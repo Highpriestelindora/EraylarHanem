@@ -1,0 +1,24 @@
+{
+  "name": "Eraylar Hanesi",
+  "short_name": "Eraylar",
+  "description": "Eraylar Ailesi Yaşam Rehberi · V9.0.0",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F5FD",
+  "theme_color": "#9B59B6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
