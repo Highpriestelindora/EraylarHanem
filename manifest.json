@@ -1,10 +1,10 @@
 {
   "name": "Eraylar Hanesi",
   "short_name": "Eraylar",
-  "description": "Eraylar Ailesi Yaşam Rehberi · V9.0.0",
+  "description": "Eraylar Ailesi Ev Yönetim Uygulaması",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F8F5FD",
+  "background_color": "#F8F0FC",
   "theme_color": "#9B59B6",
   "orientation": "portrait",
   "icons": [
