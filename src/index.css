@@ -124,14 +124,25 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 800; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(15, 23, 42, 0.7);
   backdrop-filter: blur(8px);
-  z-index: 5000; /* Above FloatingHub (1000) */
+  z-index: 99999; /* Max priority */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
   animation: fadeIn 0.3s ease;
+}
+
+/* Ensure nothing covers modals when they are open */
+body:has(.modal-overlay) .floating-hub-container,
+body:has(.modal-overlay) .app-header {
+  z-index: 1 !important;
+}
+
+body:has(.modal-overlay) .app-content {
+  z-index: 9999 !important;
+  position: relative;
 }
 
 .modal-content {
