@@ -445,7 +445,18 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      setModalOpen: (isOpen) => set((state) => ({ ui: { ...state.ui, isModalOpen: isOpen } })),
+      resetAllCriticalStocks: async () => {
+        const state = get();
+        const updatedMutfak = { ...state.mutfak };
+        ['buzdolabi', 'kiler', 'dondurucu'].forEach(loc => {
+          if (Array.isArray(updatedMutfak[loc])) {
+            updatedMutfak[loc] = updatedMutfak[loc].map(item => ({ ...item, mn: 0 }));
+          }
+        });
+        
+        await state.setModuleData('mutfak', updatedMutfak);
+        toast.success('Bütün kritik stoklar 0 yapıldı! ✅');
+      },
 
       payLoanInstallment: async (loanId) => {
         const state = get();
