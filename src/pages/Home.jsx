@@ -600,9 +600,6 @@ const Home = () => {
           </div>
         </Link>
       </div>
-
-      </div>
-      </div>
       {/* System Logs Modal */}
       {showLogs && (
         <Portal>
