@@ -11,15 +11,10 @@ import toast from 'react-hot-toast';
 import './Tatil.css';
 
 export default function Tatil() {
-  const { tatil, setModuleData, addTrip, setModalOpen } = useStore();
+  const { tatil, setModuleData, addTrip } = useStore();
   const [activeTab, setActiveTab] = useState(tatil.ttab || 'trips');
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
-
-  useEffect(() => {
-    setModalOpen(!!selectedTrip || showWizard);
-    return () => setModalOpen(false);
-  }, [selectedTrip, showWizard, setModalOpen]);
 
   const updateTab = (tab) => {
     setActiveTab(tab);

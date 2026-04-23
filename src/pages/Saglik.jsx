@@ -15,12 +15,7 @@ import MoodTab from './saglik/MoodTab';
 export default function Saglik() {
   const [activeTab, setActiveTab] = useState('randevu');
   const [showAddExpense, setShowAddExpense] = useState(false);
-  const { saglik, addExpense, setModalOpen } = useStore();
-
-  React.useEffect(() => {
-    setModalOpen(showAddExpense);
-    return () => setModalOpen(false);
-  }, [showAddExpense, setModalOpen]);
+  const { saglik, addExpense } = useStore();
 
   const navigate = useNavigate();
 

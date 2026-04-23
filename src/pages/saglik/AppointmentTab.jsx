@@ -5,14 +5,9 @@ import toast from 'react-hot-toast';
 import ActionSheet from '../../components/ActionSheet';
 
 const AppointmentTab = () => {
-  const { saglik, setModuleData, setModalOpen } = useStore();
+  const { saglik, setModuleData } = useStore();
   const [modalOpen, setModalOpenLocal] = useState(false);
   const [form, setForm] = useState({ kisi: 'Görkem', doktor: '', tarih: '', saat: '', not: '', rekurans: 'yok' });
-
-  React.useEffect(() => {
-    setModalOpen(modalOpen);
-    return () => setModalOpen(false);
-  }, [modalOpen, setModalOpen]);
 
   const appointments = saglik.randevular || [];
 

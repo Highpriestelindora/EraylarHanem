@@ -9,14 +9,9 @@ import './Ayarlar.css'; // Reusing common styles, will add profile specific ones
 
 export default function Profil() {
   const navigate = useNavigate();
-  const { currentUser, setCurrentUser, users, updateUser, setModalOpen } = useStore();
+  const { currentUser, setCurrentUser, users, updateUser } = useStore();
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
-  useEffect(() => {
-    setModalOpen(isEditing);
-    return () => setModalOpen(false);
-  }, [isEditing, setModalOpen]);
 
   const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
   const profile = users[userKey] || {};

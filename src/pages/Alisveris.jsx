@@ -11,12 +11,7 @@ const formatMoney = (val) =>
 export default function Alisveris() {
   const [activeTab, setActiveTab] = useState('ev');
   const [showAddModal, setShowAddModal] = useState(false);
-  const { alisveris, addShoppingItem, toggleShoppingItem, deleteShoppingItem, setModalOpen, addExpense } = useStore();
-
-  useEffect(() => {
-    setModalOpen(showAddModal);
-    return () => setModalOpen(false);
-  }, [showAddModal, setModalOpen]);
+  const { alisveris, addShoppingItem, toggleShoppingItem, deleteShoppingItem, addExpense } = useStore();
 
   const currentList = alisveris[activeTab] || [];
   const pendingItems = currentList.filter(i => !i.done);
