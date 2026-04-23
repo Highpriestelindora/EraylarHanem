@@ -116,18 +116,119 @@ const StokTab = () => {
             qty: bulkItems[item.n]
           });
         }
-      });
-    });
-
-    if (itemsToFinish.length > 0) {
-      bulkFinishItems(itemsToFinish);
-      toast.success(`${itemsToFinish.length} ürün toplu olarak bitti işaretlendi!`);
-    }
-    setShowBulkFinish(false);
-  };
-
   return (
-    <div className="stok-tab-container">
+    <>
+      <div className="stok-tab-container">
+        <div className="sub-nav">
+          <button className={subTab === 'buzdolabi' ? 'active' : ''} onClick={() => setSubTab('buzdolabi')}>❄️ Buzdolabı</button>
+          <button className={subTab === 'kiler' ? 'active' : ''} onClick={() => setSubTab('kiler')}>🧺 Kiler</button>
+          <button className={subTab === 'dondurucu' ? 'active' : ''} onClick={() => setSubTab('dondurucu')}>🧊 Dondurucu</button>
+        </div>
+
+        <div className="search-bar-row" style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+          <div className="search-bar glass" style={{ flex: 1, marginBottom: 0 }}>
+            <Search size={18} />
+            <input 
+              type="text" 
+              placeholder={`${subTab === 'buzdolabi' ? 'Buzdolabında' : subTab === 'kiler' ? 'Kilerde' : 'Dondurucuda'} ara...`} 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button className="add-item-btn glass" onClick={() => setShowNeYap(true)} title="Ne Yapabilirim?" style={{ color: 'var(--primary)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
+            <ChefHat size={20} />
+          </button>
+          <button className="add-item-btn glass" onClick={() => setEditingItem({ isNew: true, item: {} })}>
+            <Plus size={20} />
+          </button>
+        </div>
+
+        <div className="items-list">
+          {[...REYON_ORDER, ...Object.keys(grouped).filter(k => !REYON_ORDER.includes(k))].map(cat => {
+            if (!grouped[cat]) return null;
+            return (
+              <div key={cat} className="category-section">
+                <h3 className="category-title">
+                  {REYON_IC[cat] || '📋'} {cat}
+                </h3>
+                <div className="category-items">
+                  {grouped[cat].map(item => (
+                    <div key={item.n} className="stock-card glass" onClick={() => setEditingItem({ isNew: false, item })}>
+                      {item.cr <= item.mn && item.cr > 0 && (
+                        <div className="critical-warning">
+                          <AlertCircle size={10} /> KRİTİK
+                        </div>
+                      )}
+
+                      <div className="stock-info">
+                        <span className="stock-icon">{item.ic || '📦'}</span>
+                        <div className="stock-details">
+                          <span className="stock-name">{item.n}</span>
+                          <div className="stock-meta">
+                            {item.br && <span>{item.br}</span>}
+                            {item.mk && <span> · {item.mk}</span>}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="stock-right" onClick={e => e.stopPropagation()}>
+                        <div className="qty-controls">
+                           <button className="qty-btn minus" onClick={() => updateStockQty(subTab, item.n, -1)}>-</button>
+                           <div className="amount-container">
+                             <span className="current-amount" style={{ color: getStatusColor(item) }}>
+                               {item.cr}
+                             </span>
+                             <span className="unit-label">{item.u}</span>
+                           </div>
+                           <button className="qty-btn plus" onClick={() => updateStockQty(subTab, item.n, 1)}>+</button>
+                        </div>
+
+                        <div className="stock-actions-column">
+                          <button 
+                            className={`finish-action-btn ${item.cr <= 0 ? 'disabled' : ''}`}
+                            onClick={() => item.cr > 0 && handleFinish(item.n)}
+                            disabled={item.cr <= 0}
+                            title="Bitti Olarak İşaretle"
+                          >
+                            BİTTİ
+                          </button>
+                          <button 
+                            className="shopping-action-btn"
+                            onClick={() => handleManualAddShopping(item)}
+                            title="Alışverişe Ekle"
+                          >
+                            <ShoppingCart size={14} />
+                          </button>
+                        </div>
+
+                        {(subTab === 'buzdolabi' || subTab === 'dondurucu') && item.cr > 0 && (
+                          <button 
+                            className="transfer-btn-mini" 
+                            onClick={() => handleTransfer(item.n, subTab, 1)}
+                            title={subTab === 'buzdolabi' ? 'Dondur' : 'Çöz'}
+                          >
+                            {subTab === 'buzdolabi' ? <Snowflake size={12} color="#3b82f6" /> : <Sun size={12} color="#f59e0b" />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {filteredItems.length === 0 && (
+            <div className="empty-results glass" style={{ padding: '60px', borderRadius: '32px', textAlign: 'center' }}>
+              <Search size={48} opacity={0.1} style={{ marginBottom: '16px' }} />
+              <p style={{ fontWeight: '800', opacity: 0.5 }}>Burada hiç malzeme yok...</p>
+              <button className="submit-btn" onClick={() => setEditingItem({ isNew: true, item: {} })} style={{ margin: '20px auto 0', padding: '12px 24px' }}>
+                 <Plus size={18} /> Yeni Malzeme Ekle
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
       <ActionSheet
         isOpen={!!editingItem}
         onClose={() => setEditingItem(null)}
@@ -194,117 +295,6 @@ const StokTab = () => {
           </form>
         )}
       </ActionSheet>
-
-      <div className="sub-nav">
-        <button className={subTab === 'buzdolabi' ? 'active' : ''} onClick={() => setSubTab('buzdolabi')}>❄️ Buzdolabı</button>
-        <button className={subTab === 'kiler' ? 'active' : ''} onClick={() => setSubTab('kiler')}>🧺 Kiler</button>
-        <button className={subTab === 'dondurucu' ? 'active' : ''} onClick={() => setSubTab('dondurucu')}>🧊 Dondurucu</button>
-      </div>
-
-      <div className="search-bar-row" style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-        <div className="search-bar glass" style={{ flex: 1, marginBottom: 0 }}>
-          <Search size={18} />
-          <input 
-            type="text" 
-            placeholder={`${subTab === 'buzdolabi' ? 'Buzdolabında' : subTab === 'kiler' ? 'Kilerde' : 'Dondurucuda'} ara...`} 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <button className="add-item-btn glass" onClick={() => setShowNeYap(true)} title="Ne Yapabilirim?" style={{ color: 'var(--primary)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
-          <ChefHat size={20} />
-        </button>
-        <button className="add-item-btn glass" onClick={() => setEditingItem({ isNew: true, item: {} })}>
-          <Plus size={20} />
-        </button>
-      </div>
-
-      <div className="items-list">
-        {[...REYON_ORDER, ...Object.keys(grouped).filter(k => !REYON_ORDER.includes(k))].map(cat => {
-          if (!grouped[cat]) return null;
-          return (
-            <div key={cat} className="category-section">
-              <h3 className="category-title">
-                {REYON_IC[cat] || '📋'} {cat}
-              </h3>
-              <div className="category-items">
-                {grouped[cat].map(item => (
-                  <div key={item.n} className="stock-card glass" onClick={() => setEditingItem({ isNew: false, item })}>
-                    {item.cr <= item.mn && item.cr > 0 && (
-                      <div className="critical-warning">
-                        <AlertCircle size={10} /> KRİTİK
-                      </div>
-                    )}
-
-                    <div className="stock-info">
-                      <span className="stock-icon">{item.ic || '📦'}</span>
-                      <div className="stock-details">
-                        <span className="stock-name">{item.n}</span>
-                        <div className="stock-meta">
-                          {item.br && <span>{item.br}</span>}
-                          {item.mk && <span> · {item.mk}</span>}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="stock-right" onClick={e => e.stopPropagation()}>
-                      <div className="qty-controls">
-                         <button className="qty-btn minus" onClick={() => updateStockQty(subTab, item.n, -1)}>-</button>
-                         <div className="amount-container">
-                           <span className="current-amount" style={{ color: getStatusColor(item) }}>
-                             {item.cr}
-                           </span>
-                           <span className="unit-label">{item.u}</span>
-                         </div>
-                         <button className="qty-btn plus" onClick={() => updateStockQty(subTab, item.n, 1)}>+</button>
-                      </div>
-
-                      <div className="stock-actions-column">
-                        <button 
-                          className={`finish-action-btn ${item.cr <= 0 ? 'disabled' : ''}`}
-                          onClick={() => item.cr > 0 && handleFinish(item.n)}
-                          disabled={item.cr <= 0}
-                          title="Bitti Olarak İşaretle"
-                        >
-                          BİTTİ
-                        </button>
-                        <button 
-                          className="shopping-action-btn"
-                          onClick={() => handleManualAddShopping(item)}
-                          title="Alışverişe Ekle"
-                        >
-                          <ShoppingCart size={14} />
-                        </button>
-                      </div>
-
-                      {(subTab === 'buzdolabi' || subTab === 'dondurucu') && item.cr > 0 && (
-                        <button 
-                          className="transfer-btn-mini" 
-                          onClick={() => handleTransfer(item.n, subTab, 1)}
-                          title={subTab === 'buzdolabi' ? 'Dondur' : 'Çöz'}
-                        >
-                          {subTab === 'buzdolabi' ? <Snowflake size={12} color="#3b82f6" /> : <Sun size={12} color="#f59e0b" />}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
-        {filteredItems.length === 0 && (
-          <div className="empty-results glass" style={{ padding: '60px', borderRadius: '32px', textAlign: 'center' }}>
-            <Search size={48} opacity={0.1} style={{ marginBottom: '16px' }} />
-            <p style={{ fontWeight: '800', opacity: 0.5 }}>Burada hiç malzeme yok...</p>
-            <button className="submit-btn" onClick={() => setEditingItem({ isNew: true, item: {} })} style={{ margin: '20px auto 0', padding: '12px 24px' }}>
-               <Plus size={18} /> Yeni Malzeme Ekle
-            </button>
-          </div>
-        )}
-      </div>
-
-      </div>
 
       <ActionSheet
         isOpen={showNeYap}
@@ -396,8 +386,8 @@ const StokTab = () => {
         </div>
       </ActionSheet>
 
-
       <style>{`
+        .stok-tab-container { position: relative; }
         .add-item-btn {
           width: 48px;
           height: 48px;
@@ -444,7 +434,7 @@ const StokTab = () => {
         .stock-card { cursor: pointer; transition: transform 0.2s; }
         .stock-card:active { transform: scale(0.98); }
       `}</style>
-    </div>
+    </>
   );
 };
 
