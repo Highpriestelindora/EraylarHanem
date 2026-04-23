@@ -534,10 +534,22 @@ function HaftaTab({ sosyal, onAdd }) {
               </div>
               
               <div className="nostalgic-content" style={{ padding: '20px' }}>
+                <div className="leaf-date-header" style={{ textAlign: 'center', marginBottom: '20px', borderBottom: '1px dashed #e2e8f0', paddingBottom: '15px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                    {new Date(selectedDay.date).toLocaleDateString('tr-TR', { weekday: 'long' })}
+                  </div>
+                  <div style={{ fontSize: '48px', fontWeight: '900', color: 'var(--txt)', lineHeight: '1' }}>
+                    {selectedDay.day}
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--social)' }}>
+                    {new Date(selectedDay.date).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}
+                  </div>
+                </div>
+
                 {selectedDay.holiday && (
                   <div className="nostalgic-event holiday" style={{ marginBottom: '20px', padding: '15px', background: '#fff5f5', borderRadius: '16px', border: '1px solid #fed7d7' }}>
-                    <strong style={{ display: 'block', fontSize: '16px', color: '#c53030' }}>🇹🇷 {selectedDay.holiday}</strong>
-                    <span style={{ fontSize: '12px', color: '#e53e3e' }}>Resmi Tatil</span>
+                    <strong style={{ display: 'block', fontSize: '16px', color: '#c53030', textAlign: 'center' }}>🇹🇷 {selectedDay.holiday}</strong>
+                    <span style={{ fontSize: '12px', color: '#e53e3e', display: 'block', textAlign: 'center' }}>Resmi Tatil</span>
                   </div>
                 )}
 
