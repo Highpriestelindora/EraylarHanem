@@ -16,18 +16,13 @@ const formatMoney = (val) =>
 
 export default function Finans() {
   const [activeTab, setActiveTab] = useState('bakiye');
+  const navigate = useNavigate();
   const { finans, kasa, addExpense, updateKasa, transferKasa, payDebt, updateDebt, updateCard, payLoanInstallment } = useStore();
   
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showUpdateKasa, setShowUpdateKasa] = useState(null);
   const [payingDebt, setPayingDebt] = useState(null);
-  const { setModalOpen } = useStore();
-
-  useEffect(() => {
-    setModalOpen(showAddExpense || showTransfer || !!showUpdateKasa);
-    return () => setModalOpen(false);
-  }, [showAddExpense, showTransfer, showUpdateKasa, setModalOpen]);
 
   const bakiyeler = kasa?.bakiyeler || { gorkem: 0, esra: 0, ortak: 0 };
   const harcamalar = finans?.harcamalar || [];
@@ -126,8 +121,6 @@ export default function Finans() {
       </div>
     );
   };
-
-  const navigate = useNavigate();
 
   const tabs = [
     { id: 'bakiye', label: 'Varlıklar', emoji: '💎' },
