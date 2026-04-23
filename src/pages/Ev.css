@@ -1,0 +1,194 @@
+.ev-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px;
+  padding-bottom: 100px;
+}
+
+.ev-gradient {
+  background: var(--ev) !important;
+}
+
+.ev-primary {
+  background: linear-gradient(135deg, #8E44AD, #6C3483) !important;
+  color: white !important;
+  border: none !important;
+}
+
+.summary-card {
+  padding: 20px;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.s-header {
+  display: flex;
+  flex-direction: column;
+}
+
+.s-label { font-size: 11px; font-weight: 800; opacity: 0.8; }
+.s-val { font-size: 28px; font-weight: 900; }
+
+.s-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.s-stats .alert { color: #fecaca; }
+
+/* Bill List */
+.bill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bill-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 20px;
+}
+
+.b-check {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Assets Phase 6 */
+.assets-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.asset-card {
+  padding: 18px;
+  border-radius: 28px;
+  border: 1px solid var(--brd);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.a-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.a-emoji {
+  width: 44px;
+  height: 44px;
+  background: var(--bg);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.a-title strong { display: block; font-size: 15px; color: var(--txt); }
+.a-title span { font-size: 11px; color: var(--txt-light); }
+
+.a-details {
+  background: rgba(0,0,0,0.02);
+  padding: 12px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ad-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.ad-row span { color: var(--txt-light); }
+.ad-row strong { color: var(--txt); }
+
+.a-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-top: 4px;
+}
+
+.a-value small { display: block; font-size: 9px; color: var(--txt-light); text-transform: uppercase; font-weight: 800; }
+.a-value strong { font-size: 18px; color: var(--ev); }
+
+.edit-btn-mini {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--bg);
+  color: var(--txt-light);
+  cursor: pointer;
+}
+
+
+.b-check .circle {
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--brd);
+  border-radius: 50%;
+}
+
+.b-check.checked { color: #8E44AD; }
+
+.b-info { flex: 1; display: flex; flex-direction: column; }
+.b-info strong { font-size: 14px; }
+.b-info span { font-size: 11px; color: var(--txt-light); }
+
+.b-amt { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.b-amt strong { font-size: 15px; color: #8E44AD; }
+
+/* Maintenance */
+.maintenance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.maintenance-card {
+  padding: 16px;
+  border-radius: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 6px solid #ccc;
+}
+
+.maintenance-card.priority-yüksek { border-left-color: #ef4444; }
+.maintenance-card.priority-orta { border-left-color: #f59e0b; }
+.maintenance-card.priority-düşük { border-left-color: #10b981; }
+
+.m-main { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.m-header { display: flex; align-items: center; gap: 8px; }
+.m-header strong { font-size: 15px; }
+.p-badge { font-size: 9px; font-weight: 900; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; background: var(--bg); }
+
+.m-notes { font-size: 12px; color: var(--txt-light); }
+.m-date { font-size: 10px; color: var(--txt-light); font-weight: 700; }
+
+.m-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.done-btn { padding: 6px 12px; border-radius: 8px; border: none; background: #8E44AD; color: white; font-weight: 800; font-size: 11px; }
+
+/* Insurance */
+.insurance-list { display: flex; flex-direction: column; gap: 10px; }
+.insurance-card { padding: 16px; border-radius: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+.i-main { display: flex; flex-direction: column; gap: 4px; }
+.i-main strong { font-size: 14px; }
+.i-company { font-size: 12px; color: var(--txt-light); }
+.i-dates { display: flex; gap: 10px; font-size: 10px; font-weight: 800; margin-top: 4px; }
+.i-dates .alert { color: #ef4444; }

@@ -1,0 +1,112 @@
+.achs-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.achs-header .h-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.achs-header h2 {
+  font-size: 24px;
+  color: var(--txt);
+}
+
+.achs-header p {
+  color: var(--txt-light);
+  font-size: 14px;
+}
+
+.achs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ach-card {
+  position: relative;
+  background: var(--card);
+  border-radius: 24px;
+  padding: 20px;
+  border: 1px solid var(--brd);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  transition: all 0.3s;
+}
+
+.ach-card.locked {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+
+.ach-card.unlocked {
+  border-color: #f59e0b;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.1);
+  transform: translateY(-2px);
+}
+
+.ach-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  position: relative;
+}
+
+.ach-card.unlocked .ach-icon-box {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+.unlock-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--card);
+}
+
+.ach-info strong {
+  font-size: 14px;
+  color: var(--txt);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.ach-info p {
+  font-size: 11px;
+  color: var(--txt-light);
+  line-height: 1.4;
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  .achs-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eraylar Hanem - iPhone 15 Pro Simulator</title>
+    <style>
+        :root {
+            --phone-width: 393px;
+            --phone-height: 852px;
+            --bezel: 12px;
+            --radius: 55px;
+            --bg-color: #0f172a;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+        }
+
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 24px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: white;
+        }
+
+        .btn.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        /* iPhone 15 Pro Frame */
+        .iphone-15 {
+            width: var(--phone-width);
+            height: var(--phone-height);
+            background: #1e1e1e;
+            border-radius: var(--radius);
+            position: relative;
+            box-shadow: 
+                0 0 0 4px #444, 
+                0 0 0 7px #111,
+                0 30px 60px rgba(0,0,0,0.8);
+            padding: var(--bezel);
+            box-sizing: content-box;
+            transform: scale(0.9);
+        }
+
+        /* Dynamic Island */
+        .dynamic-island {
+            position: absolute;
+            width: 110px;
+            height: 30px;
+            background: black;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 20px;
+            z-index: 100;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dynamic-island:hover {
+            width: 200px;
+            height: 35px;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: calc(var(--radius) - var(--bezel));
+            overflow: hidden;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #f8fafc;
+        }
+
+        /* Physical Buttons */
+        .button {
+            position: absolute;
+            background: #222;
+            border-radius: 2px;
+        }
+
+        .silent { width: 3px; height: 26px; left: -10px; top: 160px; }
+        .vol-up { width: 3px; height: 50px; left: -10px; top: 210px; }
+        .vol-down { width: 3px; height: 50px; left: -10px; top: 275px; }
+        .power { width: 3px; height: 80px; right: -10px; top: 250px; }
+
+        .label-tag {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="workspace">
+        <div class="controls">
+            <button class="btn active" onclick="reload()">🔄 Yenile</button>
+            <button class="btn" onclick="toggleTheme()">🌓 Tema Değiştir</button>
+            <button class="btn" onclick="rotate()">📱 Çevir</button>
+        </div>
+
+        <div class="iphone-15" id="phone">
+            <div class="button silent"></div>
+            <div class="button vol-up"></div>
+            <div class="button vol-down"></div>
+            <div class="button power"></div>
+            
+            <div class="dynamic-island"></div>
+            
+            <div class="screen">
+                <iframe id="app-frame" src="/"></iframe>
+            </div>
+        </div>
+
+        <div class="label-tag">Eraylar Hanem Development Environment - iPhone 15 Pro Max Mockup</div>
+    </div>
+
+    <script>
+        const frame = document.getElementById('app-frame');
+        const phone = document.getElementById('phone');
+        let isDark = false;
+
+        function reload() {
+            frame.src = frame.src;
+        }
+
+        function toggleTheme() {
+            isDark = !isDark;
+            const doc = frame.contentDocument || frame.contentWindow.document;
+            if (isDark) {
+                doc.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                doc.documentElement.removeAttribute('data-theme');
+            }
+        }
+
+        function rotate() {
+            // Mobile app is mostly portrait, but we can add rotation logic here if needed
+            toast('Yatay mod henüz optimize edilmedi.');
+        }
+
+        function toast(msg) {
+            console.log(msg);
+        }
+    </script>
+</body>
+</html>

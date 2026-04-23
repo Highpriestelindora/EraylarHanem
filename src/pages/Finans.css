@@ -1,0 +1,282 @@
+
+.finans-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.money-gradient {
+  background: var(--finans) !important;
+  color: white;
+}
+
+.finans-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  padding-bottom: 100px;
+}
+
+/* Person Grid */
+.person-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.person-card {
+  padding: 16px;
+  border-radius: 24px;
+  text-align: center;
+  border: 1px solid var(--brd);
+}
+
+.p-header { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 8px; }
+.p-emoji { font-size: 20px; }
+.p-name { font-size: 10px; font-weight: 800; color: var(--txt-light); }
+.p-val { font-size: 14px; font-weight: 900; color: var(--txt); margin-bottom: 10px; }
+
+.update-btn {
+  width: 100%;
+  padding: 6px;
+  border: none;
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+/* Quick Actions */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.action-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid var(--brd);
+  background: white;
+  cursor: pointer;
+}
+
+.ac-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ac-icon.expense { background: #FEE2E2; color: #EF4444; }
+.ac-icon.transfer { background: #DBEAFE; color: #3B82F6; }
+
+.action-card span { font-size: 13px; font-weight: 800; color: var(--txt); }
+
+/* Expense Items */
+.expense-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.expense-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 20px;
+  border: 1px solid var(--brd);
+}
+
+.exp-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.exp-info { flex: 1; }
+.exp-info strong { display: block; font-size: 14px; }
+.exp-info span { font-size: 11px; color: var(--txt-light); }
+.exp-amt { font-weight: 900; color: #EF4444; font-size: 14px; }
+
+/* Debt Cards */
+.debt-card {
+  padding: 20px;
+  border-radius: 28px;
+  border: 1px solid var(--brd);
+  margin-top: 12px;
+}
+
+.dc-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.dc-title strong { display: block; font-size: 15px; }
+.dc-title small { font-size: 11px; color: var(--txt-light); }
+
+.progress-bar {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.progress-fill { height: 100%; background: var(--primary); border-radius: 10px; }
+.dc-progress span { font-size: 11px; font-weight: 800; color: var(--primary); }
+
+.dc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--bg);
+}
+
+.dc-meta { display: flex; flex-direction: column; gap: 4px; }
+.dc-meta span { font-size: 11px; color: var(--txt-light); }
+.dc-meta strong { color: var(--txt); }
+
+.pay-btn {
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: none;
+  background: #ECFDF5;
+  color: #10B981;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+/* Credit Cards */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.cc-card {
+  padding: 16px;
+  border-radius: 24px;
+  border: 1px solid var(--brd);
+  background: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.cc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; color: var(--primary); }
+.cc-top strong { font-size: 13px; color: var(--txt); }
+
+.cc-balance small { font-size: 10px; color: var(--txt-light); display: block; }
+.cc-balance strong { font-size: 18px; font-weight: 900; }
+
+.limit-bar { height: 4px; background: var(--bg); border-radius: 10px; margin: 10px 0 6px; }
+.limit-fill { height: 100%; background: #EF4444; border-radius: 10px; }
+.limit-labels { display: flex; justify-content: space-between; font-size: 9px; font-weight: 800; color: var(--txt-light); }
+
+/* Analysis View */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat-box { padding: 16px; border-radius: 24px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--brd); }
+.sb-info small { font-size: 10px; color: var(--txt-light); display: block; }
+.sb-info strong { font-size: 16px; font-weight: 900; }
+
+.history-item.pos .h-amt { color: #10B981; }
+.history-item.neg .h-amt { color: #EF4444; }
+
+/* Forms */
+.payer-select { display: flex; gap: 8px; margin-top: 4px; }
+.payer-select button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--brd);
+  background: var(--bg);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.payer-select button.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Subscription Styles */
+.subscription-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.sub-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 24px;
+  border: 1px solid var(--brd);
+  background: white;
+}
+
+.sub-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--bg);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.sub-info {
+  flex: 1;
+}
+
+.sub-info strong {
+  display: block;
+  font-size: 15px;
+  color: var(--txt);
+  margin-bottom: 2px;
+}
+
+.sub-info span {
+  font-size: 11px;
+  color: var(--txt-light);
+  font-weight: 600;
+}
+
+.sub-price {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.sub-price strong {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--txt);
+}
+
+.pay-btn.small {
+  padding: 4px 12px;
+  font-size: 10px;
+  border-radius: 8px;
+}
+
+.mt-20 { margin-top: 20px; }
