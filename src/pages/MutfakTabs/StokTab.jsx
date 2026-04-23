@@ -3,6 +3,7 @@ import { Search, AlertCircle, Plus, ShoppingCart, Edit3, X, Save, Snowflake, Sun
 import useStore from '../../store/useStore';
 import { REYON_ORDER, REYON_IC } from '../../constants/data';
 import toast from 'react-hot-toast';
+import Portal from '../../components/Portal';
 
 const StokTab = () => {
   const { mutfak, setModuleData, setItemFinished, transferStock, bulkFinishItems } = useStore();
@@ -232,215 +233,182 @@ const StokTab = () => {
             <button className="submit-btn" onClick={() => setEditingItem({ isNew: true, item: {} })} style={{ margin: '20px auto 0', padding: '12px 24px' }}>
                <Plus size={18} /> Yeni Malzeme Ekle
             </button>
+            {editingItem && (
+        <Portal>
+          <div className="modal-overlay" onClick={() => setEditingItem(null)}>
+            <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h4>{editingItem.isNew ? '✨ Yeni Malzeme Ekle' : '📝 Stok Kartı'}</h4>
+                <button className="close-btn" onClick={() => setEditingItem(null)}><X size={20} /></button>
+              </div>
+              
+              <form onSubmit={handleSaveItem}>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Malzeme Adı</label>
+                    <input name="n" defaultValue={editingItem.item?.n || ''} required placeholder="Örn: Süt" />
+                  </div>
+                  <div className="form-group">
+                    <label>İkon (Emoji)</label>
+                    <input name="ic" defaultValue={editingItem.item?.ic || '📦'} placeholder="🥛" />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Birim</label>
+                    <select name="u" defaultValue={editingItem.item?.u || 'adet'}>
+                      <option value="adet">Adet</option>
+                      <option value="kg">KG</option>
+                      <option value="gram">Gram</option>
+                      <option value="litre">Litre</option>
+                      <option value="paket">Paket</option>
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Reyon/Kategori</label>
+                    <select name="ct" defaultValue={editingItem.item?.ct || 'Diğer'}>
+                      {REYON_ORDER.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Kritik Stok Sınırı (mn)</label>
+                    <input name="mn" type="number" step="0.1" defaultValue={editingItem.item?.mn || 0} required />
+                  </div>
+                  <div className="form-group">
+                    <label>Mevcut Miktar (cr)</label>
+                    <input name="cr" type="number" step="0.1" defaultValue={editingItem.item?.cr || 0} required />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Marka Tercihi</label>
+                    <input name="mk" defaultValue={editingItem.item?.mk || ''} placeholder="Sütaş, BİM vb." />
+                  </div>
+                  <div className="form-group">
+                    <label>Paket/Ağırlık Bilgisi</label>
+                    <input name="pk" defaultValue={editingItem.item?.pk || ''} placeholder="1L, 500g vb." />
+                  </div>
+                </div>
+
+                <button type="submit" className="submit-btn" style={{ background: 'var(--mutfak)', color: 'white' }}>
+                  <Save size={18} />
+                  <span>Kaydet</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </Portal>
+      )}
           </div>
         )}
       </div>
 
-      {/* Stock Card Edit/Add Modal */}
-      {editingItem && (
-        <div className="modal-overlay" onClick={() => setEditingItem(null)}>
-          <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>{editingItem.isNew ? '✨ Yeni Malzeme Ekle' : '🗂️ Stok Kartı'}</h4>
-              <button className="close-btn" onClick={() => setEditingItem(null)}>✕</button>
-            </div>
-            
-            <form className="modal-form" onSubmit={handleSaveItem}>
-              <div className="form-group">
-                <label>Malzeme Adı</label>
-                <input name="n" defaultValue={editingItem.item.n} placeholder="Örn: Süt" required style={{ width: '100%', boxSizing: 'border-box' }} />
-              </div>
+      {showNeYap && (
+        <Portal>
+          <div className="modal-overlay" onClick={() => setShowNeYap(false)}>
+            <div className="modal-content glass animate-pop" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+              <header className="modal-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <ChefHat size={24} color="var(--mutfak)" />
+                  <h4>Bugün Ne Pişirebiliriz?</h4>
+                </div>
+                <button className="close-btn" onClick={() => setShowNeYap(false)}><X size={20} /></button>
+              </header>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Emoji</label>
-                  <input name="ic" defaultValue={editingItem.item.ic} placeholder="🥛" maxLength={2} style={{ width: '100%', boxSizing: 'border-box' }} />
-                </div>
-                <div className="form-group">
-                  <label>Kategori</label>
-                  <select name="ct" defaultValue={editingItem.item.ct || 'Diğer'} style={{ width: '100%', boxSizing: 'border-box' }}>
-                    {REYON_ORDER.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-              </div>
+              <div className="ne-yap-body" style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '4px' }}>
+                  {cookable.length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                        <h5 style={{ fontSize: '14px', marginBottom: '10px', color: '#10b981', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <Save size={14} /> Hazır Tarifler ({cookable.length})
+                        </h5>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {cookable.map(r => (
+                            <div key={r.id} className="si glass" style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <span style={{ fontSize: '24px' }}>{r.e}</span>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '14px', fontWeight: '800' }}>{r.n}</span>
+                                <span style={{ fontSize: '10px', opacity: 0.6 }}>{r.t} dk | {r.c}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                    </div>
+                  )}
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Mevcut Stok</label>
-                  <input name="cr" type="number" step="0.1" defaultValue={editingItem.item.cr || 0} style={{ width: '100%', boxSizing: 'border-box' }} />
-                </div>
-                <div className="form-group">
-                  <label>Birim</label>
-                  <select name="u" defaultValue={editingItem.item.u || 'adet'} style={{ width: '100%', boxSizing: 'border-box' }}>
-                    <option value="adet">Adet</option>
-                    <option value="kg">KG</option>
-                    <option value="gr">Gram</option>
-                    <option value="lt">Litre</option>
-                    <option value="paket">Paket</option>
-                    <option value="koli">Koli</option>
-                    <option value="kavanoz">Kavanoz</option>
-                    <option value="şişe">Şişe</option>
-                  </select>
-                </div>
-              </div>
+                  {frozenCookable.length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                        <h5 style={{ fontSize: '14px', marginBottom: '10px', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <Snowflake size={14} /> Çözülünce Hazır ({frozenCookable.length})
+                        </h5>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {frozenCookable.map(r => (
+                            <div key={r.id} className="si glass" style={{ padding: '10px', display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.8 }}>
+                              <span style={{ fontSize: '24px' }}>{r.e}</span>
+                              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <span style={{ fontSize: '14px', fontWeight: '800' }}>{r.n}</span>
+                                <span style={{ fontSize: '10px', opacity: 0.6 }}>Buzlukta malzeme var</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                    </div>
+                  )}
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Kritik Eşik</label>
-                  <input name="mn" type="number" step="0.1" defaultValue={editingItem.item.mn || 1} style={{ width: '100%', boxSizing: 'border-box' }} />
-                </div>
-                <div className="form-group">
-                   <label>Favori Market</label>
-                   <select name="mk" defaultValue={editingItem.item.mk || 'BİM'} style={{ width: '100%', boxSizing: 'border-box' }}>
-                      <option value="BİM">BİM</option>
-                      <option value="A101">A101</option>
-                      <option value="Migros">Migros</option>
-                      <option value="Şok">Şok</option>
-                      <option value="Manav">Manav</option>
-                      <option value="Pazar">Pazar</option>
-                      <option value="Kasap">Kasap</option>
-                      <option value="Diğer">Diğer</option>
-                   </select>
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Marka</label>
-                <input name="br" defaultValue={editingItem.item.br} placeholder="Örn: İçim" style={{ width: '100%', boxSizing: 'border-box' }} />
+                  {partialCookable.length > 0 && (
+                    <div style={{ marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                          <h5 style={{ fontSize: '14px', margin: 0, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <AlertCircle size={14} /> 1-2 Eksikli ({partialCookable.length})
+                          </h5>
+                          <button 
+                            onClick={() => {
+                              const allMissing = [...new Set(partialCookable.flatMap(r => r.missing))];
+                              useStore.getState().addMissingToShopping(allMissing);
+                              toast.success('Eksik malzemeler alışveriş listesine eklendi! 🛒');
+                            }}
+                            style={{ fontSize: '10px', background: 'var(--mutfak-light)', color: 'var(--mutfak)', border: '1px solid var(--mutfak)', padding: '4px 8px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
+                          >
+                             Tümünü Listeye Ekle
+                          </button>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {partialCookable.slice(0, 5).map(r => (
+                            <div key={r.id} className="si glass" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '20px' }}>{r.e}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontSize: '13px', fontWeight: '700' }}>{r.n}</span>
+                                  <span style={{ fontSize: '9px', color: '#f59e0b', fontWeight: 'bold' }}>Eksik: {r.missing.join(', ')}</span>
+                                </div>
+                              </div>
+                              <button 
+                                onClick={() => {
+                                  useStore.getState().addMissingToShopping(r.missing);
+                                  toast.success(`${r.n} için eksikler eklendi!`);
+                                }}
+                                style={{ background: 'white', border: '1px solid var(--brd)', borderRadius: '8px', padding: '4px', cursor: 'pointer' }}
+                                title="Bu tarif için eksikleri ekle"
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                    </div>
+                  )}
               </div>
               
-              <div className="form-group">
-                 <label>Ambalaj Bilgisi</label>
-                 <input name="pk" defaultValue={editingItem.item.pk} placeholder="Örn: 1 paket = 500 gram" style={{ width: '100%', boxSizing: 'border-box' }} />
-              </div>
-
-               {!editingItem.isNew && (subTab === 'buzdolabi' || subTab === 'dondurucu') && (
-                 <div className="transfer-action-row" style={{ marginTop: '10px' }}>
-                    <button 
-                      type="button"
-                      className="submit-btn" 
-                      onClick={() => { handleTransfer(editingItem.item.n, subTab, editingItem.item.cr); setEditingItem(null); }}
-                      style={{ background: subTab === 'buzdolabi' ? '#3b82f6' : '#f59e0b', width: '100%' }}
-                    >
-                      {subTab === 'buzdolabi' ? <><Snowflake size={18} /> Dondurucuya Taşı (Hepsini)</> : <><Sun size={18} /> Buzdolabına Taşı (Hepsini)</>}
-                    </button>
-                 </div>
-               )}
-
-              <button type="submit" className="submit-btn">
-                <Save size={18} /> {editingItem.isNew ? 'Stoka Kaydet' : 'Kartı Güncelle'}
+              <button className="submit-btn" onClick={() => setShowNeYap(false)} style={{ width: '100%', marginTop: '14px', background: 'var(--card)', color: 'var(--txt)' }}>
+                 Kapat
               </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Ne Yapabilirim Modal */}
-      {showNeYap && (
-        <div className="modal-overlay" onClick={() => setShowNeYap(false)}>
-          <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <div className="modal-header">
-              <h4>🍳 Ne Yapabilirim?</h4>
-              <button className="close-btn" onClick={() => setShowNeYap(false)}><X size={20} /></button>
             </div>
-            
-            <div style={{ maxHeight: '70vh', overflowY: 'auto', padding: '10px 0' }}>
-               <p style={{ fontSize: '11px', color: 'var(--txt-light)', marginBottom: '16px' }}>Mevcut stok durumuna göre hazırlayabileceğiniz tarifler:</p>
-               
-               {/* 1. Tam Hazır */}
-               <div style={{ marginBottom: '20px' }}>
-                  <h5 style={{ fontSize: '11px', fontWeight: '800', color: '#10b981', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                     ✅ TÜM MALZEME MEVCUT ({cookable.length})
-                  </h5>
-                  {cookable.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {cookable.slice(0, 8).map(r => (
-                        <div key={r.id} className="si glass" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '20px' }}>{r.e}</span>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '13px', fontWeight: '700' }}>{r.n}</span>
-                              <span style={{ fontSize: '9px', color: 'var(--txt-light)' }}>⏱ {r.t}dk · Zorluk: {r.d}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : <p style={{ fontSize: '11px', color: 'var(--txt-light)', paddingLeft: '10px' }}>Şu an tam hazır tarif yok.</p>}
-               </div>
-
-               {/* 2. Dondurucuda Mevcut */}
-               {frozenCookable.length > 0 && (
-                 <div style={{ marginBottom: '20px' }}>
-                    <h5 style={{ fontSize: '11px', fontWeight: '800', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                       ❄️ DONDURUCUDAN ÇIKARILMALI ({frozenCookable.length})
-                    </h5>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {frozenCookable.slice(0, 4).map(r => (
-                        <div key={r.id} className="si glass" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <span style={{ fontSize: '20px' }}>{r.e}</span>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ fontSize: '13px', fontWeight: '700' }}>{r.n}</span>
-                              <span style={{ fontSize: '9px', color: '#3b82f6' }}>❄️ {r.missing.join(', ')} dondurucuda</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                 </div>
-               )}
-
-                {/* 3. Az Eksikli */}
-                {partialCookable.length > 0 && (
-                  <div style={{ marginBottom: '10px' }}>
-                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <h5 style={{ fontSize: '11px', fontWeight: '800', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                           ⚠️ 1-2 MALZEME EKSİK ({partialCookable.length})
-                        </h5>
-                        <button 
-                          onClick={() => {
-                            const allMissing = [...new Set(partialCookable.flatMap(r => r.missing))];
-                            useStore.getState().addMissingToShopping(allMissing);
-                            toast.success('Eksik malzemeler alışveriş listesine eklendi! 🛒');
-                          }}
-                          style={{ fontSize: '10px', background: 'var(--mutfak-light)', color: 'var(--mutfak)', border: '1px solid var(--mutfak)', padding: '4px 8px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
-                        >
-                           Tümünü Listeye Ekle
-                        </button>
-                     </div>
-                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                       {partialCookable.slice(0, 5).map(r => (
-                         <div key={r.id} className="si glass" style={{ padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                             <span style={{ fontSize: '20px' }}>{r.e}</span>
-                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                               <span style={{ fontSize: '13px', fontWeight: '700' }}>{r.n}</span>
-                               <span style={{ fontSize: '9px', color: '#f59e0b', fontWeight: 'bold' }}>Eksik: {r.missing.join(', ')}</span>
-                             </div>
-                           </div>
-                           <button 
-                             onClick={() => {
-                               useStore.getState().addMissingToShopping(r.missing);
-                               toast.success(`${r.n} için eksikler eklendi!`);
-                             }}
-                             style={{ background: 'white', border: '1px solid var(--brd)', borderRadius: '8px', padding: '4px', cursor: 'pointer' }}
-                             title="Bu tarif için eksikleri ekle"
-                           >
-                             <Plus size={14} />
-                           </button>
-                         </div>
-                       ))}
-                     </div>
-                  </div>
-                )}
-            </div>
-            
-            <button className="submit-btn" onClick={() => setShowNeYap(false)} style={{ width: '100%', marginTop: '14px', background: 'var(--card)', color: 'var(--txt)' }}>
-               Kapat
-            </button>
           </div>
-        </div>
+        </Portal>
       )}
 
 

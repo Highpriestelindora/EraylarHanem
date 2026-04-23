@@ -4,6 +4,7 @@ import { User, Bell, Shield, Moon, LogOut, Trophy, ChevronRight, History, Downlo
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import Portal from '../components/Portal';
 import { notificationService } from '../lib/notificationService';
 import toast from 'react-hot-toast';
 import './Ayarlar.css';
@@ -197,31 +198,33 @@ export default function Ayarlar() {
 
       {/* Logs Modal */}
       {showLogsModal && (
-        <div className="modal-overlay" onClick={() => setShowLogsModal(false)}>
-          <div className="modal-content logs-modal glass animate-pop" onClick={e => e.stopPropagation()}>
-            <header className="modal-header">
-              <h3>📜 İşlem Geçmişi</h3>
-              <button className="close-btn" onClick={() => setShowLogsModal(false)}><X size={20} /></button>
-            </header>
-            <div className="logs-mini-list">
-              {logs && logs.length > 0 ? (
-                logs.map((log) => (
-                  <div key={log.id} className="log-mini-item">
-                    <div className="log-mini-main">
-                      <span className="log-mini-action">{log.action}</span>
-                      <span className="log-mini-detail">{log.detail}</span>
+        <Portal>
+          <div className="modal-overlay" onClick={() => setShowLogsModal(false)}>
+            <div className="modal-content logs-modal glass animate-pop" onClick={e => e.stopPropagation()}>
+              <header className="modal-header">
+                <h3>📜 İşlem Geçmişi</h3>
+                <button className="close-btn" onClick={() => setShowLogsModal(false)}><X size={20} /></button>
+              </header>
+              <div className="logs-mini-list">
+                {logs && logs.length > 0 ? (
+                  logs.map((log) => (
+                    <div key={log.id} className="log-mini-item">
+                      <div className="log-mini-main">
+                        <span className="log-mini-action">{log.action}</span>
+                        <span className="log-mini-detail">{log.detail}</span>
+                      </div>
+                      <span className="log-mini-time">
+                        {new Date(log.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-                    <span className="log-mini-time">
-                      {new Date(log.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <p className="empty-logs">Henüz bir hareket kaydedilmedi.</p>
-              )}
+                  ))
+                ) : (
+                  <p className="empty-logs">Henüz bir hareket kaydedilmedi.</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </AnimatedPage>
   );

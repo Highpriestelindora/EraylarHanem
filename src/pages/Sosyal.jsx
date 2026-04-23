@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { INITIAL_SOCIAL } from '../constants/data';
 import ConfirmModal from '../components/ConfirmModal';
+import Portal from '../components/Portal';
 import './Sosyal.css';
 
 export default function Sosyal() {

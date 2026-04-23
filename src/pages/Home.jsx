@@ -10,6 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
 import logo from '../assets/eraylar-logo.png';
+import Portal from '../components/Portal';
 import './Home.css';
 
 const Home = () => {
@@ -600,25 +601,29 @@ const Home = () => {
         </Link>
       </div>
 
+      </div>
+      </div>
       {/* System Logs Modal */}
       {showLogs && (
-        <div className="modal-overlay" onClick={() => setShowLogs(false)}>
-          <div className="logs-modal animate-slideUp" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3><History size={18} /> Sistem Hareketleri</h3>
-              <button onClick={() => setShowLogs(false)}><X size={20} /></button>
-            </div>
-            <div className="logs-list">
-              {(logs || []).slice(-15).reverse().map((log, idx) => (
-                <div key={idx} className="log-item">
-                  <span className="log-time">{new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span className="log-text">{log.text}</span>
-                </div>
-              ))}
-              {(!logs || logs.length === 0) && <p className="no-logs">Henüz hareket kaydı yok.</p>}
+        <Portal>
+          <div className="modal-overlay" onClick={() => setShowLogs(false)}>
+            <div className="logs-modal animate-slideUp" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3><History size={18} /> Sistem Hareketleri</h3>
+                <button onClick={() => setShowLogs(false)}><X size={20} /></button>
+              </div>
+              <div className="logs-list">
+                {(logs || []).slice(-15).reverse().map((log, idx) => (
+                  <div key={idx} className="log-item">
+                    <span className="log-time">{new Date(log.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span className="log-text">{log.text}</span>
+                  </div>
+                ))}
+                {(!logs || logs.length === 0) && <p className="no-logs">Henüz hareket kaydı yok.</p>}
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </AnimatedPage>
   );
