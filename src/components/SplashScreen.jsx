@@ -15,16 +15,19 @@ const SplashScreen = ({ finishLoading }) => {
   ];
 
   useEffect(() => {
+    let step = 0;
     const interval = setInterval(() => {
-      setJokeIndex(prev => {
-        if (prev < jokes.length - 1) return prev + 1;
+      step += 1;
+      if (step < jokes.length - 1) {
+        setJokeIndex(step);
+      } else {
+        setJokeIndex(jokes.length - 1);
         clearInterval(interval);
         setTimeout(finishLoading, 1000);
-        return prev;
-      });
+      }
     }, 1500);
     return () => clearInterval(interval);
-  }, []);
+  }, [finishLoading]);
 
   return (
     <motion.div 
