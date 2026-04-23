@@ -3,7 +3,7 @@ import { Droplets, Calendar, Minus, Plus } from 'lucide-react';
 import useStore from '../../store/useStore';
 
 export default function SuTakipTab() {
-  const { mutfak, updateWaterLevel, addWaterOrder, addExpense } = useStore();
+  const { mutfak, updateWaterLevel, addWaterOrder, addExpense, setWaterDailyRate } = useStore();
   const water = mutfak.su || {};
   const level1 = water?.level1 ?? 100;
   const level2 = water?.level2 ?? 100;
@@ -69,8 +69,8 @@ export default function SuTakipTab() {
             <span>%{water.dailyRate || 20}</span>
           </div>
           <div className="dc-btns">
-            <button onClick={() => useStore.getState().setWaterDailyRate(Math.max(10, (water.dailyRate || 20) - 10))}>-</button>
-            <button onClick={() => useStore.getState().setWaterDailyRate(Math.min(100, (water.dailyRate || 20) + 10))}>+</button>
+            <button onClick={() => setWaterDailyRate(Math.max(10, (water.dailyRate || 20) - 10))}>-</button>
+            <button onClick={() => setWaterDailyRate(Math.min(100, (water.dailyRate || 20) + 10))}>+</button>
           </div>
         </div>
         

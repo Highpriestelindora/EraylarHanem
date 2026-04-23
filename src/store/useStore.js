@@ -860,14 +860,26 @@ const useStore = create(
         const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
         if (diffDays > 0) {
-          const totalDepletion = diffDays * (su.dailyRate || 20);
-          const newLevel1 = Math.max(0, su.level1 - totalDepletion);
+          let totalDepletion = diffDays * (su.dailyRate || 20);
+          let newLevel1 = su.level1;
+          let newLevel2 = su.level2;
+
+          if (newLevel1 >= totalDepletion) {
+            newLevel1 -= totalDepletion;
+            totalDepletion = 0;
+          } else {
+            totalDepletion -= newLevel1;
+            newLevel1 = 0;
+            newLevel2 = Math.max(0, newLevel2 - totalDepletion);
+          }
+
           set({ 
             mutfak: { 
               ...state.mutfak, 
               su: { 
                 ...su, 
                 level1: newLevel1, 
+                level2: newLevel2,
                 lastChecked: now.toISOString() 
               } 
             } 

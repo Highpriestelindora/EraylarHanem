@@ -15,7 +15,8 @@ import './Home.css';
 
 const Home = () => {
   const { 
-    mutfak, ev, saglik, finans, tatil, pet, sosyal, aracim, logs, settings, toggleSilentMode, currentUser 
+    mutfak, ev, saglik, finans, tatil, pet, sosyal, aracim, logs, settings, 
+    toggleSilentMode, currentUser, checkWaterDepletion 
   } = useStore();
   
   const navigate = useNavigate();
@@ -23,6 +24,11 @@ const Home = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayIso = today.toISOString().split('T')[0];
+
+  useEffect(() => {
+    // Check water depletion on mount
+    checkWaterDepletion();
+  }, [checkWaterDepletion]);
 
   const [dismissedToday, setDismissedToday] = useState(() => {
     const saved = localStorage.getItem(`dismissed_alerts_${todayIso}`);
