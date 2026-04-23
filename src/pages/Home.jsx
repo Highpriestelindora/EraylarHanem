@@ -299,7 +299,7 @@ const Home = () => {
     // 5. Sosyal Aktivite Hatırlatıcı (Önümüzdeki 6 saat)
     const now = new Date();
     const sixHoursLater = new Date(now.getTime() + 6 * 60 * 60 * 1000);
-    const nearActivities = (sosyal?.aktiviteler || []).filter(act => {
+    const nearActivities = (Array.isArray(sosyal?.aktiviteler) ? sosyal.aktiviteler : []).filter(act => {
       if (act.tarih !== todayIso || act.durum === 'tamamlandi') return false;
       if (!act.saat) return true; // Saati yoksa bugün uyarısı ver
       const [h, m] = act.saat.split(':');
@@ -321,7 +321,7 @@ const Home = () => {
     // 6. Sosyal Boşluk (5 gündür aktivite yoksa)
     const fiveDaysAgo = new Date();
     fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-    const recentActivities = (sosyal?.aktiviteler || []).filter(act => new Date(act.tarih) >= fiveDaysAgo);
+    const recentActivities = (Array.isArray(sosyal?.aktiviteler) ? sosyal.aktiviteler : []).filter(act => new Date(act.tarih) >= fiveDaysAgo);
     if (recentActivities.length === 0) {
       alerts.push({
         id: 'sosyal_gap',

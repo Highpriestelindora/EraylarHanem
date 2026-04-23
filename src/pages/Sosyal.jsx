@@ -842,7 +842,7 @@ function CompleteActivityModal({ activity, onClose }) {
 }
 
 function AddActivityModal({ onClose, initialDate, prefilledData }) {
-  const { addSocialActivity, sosial } = useStore();
+  const { addSocialActivity, sosyal: rawSosyalModal } = useStore();
   const [baslik, setBaslik] = useState(prefilledData?.baslik || '');
   const [date, setDate] = useState(initialDate || '');
   const [saat, setSaat] = useState(prefilledData?.saat || '20:00');
@@ -859,7 +859,7 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
     }
 
     // --- CONFLICT CHECK ---
-    const existingActivities = sosial.aktiviteler || [];
+    const existingActivities = Array.isArray(rawSosyalModal?.aktiviteler) ? rawSosyalModal.aktiviteler : [];
     const hasConflict = existingActivities.some(a => 
       !a.tamamlandi && 
       a.tarih === date && 
