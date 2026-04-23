@@ -383,19 +383,21 @@ export default function MenuTab() {
                           <div className="ri-btns">
                             <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>Ana</button>
                             <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>Yan</button>
+                            {missing.length > 0 && (
+                              <button 
+                                className="add-missing-mini-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  useStore.getState().addMissingToShopping(missing);
+                                  toast.success('Eksikler listeye eklendi! 🛒');
+                                }}
+                                title="Eksikleri Listeye Ekle"
+                              >
+                                🛒
+                              </button>
+                            )}
                           </div>
                         </div>
-                        {missing.length > 0 && (
-                          <button 
-                            className="add-missing-btn"
-                            onClick={() => {
-                              useStore.getState().addMissingToShopping(missing);
-                              toast.success('Eksikler listeye eklendi! 🛒');
-                            }}
-                          >
-                            🛒 Eksikleri Listeye Ekle
-                          </button>
-                        )}
                       </div>
                     );
                   })}
@@ -498,7 +500,9 @@ export default function MenuTab() {
         .ri-emoji { font-size: 20px; }
         .ri-name { font-size: 13px; font-weight: 700; }
         .ri-btns { display: flex; gap: 4px; }
-        .ri-btns button { border: 1px solid var(--brd); background: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        .ri-btns button { border: 1px solid var(--brd); background: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+        .add-missing-mini-btn { background: #fffbeb !important; border-color: #fcd34d !important; color: #92400e !important; width: 30px; height: 30px; padding: 0 !important; display: flex !important; align-items: center; justify-content: center; font-size: 14px !important; }
+        .add-missing-mini-btn:active { transform: scale(0.9); }
 
         .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 16px 5px; border-radius: 20px; background: #f8fafc; border: 1px solid var(--brd); color: #64748b; font-size: 11px; font-weight: 800; }
         .smart-pill.complete { background: #f0fdf4; border-color: #10b981; color: #10b981; }
