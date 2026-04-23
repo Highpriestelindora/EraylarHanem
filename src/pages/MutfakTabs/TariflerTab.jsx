@@ -179,21 +179,6 @@ const RecipesTab = () => {
         <button className="btn-dice" onClick={openAddModal} style={{ background: 'var(--card)', color: 'var(--mutfak)', border: '1px solid var(--brd)', flexShrink: 0, padding: '12px', width: 'auto' }}>
           <Plus size={20} />
         </button>
-        <button 
-          className="btn-dice" 
-          onClick={async () => {
-            const count = await useStore.getState().syncRecipesFromData();
-            if (count > 0) {
-              toast.success(`${count} yeni tarif buluta yüklendi! ☁️`);
-            } else {
-              toast.success('Bulut senkronizasyonu güncel! ✅');
-            }
-          }} 
-          style={{ background: 'var(--card)', color: '#3b82f6', border: '1px solid var(--brd)', flexShrink: 0, padding: '12px', width: 'auto' }}
-          title="Bulutla Senkronize Et"
-        >
-          <Save size={20} />
-        </button>
       </div>
 
       <div className="category-carousel-wrapper">

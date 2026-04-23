@@ -54,18 +54,6 @@ export default function Mutfak() {
                       <strong>{criticalCount} Ürün Azaldı!</strong>
                       <ChevronRight size={14} />
                     </div>
-                    <button 
-                      className="critical-reset-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if(window.confirm('Tüm ürünlerin kritik stoklarını 0 yapmak istiyor musunuz?')) {
-                          useStore.getState().resetAllCriticalStocks();
-                        }
-                      }}
-                      title="Uyarıları Temizle"
-                    >
-                      🧹 Temizle
-                    </button>
                   </div>
                 ) : null;
               })()}

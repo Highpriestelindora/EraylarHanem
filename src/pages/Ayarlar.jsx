@@ -147,21 +147,6 @@ export default function Ayarlar() {
         </div>
       </div>
 
-      <div className="settings-group">
-        <h4>Veri Bakımı</h4>
-        <div className="setting-item clickable" onClick={() => {
-          if(window.confirm('Bütün ürünlerin kritik stok sınırlarını 0 yapmak istediğinize emin misiniz?')) {
-            useStore.getState().resetAllCriticalStocks();
-          }
-        }}>
-          <div className="setting-icon" style={{ background: '#fff1f2', color: '#f43f5e' }}><Trash2 size={20} /></div>
-          <div className="setting-content">
-            <span className="setting-title">Mutfak Stoklarını Sıfırla</span>
-            <span className="setting-desc">Tüm ürünlerin kritik eşiğini 0 yapar</span>
-          </div>
-          <ChevronRight size={18} className="chevron" />
-        </div>
-      </div>
 
       <div className="settings-group">
         <h4>Sistem Geçmişi</h4>
