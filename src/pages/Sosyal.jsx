@@ -284,7 +284,7 @@ function HaftaTab({ sosyal, onAdd }) {
       }, {});
       const frequent = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
       frequent.forEach(f => {
-        const original = sosyal.aktiviteler.find(oa => oa.baslik === f);
+        const original = (sosyal.aktiviteler || []).find(oa => oa.baslik === f);
         pool.push({ baslik: f, emoji: original?.emoji || '🎭', tur: original?.tur || 'disari', type: 'gecmis', weight: counts[f] });
       });
 
@@ -311,7 +311,7 @@ function HaftaTab({ sosyal, onAdd }) {
     } else {
       setRecommendedIdea(null);
     }
-  }, [currentMonth, currentYear, sosyal.aktiviteler, sosyal.havuz, sosyal.rutinler, refreshTrigger]);
+  }, [currentMonth, currentYear, sosyal.aktiviteler, sosyal.havuz, sosyal.rutinler, refreshTrigger, allEvents, vehicle?.muayene?.next]);
 
   const refreshRecommendation = () => {
     setRefreshTrigger(prev => prev + 1);

@@ -885,7 +885,8 @@ const useStore = create(
         if (idx === -1) return;
 
         const item = items[idx];
-        const newCr = Math.max(0, item.cr - qty);
+        const deductQty = qty === undefined ? item.cr : qty;
+        const newCr = Math.max(0, item.cr - deductQty);
         items[idx] = { ...item, cr: newCr };
 
         // Coordination: Auto-add to shopping if it hits zero or goes low
