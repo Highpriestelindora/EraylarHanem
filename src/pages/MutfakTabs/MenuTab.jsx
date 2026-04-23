@@ -381,9 +381,7 @@ export default function MenuTab() {
                             </div>
                           </div>
                           <div className="ri-btns">
-                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>Ana</button>
-                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>Yan</button>
-                            {missing.length > 0 && (
+                            {missing.length > 0 ? (
                               <button 
                                 className="add-missing-mini-btn"
                                 onClick={(e) => {
@@ -395,7 +393,11 @@ export default function MenuTab() {
                               >
                                 🛒
                               </button>
+                            ) : (
+                              <div style={{ width: '30px' }}></div>
                             )}
+                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>Ana Menü</button>
+                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>Yan Menü</button>
                           </div>
                         </div>
                       </div>
@@ -495,13 +497,15 @@ export default function MenuTab() {
         .p-cat-btn .p-cat-label { font-size: 10px; font-weight: 800; white-space: nowrap; }
 
         .recipe-scroll { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
-        .recipe-item-mini { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 14px; }
-        .ri-info { display: flex; align-items: center; gap: 10px; }
-        .ri-emoji { font-size: 20px; }
-        .ri-name { font-size: 13px; font-weight: 700; }
-        .ri-btns { display: flex; gap: 4px; }
-        .ri-btns button { border: 1px solid var(--brd); background: white; padding: 5px 10px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
-        .add-missing-mini-btn { background: #fffbeb !important; border-color: #fcd34d !important; color: #92400e !important; width: 30px; height: 30px; padding: 0 !important; display: flex !important; align-items: center; justify-content: center; font-size: 14px !important; }
+        .recipe-item-mini { padding: 10px; border-radius: 14px; margin-bottom: 4px; }
+        .ri-content { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+        .ri-info { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
+        .ri-emoji { font-size: 20px; flex-shrink: 0; }
+        .ri-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ri-btns { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+        .ri-btns button { border: 1px solid var(--brd); background: white; padding: 6px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .ri-btns button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .add-missing-mini-btn { background: #fffbeb !important; border-color: #fcd34d !important; color: #92400e !important; width: 30px; height: 30px; padding: 0 !important; display: flex !important; align-items: center; justify-content: center; font-size: 14px !important; border-radius: 50% !important; }
         .add-missing-mini-btn:active { transform: scale(0.9); }
 
         .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 16px 5px; border-radius: 20px; background: #f8fafc; border: 1px solid var(--brd); color: #64748b; font-size: 11px; font-weight: 800; }
