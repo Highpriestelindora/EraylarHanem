@@ -17,12 +17,13 @@ const formatMoney = (val) =>
 export default function Finans() {
   const [activeTab, setActiveTab] = useState('bakiye');
   const navigate = useNavigate();
-  const { finans, kasa, addExpense, updateKasa, transferKasa, payDebt, updateDebt, updateCard, payLoanInstallment } = useStore();
+  const { finans, kasa, addExpense, deleteExpense, updateKasa, transferKasa, payDebt, updateDebt, updateCard, payLoanInstallment } = useStore();
   
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const [showUpdateKasa, setShowUpdateKasa] = useState(null);
   const [payingDebt, setPayingDebt] = useState(null);
+  const [deletingExpense, setDeletingExpense] = useState(null);
 
   const bakiyeler = kasa?.bakiyeler || { gorkem: 0, esra: 0, ortak: 0 };
   const harcamalar = finans?.harcamalar || [];
