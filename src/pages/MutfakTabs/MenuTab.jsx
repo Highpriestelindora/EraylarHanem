@@ -389,15 +389,22 @@ export default function MenuTab() {
                                   useStore.getState().addMissingToShopping(missing);
                                   toast.success('Eksikler listeye eklendi! 🛒');
                                 }}
-                                title="Eksikleri Listeye Ekle"
                               >
-                                🛒
+                                <img src="https://img.icons8.com/color/48/shopping-cart.png" alt="cart" style={{ width: '18px' }} />
                               </button>
                             ) : (
-                              <div style={{ width: '30px' }}></div>
+                              <div style={{ width: '36px' }}></div>
                             )}
-                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>Ana Menü</button>
-                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>Yan Menü</button>
+                            <button className="recipe-select-btn" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>
+                              <span className="plus">+</span>
+                              <span className="label">Ana</span>
+                              <span className="sub">menü</span>
+                            </button>
+                            <button className="recipe-select-btn" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>
+                              <span className="plus">+</span>
+                              <span className="label">Yan</span>
+                              <span className="sub">menü</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -502,11 +509,40 @@ export default function MenuTab() {
         .ri-info { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
         .ri-emoji { font-size: 20px; flex-shrink: 0; }
         .ri-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .ri-btns { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
-        .ri-btns button { border: 1px solid var(--brd); background: white; padding: 6px 10px; border-radius: 8px; font-size: 10px; font-weight: 800; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-        .ri-btns button:hover { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .add-missing-mini-btn { background: #fffbeb !important; border-color: #fcd34d !important; color: #92400e !important; width: 30px; height: 30px; padding: 0 !important; display: flex !important; align-items: center; justify-content: center; font-size: 14px !important; border-radius: 50% !important; }
-        .add-missing-mini-btn:active { transform: scale(0.9); }
+        .ri-btns { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+        
+        .add-missing-mini-btn { 
+          background: #fffbeb !important; 
+          border: 1px solid #fcd34d !important; 
+          width: 36px; height: 36px; 
+          display: flex !important; align-items: center; justify-content: center; 
+          border-radius: 12px !important; 
+          cursor: pointer;
+        }
+
+        .recipe-select-btn {
+          background: white;
+          border: 1px solid var(--brd);
+          border-radius: 16px;
+          width: 50px;
+          height: 56px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+          padding: 4px 0;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+        .recipe-select-btn:active { transform: scale(0.94); }
+        .recipe-select-btn span { line-height: 1.1; }
+        .recipe-select-btn .plus { font-size: 14px; font-weight: 400; color: #2E1065; }
+        .recipe-select-btn .label { font-size: 13px; font-weight: 800; color: #2E1065; }
+        .recipe-select-btn .sub { font-size: 10px; font-weight: 700; color: #2E1065; font-style: italic; opacity: 0.8; }
+
+        .ri-text { display: flex; flex-direction: column; gap: 2px; }
+        .ri-missing { font-size: 11px; font-weight: 700; color: #ef4444; }
 
         .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 16px 5px; border-radius: 20px; background: #f8fafc; border: 1px solid var(--brd); color: #64748b; font-size: 11px; font-weight: 800; }
         .smart-pill.complete { background: #f0fdf4; border-color: #10b981; color: #10b981; }
