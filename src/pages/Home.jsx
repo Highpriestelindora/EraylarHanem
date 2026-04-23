@@ -211,7 +211,6 @@ const Home = () => {
   const handleRefreshAlerts = () => {
     setDismissedToday([]);
     localStorage.removeItem(`dismissed_alerts_${todayIso}`);
-    setMinimizedAlerts([]);
     toast.success('Tüm bildirimler yenilendi! ✨');
   };
 
