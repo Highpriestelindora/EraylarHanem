@@ -30,7 +30,6 @@ export default function Mutfak() {
     { id: 'stok', label: 'Stok', icon: Refrigerator, emoji: '🧊' },
     { id: 'ekmek', label: 'Ekmek', icon: Wheat, emoji: '🥖' },
     { id: 'su', label: 'Su', icon: Droplets, emoji: '💧' },
-    { id: 'tarifler', label: 'Tarifler', icon: BookOpen, emoji: '📖' },
     { id: 'alisveris', label: 'Alışveriş', icon: ShoppingCart, emoji: '🛒' }
   ];
 
@@ -61,7 +60,10 @@ export default function Mutfak() {
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+            <button className={`icon-btn ${activeTab === 'tarifler' ? 'active' : ''}`} onClick={() => setActiveTab('tarifler')} title="Tarifler Kitabı" style={{ background: activeTab === 'tarifler' ? 'white' : 'rgba(255,255,255,0.2)', color: activeTab === 'tarifler' ? 'var(--mutfak)' : 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
+              <BookOpen size={20} />
+            </button>
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
               <ArrowLeft size={20} />
             </button>
           </div>
@@ -73,9 +75,10 @@ export default function Mutfak() {
               key={tab.id}
               className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
+              style={{ flex: 1 }}
             >
               <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
-              <span>{tab.label}</span>
+              <span style={{ fontSize: '10px' }}>{tab.label}</span>
               {activeTab === tab.id && <div className="tab-dot" />}
             </button>
           ))}
