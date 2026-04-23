@@ -43,10 +43,10 @@ export default function Mutfak() {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h1>Eraylar Mutfak</h1>
               {mutfak && (() => {
-                const shoppingListNames = (mutfak.alisveris || []).map(i => i.n.toLowerCase());
+                const shoppingListNames = (mutfak.alisveris || []).map(i => i.n?.toLowerCase() || '');
                 const criticalCount = ['buzdolabi', 'kiler', 'dondurucu'].reduce((acc, loc) => 
                   acc + (mutfak[loc] || []).filter(i => 
-                    i.mn > 0 && i.cr <= i.mn && !shoppingListNames.includes(i.n.toLowerCase())
+                    i.mn > 0 && i.cr <= i.mn && !shoppingListNames.includes(i.n?.toLowerCase() || '')
                   ).length, 0);
                 return criticalCount > 0 ? (
                   <div className="critical-container" onClick={() => setActiveTab('alisveris')}>

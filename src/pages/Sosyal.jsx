@@ -1256,8 +1256,8 @@ function HavuzTab({ sosyal, onAdd, onAddRutin }) {
         <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>🎬 İzlenen Filmler</h3>
       </div>
       <div className="movie-list" style={{ padding: '0 20px' }}>
-        {(Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi && a.baslik.toLowerCase().includes('film')).length > 0 ? (
-          (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi && a.baslik.toLowerCase().includes('film')).map(m => (
+        {(Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi && a.baslik?.toLowerCase().includes('film')).length > 0 ? (
+          (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi && a.baslik?.toLowerCase().includes('film')).map(m => (
             <div key={m.id} className="tl-content glass" style={{ marginBottom: '8px', padding: '12px' }}>
                <div style={{ fontSize: '20px' }}>🍿</div>
                <div style={{ flex: 1 }}>
@@ -1440,7 +1440,7 @@ function PlanIdeaModal({ idea, onClose, onConfirm }) {
               type="text" 
               value={formData.mekan} 
               onChange={e => setFormData({...formData, mekan: e.target.value})} 
-              placeholder={idea.baslik.toLowerCase().includes('film') ? 'Film adı ne?' : 'Mekan neresi?'} 
+              placeholder={idea.baslik?.toLowerCase().includes('film') ? 'Film adı ne?' : 'Mekan neresi?'} 
             />
           </div>
 

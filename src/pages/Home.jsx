@@ -219,14 +219,14 @@ const Home = () => {
     const alerts = [];
 
     // 1. Mutfak Kritik Stok (Özet Alert)
-    const shoppingListNames = (Array.isArray(mutfak?.alisveris) ? mutfak.alisveris : []).map(i => i.n.toLowerCase());
+    const shoppingListNames = (Array.isArray(mutfak?.alisveris) ? mutfak.alisveris : []).map(i => i.n?.toLowerCase() || '');
     const stockCategories = ['buzdolabi', 'kiler', 'dondurucu'];
     const lowStockItems = [];
 
     stockCategories.forEach(cat => {
       const items = mutfak?.[cat] || [];
       items.forEach(item => {
-        if (item.mn > 0 && item.cr <= item.mn && !shoppingListNames.includes(item.n.toLowerCase())) {
+        if (item.mn > 0 && item.cr <= item.mn && !shoppingListNames.includes(item.n?.toLowerCase() || '')) {
           lowStockItems.push(item.n);
         }
       });
@@ -264,7 +264,7 @@ const Home = () => {
         if (recipe && recipe.ig) {
           const missing = recipe.ig.filter(igLine => {
             const ingName = igLine.split(':')[0].trim().toLowerCase();
-            const stockItem = allStockItems.find(s => s.n.toLowerCase() === ingName);
+            const stockItem = allStockItems.find(s => (s.n?.toLowerCase() || '') === ingName);
             return !stockItem || stockItem.cr <= 0;
           });
           
