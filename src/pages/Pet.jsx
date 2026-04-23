@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import ActionSheet from '../components/ActionSheet';
 import ConfirmModal from '../components/ConfirmModal';
 import './Pet.css';
 
@@ -231,66 +232,85 @@ export default function Pet() {
         </div>
       )}
 
-      {showAddLog && <AddPetLogModal petId={activePet} onClose={() => setShowAddLog(false)} />}
-      {showAddVaccine && <AddVaccineModal petId={activePet} onClose={() => setShowAddVaccine(false)} />}
-      {showAddWeight && <AddWeightModal petId={activePet} onClose={() => setShowAddWeight(false)} />}
-      {showAddExpense && <AddPetExpenseModal petId={activePet} onClose={() => setShowAddExpense(false)} />}
+      <ActionSheet
+        isOpen={showAddLog}
+        onClose={() => setShowAddLog(false)}
+        title="📝 Günlüğe Ekle"
+      >
+        <AddPetLogContent petId={activePet} onClose={() => setShowAddLog(false)} />
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={showAddVaccine}
+        onClose={() => setShowAddVaccine(false)}
+        title="💉 Aşı Yönetim Merkezi"
+      >
+        <ManageVaccineContent petId={activePet} onClose={() => setShowAddVaccine(false)} />
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={showAddWeight}
+        onClose={() => setShowAddWeight(false)}
+        title="⚖️ Kilo Ölçümü"
+      >
+        <AddWeightContent petId={activePet} onClose={() => setShowAddWeight(false)} />
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={showAddExpense}
+        onClose={() => setShowAddExpense(false)}
+        title={`💸 ${meta[activePet]?.name} Harcaması`}
+      >
+        <AddPetExpenseContent petId={activePet} onClose={() => setShowAddExpense(false)} />
+      </ActionSheet>
     </AnimatedPage>
   );
 }
 
-function AddPetExpenseModal({ petId, onClose }) {
-  const { addExpense, pet, meta } = useStore();
+function AddPetExpenseContent({ petId, onClose }) {
+  const { addExpense, pet } = useStore();
   const [formData, setFormData] = useState({ title: '', amount: '', payer: 'ortak' });
   const petName = pet.meta[petId].name;
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.title || !formData.amount) return;
-    
     addExpense({
       title: `🐾 ${petName}: ${formData.title}`,
       amount: Number(formData.amount),
       category: 'pet',
       payer: formData.payer
     });
-    
     onClose();
     toast.success('Harcama Finans\'a eklendi! 💸');
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <header className="modal-header">
-          <h3>💸 {petName} Harcaması</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label>Harcama Başlığı</label>
-            <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="ör: Mama, Kum, Oyuncak..." required autoFocus />
-          </div>
-          <div className="form-group">
-            <label>Tutar (₺)</label>
-            <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0" required />
-          </div>
-          <div className="form-group">
-            <label>Kim Ödedi?</label>
-            <div className="payer-select">
-              <button type="button" className={formData.payer === 'gorkem' ? 'active' : ''} onClick={() => setFormData({...formData, payer: 'gorkem'})}>Görkem</button>
-              <button type="button" className={formData.payer === 'esra' ? 'active' : ''} onClick={() => setFormData({...formData, payer: 'esra'})}>Esra</button>
-              <button type="button" className={formData.payer === 'ortak' ? 'active' : ''} onClick={() => setFormData({...formData, payer: 'ortak'})}>Ortak</button>
-            </div>
-          </div>
-          <button type="submit" className="submit-btn pet-header-grad">Harcamayı Kaydet</button>
-        </form>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Harcama Başlığı</label>
+        <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="ör: Mama, Kum, Oyuncak..." required autoFocus style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
       </div>
-    </div>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tutar (₺)</label>
+        <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0" required style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} inputMode="decimal" />
+      </div>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Kim Ödedi?</label>
+        <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          {['gorkem', 'esra', 'ortak'].map(p => (
+            <button key={p} type="button" className={formData.payer === p ? 'active' : ''} onClick={() => setFormData({...formData, payer: p})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: formData.payer === p ? 'var(--pet-header-grad)' : 'white', color: formData.payer === p ? 'white' : 'inherit', fontWeight: 'bold' }}>
+              {p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--pet-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(217, 119, 6, 0.2)' }}>Harcamayı Kaydet</button>
+    </form>
   );
 }
 
-function AddWeightModal({ petId, onClose }) {
+function AddWeightContent({ petId, onClose }) {
   const { addPetWeight } = useStore();
   const [formData, setFormData] = useState({ w: '', dt: new Date().toLocaleDateString('tr-TR') });
 
@@ -303,33 +323,24 @@ function AddWeightModal({ petId, onClose }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <header className="modal-header">
-          <h3>⚖️ Kilo Ölçümü</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label>Ağırlık (kg)</label>
-            <input type="number" step="0.1" value={formData.w} onChange={e => setFormData({...formData, w: e.target.value})} placeholder="ör: 10.5" required autoFocus />
-          </div>
-          <div className="form-group">
-            <label>Tarih</label>
-            <input type="text" value={formData.dt} onChange={e => setFormData({...formData, dt: e.target.value})} placeholder="DD.MM.YYYY" required />
-          </div>
-          <button type="submit" className="submit-btn pet-header-grad">Kaydet</button>
-        </form>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Ağırlık (kg)</label>
+        <input type="number" step="0.1" value={formData.w} onChange={e => setFormData({...formData, w: e.target.value})} placeholder="ör: 10.5" required autoFocus style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} inputMode="decimal" />
       </div>
-    </div>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tarih</label>
+        <input type="text" value={formData.dt} onChange={e => setFormData({...formData, dt: e.target.value})} placeholder="DD.MM.YYYY" required style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+      </div>
+      <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--pet-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px' }}>Kaydet</button>
+    </form>
   );
 }
 
-function ManageVaccineModal({ petId, onClose }) {
+function ManageVaccineContent({ petId, onClose }) {
   const { pet, addPetVaccine, deletePetVaccine } = useStore();
   const [formData, setFormData] = useState({ n: '', last: new Date().toLocaleDateString('tr-TR'), ev: 60 });
   const petVaccines = pet.vaccines[petId] || [];
-
   const [deletingVaccine, setDeletingVaccine] = useState(null);
 
   const handleSubmit = (e) => {
@@ -340,97 +351,69 @@ function ManageVaccineModal({ petId, onClose }) {
     toast.success('Aşı takvime eklendi! 💉');
   };
 
-  const handleDelete = (name) => {
-    setDeletingVaccine(name);
-  };
-
-  const confirmDelete = () => {
-    if (deletingVaccine) {
-      deletePetVaccine(petId, deletingVaccine);
-      toast.success(`${deletingVaccine} aşısı silindi.`);
-      setDeletingVaccine(null);
-    }
-  };
-
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()} style={{ maxWidth: '450px' }}>
-        <header className="modal-header">
-          <h3>💉 Aşı Yönetim Merkezi</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-
-        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '10px' }}>
-          
-          {/* Mevcut Aşılar Listesi */}
-          <div className="current-vaccines-list" style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '5px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 800, opacity: 0.5, marginBottom: '10px', display: 'block' }}>MEVCUT AŞI TAKVİMİ</label>
-            {petVaccines.length === 0 ? (
-              <p style={{ fontSize: '12px', opacity: 0.5, textAlign: 'center', padding: '20px' }}>Henüz kayıtlı aşı yok.</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {petVaccines.map((v, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 15px', background: 'rgba(255,255,255,0.5)', borderRadius: '12px', border: '1px solid var(--brd)' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 800 }}>{v.n}</span>
-                      <small style={{ fontSize: '10px', opacity: 0.6 }}>Son: {v.last}</small>
-                    </div>
-                    <button 
-                      onClick={() => handleDelete(v.n)}
-                      style={{ background: '#fef2f2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer' }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="current-vaccines-list">
+        <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, marginBottom: '12px', display: 'block', letterSpacing: '1px' }}>MEVCUT AŞILAR</label>
+        {petVaccines.length === 0 ? (
+          <p style={{ fontSize: '13px', opacity: 0.5, textAlign: 'center', padding: '20px' }}>Henüz kayıtlı aşı yok.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {petVaccines.map((v, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--bg)', borderRadius: '16px', border: '1px solid var(--brd)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 800 }}>{v.n}</span>
+                  <small style={{ fontSize: '11px', opacity: 0.6 }}>Son: {v.last}</small>
+                </div>
+                <button onClick={() => setDeletingVaccine(v.n)} style={{ background: '#fef2f2', color: '#ef4444', border: 'none', padding: '8px', borderRadius: '10px', cursor: 'pointer' }}>
+                  <Trash2 size={16} />
+                </button>
               </div>
-            )}
+            ))}
           </div>
-
-          <div style={{ height: '1px', background: 'var(--brd)', opacity: 0.5 }} />
-
-          {/* Yeni Aşı Ekleme Formu */}
-          <form onSubmit={handleSubmit} className="modal-form">
-            <label style={{ fontSize: '11px', fontWeight: 800, opacity: 0.5, marginBottom: '10px', display: 'block' }}>YENİ AŞI EKLE</label>
-            <div className="form-group">
-              <label>Aşı Adı</label>
-              <input type="text" value={formData.n} onChange={e => setFormData({...formData, n: e.target.value})} placeholder="ör: Karma, Kuduz..." required />
-            </div>
-            <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>Son Tarih</label>
-                <input type="text" value={formData.last} onChange={e => setFormData({...formData, last: e.target.value})} placeholder="DD.MM.YYYY" required />
-              </div>
-              <div className="form-group" style={{ flex: 1 }}>
-                <label>Periyot (Gün)</label>
-                <input type="number" value={formData.ev} onChange={e => setFormData({...formData, ev: Number(e.target.value)})} required />
-              </div>
-            </div>
-            <button type="submit" className="submit-btn pet-header-grad" style={{ width: '100%', marginTop: '10px' }}>Takvime Ekle</button>
-          </form>
-        </div>
-
-        {deletingVaccine && (
-          <ConfirmModal 
-            title="Aşıyı Sil"
-            message={`${deletingVaccine} aşısını takvimden kaldırmak istediğine emin misin?`}
-            onConfirm={confirmDelete}
-            onCancel={() => setDeletingVaccine(null)}
-          />
         )}
       </div>
+
+      <div style={{ height: '1px', background: 'var(--brd)', opacity: 0.5 }} />
+
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px' }}>YENİ AŞI EKLE</label>
+        <div className="form-group">
+          <label style={{ fontSize: '13px', fontWeight: 800, marginBottom: '6px', display: 'block' }}>Aşı Adı</label>
+          <input type="text" value={formData.n} onChange={e => setFormData({...formData, n: e.target.value})} placeholder="ör: Karma, Kuduz..." required style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)' }} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: 800, marginBottom: '6px', display: 'block' }}>Son Tarih</label>
+            <input type="text" value={formData.last} onChange={e => setFormData({...formData, last: e.target.value})} placeholder="DD.MM.YYYY" required style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)' }} />
+          </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: 800, marginBottom: '6px', display: 'block' }}>Periyot (Gün)</label>
+            <input type="number" value={formData.ev} onChange={e => setFormData({...formData, ev: Number(e.target.value)})} required style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)' }} />
+          </div>
+        </div>
+        <button type="submit" className="submit-btn" style={{ width: '100%', padding: '16px', borderRadius: '18px', background: 'var(--pet-header-grad)', color: 'white', border: 'none', fontWeight: '900', marginTop: '8px' }}>Takvime Ekle</button>
+      </form>
+
+      {deletingVaccine && (
+        <ConfirmModal 
+          title="Aşıyı Sil"
+          message={`${deletingVaccine} aşısını takvimden kaldırmak istediğine emin misin?`}
+          onConfirm={() => { deletePetVaccine(petId, deletingVaccine); setDeletingVaccine(null); toast.success('Aşı silindi'); }}
+          onCancel={() => setDeletingVaccine(null)}
+        />
+      )}
     </div>
   );
 }
 
-function AddPetLogModal({ petId, onClose }) {
+function AddPetLogContent({ petId, onClose }) {
   const { pet, setModuleData } = useStore();
   const [note, setNote] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!note) return;
-    
     const newLog = {
       id: Date.now(),
       pet: petId,
@@ -438,37 +421,25 @@ function AddPetLogModal({ petId, onClose }) {
       dt: new Date().toLocaleDateString('tr-TR'),
       type: 'manual'
     };
-
-    setModuleData('pet', {
-      ...pet,
-      history: [newLog, ...(pet.history || [])]
-    });
-    
+    setModuleData('pet', { ...pet, history: [newLog, ...(pet.history || [])] });
     onClose();
     toast.success('Günlük kaydedildi! 📝');
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <header className="modal-header">
-          <h3>📝 Günlüğe Ekle</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <div className="form-group">
-            <label>Neler Oldu?</label>
-            <textarea 
-              value={note} 
-              onChange={e => setNote(e.target.value)} 
-              placeholder="ör: Veteriner kontrolü yapıldı, vitamin verildi..."
-              rows={3}
-              autoFocus
-            />
-          </div>
-          <button type="submit" className="submit-btn pet-header-grad">Kaydet</button>
-        </form>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: 800, marginBottom: '8px', display: 'block' }}>Neler Oldu?</label>
+        <textarea 
+          value={note} 
+          onChange={e => setNote(e.target.value)} 
+          placeholder="ör: Veteriner kontrolü yapıldı, vitamin verildi..."
+          rows={4}
+          autoFocus
+          style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontFamily: 'inherit', fontSize: '14px', lineHeight: '1.6' }}
+        />
       </div>
-    </div>
+      <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--pet-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px' }}>Kaydet</button>
+    </form>
   );
 }

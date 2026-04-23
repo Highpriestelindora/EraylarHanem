@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TrendingUp, TrendingDown, Clock, PlusCircle, X, ArrowRightLeft } from 'lucide-react';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import ActionSheet from '../components/ActionSheet';
 import toast from 'react-hot-toast';
 import './Kasa.css';
 
@@ -236,85 +237,93 @@ export default function Kasa() {
         )}
       </div>
 
-      {/* Güncelleme Modalı */}
-      {updateModal && (
-        <div className="kasa-modal-overlay" onClick={() => setUpdateModal(null)}>
-          <div className="kasa-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>{kisiler.find(k => k.key === updateModal)?.emoji} {kisiler.find(k => k.key === updateModal)?.label} Bakiyesi</h3>
-              <button className="modal-close" onClick={() => setUpdateModal(null)}><X size={20} /></button>
-            </div>
-            <div className="modal-body">
-              <label className="modal-label">Yeni Bakiye (₺)</label>
-              <input
-                type="number"
-                className="modal-input"
-                value={inputVal}
-                onChange={e => setInputVal(e.target.value)}
-                autoFocus
-              />
-              <label className="modal-label">Not (opsiyonel)</label>
-              <input
-                type="text"
-                className="modal-input"
-                value={inputNot}
-                onChange={e => setInputNot(e.target.value)}
-                placeholder="Maaş, harcama vb."
-              />
-            </div>
-            <div className="modal-footer">
-              <button className="btn-save" onClick={handleUpdateSave}>Kaydet</button>
-            </div>
+      <ActionSheet
+        isOpen={!!updateModal}
+        onClose={() => setUpdateModal(null)}
+        title={`${kisiler.find(k => k.key === updateModal)?.emoji} ${kisiler.find(k => k.key === updateModal)?.label} Bakiyesi`}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Yeni Bakiye (₺)</label>
+            <input
+              type="number"
+              value={inputVal}
+              onChange={e => setInputVal(e.target.value)}
+              autoFocus
+              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '18px', fontWeight: '800' }}
+              inputMode="decimal"
+            />
           </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Not (opsiyonel)</label>
+            <input
+              type="text"
+              value={inputNot}
+              onChange={e => setInputNot(e.target.value)}
+              placeholder="Maaş, harcama vb."
+              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }}
+            />
+          </div>
+          <button 
+            className="confirm-btn" 
+            onClick={handleUpdateSave}
+            style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--txt)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px' }}
+          >
+            Kaydet
+          </button>
         </div>
-      )}
+      </ActionSheet>
 
-      {/* Transfer Modalı */}
-      {transferModal && (
-        <div className="kasa-modal-overlay" onClick={() => setTransferModal(false)}>
-          <div className="kasa-modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Hesaplar Arası Transfer</h3>
-              <button className="modal-close" onClick={() => setTransferModal(false)}><X size={20} /></button>
+      <ActionSheet
+        isOpen={transferModal}
+        onClose={() => setTransferModal(false)}
+        title="💸 Hesaplar Arası Transfer"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Nereden</label>
+              <select value={transferFrom} onChange={e => setTransferFrom(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)' }}>
+                {kisiler.map(k => <option key={k.key} value={k.key}>{k.emoji} {k.label}</option>)}
+              </select>
             </div>
-            <div className="modal-body">
-              <div className="transfer-grid">
-                <div>
-                  <label className="modal-label">Nereden</label>
-                  <select className="modal-input" value={transferFrom} onChange={e => setTransferFrom(e.target.value)}>
-                    {kisiler.map(k => <option key={k.key} value={k.key}>{k.emoji} {k.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="modal-label">Nereye</label>
-                  <select className="modal-input" value={transferTo} onChange={e => setTransferTo(e.target.value)}>
-                    {kisiler.map(k => <option key={k.key} value={k.key}>{k.emoji} {k.label}</option>)}
-                  </select>
-                </div>
-              </div>
-              <label className="modal-label">Miktar (₺)</label>
-              <input
-                type="number"
-                className="modal-input"
-                value={transferAmount}
-                onChange={e => setTransferAmount(e.target.value)}
-                placeholder="0"
-              />
-              <label className="modal-label">Not</label>
-              <input
-                type="text"
-                className="modal-input"
-                value={inputNot}
-                onChange={e => setInputNot(e.target.value)}
-                placeholder="Açıklama"
-              />
-            </div>
-            <div className="modal-footer">
-              <button className="btn-save" onClick={handleTransferSave}>Transferi Yap</button>
+            <div className="form-group">
+              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Nereye</label>
+              <select value={transferTo} onChange={e => setTransferTo(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)' }}>
+                {kisiler.map(k => <option key={k.key} value={k.key}>{k.emoji} {k.label}</option>)}
+              </select>
             </div>
           </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Miktar (₺)</label>
+            <input
+              type="number"
+              value={transferAmount}
+              onChange={e => setTransferAmount(e.target.value)}
+              placeholder="0"
+              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '18px', fontWeight: '800' }}
+              inputMode="decimal"
+            />
+          </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Not</label>
+            <input
+              type="text"
+              value={inputNot}
+              onChange={e => setInputNot(e.target.value)}
+              placeholder="Açıklama"
+              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }}
+            />
+          </div>
+          <button 
+            className="confirm-btn" 
+            onClick={handleTransferSave}
+            style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'linear-gradient(135deg, #2C3E50, #1a252f)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
+          >
+            Transferi Gerçekleştir
+          </button>
         </div>
-      )}
+      </ActionSheet>
     </AnimatedPage>
   );
 }

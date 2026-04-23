@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Clock, User, Stethoscope, Trash2, Plus, X } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
+import ActionSheet from '../../components/ActionSheet';
 
 const AppointmentTab = () => {
   const { saglik, setModuleData, setModalOpen } = useStore();
@@ -71,56 +72,52 @@ const AppointmentTab = () => {
         )}
       </div>
 
-      {modalOpen && (
-        <div className="modal-overlay" onClick={() => setModalOpenLocal(false)}>
-          <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>🩺 Yeni Randevu</h3>
-              <button onClick={() => setModalOpenLocal(false)}><X size={20} /></button>
-            </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Kişi</label>
-                <div className="user-toggle-mini">
-                  <button className={form.kisi === 'Görkem' ? 'active' : ''} onClick={() => setForm({...form, kisi: 'Görkem'})}>Görkem</button>
-                  <button className={form.kisi === 'Esra' ? 'active' : ''} onClick={() => setForm({...form, kisi: 'Esra'})}>Esra</button>
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Doktor / Bölüm</label>
-                <input type="text" value={form.doktor} onChange={e => setForm({...form, doktor: e.target.value})} placeholder="Örn: Diş Hekimi" />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Tarih</label>
-                  <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} lang="tr-TR" />
-                </div>
-                <div className="form-group">
-                  <label>Saat</label>
-                  <input type="time" value={form.saat} onChange={e => setForm({...form, saat: e.target.value})} />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Tekrar Periyodu</label>
-                <select value={form.rekurans} onChange={e => setForm({...form, rekurans: e.target.value})}>
-                  <option value="yok">Tek Seferlik</option>
-                  <option value="Haftalık">Haftalık</option>
-                  <option value="Aylık">Aylık</option>
-                  <option value="6 Aylık">6 Aylık</option>
-                  <option value="Yıllık">Yıllık</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Not</label>
-                <input type="text" value={form.not} onChange={e => setForm({...form, not: e.target.value})} placeholder="Aç karnına vb." />
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-save saglik-header-grad" onClick={handleAdd}>Randevuyu Ekle</button>
+      <ActionSheet
+        isOpen={modalOpen}
+        onClose={() => setModalOpenLocal(false)}
+        title="🩺 Yeni Randevu"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Kişi</label>
+            <div className="user-toggle-mini" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <button className={form.kisi === 'Görkem' ? 'active' : ''} onClick={() => setForm({...form, kisi: 'Görkem'})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: form.kisi === 'Görkem' ? 'var(--saglik-header-grad)' : 'white', color: form.kisi === 'Görkem' ? 'white' : 'inherit', fontWeight: 'bold' }}>Görkem</button>
+              <button className={form.kisi === 'Esra' ? 'active' : ''} onClick={() => setForm({...form, kisi: 'Esra'})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: form.kisi === 'Esra' ? 'var(--saglik-header-grad)' : 'white', color: form.kisi === 'Esra' ? 'white' : 'inherit', fontWeight: 'bold' }}>Esra</button>
             </div>
           </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Doktor / Bölüm</label>
+            <input type="text" value={form.doktor} onChange={e => setForm({...form, doktor: e.target.value})} placeholder="Örn: Diş Hekimi" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tarih</label>
+              <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} lang="tr-TR" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+            </div>
+            <div className="form-group">
+              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Saat</label>
+              <input type="time" value={form.saat} onChange={e => setForm({...form, saat: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+            </div>
+          </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tekrar Periyodu</label>
+            <select value={form.rekurans} onChange={e => setForm({...form, rekurans: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+              <option value="yok">Tek Seferlik</option>
+              <option value="Haftalık">Haftalık</option>
+              <option value="Aylık">Aylık</option>
+              <option value="6 Aylık">6 Aylık</option>
+              <option value="Yıllık">Yıllık</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Not</label>
+            <input type="text" value={form.not} onChange={e => setForm({...form, not: e.target.value})} placeholder="Aç karnına vb." style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+          </div>
+          <button className="confirm-btn" onClick={handleAdd} style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--saglik-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>
+            Randevuyu Ekle
+          </button>
         </div>
-      )}
+      </ActionSheet>
     </div>
   );
 };

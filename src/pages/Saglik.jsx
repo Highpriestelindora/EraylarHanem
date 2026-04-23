@@ -3,6 +3,7 @@ import { Calendar, Pill, Activity, Plus, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import ActionSheet from '../components/ActionSheet';
 import toast from 'react-hot-toast';
 import './Saglik.css';
 
@@ -73,14 +74,18 @@ export default function Saglik() {
         {activeTab === 'mood' && <MoodTab />}
       </div>
 
-      {showAddExpense && (
-        <AddHealthExpenseModal onClose={() => setShowAddExpense(false)} addExpense={addExpense} />
-      )}
+      <ActionSheet
+        isOpen={showAddExpense}
+        onClose={() => setShowAddExpense(false)}
+        title="🏥 Sağlık Harcaması"
+      >
+        <AddHealthExpenseContent onClose={() => setShowAddExpense(false)} addExpense={addExpense} />
+      </ActionSheet>
     </AnimatedPage>
   );
 }
 
-function AddHealthExpenseModal({ onClose, addExpense }) {
+function AddHealthExpenseContent({ onClose, addExpense }) {
   const [form, setForm] = useState({ title: '', amount: '', payer: 'ortak' });
 
   const handleSubmit = (e) => {
@@ -95,29 +100,26 @@ function AddHealthExpenseModal({ onClose, addExpense }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <h3>🏥 Sağlık Harcaması</h3>
-        <form onSubmit={handleSubmit} className="modal-form mt-10">
-          <div className="form-group">
-            <label>Açıklama</label>
-            <input type="text" placeholder="Örn: Eczane, Muayene..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} required autoFocus />
-          </div>
-          <div className="form-group">
-            <label>Tutar (₺)</label>
-            <input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
-          </div>
-          <div className="form-group">
-            <label>Ödeyen</label>
-            <div className="payer-select">
-              <button type="button" className={form.payer === 'gorkem' ? 'active' : ''} onClick={() => setForm({...form, payer: 'gorkem'})}>Görkem</button>
-              <button type="button" className={form.payer === 'esra' ? 'active' : ''} onClick={() => setForm({...form, payer: 'esra'})}>Esra</button>
-              <button type="button" className={form.payer === 'ortak' ? 'active' : ''} onClick={() => setForm({...form, payer: 'ortak'})}>Ortak</button>
-            </div>
-          </div>
-          <button type="submit" className="submit-btn saglik-header-grad">Harcamayı Kaydet</button>
-        </form>
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Açıklama</label>
+        <input type="text" placeholder="Örn: Eczane, Muayene..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} required autoFocus style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
       </div>
-    </div>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tutar (₺)</label>
+        <input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} inputMode="decimal" />
+      </div>
+      <div className="form-group">
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Ödeyen</label>
+        <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          {['gorkem', 'esra', 'ortak'].map(p => (
+            <button key={p} type="button" className={form.payer === p ? 'active' : ''} onClick={() => setForm({...form, payer: p})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: form.payer === p ? 'var(--saglik-header-grad)' : 'white', color: form.payer === p ? 'white' : 'inherit', fontWeight: 'bold' }}>
+              {p.charAt(0).toUpperCase() + p.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+      <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--saglik-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>Harcamayı Kaydet</button>
+    </form>
   );
 }

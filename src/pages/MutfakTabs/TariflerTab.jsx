@@ -4,6 +4,7 @@ import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 import { REYON_ORDER } from '../../constants/data';
 import ConfirmModal from '../../components/ConfirmModal';
+import ActionSheet from '../../components/ActionSheet';
 
 const RecipesTab = () => {
   const { mutfak, getAvailableRecipes, updateRecipe, deleteRecipe, toggleFavorite, addRecipe, addMissingToShopping } = useStore();
@@ -251,168 +252,176 @@ const RecipesTab = () => {
         )}
       </div>
 
-      {/* Detail Modal */}
-      {selectedRecipe && !editingRecipe && (
-        <div className="recipe-modal-overlay" onClick={() => setSelectedRecipe(null)}>
-          <div className="recipe-modal animate-pop" onClick={e => e.stopPropagation()}>
-            <button className="close-btn" onClick={() => setSelectedRecipe(null)}><X size={20} /></button>
-            
-            <div className="modal-header-hero">
-              <div className="modal-header-top">
-                <div className="modal-emoji-circle">{selectedRecipe.e}</div>
+      <ActionSheet
+        isOpen={!!selectedRecipe && !editingRecipe}
+        onClose={() => setSelectedRecipe(null)}
+        title={selectedRecipe?.n || 'Tarif Detayı'}
+        fullHeight
+      >
+        {selectedRecipe && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="modal-header-hero" style={{ padding: '24px', background: 'linear-gradient(135deg, #fdf2f8, #fce7f3)', borderRadius: '24px', position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <div className="modal-emoji-circle" style={{ fontSize: '40px', width: '80px', height: '80px', background: 'white', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.05)' }}>
+                  {selectedRecipe.e}
+                </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="icon-btn-round" onClick={(e) => openEditModal(selectedRecipe, e)}><Edit2 size={16} /></button>
-                  <button className="icon-btn-round danger" onClick={(e) => handleDelete(selectedRecipe.id, e)}><Trash2 size={16} /></button>
+                  <button className="icon-btn-round" onClick={(e) => openEditModal(selectedRecipe, e)} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Edit2 size={16} /></button>
+                  <button className="icon-btn-round danger" onClick={(e) => handleDelete(selectedRecipe.id, e)} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Trash2 size={16} /></button>
                 </div>
               </div>
               
-              <h2>{selectedRecipe.n} {getStatusBadge(selectedRecipe)}</h2>
-              
-              <div className="modal-meta-grid">
-                <div className="meta-pill">
-                  <span>Hazırlık</span>
-                  <strong>{selectedRecipe.t} dk</strong>
+              <h2 style={{ fontSize: '24px', fontWeight: '900', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {selectedRecipe.n} {getStatusBadge(selectedRecipe)}
+              </h2>
+
+              <div className="modal-meta-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+                <div className="meta-pill" style={{ background: 'white', padding: '10px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--txt-light)' }}>SÜRE</span>
+                  <strong style={{ fontSize: '13px', fontWeight: '900', color: 'var(--mutfak)' }}>{selectedRecipe.t} dk</strong>
                 </div>
-                <div className="meta-pill">
-                  <span>Zorluk</span>
-                  <strong>{getDifficulty(selectedRecipe.d)}</strong>
+                <div className="meta-pill" style={{ background: 'white', padding: '10px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--txt-light)' }}>ZORLUK</span>
+                  <strong style={{ fontSize: '13px', fontWeight: '900', color: 'var(--mutfak)' }}>{getDifficulty(selectedRecipe.d)}</strong>
                 </div>
-                <div className="meta-pill" onClick={() => toggleFavorite(selectedRecipe.id)} style={{ cursor: 'pointer' }}>
-                  <span>Favori</span>
-                  <strong>{selectedRecipe.f ? 'Evet ❤️' : 'Hayır 🤍'}</strong>
+                <div className="meta-pill" onClick={() => toggleFavorite(selectedRecipe.id)} style={{ background: 'white', padding: '10px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer' }}>
+                  <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--txt-light)' }}>FAVORİ</span>
+                  <strong style={{ fontSize: '13px', fontWeight: '900', color: 'var(--mutfak)' }}>{selectedRecipe.f ? '❤️' : '🤍'}</strong>
                 </div>
               </div>
-              
+
               {selectedRecipe.missing?.length > 0 && (
-                <div className="missing-box-premium">
-                  <div className="missing-title">
+                <div className="missing-box-premium" style={{ background: '#fee2e2', border: '1.5px dashed #ef4444', padding: '16px', borderRadius: '20px', marginTop: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#b91c1c', fontWeight: '900', fontSize: '13px', marginBottom: '8px' }}>
                     <Info size={16} /> EKSİK MALZEMELER
                   </div>
-                  <div className="missing-list">
+                  <div style={{ fontSize: '12px', color: '#ef4444', fontWeight: '600', lineHeight: '1.4', marginBottom: '12px' }}>
                     {selectedRecipe.missing.join(', ')}
                   </div>
                   <button 
                     className="add-missing-btn"
                     onClick={() => handleAddMissingToShopping(selectedRecipe.missing)}
+                    style={{ width: '100%', background: '#ef4444', color: 'white', border: 'none', padding: '12px', borderRadius: '14px', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}
                   >
-                    <ShoppingCart size={14} /> Eksikleri Alışverişe Ekle
+                    <ShoppingCart size={16} /> Eksikleri Alışverişe Ekle
                   </button>
                 </div>
               )}
             </div>
 
-            <div className="modal-body">
-              <section>
-                <h4>Malzemeler</h4>
-                <ul className="ig-list">
-                  {(selectedRecipe.ig || []).map((igLine, i) => {
-                    const name = igLine.split(':')[0].trim().toLowerCase();
-                    const isMissing = selectedRecipe.missing?.includes(name);
-                    return (
-                      <li key={i} className={`ig-item ${isMissing ? 'missing' : ''}`}>
-                        {isMissing ? '❌' : '✅'} {igLine}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
+            <section>
+              <h4 style={{ fontSize: '16px', fontWeight: '900', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ width: '4px', height: '16px', background: 'var(--mutfak)', borderRadius: '2px' }} />
+                Malzemeler
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {(selectedRecipe.ig || []).map((igLine, i) => {
+                  const name = igLine.split(':')[0].trim().toLowerCase();
+                  const isMissing = selectedRecipe.missing?.includes(name);
+                  return (
+                    <div key={i} style={{ padding: '12px 16px', background: isMissing ? '#fff5f5' : 'var(--bg)', borderRadius: '14px', fontSize: '14px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid', borderColor: isMissing ? '#fecaca' : 'var(--brd)', color: isMissing ? '#ef4444' : 'inherit' }}>
+                      {isMissing ? '❌' : '✅'} {igLine}
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
 
-              <section>
-                <h4>Hazırlanışı</h4>
-                <ol className="st-list">
-                  {(selectedRecipe.st || []).map((st, i) => <li key={i}>{st}</li>)}
-                </ol>
-              </section>
+            <section>
+              <h4 style={{ fontSize: '16px', fontWeight: '900', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ width: '4px', height: '16px', background: 'var(--mutfak)', borderRadius: '2px' }} />
+                Hazırlanışı
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingLeft: '8px' }}>
+                {(selectedRecipe.st || []).map((st, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '12px', fontSize: '14px', lineHeight: '1.6' }}>
+                    <span style={{ minWidth: '24px', height: '24px', borderRadius: '50%', background: 'var(--mutfak-light)', color: 'var(--mutfak)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '900' }}>{i + 1}</span>
+                    <p style={{ margin: 0 }}>{st}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={!!editingRecipe}
+        onClose={() => setEditingItem(null)}
+        title={editingRecipe?.isNew ? '✨ Yeni Tarif' : '✏️ Tarifi Düzenle'}
+        fullHeight
+      >
+        <form onSubmit={handleSaveRecipe} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div className="form-group">
+            <label>Tarif Adı</label>
+            <input name="n" defaultValue={editingRecipe?.item?.n} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '16px' }} />
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label>Kategori</label>
+              <select name="c" defaultValue={editingRecipe?.item?.c || 'kahvalti'} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+                {categories.filter(c => c.id !== 'hepsi').map(c => (
+                  <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Emoji</label>
+              <input name="e" defaultValue={editingRecipe?.item?.e} maxLength={2} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', textAlign: 'center', fontSize: '24px' }} />
             </div>
           </div>
-        </div>
-      )}
 
-      {editingRecipe && (
-        <div className="recipe-modal-overlay" onClick={() => setEditingItem(null)}>
-          <form onSubmit={handleSaveRecipe} className="recipe-modal animate-pop" onClick={e => e.stopPropagation()}>
-            <button type="button" className="close-btn" onClick={() => setEditingItem(null)}><X size={20} /></button>
-            <div className="modal-header" style={{ padding: '24px 24px 10px' }}>
-              <h2>{editingRecipe.isNew ? '✨ Yeni Tarif' : '✏️ Tarifi Düzenle'}</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label>Süre (dk)</label>
+              <input name="t" type="number" defaultValue={editingRecipe?.item?.t || 20} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
             </div>
-            
-            <div className="modal-body" style={{ padding: '10px 24px 24px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div className="form-group">
-                  <label>Tarif Adı</label>
-                  <input name="n" defaultValue={editingRecipe.item.n} required />
-                </div>
-                
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Kategori</label>
-                    <select name="c" defaultValue={editingRecipe.item.c || 'kahvalti'}>
-                      {categories.filter(c => c.id !== 'hepsi' && c.id !== 'neyap').map(c => (
-                        <option key={c.id} value={c.id}>{c.icon} {c.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Emoji</label>
-                    <input name="e" defaultValue={editingRecipe.item.e} maxLength={2} />
-                  </div>
-                </div>
-
-                <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="form-group">
-                    <label>Süre (dk)</label>
-                    <input name="t" type="number" defaultValue={editingRecipe.item.t || 20} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Zorluk (1-5)</label>
-                    <input name="d" type="number" min="1" max="5" defaultValue={editingRecipe.item.d || 1} required />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Malzemeler</label>
-                  <datalist id="stock-names">
-                    {uniqueStockNames.map(n => <option key={n} value={n} />)}
-                  </datalist>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {igFields.map((f, i) => (
-                      <div key={f.id} className="ig-row" style={{ display: 'flex', gap: '6px' }}>
-                        <input className="ig-name" list="stock-names" placeholder="Malzeme adı" defaultValue={f.n} style={{ flex: 2 }} required />
-                        <input className="ig-qty" placeholder="Miktar" defaultValue={f.qt} style={{ flex: 1 }} />
-                        <select className="ig-unit" defaultValue={f.u} style={{ flex: 1 }}>
-                          <option value="adet">adet</option>
-                          <option value="kg">kg</option>
-                          <option value="gr">gram</option>
-                          <option value="lt">litre</option>
-                          <option value="ml">ml</option>
-                          <option value="kaşık">kaşık</option>
-                          <option value="bardak">bardak</option>
-                          <option value="paket">paket</option>
-                          <option value="diş">diş</option>
-                          <option value="tutam">tutam</option>
-                        </select>
-                        <button type="button" onClick={() => removeIgField(f.id)} style={{ padding: '0 8px', background: 'var(--danger-light)', color: 'var(--danger)', border: 'none', borderRadius: '10px' }}>✕</button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={addIgField} style={{ padding: '8px', border: '1px dashed var(--mutfak)', background: 'transparent', color: 'var(--mutfak)', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}>+ Malzeme Ekle</button>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Yapılışı (Her satır bir adım)</label>
-                  <textarea name="st" defaultValue={(editingRecipe.item.st || []).join('\n')} rows={5} required placeholder="1. Adım\n2. Adım" />
-                </div>
-              </div>
+            <div className="form-group">
+              <label>Zorluk (1-5)</label>
+              <input name="d" type="number" min="1" max="5" defaultValue={editingRecipe?.item?.d || 1} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
             </div>
+          </div>
 
-            <div className="modal-footer" style={{ padding: '16px 24px 24px', background: 'var(--bg)', borderTop: '1px solid var(--brd)' }}>
-              <button type="submit" className="submit-btn" style={{ width: '100%', padding: '16px', background: 'var(--mutfak)', color: '#fff', border: 'none', borderRadius: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', justifyContent: 'center', gap: '8px' }}>
-                <Save size={20} /> {editingRecipe.isNew ? 'Tarifi Kaydet' : 'Değişiklikleri Kaydet'}
-              </button>
+          <div className="form-group">
+            <label>Malzemeler</label>
+            <datalist id="stock-names">
+              {uniqueStockNames.map(n => <option key={n} value={n} />)}
+            </datalist>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {igFields.map((f, i) => (
+                <div key={f.id} className="ig-row" style={{ display: 'flex', gap: '8px' }}>
+                  <input className="ig-name" list="stock-names" placeholder="Malzeme" defaultValue={f.n} style={{ flex: 2, padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)' }} required />
+                  <input className="ig-qty" placeholder="Mkt" defaultValue={f.qt} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', textAlign: 'center' }} />
+                  <select className="ig-unit" defaultValue={f.u} style={{ flex: 1.2, padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', background: 'white' }}>
+                    <option value="adet">adet</option>
+                    <option value="kg">kg</option>
+                    <option value="gr">gram</option>
+                    <option value="lt">litre</option>
+                    <option value="ml">ml</option>
+                    <option value="kaşık">kaşık</option>
+                    <option value="bardak">bardak</option>
+                    <option value="paket">paket</option>
+                    <option value="diş">diş</option>
+                    <option value="tutam">tutam</option>
+                  </select>
+                  <button type="button" onClick={() => removeIgField(f.id)} style={{ padding: '0 12px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '12px' }}>✕</button>
+                </div>
+              ))}
+              <button type="button" onClick={addIgField} style={{ padding: '14px', border: '2px dashed var(--mutfak)', background: 'transparent', color: 'var(--mutfak)', borderRadius: '16px', cursor: 'pointer', fontWeight: '900', fontSize: '13px', marginTop: '4px' }}>+ Yeni Malzeme Satırı</button>
             </div>
-          </form>
-        </div>
-      )}
+          </div>
+
+          <div className="form-group">
+            <label>Yapılışı (Her satır bir adım)</label>
+            <textarea name="st" defaultValue={(editingRecipe?.item?.st || []).join('\n')} rows={6} required placeholder="1. Adım..." style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontFamily: 'inherit', fontSize: '14px', lineHeight: '1.6' }} />
+          </div>
+
+          <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', background: 'var(--mutfak)', color: '#fff', border: 'none', borderRadius: '20px', fontWeight: '900', fontSize: '16px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(236, 72, 153, 0.2)', marginBottom: '40px' }}>
+            <Save size={20} /> {editingRecipe?.isNew ? 'Tarifi Kaydet' : 'Değişiklikleri Uygula'}
+          </button>
+        </form>
+      </ActionSheet>
 
       {deletingRecipeId && (
         <ConfirmModal 

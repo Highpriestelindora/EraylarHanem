@@ -321,17 +321,13 @@ const useStore = create(
 
             // Smart Notifications Check
             if (prevState.currentUser && !get().settings.silentMode) {
-              // 1. New Shopping Item
-              if (newData.mutfak?.alisveris?.length > (prevState.mutfak.alisveris?.length || 0)) {
-                const newItem = newData.mutfak.alisveris[0];
-                notificationService.send('🛒 Alışveriş Listesi', `Eşin listeye ${newItem.n} ekledi!`);
-              }
 
-              // 2. New Sohbet Note
+              // 1. New Sohbet Note
               if (newData.mutfak?.sohbet?.length > (prevState.mutfak.sohbet?.length || 0)) {
                 const newNote = newData.mutfak.sohbet[0];
                 if (newNote.w !== prevState.currentUser.name) {
-                  notificationService.send('📝 Yeni Not', `${newNote.w} sana bir not bıraktı: ${newNote.t}`);
+                  const title = newNote.t.startsWith('🛒') ? '🛒 Alışveriş Listesi' : '📝 Yeni Not';
+                  notificationService.send(title, `${newNote.w} sana bir mesaj bıraktı: ${newNote.t}`);
                 }
               }
 

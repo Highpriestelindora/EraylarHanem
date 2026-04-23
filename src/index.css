@@ -159,9 +159,44 @@ body:has(.modal-overlay) .app-content {
   background: var(--card);
   border-radius: 32px;
   padding: 24px;
-  padding-bottom: 30px; /* Base padding */
+  padding-bottom: 30px; 
   position: relative;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Immersive Overlay System - New! */
+.immersive-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 2000000 !important;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.immersive-header {
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border-bottom: 1px solid var(--brd);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.immersive-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Ensure wizards and detailed modals also stay on top */

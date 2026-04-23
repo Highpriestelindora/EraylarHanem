@@ -1,50 +1,9 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, AlertTriangle, Wheat, ShoppingCart } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle, Wheat, ShoppingCart, X } from 'lucide-react';
 import useStore from '../../store/useStore';
+import ActionSheet from '../../components/ActionSheet';
 import toast from 'react-hot-toast';
 
-function BreadShopModal({ onClose, onConfirm }) {
-  const [type, setType] = useState('Somun');
-  const [qty, setQty] = useState(1);
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()} style={{ maxWidth: '350px' }}>
-        <div className="modal-header">
-          <h4>🍞 Ekmek Alışverişi</h4>
-          <button className="close-btn" onClick={onClose}>✕</button>
-        </div>
-        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-          <div className="form-group">
-            <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Ekmek Çeşidi</label>
-            <select 
-              value={type} 
-              onChange={e => setType(e.target.value)}
-              style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', marginTop: '5px' }}
-            >
-              {Object.keys(SHELF_LIFE).map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Kaç Adet?</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
-              <button className="small-btn" onClick={() => setQty(Math.max(1, qty - 1))} style={{ width: '40px', height: '40px', borderRadius: '12px' }}>-</button>
-              <span style={{ fontSize: '20px', fontWeight: 900 }}>{qty}</span>
-              <button className="small-btn" onClick={() => setQty(qty + 1)} style={{ width: '40px', height: '40px', borderRadius: '12px' }}>+</button>
-            </div>
-          </div>
-          <button 
-            className="submit-btn" 
-            onClick={() => onConfirm(type, qty)}
-            style={{ width: '100%', padding: '15px', borderRadius: '15px', background: 'linear-gradient(135deg, #EC4899, #DB2777)', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}
-          >
-            Listeye Ekle
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const SHELF_LIFE = {
   'Somun': 2,
@@ -63,6 +22,8 @@ export default function EkmeklikTab() {
   const { mutfak, updateBreadStock, addMissingToShopping } = useStore();
   const ekmeklik = mutfak.ekmeklik || [];
   const [showShopModal, setShowShopModal] = useState(false);
+  const [shopType, setShopType] = useState('Somun');
+  const [shopQty, setShopQty] = useState(1);
 
   const calculateFreshness = (bread) => {
     const life = SHELF_LIFE[bread.tip] || 3;
@@ -145,27 +106,72 @@ export default function EkmeklikTab() {
         </div>
       </div>
 
-      {showShopModal && (
-        <BreadShopModal 
-          onClose={() => setShowShopModal(false)}
-          onConfirm={(type, qty) => {
-            const state = useStore.getState();
-            let newShopping = [...state.mutfak.alisveris];
-            newShopping.push({
-              id: Date.now(),
-              nm: type + ' Ekmeği',
-              qt: qty + ' adet',
-              mk: 'BİM',
-              dn: false,
-              loc: 'kil',
-              ct: 'Unlu Mamül'
-            });
-            state.setModuleData('mutfak', { ...state.mutfak, alisveris: newShopping });
-            setShowShopModal(false);
-            toast.success(`${qty} adet ${type} listeye eklendi! 🛒`);
-          }}
-        />
-      )}
+      <ActionSheet
+        isOpen={showShopModal}
+        onClose={() => setShowShopModal(false)}
+        title="🍞 Ekmek Alışverişi"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', opacity: 0.8, marginBottom: '8px', display: 'block' }}>Ekmek Çeşidi</label>
+            <select 
+              value={shopType} 
+              onChange={e => setShopType(e.target.value)}
+              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)', fontSize: '16px' }}
+            >
+              {Object.keys(SHELF_LIFE).map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', opacity: 0.8, marginBottom: '8px', display: 'block' }}>Kaç Adet?</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '30px', padding: '10px 0' }}>
+              <button 
+                className="small-btn" 
+                onClick={() => setShopQty(Math.max(1, shopQty - 1))} 
+                style={{ width: '50px', height: '50px', borderRadius: '16px', fontSize: '20px', background: 'var(--bg)', border: '1px solid var(--brd)' }}
+              >
+                -
+              </button>
+              <span style={{ fontSize: '32px', fontWeight: 900 }}>{shopQty}</span>
+              <button 
+                className="small-btn" 
+                onClick={() => setShopQty(shopQty + 1)} 
+                style={{ width: '50px', height: '50px', borderRadius: '16px', fontSize: '20px', background: 'var(--bg)', border: '1px solid var(--brd)' }}
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <button 
+            className="submit-btn" 
+            onClick={() => {
+              const state = useStore.getState();
+              let newShopping = [...state.mutfak.alisveris];
+              newShopping.push({
+                id: Date.now(),
+                nm: shopType + ' Ekmeği',
+                qt: shopQty + ' adet',
+                mk: 'BİM',
+                dn: false,
+                loc: 'kil',
+                ct: 'Unlu Mamül'
+              });
+              state.setModuleData('mutfak', { ...state.mutfak, alisveris: newShopping });
+              setShowShopModal(false);
+              toast.success(`${shopQty} adet ${shopType} listeye eklendi! 🛒`);
+            }}
+            style={{ 
+              width: '100%', padding: '18px', borderRadius: '20px', 
+              background: 'linear-gradient(135deg, #EC4899, #DB2777)', 
+              color: 'white', border: 'none', fontWeight: '900', fontSize: '16px',
+              boxShadow: '0 10px 20px rgba(219, 39, 119, 0.2)',
+              marginTop: '10px'
+            }}
+          >
+            Alışveriş Listesine Ekle
+          </button>
+        </div>
+      </ActionSheet>
 
       <div className="ekmek-grid">
         {ekmeklik.map(bread => {

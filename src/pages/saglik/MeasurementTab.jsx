@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Activity, Trash2, Plus, X, TrendingUp } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
+import ActionSheet from '../../components/ActionSheet';
 
 const MeasurementTab = () => {
   const { saglik, setModuleData } = useStore();
@@ -64,47 +65,43 @@ const MeasurementTab = () => {
         )}
       </div>
 
-      {modalOpen && (
-        <div className="modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Ölçüm Kaydet</h3>
-              <button onClick={() => setModalOpen(false)}><X size={20} /></button>
+      <ActionSheet
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="🌡️ Ölçüm Kaydet"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Kişi</label>
+            <select value={form.kisi} onChange={e => setForm({...form, kisi: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+              <option>Görkem</option>
+              <option>Esra</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tür</label>
+            <select value={form.tur} onChange={e => setForm({...form, tur: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+              <option>Tansiyon</option>
+              <option>Şeker</option>
+              <option>Ateş</option>
+              <option>Kilo</option>
+            </select>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Değer</label>
+              <input type="text" value={form.deger} onChange={e => setForm({...form, deger: e.target.value})} placeholder="Örn: 12/8" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
             </div>
-            <div className="modal-body">
-              <div className="form-group">
-                <label>Kişi</label>
-                <select value={form.kisi} onChange={e => setForm({...form, kisi: e.target.value})}>
-                  <option>Görkem</option>
-                  <option>Esra</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Tür</label>
-                <select value={form.tur} onChange={e => setForm({...form, tur: e.target.value})}>
-                  <option>Tansiyon</option>
-                  <option>Şeker</option>
-                  <option>Ateş</option>
-                  <option>Kilo</option>
-                </select>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Değer</label>
-                  <input type="text" value={form.deger} onChange={e => setForm({...form, deger: e.target.value})} placeholder="Örn: 12/8" />
-                </div>
-                <div className="form-group">
-                  <label>Tarih</label>
-                  <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} />
-                </div>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn-save" onClick={handleAdd}>Kaydet</button>
+            <div className="form-group">
+              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tarih</label>
+              <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
             </div>
           </div>
+          <button className="confirm-btn" onClick={handleAdd} style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--saglik-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>
+            Ölçümü Kaydet
+          </button>
         </div>
-      )}
+      </ActionSheet>
 
     </div>
   );

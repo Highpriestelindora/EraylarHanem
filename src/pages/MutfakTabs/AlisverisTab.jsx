@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, Trash2, CheckCircle2, Circle, Search, CreditCard, AlertTriangle, Wallet, ShoppingCart, BellRing, X } from 'lucide-react';
+import { Plus, Trash2, CheckCircle2, Circle, Search, CreditCard, AlertTriangle, Wallet, ShoppingCart, BellRing, X, ArrowRight } from 'lucide-react';
 import useStore from '../../store/useStore';
+import ActionSheet from '../../components/ActionSheet';
 import toast from 'react-hot-toast';
 
 const AlisverisTab = () => {
@@ -186,105 +187,111 @@ const AlisverisTab = () => {
         </div>
       )}
 
-      {/* Miktar Düzenleme Modalı */}
-      {editQtyItem && (
-        <div className="modal-overlay" onClick={() => setEditQtyItem(null)}>
-          <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>📏 Miktarı Güncelle</h4>
-              <button className="close-btn" onClick={() => setEditQtyItem(null)}>✕</button>
-            </div>
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-              <div className="form-group">
-                <label>Yeni Miktar</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input 
-                    type="number" 
-                    value={editQtyItem.val} 
-                    onChange={(e) => setEditQtyItem({ ...editQtyItem, val: e.target.value })}
-                    style={{ flex: 1 }}
-                  />
-                  <select 
-                    value={editQtyItem.unit} 
-                    onChange={(e) => setEditQtyItem({ ...editQtyItem, unit: e.target.value })}
-                    style={{ flex: 1 }}
-                  >
-                    <option value="adet">adet</option>
-                    <option value="kg">kg</option>
-                    <option value="gr">gram</option>
-                    <option value="paket">paket</option>
-                    <option value="litre">litre</option>
-                    <option value="ml">ml</option>
-                    <option value="kaşık">kaşık</option>
-                    <option value="bardak">bardak</option>
-                  </select>
-                </div>
-              </div>
-              <button className="confirm-btn" onClick={() => updateItemQty(editQtyItem.id, editQtyItem.val, editQtyItem.unit)}>
-                Güncelle
-              </button>
+      <ActionSheet
+        isOpen={!!editQtyItem}
+        onClose={() => setEditQtyItem(null)}
+        title="📏 Miktarı Güncelle"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Yeni Miktar</label>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <input 
+                type="number" 
+                value={editQtyItem?.val || ''} 
+                onChange={(e) => setEditQtyItem({ ...editQtyItem, val: e.target.value })}
+                style={{ flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '16px' }}
+                autoFocus
+              />
+              <select 
+                value={editQtyItem?.unit || 'adet'} 
+                onChange={(e) => setEditQtyItem({ ...editQtyItem, unit: e.target.value })}
+                style={{ flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '16px', background: 'var(--bg)' }}
+              >
+                <option value="adet">adet</option>
+                <option value="kg">kg</option>
+                <option value="gr">gram</option>
+                <option value="paket">paket</option>
+                <option value="litre">litre</option>
+                <option value="ml">ml</option>
+                <option value="kaşık">kaşık</option>
+                <option value="bardak">bardak</option>
+              </select>
             </div>
           </div>
+          <button className="confirm-btn" onClick={() => updateItemQty(editQtyItem.id, editQtyItem.val, editQtyItem.unit)}>
+            Güncelle
+          </button>
         </div>
-      )}
+      </ActionSheet>
 
-      {showCheckout && (
-        <div className="modal-overlay" onClick={() => setShowCheckout(false)}>
-          <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()} style={{ maxWidth: '450px' }}>
-            <div className="modal-header">
-              <h4>🛒 Toplu Ödeme</h4>
-              <button className="close-btn" onClick={() => setShowCheckout(false)}><X size={20} /></button>
-            </div>
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-              
-              <div className="checkout-items-list" style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: '10px', background: 'rgba(0,0,0,0.02)', borderRadius: '12px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 800, opacity: 0.5 }}>ALINAN MİKTARLARI ONAYLA</label>
-                {checkoutItems.map(item => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 700, flex: 1 }}>{item.nm}</span>
-                    <input 
-                      type="text" 
-                      value={item.qt} 
-                      onChange={(e) => updateCheckoutItemQty(item.id, e.target.value)}
-                      style={{ width: '80px', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--brd)', fontSize: '12px', textAlign: 'center' }}
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="form-group">
-                <label>Toplam Tutar (₺)</label>
+      <ActionSheet
+        isOpen={showCheckout}
+        onClose={() => setShowCheckout(false)}
+        title="🛒 Kasaya Git"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="checkout-items-list" style={{ maxHeight: '25vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: 'var(--bg)', borderRadius: '20px', border: '1px solid var(--brd)' }}>
+            <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px' }}>SEÇİLEN ÜRÜNLER</label>
+            {checkoutItems.map(item => (
+              <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 700, flex: 1 }}>{item.nm}</span>
                 <input 
-                  type="number" 
-                  placeholder="0.00" 
-                  value={totalPrice} 
-                  onChange={e => setTotalPrice(e.target.value)}
-                  autoFocus
-                  style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)' }}
+                  type="text" 
+                  value={item.qt} 
+                  onChange={(e) => updateCheckoutItemQty(item.id, e.target.value)}
+                  style={{ width: '90px', padding: '8px 12px', borderRadius: '12px', border: '1px solid var(--brd)', fontSize: '13px', textAlign: 'center', background: 'white' }}
                 />
               </div>
-              <div className="form-group">
-                <label>Market</label>
-                <select value={market} onChange={e => setMarket(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)' }}>
-                  <option>BİM</option><option>Migros</option><option>A101</option><option>ŞOK</option><option>File</option><option>Pazar</option><option>Kasap</option><option>Diğer</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Ödeme Kartı</label>
-                <select value={cardId} onChange={e => setCardId(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)' }}>
-                  <option value="">Nakit / Diğer</option>
-                  {(finans?.kartlar || []).map(card => (
-                    <option key={card.id} value={card.id}>{card.banka} - {card.ad}</option>
-                  ))}
-                </select>
-              </div>
-              <button className="confirm-btn" onClick={handleCheckout} style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'var(--mutfak)', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}>
-                Alışverişi Tamamla & Finansa İşle
-              </button>
+            ))}
+          </div>
+
+          <div className="form-group">
+            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Toplam Tutar (₺)</label>
+            <input 
+              type="number" 
+              placeholder="0.00" 
+              value={totalPrice} 
+              onChange={e => setTotalPrice(e.target.value)}
+              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '18px', fontWeight: '800' }}
+              inputMode="decimal"
+            />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="form-group">
+              <label style={{ fontSize: '12px', fontWeight: '800', marginBottom: '6px', display: 'block' }}>Market</label>
+              <select value={market} onChange={e => setMarket(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)' }}>
+                <option>BİM</option><option>Migros</option><option>A101</option><option>ŞOK</option><option>File</option><option>Pazar</option><option>Kasap</option><option>Diğer</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label style={{ fontSize: '12px', fontWeight: '800', marginBottom: '6px', display: 'block' }}>Ödeme Kartı</label>
+              <select value={cardId} onChange={e => setCardId(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)' }}>
+                <option value="">Nakit / Diğer</option>
+                {(finans?.kartlar || []).map(card => (
+                  <option key={card.id} value={card.id}>{card.banka} - {card.ad}</option>
+                ))}
+              </select>
             </div>
           </div>
+
+          <button 
+            className="confirm-btn" 
+            onClick={handleCheckout} 
+            style={{ 
+              width: '100%', padding: '18px', borderRadius: '20px', 
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+              color: 'white', border: 'none', fontWeight: '900', fontSize: '16px',
+              boxShadow: '0 10px 20px rgba(16, 185, 129, 0.2)',
+              marginTop: '10px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
+            }}
+          >
+            Ödemeyi Onayla <ArrowRight size={20} />
+          </button>
         </div>
-      )}
+      </ActionSheet>
 
       <style>{`
         .alisveris-tab-compact { display: flex; flex-direction: column; gap: 12px; padding-bottom: 80px; }

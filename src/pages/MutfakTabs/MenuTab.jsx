@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
+import ActionSheet from '../../components/ActionSheet';
 
 export default function MenuTab() {
   const { mutfak, updateMenuDetail, setEatOut, setDelivery, addRecipe, getAvailableRecipes, currentUser, luckyFill } = useStore();
@@ -234,87 +235,97 @@ export default function MenuTab() {
          </button>
       </div>
 
-      {showQuickShop && (
-        <div className="modal-overlay" onClick={() => setShowQuickShop(false)}>
-           <div className="modal-content glass animate-pop" style={{ maxWidth: '300px' }} onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h4>Hızlı Alışveriş</h4>
-                <button className="close-btn" onClick={() => setShowQuickShop(false)}>✕</button>
-              </div>
-              <p style={{ fontSize: '12px', margin: '10px 0', opacity: 0.7 }}>Planlanan yemeklerin malzemelerini listeye ekle:</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                 <button className="period-btn" onClick={() => handleQuickShop(1)}>1 Haftalık (Standart)</button>
-                 <button className="period-btn" onClick={() => handleQuickShop(2)}>2 Haftalık</button>
-                 <button className="period-btn" onClick={() => handleQuickShop(4)}>1 Aylık (Stokçuluk!)</button>
-              </div>
-           </div>
+      <ActionSheet
+        isOpen={showQuickShop}
+        onClose={() => setShowQuickShop(false)}
+        title="🛒 Hızlı Alışveriş"
+      >
+        <p style={{ fontSize: '13px', marginBottom: '20px', opacity: 0.8, color: 'var(--txt-light)' }}>
+          Planlanan yemeklerin malzemelerini otomatik olarak listeye ekleyin:
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <button className="period-btn" onClick={() => handleQuickShop(1)}>1 Haftalık (Standart)</button>
+          <button className="period-btn" onClick={() => handleQuickShop(2)}>2 Haftalık</button>
+          <button className="period-btn" onClick={() => handleQuickShop(4)}>1 Aylık (Stokçuluk!)</button>
         </div>
-      )}
+      </ActionSheet>
 
-      {showDelivery && (
-        <DeliveryModal 
-          onClose={() => setShowDelivery(null)} 
-          onConfirm={(info) => {
-            setDelivery(showDelivery.dt, showDelivery.ml, info);
-            setShowDelivery(null);
-            toast.success('Sipariş kaydedildi! 🛵');
-          }}
-          existingRestaurants={mutfak.restaurantlar || []}
-        />
-      )}
+      <ActionSheet
+        isOpen={!!showDelivery}
+        onClose={() => setShowDelivery(null)}
+        title="🛵 Sipariş Detayı"
+      >
+        {showDelivery && (
+          <DeliveryForm 
+            onConfirm={(info) => {
+              setDelivery(showDelivery.dt, showDelivery.ml, info);
+              setShowDelivery(null);
+              toast.success('Sipariş kaydedildi! 🛵');
+            }}
+            existingRestaurants={mutfak.restaurantlar || []}
+          />
+        )}
+      </ActionSheet>
 
-      {showEatOut && (
-        <EatOutModal 
-          onClose={() => setShowEatOut(null)} 
-          onConfirm={(info) => {
-            setEatOut(showEatOut.dt, showEatOut.ml, info);
-            setShowEatOut(null);
-            toast.success('Dışarıda yemek kaydedildi! 🍴');
-          }}
-          existingRestaurants={mutfak.restaurantlar || []}
-        />
-      )}
+      <ActionSheet
+        isOpen={!!showEatOut}
+        onClose={() => setShowEatOut(null)}
+        title="🍴 Dışarıda Yemek"
+      >
+        {showEatOut && (
+          <EatOutForm 
+            onConfirm={(info) => {
+              setEatOut(showEatOut.dt, showEatOut.ml, info);
+              setShowEatOut(null);
+              toast.success('Dışarıda yemek kaydedildi! 🍴');
+            }}
+            existingRestaurants={mutfak.restaurantlar || []}
+          />
+        )}
+      </ActionSheet>
 
-      {showPicker && (() => {
-        const currentData = getMealData(showPicker.dt, showPicker.ml);
-        const pickingType = showPicker.type || 'ana';
-        
-        return (
-          <div className="modal-overlay" onClick={() => setShowPicker(null)}>
-            <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h4>{showPicker.ml === 'k' ? '☀️ Kahvaltı Seçimi' : '🌙 Akşam Yemeği Seçimi'}</h4>
-                <button className="close-btn" onClick={() => setShowPicker(null)}>✕</button>
-              </div>
-
+      <ActionSheet
+        isOpen={!!showPicker}
+        onClose={() => { setShowPicker(null); setSearchQuery(''); }}
+        title={showPicker?.ml === 'k' ? '☀️ Kahvaltı Seçimi' : '🌙 Akşam Yemeği Seçimi'}
+        fullHeight={searchQuery.length > 0}
+      >
+        {showPicker && (() => {
+          const currentData = getMealData(showPicker.dt, showPicker.ml);
+          const pickingType = showPicker.type || 'ana';
+          
+          return (
+            <div className="picker-container">
               <div className="selection-summary">
                 <div className={pickingType === 'ana' ? 'active' : ''}><strong>Ana:</strong> {currentData.main || '---'}</div>
                 <div className={pickingType === 'yan' ? 'active' : ''}><strong>Yan:</strong> {currentData.side || '---'}</div>
               </div>
 
-              <div className="dice-container-large">
-                 <button className="dice-big green" onClick={() => handleRandomize('pratik', 'ana')}>
-                    <div className="dice-icon-wrap"><Dices size={32} /></div>
-                    <div className="dice-label"><span className="dice-type">⚡ PRATİK</span><span className="dice-target">ANA YEMEK</span></div>
-                 </button>
-                 <button className="dice-big red" onClick={() => handleRandomize('zor', 'ana')}>
-                    <div className="dice-icon-wrap"><Dices size={32} /></div>
-                    <div className="dice-label"><span className="dice-type">👨‍🍳 ŞEF</span><span className="dice-target">ANA YEMEK</span></div>
-                 </button>
-                 <button className="dice-big purple" onClick={() => handleRandomize('any', 'yan')}>
-                    <div className="dice-icon-wrap"><Dices size={32} /></div>
-                    <div className="dice-label"><span className="dice-type">🥗 SÜRPRİZ</span><span className="dice-target">YAN YEMEK</span></div>
-                 </button>
-              </div>
+              {searchQuery.length === 0 && (
+                <>
+                  <div className="dice-row-compact">
+                     <button className="dice-pill green" onClick={() => handleRandomize('pratik', 'ana')}>
+                        <Dices size={16} /> ⚡ PRATİK
+                     </button>
+                     <button className="dice-pill red" onClick={() => handleRandomize('zor', 'ana')}>
+                        <Dices size={16} /> 👨‍🍳 ŞEF
+                     </button>
+                     <button className="dice-pill purple" onClick={() => handleRandomize('any', 'yan')}>
+                        <Dices size={16} /> 🥗 YAN
+                     </button>
+                  </div>
 
-              <div className="quick-actions-row">
-                <button className="qa-btn del" onClick={() => { setShowDelivery(showPicker); setShowPicker(null); }}><Truck size={16}/> Sipariş</button>
-                <button className="qa-btn out" onClick={() => { setShowEatOut(showPicker); setShowPicker(null); }}><UtensilsCrossed size={16}/> Dışarıda</button>
-              </div>
+                  <div className="quick-actions-row">
+                    <button className="qa-btn del" onClick={() => { setShowDelivery(showPicker); setShowPicker(null); }}><Truck size={16}/> Sipariş</button>
+                    <button className="qa-btn out" onClick={() => { setShowEatOut(showPicker); setShowPicker(null); }}><UtensilsCrossed size={16}/> Dışarıda</button>
+                  </div>
+                </>
+              )}
 
               <div className="search-box">
                 <Search size={18} />
                 <input placeholder="Tarif ara..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+                {searchQuery.length > 0 && <button className="clear-search" onClick={() => setSearchQuery('')}><X size={16}/></button>}
               </div>
 
               <div className="recipe-scroll">
@@ -327,29 +338,29 @@ export default function MenuTab() {
                     const statusColor = status === 'ready' ? '#10b981' : status === 'frozen' ? '#3b82f6' : '#ef4444';
                     
                     return (
-                      <div key={r.id} className="recipe-item-mini glass" style={{ borderLeft: `4px solid ${statusColor}`, display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <div key={r.id} className="recipe-item-mini glass" style={{ borderLeft: `4px solid ${statusColor}` }}>
+                        <div className="ri-content">
                           <div className="ri-info">
                             <span className="ri-emoji">{r.e}</span>
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <div className="ri-text">
                               <span className="ri-name">{r.n}</span>
                               {missing.length > 0 && (
-                                <span style={{ fontSize: '9px', color: '#ef4444', fontWeight: 'bold' }}>Eksik: {missing.join(', ')}</span>
+                                <span className="ri-missing">Eksik: {missing.join(', ')}</span>
                               )}
                             </div>
                           </div>
                           <div className="ri-btns">
-                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); }}>Ana</button>
-                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); }}>Yan</button>
+                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>Ana</button>
+                            <button onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>Yan</button>
                           </div>
                         </div>
                         {missing.length > 0 && (
                           <button 
+                            className="add-missing-btn"
                             onClick={() => {
                               useStore.getState().addMissingToShopping(missing);
                               toast.success('Eksikler listeye eklendi! 🛒');
                             }}
-                            style={{ alignSelf: 'flex-start', fontSize: '10px', background: 'var(--bg)', border: '1px solid var(--brd)', padding: '4px 10px', borderRadius: '8px', cursor: 'pointer', color: 'var(--txt-light)' }}
                           >
                             🛒 Eksikleri Listeye Ekle
                           </button>
@@ -359,9 +370,9 @@ export default function MenuTab() {
                   })}
               </div>
             </div>
-          </div>
-        );
-      })()}
+          );
+        })()}
+      </ActionSheet>
 
       <style jsx="true">{`
         .menu-tab { padding: 10px; }
@@ -400,16 +411,30 @@ export default function MenuTab() {
         .selection-summary div { font-size: 13px; padding: 8px; border-radius: 10px; border: 1px solid transparent; }
         .selection-summary div.active { background: var(--mutfak-light); border-color: var(--mutfak); color: var(--mutfak); }
 
-        .dice-container-large { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .dice-big { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 15px 5px; border-radius: 20px; border: none; cursor: pointer; color: white; transition: transform 0.1s; }
-        .dice-big:active { transform: scale(0.95); }
-        .dice-big.green { background: linear-gradient(135deg, #10b981, #059669); }
-        .dice-big.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
-        .dice-big.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-        .dice-icon-wrap { width: 44px; height: 44px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #333; }
-        .dice-label { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
-        .dice-type { font-size: 9px; font-weight: 900; opacity: 0.8; }
-        .dice-target { font-size: 10px; font-weight: 900; }
+        .dice-row-compact { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .dice-pill { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 5px; border-radius: 14px; border: none; cursor: pointer; color: white; font-weight: 800; font-size: 10px; transition: transform 0.1s; }
+        .dice-pill:active { transform: scale(0.95); }
+        .dice-pill.green { background: linear-gradient(135deg, #10b981, #059669); }
+        .dice-pill.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .dice-pill.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+
+        .search-box { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg); border: 1px solid var(--brd); border-radius: 15px; margin-bottom: 15px; }
+        .search-box input { flex: 1; border: none; background: none; outline: none; font-size: 14px; color: var(--txt); }
+        .clear-search { background: none; border: none; color: var(--txt-light); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        .recipe-scroll { display: flex; flex-direction: column; gap: 10px; }
+        .recipe-item-mini { padding: 12px; border-radius: 16px; transition: all 0.2s; }
+        .ri-content { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .ri-info { display: flex; align-items: center; gap: 12px; }
+        .ri-emoji { font-size: 24px; }
+        .ri-text { display: flex; flex-direction: column; }
+        .ri-name { font-size: 14px; font-weight: 800; color: var(--txt); }
+        .ri-missing { font-size: 10px; color: #ef4444; font-weight: 700; margin-top: 2px; }
+        .ri-btns { display: flex; gap: 6px; }
+        .ri-btns button { border: 1px solid var(--brd); background: white; padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; color: var(--txt); transition: all 0.2s; }
+        .ri-btns button:active { background: var(--bg); transform: scale(0.95); }
+        
+        .add-missing-btn { align-self: flex-start; margin-top: 8px; font-size: 11px; background: var(--bg); border: 1px solid var(--brd); padding: 6px 12px; border-radius: 10px; cursor: pointer; color: var(--txt-light); font-weight: 600; width: 100%; text-align: center; }
 
         .quick-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
         .qa-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 12px; border: 1px solid var(--brd); background: var(--bg); font-weight: 700; font-size: 12px; cursor: pointer; }
@@ -446,7 +471,7 @@ export default function MenuTab() {
   );
 }
 
-function DeliveryModal({ onClose, onConfirm, existingRestaurants }) {
+function DeliveryForm({ onConfirm, existingRestaurants }) {
   const [fr, setFr] = useState('');
   const [wh, setWh] = useState('');
   const [pr, setPr] = useState('');
@@ -455,65 +480,57 @@ function DeliveryModal({ onClose, onConfirm, existingRestaurants }) {
   const filtered = existingRestaurants.filter(r => r.toLowerCase().includes(fr.toLowerCase()));
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h4>🛵 Sipariş Detayı</h4>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </div>
-        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-          <div className="form-group" style={{ position: 'relative' }}>
-            <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Nereden? (Restaurant)</label>
-            <input 
-              type="text" 
-              placeholder="Örn: Burger King, Köfteci Yusuf..." 
-              value={fr} 
-              onChange={e => { setFr(e.target.value); setShowSuggestions(true); }}
-              onFocus={() => setShowSuggestions(true)}
-              style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', marginTop: '5px' }}
-            />
-            {showSuggestions && filtered.length > 0 && (
-              <div className="suggestions-box glass">
-                {filtered.map(r => (
-                  <div key={r} className="suggestion-item" onClick={() => { setFr(r); setShowSuggestions(false); }}>{r}</div>
-                ))}
-              </div>
-            )}
+    <div className="modal-body-standard" style={{ display: 'flex', flexDirection: 'column', gap: '15px', paddingBottom: '30px' }}>
+      <div className="form-group" style={{ position: 'relative' }}>
+        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Nereden? (Restaurant)</label>
+        <input 
+          type="text" 
+          placeholder="Örn: Burger King, Köfteci Yusuf..." 
+          value={fr} 
+          onChange={e => { setFr(e.target.value); setShowSuggestions(true); }}
+          onFocus={() => setShowSuggestions(true)}
+          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
+        />
+        {showSuggestions && filtered.length > 0 && (
+          <div className="suggestions-box glass animate-fadeIn" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, border: '1px solid var(--brd)', borderRadius: '12px', background: 'white', maxHeight: '150px', overflowY: 'auto' }}>
+            {filtered.map(r => (
+              <div key={r} className="suggestion-item" onClick={() => { setFr(r); setShowSuggestions(false); }} style={{ padding: '12px', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}>{r}</div>
+            ))}
           </div>
-          <div className="form-group">
-            <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Ne Söylüyoruz?</label>
-            <input 
-              type="text" 
-              placeholder="Örn: 2 Adet Whopper Menü" 
-              value={wh} 
-              onChange={e => setWh(e.target.value)}
-              style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', marginTop: '5px' }}
-            />
-          </div>
-          <div className="form-group">
-            <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Tutar (₺)</label>
-            <input 
-              type="number" 
-              placeholder="0₺" 
-              value={pr} 
-              onChange={e => setPr(e.target.value)}
-              style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', marginTop: '5px' }}
-            />
-          </div>
-          <button 
-            className="submit-btn" 
-            onClick={() => onConfirm({ fr, wh, pr: Number(pr) })}
-            style={{ padding: '15px', borderRadius: '15px', background: 'linear-gradient(135deg, #F1C40F, #F39C12)', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}
-          >
-            Siparişi Kaydet & Finansa İşle
-          </button>
-        </div>
+        )}
       </div>
+      <div className="form-group">
+        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Ne Söylüyoruz?</label>
+        <input 
+          type="text" 
+          placeholder="Örn: 2 Adet Whopper Menü" 
+          value={wh} 
+          onChange={e => setWh(e.target.value)}
+          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
+        />
+      </div>
+      <div className="form-group">
+        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Tutar (₺)</label>
+        <input 
+          type="number" 
+          placeholder="0₺" 
+          value={pr} 
+          onChange={e => setPr(e.target.value)}
+          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
+        />
+      </div>
+      <button 
+        className="submit-btn" 
+        onClick={() => onConfirm({ fr, wh, pr: Number(pr) })}
+        style={{ padding: '16px', borderRadius: '16px', background: 'linear-gradient(135deg, #F1C40F, #F39C12)', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}
+      >
+        Siparişi Kaydet & Finansa İşle
+      </button>
     </div>
   );
 }
 
-function EatOutModal({ onClose, onConfirm, existingRestaurants }) {
+function EatOutForm({ onConfirm, existingRestaurants }) {
   const [fr, setFr] = useState('');
   const [pr, setPr] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -521,50 +538,42 @@ function EatOutModal({ onClose, onConfirm, existingRestaurants }) {
   const filtered = existingRestaurants.filter(r => r.toLowerCase().includes(fr.toLowerCase()));
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <div className="modal-header">
-          <h4>🍴 Dışarıda Yemek</h4>
-          <button className="close-btn" onClick={onClose}>✕</button>
-        </div>
-        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-          <div className="form-group" style={{ position: 'relative' }}>
-            <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Neresi? (Restoran)</label>
-            <input 
-              type="text" 
-              placeholder="Örn: Big Chefs, Nusret..." 
-              value={fr} 
-              onChange={e => { setFr(e.target.value); setShowSuggestions(true); }}
-              onFocus={() => setShowSuggestions(true)}
-              style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', marginTop: '5px' }}
-            />
-            {showSuggestions && filtered.length > 0 && (
-              <div className="suggestions-box glass">
-                {filtered.map(r => (
-                  <div key={r} className="suggestion-item" onClick={() => { setFr(r); setShowSuggestions(false); }}>{r}</div>
-                ))}
-              </div>
-            )}
+    <div className="modal-body-standard" style={{ display: 'flex', flexDirection: 'column', gap: '15px', paddingBottom: '30px' }}>
+      <div className="form-group" style={{ position: 'relative' }}>
+        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Neresi? (Restoran)</label>
+        <input 
+          type="text" 
+          placeholder="Örn: Big Chefs, Nusret..." 
+          value={fr} 
+          onChange={e => { setFr(e.target.value); setShowSuggestions(true); }}
+          onFocus={() => setShowSuggestions(true)}
+          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
+        />
+        {showSuggestions && filtered.length > 0 && (
+          <div className="suggestions-box glass animate-fadeIn" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, border: '1px solid var(--brd)', borderRadius: '12px', background: 'white', maxHeight: '150px', overflowY: 'auto' }}>
+            {filtered.map(r => (
+              <div key={r} className="suggestion-item" onClick={() => { setFr(r); setShowSuggestions(false); }} style={{ padding: '12px', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}>{r}</div>
+            ))}
           </div>
-          <div className="form-group">
-            <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Tahmini Tutar (₺)</label>
-            <input 
-              type="number" 
-              placeholder="0₺" 
-              value={pr} 
-              onChange={e => setPr(e.target.value)}
-              style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', marginTop: '5px', marginBottom: '5px' }}
-            />
-          </div>
-          <button 
-            className="submit-btn" 
-            onClick={() => onConfirm({ fr, pr: Number(pr) })}
-            style={{ width: '100%', padding: '15px', borderRadius: '15px', background: 'linear-gradient(135deg, #3498DB, #2980B9)', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer' }}
-          >
-            Kaydet & Finansa İşle
-          </button>
-        </div>
+        )}
       </div>
+      <div className="form-group">
+        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Tahmini Tutar (₺)</label>
+        <input 
+          type="number" 
+          placeholder="0₺" 
+          value={pr} 
+          onChange={e => setPr(e.target.value)}
+          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
+        />
+      </div>
+      <button 
+        className="submit-btn" 
+        onClick={() => onConfirm({ fr, pr: Number(pr) })}
+        style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'linear-gradient(135deg, #3498DB, #2980B9)', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}
+      >
+        Kaydet & Finansa İşle
+      </button>
     </div>
   );
 }

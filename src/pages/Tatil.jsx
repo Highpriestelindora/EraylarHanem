@@ -64,17 +64,28 @@ export default function Tatil() {
         {activeTab === 'hayal' && <HayalTab tatil={tatil} />}
       </div>
 
-      {selectedTrip && (
-        <TripDetailModal trip={selectedTrip} onClose={() => setSelectedTrip(null)} />
-      )}
+      <ActionSheet
+        isOpen={!!selectedTrip}
+        onClose={() => setSelectedTrip(null)}
+        title={selectedTrip?.title || selectedTrip?.city || 'Tatil Detayı'}
+        fullHeight
+      >
+        {selectedTrip && (
+          <TripDetailContent trip={selectedTrip} />
+        )}
+      </ActionSheet>
 
-      {showWizard && (
-        <PlanningWizard onClose={() => setShowWizard(false)} onAdd={(trip) => {
+      <ActionSheet
+        isOpen={showWizard}
+        onClose={() => setShowWizard(false)}
+        title="🌍 Tatil Sihirbazı"
+      >
+        <PlanningWizardContent onAdd={(trip) => {
           addTrip(trip);
           setShowWizard(false);
           toast.success('Tatil planı oluşturuldu! ✨');
         }} />
-      )}
+      </ActionSheet>
     </AnimatedPage>
   );
 }
@@ -141,123 +152,170 @@ function TripCard({ trip, isUpcoming, onClick }) {
   );
 }
 
-function PlanningWizard({ onClose, onAdd }) {
+function PlanningWizardContent({ onAdd }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ title: '', country: 'Türkiye', city: '', type: 'yurtdisi', startDate: '', endDate: '', budget: '' });
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="wizard-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <div className="wizard-header">
-          <div className="step-dots">
-            {[1,2,3].map(i => <div key={i} className={`dot ${step >= i ? 'active' : ''}`} />)}
+    <div className="wizard-body-standard">
+      <div className="step-dots-row" style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '20px' }}>
+        {[1,2,3].map(i => (
+          <div key={i} style={{ 
+            width: '10px', height: '10px', borderRadius: '50%', 
+            background: step >= i ? 'var(--tatil)' : 'var(--brd)',
+            transition: 'background 0.3s'
+          }} />
+        ))}
+      </div>
+
+      <div className="wizard-step-content">
+        {step === 1 && (
+          <div className="wizard-step animate-fadeIn">
+            <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Nereye Gidiyoruz? 🌍</h4>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Tatil Başlığı</label>
+              <input type="text" placeholder="Örn: Roma Kaçamağı" value={form.title} onChange={e => setForm({...form, title: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} />
+            </div>
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+              <div className="form-group"><label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Ülke</label><input type="text" value={form.country} onChange={e => setForm({...form, country: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} /></div>
+              <div className="form-group"><label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Şehir</label><input type="text" value={form.city} onChange={e => setForm({...form, city: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} /></div>
+            </div>
+            <div className="type-selector" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+               <button 
+                className={form.type === 'yurtdisi' ? 'active' : ''} 
+                onClick={() => setForm({...form, type: 'yurtdisi'})}
+                style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', background: form.type === 'yurtdisi' ? 'var(--tatil-light)' : 'white', color: form.type === 'yurtdisi' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', cursor: 'pointer' }}
+               >✈️ Yurtdışı</button>
+               <button 
+                className={form.type === 'yurticici' ? 'active' : ''} 
+                onClick={() => setForm({...form, type: 'yurticici'})}
+                style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', background: form.type === 'yurticici' ? 'var(--tatil-light)' : 'white', color: form.type === 'yurticici' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', cursor: 'pointer' }}
+               >🚗 Yurtiçi</button>
+            </div>
           </div>
-          <h3>Tatil Sihirbazı</h3>
-          <button className="close-btn" onClick={onClose}><X /></button>
-        </div>
-        <div className="wizard-body">
-          {step === 1 && (
-            <div className="wizard-step animate-fadeIn">
-              <h4>Nereye Gidiyoruz? 🌍</h4>
-              <div className="form-group">
-                <label>Tatil Başlığı</label>
-                <input type="text" placeholder="Örn: Roma Kaçamağı" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
-              </div>
-              <div className="form-row">
-                <div className="form-group"><label>Ülke</label><input type="text" value={form.country} onChange={e => setForm({...form, country: e.target.value})} /></div>
-                <div className="form-group"><label>Şehir</label><input type="text" value={form.city} onChange={e => setForm({...form, city: e.target.value})} /></div>
-              </div>
-              <div className="type-selector">
-                 <button className={form.type === 'yurtdisi' ? 'active' : ''} onClick={() => setForm({...form, type: 'yurtdisi'})}>✈️ Yurtdışı</button>
-                 <button className={form.type === 'yurticici' ? 'active' : ''} onClick={() => setForm({...form, type: 'yurticici'})}>🚗 Yurtiçi</button>
-              </div>
+        )}
+        {step === 2 && (
+          <div className="wizard-step animate-fadeIn">
+            <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Ne Zaman? 📅</h4>
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group"><label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Başlangıç</label><input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} /></div>
+              <div className="form-group"><label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Bitiş</label><input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} /></div>
             </div>
-          )}
-          {step === 2 && (
-            <div className="wizard-step animate-fadeIn">
-              <h4>Ne Zaman? 📅</h4>
-              <div className="form-row">
-                <div className="form-group"><label>Başlangıç</label><input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} /></div>
-                <div className="form-group"><label>Bitiş</label><input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} /></div>
-              </div>
+          </div>
+        )}
+        {step === 3 && (
+          <div className="wizard-step animate-fadeIn">
+            <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Detaylar 💰</h4>
+            <div className="form-group">
+              <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Tahmini Bütçe (₺)</label>
+              <input type="number" placeholder="0" value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} />
             </div>
-          )}
-          {step === 3 && (
-            <div className="wizard-step animate-fadeIn">
-              <h4>Detaylar 💰</h4>
-              <div className="form-group">
-                <label>Tahmini Bütçe (₺)</label>
-                <input type="number" placeholder="0" value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} />
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="wizard-footer">
-          {step > 1 && <button className="btn-secondary" onClick={() => setStep(s => s - 1)}>Geri</button>}
-          {step < 3 ? <button className="btn-primary" onClick={() => setStep(s => s + 1)}>Devam Et</button> : <button className="btn-primary success" onClick={() => onAdd(form)}>Planı Oluştur ✨</button>}
-        </div>
+          </div>
+        )}
+      </div>
+
+      <div className="wizard-footer-standard" style={{ display: 'flex', gap: '10px', marginTop: '30px', paddingBottom: '20px' }}>
+        {step > 1 && <button className="submit-btn" onClick={() => setStep(s => s - 1)} style={{ flex: 1, padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'white', fontWeight: '800', cursor: 'pointer' }}>Geri</button>}
+        {step < 3 ? (
+          <button className="submit-btn tatil-gradient" onClick={() => setStep(s => s + 1)} style={{ flex: 2, padding: '14px', borderRadius: '14px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer' }}>Devam Et</button>
+        ) : (
+          <button className="submit-btn tatil-gradient" onClick={() => onAdd(form)} style={{ flex: 2, padding: '14px', borderRadius: '14px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer' }}>Planı Oluştur ✨</button>
+        )}
       </div>
     </div>
   );
 }
 
-function TripDetailModal({ trip, onClose }) {
+function TripDetailContent({ trip }) {
   const { toggleTripChecklist, addExpense } = useStore();
   const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
 
   return (
-    <div className="full-page-detail animate-slideUp">
-      <header className="detail-header glass">
-        <button className="back-btn" onClick={onClose}><ArrowLeft size={24} /> <span>Geri</span></button>
-        <div className="header-title"><h2>{trip.title || trip.city}</h2><p>{trip.city}, {trip.country}</p></div>
-        <div className="header-actions">
-           <button className="action-btn-circle money" onClick={() => setShowExpenseModal(true)}><Wallet size={20} /></button>
-        </div>
-      </header>
-      <main className="detail-main">
-        <div className="detail-hero-card glass" style={{ background: trip.type === 'yurtdisi' ? 'var(--tatil-dark)' : 'var(--success-dark)' }}>
-           <div className="hero-emoji-large">{trip.type === 'yurtdisi' ? '✈️' : '🚗'}</div>
-           <div className="hero-meta"><span className="meta-pill">{trip.country}</span><span className="meta-pill">{duration} Gün</span></div>
-        </div>
-        <section className="detail-section">
-          <div className="section-title"><h3>✅ Hazırlık Listesi</h3><div className="badge">{trip.checklists?.filter(c=>c.done).length || 0} / {trip.checklists?.length || 0}</div></div>
-          <div className="checklist-grid">
-            {(trip.checklists || []).map(item => (
-              <div key={item.id} className={`check-item glass ${item.done ? 'done' : ''}`} onClick={() => toggleTripChecklist(trip.id, item.id)}>
-                <div className={`check-box ${item.done ? 'checked' : ''}`}>{item.done && <CheckSquare size={16} />}</div>
-                <span>{item.text}</span>
-              </div>
-            ))}
+    <div className="trip-detail-content-standard">
+      <div className="detail-hero-card glass" style={{ background: trip.type === 'yurtdisi' ? 'var(--tatil-dark)' : 'var(--success-dark)', padding: '20px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
+         <div className="hero-emoji-large" style={{ fontSize: '48px' }}>{trip.type === 'yurtdisi' ? '✈️' : '🚗'}</div>
+         <div className="hero-meta" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+           <span className="meta-pill" style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '800', color: 'white' }}>{trip.country}</span>
+           <span className="meta-pill" style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '800', color: 'white' }}>{duration} Gün</span>
+         </div>
+         <button 
+          className="action-btn-circle money" 
+          onClick={() => setShowExpenseModal(true)}
+          style={{ marginLeft: 'auto', background: 'white', color: 'var(--tatil)', border: 'none', width: '44px', height: '44px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+         >
+          <Wallet size={20} />
+         </button>
+      </div>
+
+      <section className="detail-section">
+        <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '900' }}>✅ Hazırlık Listesi</h3>
+          <div className="badge" style={{ background: 'var(--tatil-light)', color: 'var(--tatil)', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '800' }}>
+            {trip.checklists?.filter(c=>c.done).length || 0} / {trip.checklists?.length || 0}
           </div>
-        </section>
-        <section className="detail-section mt-20">
-           <div className="section-title"><h3>🏨 Konaklama</h3></div>
-           {(trip.hotels || []).length > 0 ? trip.hotels.map((h, i) => <div key={i} className="hotel-card glass"><strong>{h.name}</strong><p>{h.address}</p></div>) : <div className="empty-notes glass">Henüz otel bilgisi eklenmemiş.</div>}
-        </section>
-      </main>
-      {showExpenseModal && <AddTripExpenseModal trip={trip} onClose={() => setShowExpenseModal(false)} onAdd={(exp) => { addExpense({ ...exp, category: 'tatil', title: `✈️ ${trip.title || trip.city}: ${exp.title}` }); setShowExpenseModal(false); toast.success('Harcama kaydedildi! 💸'); }} />}
+        </div>
+        <div className="checklist-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {(trip.checklists || []).map(item => (
+            <div key={item.id} className={`check-item glass ${item.done ? 'done' : ''}`} onClick={() => toggleTripChecklist(trip.id, item.id)} style={{ padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', background: item.done ? 'var(--bg)' : 'white', opacity: item.done ? 0.6 : 1 }}>
+              <div className={`check-box ${item.done ? 'checked' : ''}`} style={{ width: '20px', height: '20px', borderRadius: '6px', border: '2px solid var(--tatil)', background: item.done ? 'var(--tatil)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {item.done && <CheckSquare size={14} color="white" />}
+              </div>
+              <span style={{ fontSize: '14px', fontWeight: '600', textDecoration: item.done ? 'line-through' : 'none' }}>{item.text}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="detail-section mt-20" style={{ marginTop: '24px', paddingBottom: '40px' }}>
+         <div className="section-title" style={{ marginBottom: '15px' }}>
+           <h3 style={{ fontSize: '16px', fontWeight: '900' }}>🏨 Konaklama</h3>
+         </div>
+         {(trip.hotels || []).length > 0 ? trip.hotels.map((h, i) => (
+           <div key={i} className="hotel-card glass" style={{ padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', marginBottom: '10px' }}>
+             <strong style={{ display: 'block', fontSize: '14px' }}>{h.name}</strong>
+             <p style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.6 }}>{h.address}</p>
+           </div>
+         )) : (
+           <div className="empty-notes glass" style={{ padding: '20px', borderRadius: '16px', border: '1px dashed var(--brd)', textAlign: 'center', opacity: 0.5, fontSize: '13px' }}>
+             Henüz otel bilgisi eklenmemiş.
+           </div>
+         )}
+      </section>
+
+      <ActionSheet
+        isOpen={showExpenseModal}
+        onClose={() => setShowExpenseModal(false)}
+        title="💸 Tatil Harcaması"
+      >
+        <AddTripExpenseContent trip={trip} onAdd={(exp) => { 
+          addExpense({ ...exp, category: 'tatil', title: `✈️ ${trip.title || trip.city}: ${exp.title}` }); 
+          setShowExpenseModal(false); 
+          toast.success('Harcama kaydedildi! 💸'); 
+        }} />
+      </ActionSheet>
     </div>
   );
 }
 
-function AddTripExpenseModal({ trip, onClose, onAdd }) {
+function AddTripExpenseContent({ onAdd }) {
   const [form, setForm] = useState({ title: '', amount: '', payer: 'ortak' });
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <h3>💸 Tatil Harcaması</h3>
-        <form onSubmit={(e) => { e.preventDefault(); onAdd(form); }} className="modal-form mt-10">
-          <input type="text" placeholder="Harcama Kalemi" value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
-          <input type="number" placeholder="Tutar" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
-          <div className="payer-select mt-10">
-            <button type="button" className={form.payer === 'gorkem' ? 'active' : ''} onClick={() => setForm({...form, payer: 'gorkem'})}>Görkem</button>
-            <button type="button" className={form.payer === 'esra' ? 'active' : ''} onClick={() => setForm({...form, payer: 'esra'})}>Esra</button>
-            <button type="button" className={form.payer === 'ortak' ? 'active' : ''} onClick={() => setForm({...form, payer: 'ortak'})}>Ortak</button>
-          </div>
-          <button type="submit" className="submit-btn tatil-gradient mt-20">Harcamayı Ekle</button>
-        </form>
+    <div className="modal-form-standard" style={{ paddingBottom: '30px' }}>
+      <div className="form-group" style={{ marginBottom: '12px' }}>
+        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Harcama Kalemi</label>
+        <input type="text" placeholder="Örn: Akşam Yemeği, Ulaşım..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} required />
       </div>
+      <div className="form-group" style={{ marginBottom: '15px' }}>
+        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Tutar (₺)</label>
+        <input type="number" placeholder="0₺" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} required />
+      </div>
+      <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
+        <button type="button" className={form.payer === 'gorkem' ? 'active' : ''} onClick={() => setForm({...form, payer: 'gorkem'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'gorkem' ? 'var(--tatil-light)' : 'white', color: form.payer === 'gorkem' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Görkem</button>
+        <button type="button" className={form.payer === 'esra' ? 'active' : ''} onClick={() => setForm({...form, payer: 'esra'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'esra' ? 'var(--tatil-light)' : 'white', color: form.payer === 'esra' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Esra</button>
+        <button type="button" className={form.payer === 'ortak' ? 'active' : ''} onClick={() => setForm({...form, payer: 'ortak'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'ortak' ? 'var(--tatil-light)' : 'white', color: form.payer === 'ortak' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Ortak</button>
+      </div>
+      <button onClick={() => onAdd(form)} className="submit-btn tatil-gradient" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer' }}>Harcamayı Ekle</button>
     </div>
   );
 }
