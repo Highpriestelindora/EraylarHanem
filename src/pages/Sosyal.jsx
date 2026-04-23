@@ -272,6 +272,7 @@ function HaftaTab({ sosyal, onAdd }) {
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const monthName = viewDate.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+  const monthNameLong = viewDate.toLocaleDateString('tr-TR', { month: 'long' });
   
   const changeMonth = (offset) => {
     const newDate = new Date(viewDate);
@@ -542,7 +543,7 @@ function HaftaTab({ sosyal, onAdd }) {
                 <div className="nostalgic-event-list">
                   {selectedDay.events.length > 0 ? selectedDay.events.map((e, idx) => (
                     <div key={idx} className={`nostalgic-item ${e.type}`} style={{ marginBottom: '12px', padding: '15px', borderRadius: '16px', background: 'white', border: '1px solid var(--brd)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div className="ni-left" onClick={() => e.type === 'social' && onEdit(e.originalItem)} style={{ cursor: e.type === 'social' ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                      <div className="ni-left" onClick={() => e.type === 'social' && setEditingActivity(e.originalItem)} style={{ cursor: e.type === 'social' ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                         <span className="ni-icon" style={{ fontSize: '24px' }}>{e.icon}</span>
                         <div className="ni-text" style={{ display: 'flex', flexDirection: 'column' }}>
                           <strong style={{ fontSize: '14px', color: 'var(--txt)' }}>{e.title}</strong>
@@ -552,10 +553,10 @@ function HaftaTab({ sosyal, onAdd }) {
                       </div>
                       {e.type === 'social' && !e.originalItem.tamamlandi && (
                         <div className="ni-actions" style={{ display: 'flex', gap: '8px' }}>
-                          <button className="ni-done-btn" onClick={() => onComplete(e.originalItem)} style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <button className="ni-done-btn" onClick={() => setCompleteModal(e.originalItem)} style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <CheckCircle2 size={18} />
                           </button>
-                          <button className="ni-cancel-btn" onClick={() => onDelete(e.originalItem.id)} style={{ background: '#fff5f5', color: '#dc2626', border: '1px solid #fecaca', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <button className="ni-cancel-btn" onClick={() => setDeletingId(e.originalItem.id)} style={{ background: '#fff5f5', color: '#dc2626', border: '1px solid #fecaca', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Trash2 size={16} />
                           </button>
                         </div>
