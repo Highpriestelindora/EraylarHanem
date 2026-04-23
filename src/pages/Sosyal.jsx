@@ -370,7 +370,7 @@ function HaftaTab({ sosyal, onAdd }) {
         </div>
         <button className="add-btn-main" onClick={onAdd}>
           <Plus size={18} />
-          <span>Aktivite Planla</span>
+          <span>Aktivite</span>
         </button>
       </div>
 

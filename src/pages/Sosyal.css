@@ -692,14 +692,14 @@
 .add-btn-main {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   background: white;
-  border: 1.5px solid rgba(197, 28, 108, 0.2);
-  padding: 8px 16px;
-  border-radius: 20px;
+  border: 1px solid rgba(197, 28, 108, 0.2);
+  padding: 6px 12px;
+  border-radius: 14px;
   color: #c51c6c;
   font-weight: 800;
-  font-size: 13px;
+  font-size: 11px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(197, 28, 108, 0.1);
