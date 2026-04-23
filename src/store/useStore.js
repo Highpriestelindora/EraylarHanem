@@ -15,6 +15,7 @@ import {
   INITIAL_WEIGHTS
 } from '../constants/data';
 import { notificationService } from '../lib/notificationService';
+import toast from 'react-hot-toast';
 
 const DEFAULT_STATE = {
   finans: {
