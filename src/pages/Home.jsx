@@ -526,78 +526,78 @@ const Home = () => {
           </div>
         </Link>
 
-        {/* Coming Soon Modules */}
-        <div className="nav-card disabled" onClick={() => toast.info('Alışveriş modülü çok yakında! 🛍️')}>
+        {/* Coming Soon Modules - Visually 'Closed' but Functional */}
+        <Link to="/alisveris" className="nav-card" style={{ opacity: 0.85 }}>
           <div className="card-visual">🛍️</div>
           <div className="card-info">
             <h3>Eraylar Alışveriş</h3>
-            <span className="coming-soon-badge">YAKINDA</span>
+            <span className="coming-soon-badge">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="nav-card disabled" onClick={() => toast.info('Tatil modülü çok yakında! ✈️')}>
+        <Link to="/tatil" className="nav-card" style={{ opacity: 0.85 }}>
           <div className="card-visual">✈️</div>
           <div className="card-info">
             <h3>Eraylar Tatil</h3>
-            <span className="coming-soon-badge">YAKINDA</span>
+            <span className="coming-soon-badge">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="nav-card disabled" onClick={() => toast.info('Pet modülü çok yakında! 🐾')}>
+        <Link to="/pet" className="nav-card" style={{ opacity: 0.85 }}>
           <div className="card-visual">🐾</div>
           <div className="card-info">
             <h3>Eraylar Pet</h3>
-            <span className="coming-soon-badge">YAKINDA</span>
+            <span className="coming-soon-badge">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="nav-card disabled" onClick={() => toast.info('Sağlık modülü çok yakında! 🏥')}>
+        <Link to="/saglik" className="nav-card" style={{ opacity: 0.85 }}>
           <div className="card-visual">🏥</div>
           <div className="card-info">
             <h3>Eraylar Sağlık</h3>
-            <span className="coming-soon-badge">YAKINDA</span>
+            <span className="coming-soon-badge">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="nav-card disabled" onClick={() => toast.info('Ev modülü çok yakında! 🏠')}>
+        <Link to="/ev" className="nav-card" style={{ opacity: 0.85 }}>
           <div className="card-visual">🏠</div>
           <div className="card-info">
             <h3>Eraylar Ev</h3>
-            <span className="coming-soon-badge">YAKINDA</span>
+            <span className="coming-soon-badge">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="nav-card disabled" onClick={() => toast.info('Aracım modülü çok yakında! 🚗')}>
+        <Link to="/aracim" className="nav-card" style={{ opacity: 0.85 }}>
           <div className="card-visual">🚗</div>
           <div className="card-info">
             <h3>Eraylar Aracım</h3>
-            <span className="coming-soon-badge">YAKINDA</span>
+            <span className="coming-soon-badge">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="nav-card disabled" onClick={() => toast.info('Kasa modülü çok yakında! 🧾')}>
+        <Link to="/kasa" className="nav-card" style={{ opacity: 0.85 }}>
           <div className="card-visual">🧾</div>
           <div className="card-info">
             <h3>Eraylar Kasa</h3>
-            <span className="coming-soon-badge">YAKINDA</span>
+            <span className="coming-soon-badge">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="nav-card disabled" onClick={() => toast.info('Finans modülü çok yakında! 💰')}>
+        <Link to="/finans" className="nav-card" style={{ opacity: 0.85 }}>
           <div className="card-visual">💰</div>
           <div className="card-info">
             <h3>Eraylar Finans</h3>
-            <span className="coming-soon-badge">YAKINDA</span>
+            <span className="coming-soon-badge">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="nav-card hedefler wide-slim disabled" onClick={() => toast.info('Hedefler modülü çok yakında! 🏆')}>
+        <Link to="/hedefler" className="nav-card hedefler wide-slim" style={{ opacity: 0.85 }}>
           <div className="card-content-horizontal">
             <span className="card-visual-small">🏆</span>
             <h3>Eraylar Hedeflerim</h3>
-            <span className="coming-soon-badge-small">YAKINDA</span>
+            <span className="coming-soon-badge-small">Geliştiriliyor</span>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* System Logs Modal */}
