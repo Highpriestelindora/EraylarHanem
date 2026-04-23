@@ -129,6 +129,20 @@ export default function MenuTab() {
     }
   };
 
+  const [selectedCategory, setSelectedCategory] = useState('hepsi');
+
+  const categories = [
+    { id: 'hepsi', label: 'Hepsi', icon: '🍽️' },
+    { id: 'kahvalti', label: 'Kahvaltı', icon: '🍳' },
+    { id: 'makarna', label: 'Makarna', icon: '🍝' },
+    { id: 'tava', label: 'Tava/Et', icon: '🥩' },
+    { id: 'pilav', label: 'Pilav/Baklagil', icon: '🌾' },
+    { id: 'corba', label: 'Çorba', icon: '🍲' },
+    { id: 'firin', label: 'Fırın', icon: '🥘' },
+    { id: 'hamur', label: 'Hamur İşi', icon: '🥟' },
+    { id: 'salata', label: 'Salata', icon: '🥗' }
+  ];
+
   return (
     <div className="menu-tab">
       <div className="week-nav glass">
@@ -177,13 +191,13 @@ export default function MenuTab() {
 
               <div className={`meal-cell-container ${k.dis ? 'dis' : ''} ${k.sp ? 'sp' : ''}`}>
                 <div className="meal-content-split">
-                  <div className={`dish-zone ana ${k.main ? 'filled' : 'empty'}`} onClick={() => setShowPicker({ dt: day.iso, ml: 'k', type: 'ana' })}>
+                  <div className={`dish-zone ana ${k.main ? 'filled' : 'empty'}`} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'ana' }); setSelectedCategory('kahvalti'); }}>
                     {k.dis ? <div className="status-label out">Dışarıda</div> : k.sp ? <div className="status-label del">Sipariş</div> : (
                       k.main ? <span className="dish-name" style={{ color: getRecipeStatusColor(k.main) }}>{k.main}</span> : <div className="dish-placeholder"><Plus size={12}/> Ana</div>
                     )}
                   </div>
                   {!k.dis && !k.sp && (
-                    <div className={`dish-zone yan ${k.side ? 'filled' : 'empty'}`} onClick={() => setShowPicker({ dt: day.iso, ml: 'k', type: 'yan' })}>
+                    <div className={`dish-zone yan ${k.side ? 'filled' : 'empty'}`} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'yan' }); setSelectedCategory('kahvalti'); }}>
                       {k.side ? <small className="dish-name-side" style={{ color: getRecipeStatusColor(k.side) }}>{k.side}</small> : <div className="dish-placeholder-side"><Plus size={10}/> Yan</div>}
                     </div>
                   )}
@@ -192,13 +206,13 @@ export default function MenuTab() {
 
               <div className={`meal-cell-container ${a.dis ? 'dis' : ''} ${a.sp ? 'sp' : ''}`}>
                 <div className="meal-content-split">
-                  <div className={`dish-zone ana ${a.main ? 'filled' : 'empty'}`} onClick={() => setShowPicker({ dt: day.iso, ml: 'a', type: 'ana' })}>
+                  <div className={`dish-zone ana ${a.main ? 'filled' : 'empty'}`} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'ana' }); setSelectedCategory('hepsi'); }}>
                     {a.dis ? <div className="status-label out">Dışarıda</div> : a.sp ? <div className="status-label del">Sipariş</div> : (
                       a.main ? <span className="dish-name" style={{ color: getRecipeStatusColor(a.main) }}>{a.main}</span> : <div className="dish-placeholder"><Plus size={12}/> Ana</div>
                     )}
                   </div>
                   {!a.dis && !a.sp && (
-                    <div className={`dish-zone yan ${a.side ? 'filled' : 'empty'}`} onClick={() => setShowPicker({ dt: day.iso, ml: 'a', type: 'yan' })}>
+                    <div className={`dish-zone yan ${a.side ? 'filled' : 'empty'}`} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'yan' }); setSelectedCategory('hepsi'); }}>
                       {a.side ? <small className="dish-name-side" style={{ color: getRecipeStatusColor(a.side) }}>{a.side}</small> : <div className="dish-placeholder-side"><Plus size={10}/> Yan</div>}
                     </div>
                   )}
@@ -288,7 +302,7 @@ export default function MenuTab() {
         isOpen={!!showPicker}
         onClose={() => { setShowPicker(null); setSearchQuery(''); }}
         title={showPicker?.ml === 'k' ? '☀️ Kahvaltı Seçimi' : '🌙 Akşam Yemeği Seçimi'}
-        fullHeight={searchQuery.length > 0}
+        fullHeight
       >
         {showPicker && (() => {
           const currentData = getMealData(showPicker.dt, showPicker.ml);
@@ -322,6 +336,19 @@ export default function MenuTab() {
                 </>
               )}
 
+              <div className="picker-categories">
+                {categories.map(cat => (
+                  <button 
+                    key={cat.id} 
+                    className={`p-cat-btn ${selectedCategory === cat.id ? 'active' : ''}`}
+                    onClick={() => setSelectedCategory(cat.id)}
+                  >
+                    <span className="p-cat-icon">{cat.icon}</span>
+                    <span className="p-cat-label">{cat.label}</span>
+                  </button>
+                ))}
+              </div>
+
               <div className="search-box">
                 <Search size={18} />
                 <input placeholder="Tarif ara..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
@@ -330,7 +357,11 @@ export default function MenuTab() {
 
               <div className="recipe-scroll">
                 {mutfak.tarifler
-                  .filter(r => r.n.toLowerCase().includes(searchQuery.toLowerCase()))
+                  .filter(r => {
+                    const matchesSearch = r.n.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesCat = selectedCategory === 'hepsi' || r.c === selectedCategory;
+                    return matchesSearch && matchesCat;
+                  })
                   .map(r => {
                     const av = available.find(x => x.id === r.id);
                     const status = av?.status || 'missing';
@@ -368,6 +399,15 @@ export default function MenuTab() {
                       </div>
                     );
                   })}
+                {mutfak.tarifler.filter(r => {
+                    const matchesSearch = r.n.toLowerCase().includes(searchQuery.toLowerCase());
+                    const matchesCat = selectedCategory === 'hepsi' || r.c === selectedCategory;
+                    return matchesSearch && matchesCat;
+                  }).length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--txt-light)', fontSize: '13px' }}>
+                    Bu kategoride uygun tarif bulunamadı.
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -444,7 +484,15 @@ export default function MenuTab() {
         .search-box { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 15px; margin-bottom: 15px; }
         .search-box input { flex: 1; border: none; background: none; outline: none; font-size: 14px; }
 
-        .recipe-scroll { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .picker-categories { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 15px; margin-bottom: 5px; scrollbar-width: none; }
+        .picker-categories::-webkit-scrollbar { display: none; }
+        
+        .p-cat-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 15px; background: white; border: 1px solid var(--brd); border-radius: 16px; min-width: 80px; cursor: pointer; transition: all 0.2s; }
+        .p-cat-btn.active { background: var(--mutfak); border-color: var(--mutfak); color: white; transform: scale(1.05); box-shadow: 0 5px 15px rgba(236, 72, 153, 0.2); }
+        .p-cat-btn .p-cat-icon { font-size: 18px; }
+        .p-cat-btn .p-cat-label { font-size: 10px; font-weight: 800; white-space: nowrap; }
+
+        .recipe-scroll { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
         .recipe-item-mini { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 14px; }
         .ri-info { display: flex; align-items: center; gap: 10px; }
         .ri-emoji { font-size: 20px; }
