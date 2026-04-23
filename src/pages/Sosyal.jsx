@@ -67,7 +67,7 @@ export default function Sosyal() {
       </header>
 
       <div className="tab-content">
-        {activeTab === 'hafta' && <HaftaTab sosyal={sosyal} onAdd={(date) => setShowAddActivity({ date })} />}
+        {activeTab === 'hafta' && <HaftaTab sosyal={sosyal} onAdd={(date, data) => setShowAddActivity({ date, prefilledData: data })} />}
         {activeTab === 'gecmis' && <GecmisTab sosyal={sosyal} />}
         {activeTab === 'havuz' && <HavuzTab sosyal={sosyal} onAdd={() => setShowAddFikir(true)} onAddRutin={() => setShowAddRutin(true)} />}
         {activeTab === 'ist' && <IstTab onAdd={(date, data) => setShowAddActivity({ date, prefilledData: data })} />}
@@ -507,7 +507,7 @@ function HaftaTab({ sosyal, onAdd }) {
             setSelectedDay(null);
           }}
           onAdd={(date, prefilled) => {
-            setShowAddActivity({ date, prefilledData: prefilled });
+            onAdd(date, prefilled);
             setSelectedDay(null);
           }}
         />

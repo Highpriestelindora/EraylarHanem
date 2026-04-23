@@ -1449,15 +1449,6 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      setItemFinished: (moduleKey, itemName) => {
-        const state = get();
-        const updatedList = state.mutfak[moduleKey].map(item => 
-          item.n === itemName ? { ...item, cr: 0 } : item
-        );
-        set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
-        get().saveToSupabase();
-      },
-
       updateStockQty: (moduleKey, itemName, direction) => {
         const state = get();
         const updatedList = state.mutfak[moduleKey].map(item => {
@@ -1466,40 +1457,6 @@ const useStore = create(
             const delta = direction * step;
             const newQty = Math.max(0, (item.cr || 0) + delta);
             return { ...item, cr: Number(newQty.toFixed(2)) };
-          }
-          return item;
-        });
-        set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
-        get().saveToSupabase();
-      },
-
-      transferStock: (fromKey, toKey, itemName, qty) => {
-        const state = get();
-        let updatedFrom = [...state.mutfak[fromKey]];
-        let updatedTo = [...state.mutfak[toKey]];
-
-        const fromIdx = updatedFrom.findIndex(i => i.n === itemName);
-        if (fromIdx === -1) return;
-
-        const moveQty = Math.min(qty, updatedFrom[fromIdx].cr);
-        updatedFrom[fromIdx] = { ...updatedFrom[fromIdx], cr: updatedFrom[fromIdx].cr - moveQty };
-
-        const toIdx = updatedTo.findIndex(i => i.n === itemName);
-        if (toIdx !== -1) {
-          updatedTo[toIdx] = { ...updatedTo[toIdx], cr: updatedTo[toIdx].cr + moveQty };
-        } else {
-          updatedTo.push({ ...updatedFrom[fromIdx], cr: moveQty, bt: new Date().toISOString() });
-        }
-
-        set({ mutfak: { ...state.mutfak, [fromKey]: updatedFrom, [toKey]: updatedTo } });
-        get().saveToSupabase();
-      },
-
-      bulkFinishItems: (moduleKey, itemsMap) => {
-        const state = get();
-        const updatedList = state.mutfak[moduleKey].map(item => {
-          if (itemsMap[item.n]) {
-            return { ...item, cr: 0 };
           }
           return item;
         });
@@ -1595,11 +1552,6 @@ const useStore = create(
 
         set({ mutfak: updatedMutfak });
         get().saveToSupabase();
-      },
-
-      addLog: (action, detail) => {
-        const { logs } = get();
-        set({ logs: [{ id: Date.now(), dt: new Date().toLocaleString('tr-TR'), action, detail }, ...logs].slice(0, 100) });
       },
 
       setCurrentUser: (user) => {
