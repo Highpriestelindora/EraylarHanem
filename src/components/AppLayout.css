@@ -85,7 +85,6 @@
   -webkit-overflow-scrolling: touch;
   padding-bottom: 120px; /* Space for the fixed bottom nav */
   position: relative;
-  z-index: 5;
 }
 
 /* Bottom Navigation */
