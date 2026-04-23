@@ -389,6 +389,36 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      deleteExpense: async (id) => {
+        const state = get();
+        const expense = state.finans.harcamalar.find(h => h.id === id);
+        if (!expense) return;
+
+        // Use kasa.bakiyeler as the unified source
+        const yeniBakiyeler = { ...state.kasa.bakiyeler };
+        const payerKey = (expense.payer || '').toLowerCase();
+        
+        // Revert balance if it was originally deducted (not card)
+        if (payerKey && yeniBakiyeler[payerKey] !== undefined && !expense.cardId) {
+          yeniBakiyeler[payerKey] += Number(expense.amount);
+        }
+
+        set({
+          kasa: {
+            ...state.kasa,
+            bakiyeler: yeniBakiyeler,
+            gecmis: state.kasa.gecmis.filter(g => g.id !== id)
+          },
+          finans: {
+            ...state.finans,
+            harcamalar: state.finans.harcamalar.filter(h => h.id !== id),
+            history: state.finans.history.filter(h => h.id !== id)
+          }
+        });
+        get().addLog('Harcama Silindi', `${expense.payer || 'Sistem'}: ${expense.amount}₺ - ${expense.title}`);
+        get().saveToSupabase();
+      },
+
       payDebt: async (debtId, amount, payer) => {
         const state = get();
         const updatedBorclar = state.finans.borclar.map(d => {

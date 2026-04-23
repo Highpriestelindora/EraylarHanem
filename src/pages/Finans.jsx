@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, TrendingDown, Clock, PlusCircle, 
   X, ArrowRightLeft, CreditCard, Landmark, 
-  Plus, Receipt, ChevronRight, Wallet, Filter, ArrowLeft
+  Plus, Receipt, ChevronRight, Wallet, Filter, ArrowLeft, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -212,7 +212,12 @@ export default function Finans() {
                       <strong>{exp.title}</strong>
                       <span>{new Date(exp.dt).toLocaleDateString('tr-TR')} · {exp.payer?.toUpperCase()}</span>
                     </div>
-                    <div className="exp-amt">-{formatMoney(exp.amount)}</div>
+                    <div className="exp-amt-group">
+                      <div className="exp-amt">-{formatMoney(exp.amount)}</div>
+                      <button className="delete-exp-btn" onClick={() => setDeletingExpense(exp)} title="Harcamayı Sil">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -310,6 +315,20 @@ export default function Finans() {
           confirmText="Evet, Öde"
           onConfirm={confirmPayDebt}
           onCancel={() => setPayingDebt(null)}
+        />
+      )}
+
+      {deletingExpense && (
+        <ConfirmModal 
+          title="Harcamayı Sil"
+          message={`"${deletingExpense.title}" harcamasını silmek istediğine emin misin? Bakiye geri yüklenecektir.`}
+          confirmText="Evet, Sil"
+          onConfirm={() => {
+            deleteExpense(deletingExpense.id);
+            setDeletingExpense(null);
+            toast.success('Harcama silindi! 🗑️');
+          }}
+          onCancel={() => setDeletingExpense(null)}
         />
       )}
     </AnimatedPage>

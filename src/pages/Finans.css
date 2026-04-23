@@ -110,7 +110,22 @@
 .exp-info { flex: 1; }
 .exp-info strong { display: block; font-size: 14px; }
 .exp-info span { font-size: 11px; color: var(--txt-light); }
+.exp-amt-group { display: flex; align-items: center; gap: 10px; }
 .exp-amt { font-weight: 900; color: #EF4444; font-size: 14px; }
+.delete-exp-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: #FEF2F2;
+  color: #EF4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.delete-exp-btn:hover { background: #EF4444; color: white; transform: scale(1.1); }
 
 /* Debt Cards */
 .debt-card {
