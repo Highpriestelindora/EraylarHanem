@@ -128,6 +128,73 @@ const StokTab = () => {
 
   return (
     <div className="stok-tab-container">
+      <ActionSheet
+        isOpen={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        title={editingItem?.isNew ? '✨ Yeni Malzeme Ekle' : '📝 Stok Kartı'}
+      >
+        {editingItem && (
+          <form onSubmit={handleSaveItem} style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '30px' }}>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Malzeme Adı</label>
+                <input name="n" defaultValue={editingItem.item?.n || ''} required placeholder="Örn: Süt" style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              </div>
+              <div className="form-group">
+                <label>İkon (Emoji)</label>
+                <input name="ic" defaultValue={editingItem.item?.ic || '📦'} placeholder="🥛" style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Birim</label>
+                <select name="u" defaultValue={editingItem.item?.u || 'adet'} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+                  <option value="adet">Adet</option>
+                  <option value="kg">KG</option>
+                  <option value="gram">Gram</option>
+                  <option value="litre">Litre</option>
+                  <option value="paket">Paket</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Reyon/Kategori</label>
+                <select name="ct" defaultValue={editingItem.item?.ct || 'Diğer'} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+                  {REYON_ORDER.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Kritik Stok Sınırı (mn)</label>
+                <input name="mn" type="number" step="0.1" defaultValue={editingItem.item?.mn || 0} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              </div>
+              <div className="form-group">
+                <label>Mevcut Miktar (cr)</label>
+                <input name="cr" type="number" step="0.1" defaultValue={editingItem.item?.cr || 0} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Marka Tercihi</label>
+                <input name="mk" defaultValue={editingItem.item?.mk || ''} placeholder="Sütaş, BİM vb." style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              </div>
+              <div className="form-group">
+                <label>Paket/Ağırlık Bilgisi</label>
+                <input name="pk" defaultValue={editingItem.item?.pk || ''} placeholder="1L, 500g vb." style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              </div>
+            </div>
+
+            <button type="submit" className="submit-btn" style={{ background: 'var(--mutfak)', color: 'white', padding: '18px', borderRadius: '20px', border: 'none', fontWeight: '900', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}>
+              <Save size={20} />
+              <span>Kaydet</span>
+            </button>
+          </form>
+        )}
+      </ActionSheet>
+
       <div className="sub-nav">
         <button className={subTab === 'buzdolabi' ? 'active' : ''} onClick={() => setSubTab('buzdolabi')}>❄️ Buzdolabı</button>
         <button className={subTab === 'kiler' ? 'active' : ''} onClick={() => setSubTab('kiler')}>🧺 Kiler</button>
@@ -237,70 +304,6 @@ const StokTab = () => {
         )}
       </div>
 
-      <ActionSheet
-        isOpen={!!editingItem}
-        onClose={() => setEditingItem(null)}
-        title={editingItem?.isNew ? '✨ Yeni Malzeme Ekle' : '📝 Stok Kartı'}
-      >
-        <form onSubmit={handleSaveItem} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="form-row">
-            <div className="form-group">
-              <label>Malzeme Adı</label>
-              <input name="n" defaultValue={editingItem?.item?.n || ''} required placeholder="Örn: Süt" style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
-            </div>
-            <div className="form-group">
-              <label>İkon (Emoji)</label>
-              <input name="ic" defaultValue={editingItem?.item?.ic || '📦'} placeholder="🥛" style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Birim</label>
-              <select name="u" defaultValue={editingItem?.item?.u || 'adet'} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
-                <option value="adet">Adet</option>
-                <option value="kg">KG</option>
-                <option value="gram">Gram</option>
-                <option value="litre">Litre</option>
-                <option value="paket">Paket</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Reyon/Kategori</label>
-              <select name="ct" defaultValue={editingItem?.item?.ct || 'Diğer'} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
-                {REYON_ORDER.map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Kritik Stok Sınırı (mn)</label>
-              <input name="mn" type="number" step="0.1" defaultValue={editingItem?.item?.mn || 0} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
-            </div>
-            <div className="form-group">
-              <label>Mevcut Miktar (cr)</label>
-              <input name="cr" type="number" step="0.1" defaultValue={editingItem?.item?.cr || 0} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Marka Tercihi</label>
-              <input name="mk" defaultValue={editingItem?.item?.mk || ''} placeholder="Sütaş, BİM vb." style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
-            </div>
-            <div className="form-group">
-              <label>Paket/Ağırlık Bilgisi</label>
-              <input name="pk" defaultValue={editingItem?.item?.pk || ''} placeholder="1L, 500g vb." style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
-            </div>
-          </div>
-
-          <button type="submit" className="submit-btn" style={{ background: 'var(--mutfak)', color: 'white', padding: '18px', borderRadius: '20px', border: 'none', fontWeight: '900', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}>
-            <Save size={20} />
-            <span>Kaydet</span>
-          </button>
-        </form>
-      </ActionSheet>
       </div>
 
       <ActionSheet
