@@ -48,12 +48,24 @@ export default function Mutfak() {
                     i.mn > 0 && i.cr <= i.mn && !shoppingListNames.includes(i.n?.toLowerCase() || '')
                   ).length, 0);
                 return criticalCount > 0 ? (
-                  <div className="critical-container" onClick={() => setActiveTab('alisveris')}>
-                    <div className="critical-box">
+                  <div className="critical-container">
+                    <div className="critical-box" onClick={() => setActiveTab('alisveris')}>
                       <span className="c-emoji">⚠️</span>
                       <strong>{criticalCount} Ürün Azaldı!</strong>
                       <ChevronRight size={14} />
                     </div>
+                    <button 
+                      className="critical-reset-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if(window.confirm('Tüm ürünlerin kritik stoklarını 0 yapmak istiyor musunuz?')) {
+                          useStore.getState().resetAllCriticalStocks();
+                        }
+                      }}
+                      title="Uyarıları Temizle"
+                    >
+                      🧹 Temizle
+                    </button>
                   </div>
                 ) : null;
               })()}

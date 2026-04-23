@@ -11,19 +11,28 @@
 
 .tab-content {
   flex: 1;
-  padding: 20px;
+  padding: 4px;
   overflow-y: auto;
-  padding-bottom: 100px;
+  padding-bottom: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
 }
 
 /* Tabs are now global in index.css */
 
 /* Calendar Grid Styles */
 .calendar-wrapper {
-  padding: 10px;
-  border-radius: 20px;
+  padding: 6px;
+  border-radius: 16px;
   background: white;
-  margin: 0 10px;
+  margin: 0;
   border: 1px solid var(--brd);
   display: flex;
   flex-direction: column;
@@ -48,19 +57,20 @@
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: 3px;
 }
 
 .calendar-cell {
-  aspect-ratio: 1;
+  height: 8.5vh;
+  min-height: 40px;
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 4px;
+  padding: 1px;
   border: 1.5px solid rgba(197, 28, 108, 0.1); /* Visible Grid */
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -126,7 +136,7 @@
 }
 
 .cell-num {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 900;
   color: var(--txt);
 }
@@ -154,13 +164,13 @@
 }
 
 .mini-event-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 8px;
+  font-size: 6px;
   color: white;
   cursor: pointer;
   transition: transform 0.2s;
@@ -798,9 +808,39 @@
   font-size: 14px;
   font-weight: 900;
   color: #c51c6c;
-  margin: 25px 0 12px 4px;
+  margin: 10px 0 8px 4px; /* Reduced margin */
   letter-spacing: 0.5px;
 }
+
+/* Sosyal Compact Overrides */
+.sosyal-container .module-header {
+  padding: 6px 12px !important;
+}
+
+.sosyal-container .header-top h1 {
+  font-size: 1rem !important;
+  margin: 0 !important;
+}
+
+.sosyal-container .header-top p {
+  font-size: 0.6rem !important;
+  margin: 0 !important;
+}
+
+.sosyal-container .header-emoji {
+  font-size: 1.4rem !important;
+}
+
+.sosyal-container .tab-nav {
+  margin-top: 4px !important;
+  gap: 3px !important;
+}
+
+.sosyal-container .tab-btn {
+  padding: 3px 6px !important;
+  font-size: 10px !important;
+}
+
 
 .history-month-header small {
   font-size: 10px;

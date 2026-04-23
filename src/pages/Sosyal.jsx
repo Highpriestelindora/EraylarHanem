@@ -343,7 +343,7 @@ function HaftaTab({ sosyal, onAdd }) {
 
   return (
     <div className="tab-pane animate-fadeIn">
-      <div className="section-header calendar-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: '10px' }}>
+      <div className="section-header calendar-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 10px', marginBottom: '5px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button className="nav-arrow" onClick={() => changeMonth(-1)}><ArrowRight style={{ transform: 'rotate(180deg)' }} size={20} /></button>
           <h3 style={{ fontSize: '16px', fontWeight: '900', color: 'var(--txt)', minWidth: '140px', textAlign: 'center' }}>{monthName.toUpperCase()}</h3>
@@ -398,7 +398,7 @@ function HaftaTab({ sosyal, onAdd }) {
         </div>
       </div>
 
-      <div className="upcoming-list" style={{ padding: '20px' }}>
+      <div className="upcoming-list" style={{ padding: '10px 20px' }}>
         <h4 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '15px', opacity: 0.6 }}>{monthName.toUpperCase()} PLANI</h4>
         
         {(() => {
@@ -869,7 +869,27 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
 
     if (hasConflict) {
       const conflictAct = existingActivities.find(a => !a.tamamlandi && a.tarih === date && a.saat === saat);
-      toast.error(`Bu saatte zaten "${conflictAct.baslik}" planlan  return (
+      toast.error(`Bu saatte zaten "${conflictAct.baslik}" planlanmış!`);
+      return;
+    }
+
+    addSocialActivity({
+      baslik,
+      tarih: date,
+      saat,
+      emoji,
+      mekan,
+      harcama: Number(harcama),
+      tur,
+      kisiSayisi: Number(kisiSayisi),
+      tamamlandi: false
+    });
+    
+    toast.success('Yeni aktivite planlandı! 📅');
+    onClose();
+  };
+
+  return (
     <Portal>
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
@@ -924,16 +944,6 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
         </div>
       </div>
     </Portal>
-  );ışarıda</option>
-              <option value="evde">🏠 Evde</option>
-            </select>
-          </div>
-          <button className="submit-btn social-gradient" onClick={handleSave} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '20px', cursor: 'pointer' }}>
-            Planla
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
 
