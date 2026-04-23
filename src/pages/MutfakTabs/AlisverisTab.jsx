@@ -80,7 +80,7 @@ const AlisverisTab = () => {
 
   const handleOpenCheckout = () => {
     const selected = alisveris.filter(i => checkedIds.includes(i.id));
-    setCheckoutItems(selected.map(i => ({ ...i }))); // Clone to allow local edits
+    setCheckoutItems(selected.map(i => ({ ...i, price: '' }))); // Initialize with empty price
     setShowCheckout(true);
   };
 
@@ -103,6 +103,15 @@ const AlisverisTab = () => {
 
   const updateCheckoutItemQty = (id, newQt) => {
     setCheckoutItems(prev => prev.map(i => i.id === id ? { ...i, qt: newQt } : i));
+  };
+
+  const updateCheckoutItemPrice = (id, newPrice) => {
+    const updated = checkoutItems.map(i => i.id === id ? { ...i, price: newPrice } : i);
+    setCheckoutItems(updated);
+    
+    // Auto-calculate total
+    const total = updated.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+    setTotalPrice(total > 0 ? total.toString() : '');
   };
 
   return (
@@ -164,13 +173,21 @@ const AlisverisTab = () => {
               </div>
               <div className="item-info">
                 <span className="name">{item.nm}</span>
-                <span className="meta" onClick={(e) => { e.stopPropagation(); setEditQtyItem({ id: item.id, val: (item.qt || '').split(' ')[0], unit: (item.qt || '').split(' ')[1] || 'adet' }); }}>
-                  {item.qt} • {item.mk} ✏️
+                <span className="meta">
+                  {item.qt} • {item.mk}
                 </span>
               </div>
-              <button className="del-btn" onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}>
-                <Trash2 size={16} />
-              </button>
+              <div className="item-actions" style={{ display: 'flex', gap: '5px' }}>
+                <button className="edit-btn-small" onClick={(e) => { 
+                  e.stopPropagation(); 
+                  setEditQtyItem({ id: item.id, val: (item.qt || '').split(' ')[0], unit: (item.qt || '').split(' ')[1] || 'adet' }); 
+                }} style={{ background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--txt-light)', padding: '8px', borderRadius: '12px', cursor: 'pointer' }}>
+                  <ArrowRight size={14} style={{ transform: 'rotate(-45deg)' }} />
+                </button>
+                <button className="del-btn" onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -231,17 +248,28 @@ const AlisverisTab = () => {
         title="🛒 Kasaya Git"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="checkout-items-list" style={{ maxHeight: '25vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', background: 'var(--bg)', borderRadius: '20px', border: '1px solid var(--brd)' }}>
-            <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px' }}>SEÇİLEN ÜRÜNLER</label>
+          <div className="checkout-items-list" style={{ maxHeight: '35vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '15px', background: 'var(--bg)', borderRadius: '24px', border: '1px solid var(--brd)' }}>
+            <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px', marginBottom: '5px' }}>ÜRÜN BAZLI FİYAT VE MİKTAR</label>
             {checkoutItems.map(item => (
-              <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 700, flex: 1 }}>{item.nm}</span>
+              <div key={item.id} className="checkout-item-row" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: '10px', alignItems: 'center' }}>
+                <span style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nm}</span>
                 <input 
                   type="text" 
                   value={item.qt} 
+                  placeholder="Miktar"
                   onChange={(e) => updateCheckoutItemQty(item.id, e.target.value)}
-                  style={{ width: '90px', padding: '8px 12px', borderRadius: '12px', border: '1px solid var(--brd)', fontSize: '13px', textAlign: 'center', background: 'white' }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px solid var(--brd)', fontSize: '12px', textAlign: 'center', background: 'white' }}
                 />
+                <div style={{ position: 'relative' }}>
+                  <input 
+                    type="number" 
+                    value={item.price} 
+                    placeholder="₺"
+                    onChange={(e) => updateCheckoutItemPrice(item.id, e.target.value)}
+                    style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px solid var(--brd)', fontSize: '12px', textAlign: 'center', background: 'white' }}
+                    inputMode="decimal"
+                  />
+                </div>
               </div>
             ))}
           </div>
