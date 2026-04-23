@@ -367,8 +367,10 @@ const useStore = create(
         
         // Use kasa.bakiyeler as the unified source
         const yeniBakiyeler = { ...state.kasa.bakiyeler };
-        if (expense.payer && yeniBakiyeler[expense.payer] !== undefined && !expense.cardId) {
-          yeniBakiyeler[expense.payer] -= Number(expense.amount);
+        const payerKey = (expense.payer || '').toLowerCase();
+        
+        if (payerKey && yeniBakiyeler[payerKey] !== undefined && !expense.cardId) {
+          yeniBakiyeler[payerKey] -= Number(expense.amount);
         }
 
         set({
@@ -1574,6 +1576,17 @@ const useStore = create(
       resetMutfak: () => {
         set({ mutfak: DEFAULT_STATE.mutfak });
         get().saveToSupabase();
+      },
+
+      addLog: (action, detail) => {
+        const state = get();
+        const newLog = {
+          id: Date.now(),
+          action,
+          detail,
+          date: new Date().toISOString()
+        };
+        set({ logs: [newLog, ...(state.logs || [])].slice(0, 100) });
       }
     }),
     {
