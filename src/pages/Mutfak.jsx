@@ -60,7 +60,17 @@ export default function Mutfak() {
             </div>
           </div>
           <div className="header-actions">
-            <button className={`icon-btn ${activeTab === 'tarifler' ? 'active' : ''}`} onClick={() => setActiveTab('tarifler')} title="Tarifler Kitabı" style={{ background: activeTab === 'tarifler' ? 'white' : 'rgba(255,255,255,0.2)', color: activeTab === 'tarifler' ? 'var(--mutfak)' : 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
+            <button 
+              className={`icon-btn ${activeTab === 'tarifler' ? 'active' : ''}`} 
+              onClick={() => setActiveTab(prev => prev === 'tarifler' ? 'menu' : 'tarifler')} 
+              title="Tarifler Kitabı" 
+              style={{ 
+                background: activeTab === 'tarifler' ? 'white' : 'rgba(255,255,255,0.2)', 
+                color: activeTab === 'tarifler' ? 'var(--mutfak)' : 'white', 
+                border: '1px solid rgba(255,255,255,0.3)',
+                boxShadow: activeTab === 'tarifler' ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'
+              }}
+            >
               <BookOpen size={20} />
             </button>
             <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)' }}>
