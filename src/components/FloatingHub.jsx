@@ -64,59 +64,73 @@ export default function FloatingHub() {
 
       {activeModal === 'chat' && (
         <div className="hub-full-modal chat-immersive animate-fadeIn">
-          <div className="immersive-fridge">
-            <img src="https://images.unsplash.com/photo-1571175432230-01c24844c021?auto=format&fit=crop&q=80&w=1000" className="fridge-bg" alt="Fridge" />
-            <div className="immersive-overlay" />
+          <div className="immersive-fridge-surface">
+            <div className="fridge-sheen" />
             
             <header className="immersive-header">
-              <h3>📝 Buzdolabı Notları</h3>
+              <div className="header-pill">
+                <Refrigerator size={18} />
+                <h3>Buzdolabı Notları</h3>
+              </div>
               <button className="close-immersive" onClick={() => setActiveModal(null)}><X size={24} /></button>
             </header>
 
             <div className="immersive-notes-board" ref={constraintsRef}>
-              {notes.map((note, idx) => (
-                <motion.div 
-                  key={note.id} 
-                  drag
-                  dragConstraints={constraintsRef}
-                  dragElastic={0.1}
-                  dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
-                  className="immersive-note-wrap"
-                  style={{ 
-                    background: note.w === 'Esra' ? '#FFEBEE' : '#E3F2FD',
-                    left: (note.x || (10 + (idx % 3) * 25)) + '%',
-                    top: (note.y || (20 + (idx % 5) * 15)) + '%',
-                    transform: `rotate(${Math.sin(idx) * 10}deg)`,
-                    zIndex: 5 + idx
-                  }}
-                  whileDrag={{ scale: 1.1, zIndex: 100, rotate: 0 }}
-                  onDragEnd={(event, info) => {
-                    if (!constraintsRef.current) return;
-                    const board = constraintsRef.current.getBoundingClientRect();
-                    const newX = ((info.point.x - board.left) / board.width) * 100;
-                    const newY = ((info.point.y - board.top) / board.height) * 100;
-                    updateNotePosition(note.id, Math.max(5, Math.min(85, newX)), Math.max(10, Math.min(80, newY)));
-                  }}
-                >
-                  <div className="immersive-magnet" />
-                  <p>{note.t}</p>
-                  <div className="note-footer">
-                    <span>{note.w}</span>
-                    <button onClick={() => removeNote(note.id)}><Trash2 size={12} /></button>
-                  </div>
-                </motion.div>
-              ))}
+              {notes.map((note, idx) => {
+                if (!note) return null;
+                const posColor = (idx % 3 === 0) ? '#fff9c4' : (idx % 3 === 1 ? '#e3f2fd' : '#fce7f3');
+                return (
+                  <motion.div 
+                    key={note.id} 
+                    drag
+                    dragConstraints={constraintsRef}
+                    dragElastic={0.05}
+                    className="immersive-note-wrap"
+                    style={{ 
+                      backgroundColor: posColor,
+                      left: (note.x || (15 + (idx % 3) * 25)) + '%',
+                      top: (note.y || (20 + (idx % 4) * 18)) + '%',
+                      transform: `rotate(${(idx % 10 - 5) * 2}deg)`,
+                      zIndex: 10 + idx
+                    }}
+                    whileDrag={{ scale: 1.1, zIndex: 1000, rotate: 0 }}
+                    onDragEnd={(event, info) => {
+                      if (!constraintsRef.current) return;
+                      const board = constraintsRef.current.getBoundingClientRect();
+                      const newX = ((info.point.x - board.left) / board.width) * 100;
+                      const newY = ((info.point.y - board.top) / board.height) * 100;
+                      updateNotePosition(note.id, Math.max(5, Math.min(85, newX)), Math.max(10, Math.min(80, newY)));
+                    }}
+                  >
+                    <div className="immersive-magnet-cap" />
+                    <p className="note-text-premium">{note.t}</p>
+                    <div className="note-footer-premium">
+                      <span className="writer-tag">{note.w}</span>
+                      <button className="delete-btn-mini" onClick={() => removeNote(note.id)}><Trash2 size={14} /></button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              {notes.length === 0 && (
+                <div className="empty-immersive-msg">
+                   <div className="empty-icon-wrap">📝</div>
+                   <p>Buzdolabı kapağı tertemiz!<br/>Bir not bırakmak ister misin?</p>
+                </div>
+              )}
             </div>
 
-            <div className="immersive-input-area">
-              <div className="input-glass">
+            <div className="immersive-input-wrap">
+              <div className="input-glass-premium">
                 <input 
                   value={noteText} 
                   onChange={e => setNoteText(e.target.value)} 
-                  placeholder="Buzdolabına bir not bırak..."
+                  placeholder="Mıknatıslı bir not yapıştır..."
                   onKeyPress={e => e.key === 'Enter' && handleAddNote()}
                 />
-                <button onClick={handleAddNote} className="send-btn"><Send size={20} /></button>
+                <button onClick={handleAddNote} className="immersive-send-btn">
+                  <Send size={20} />
+                </button>
               </div>
             </div>
           </div>

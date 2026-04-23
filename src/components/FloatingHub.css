@@ -139,97 +139,194 @@
   flex-direction: column;
 }
 
-.immersive-fridge {
+.immersive-fridge-surface {
   position: relative;
   width: 100%;
   height: 100%;
+  background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 50%, #cbd5e1 100%);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-.fridge-bg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  position: absolute;
-  opacity: 0.9;
-}
-
-.immersive-overlay {
+.fridge-sheen {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, rgba(255,255,255,0.4), rgba(0,0,0,0.1));
+  background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.4) 45%, rgba(255,255,255,0.4) 50%, transparent 55%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .immersive-header {
   position: relative;
-  z-index: 10;
-  padding: 40px 20px 20px;
+  z-index: 100;
+  padding: 50px 25px 25px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.immersive-header h3 { margin: 0; font-size: 24px; font-weight: 900; color: #1e293b; }
-.close-immersive { background: white; border: none; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; }
+.header-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: white;
+  padding: 8px 20px;
+  border-radius: 100px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.header-pill h3 { 
+  margin: 0; 
+  font-size: 18px; 
+  font-weight: 900; 
+  color: #334155; 
+}
+
+.close-immersive { 
+  background: rgba(0,0,0,0.05); 
+  border: none; 
+  width: 44px; 
+  height: 44px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  cursor: pointer; 
+  transition: all 0.2s;
+}
+
+.close-immersive:active { transform: scale(0.9); }
 
 .immersive-notes-board {
   position: relative;
-  z-index: 5;
-  height: calc(100% - 200px);
-  overflow-y: auto;
-  padding: 20px;
+  z-index: 50;
+  flex: 1;
+  padding: 30px;
+  overflow: hidden;
 }
 
 .immersive-note-wrap {
   position: absolute;
-  width: 160px;
-  min-height: 160px;
+  width: 140px;
+  min-height: 140px;
   padding: 25px 15px 15px;
-  border-radius: 4px;
-  box-shadow: 2px 10px 20px rgba(0,0,0,0.2);
+  border-radius: 2px;
+  box-shadow: 3px 15px 30px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  cursor: grab;
+  touch-action: none;
 }
 
-.immersive-magnet {
+.immersive-note-wrap:active { cursor: grabbing; }
+
+.immersive-magnet-cap {
   position: absolute;
   top: -10px;
   left: 50%;
   transform: translateX(-50%);
   width: 24px;
   height: 24px;
-  background: #334155;
+  background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b);
   border-radius: 50%;
-  box-shadow: inset 0 2px 4px rgba(255,255,255,0.3);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
 }
 
-.immersive-note-wrap p { font-size: 16px; font-weight: 700; color: #1e293b; line-height: 1.4; }
-.note-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 10px; }
-.note-footer span { font-size: 12px; font-weight: 900; opacity: 0.5; }
-.note-footer button { background: none; border: none; color: #ef4444; cursor: pointer; }
-
-.immersive-input-area {
-  position: absolute;
-  bottom: 40px;
-  left: 20px;
-  right: 20px;
-  z-index: 10;
+.note-text-premium { 
+  font-size: 15px; 
+  font-weight: 700; 
+  color: #334155; 
+  line-height: 1.3;
+  margin: 0;
 }
 
-.input-glass {
-  background: rgba(255, 255, 255, 0.8);
+.note-footer-premium { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-top: 10px; 
+  border-top: 1px solid rgba(0,0,0,0.05); 
+  padding-top: 10px; 
+}
+
+.writer-tag { 
+  font-size: 10px; 
+  font-weight: 900; 
+  opacity: 0.3; 
+  text-transform: uppercase;
+}
+
+.delete-btn-mini { 
+  background: none; 
+  border: none; 
+  color: #ef4444; 
+  cursor: pointer; 
+  padding: 5px;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+.delete-btn-mini:hover { opacity: 1; }
+
+.empty-immersive-msg {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  color: #64748b;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.empty-icon-wrap { font-size: 48px; }
+
+.immersive-input-wrap {
+  position: relative;
+  z-index: 100;
+  padding: 30px 20px 50px;
+}
+
+.input-glass-premium {
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
-  padding: 12px 12px 12px 24px;
+  padding: 10px 10px 10px 25px;
   border-radius: 100px;
   display: flex;
   gap: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.5);
 }
 
-.input-glass input { flex: 1; border: none; background: none; outline: none; font-size: 16px; font-weight: 700; color: #1e293b; }
-.send-btn { background: #ec4899; color: white; border: none; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(236,72,153,0.3); cursor: pointer; transition: 0.2s; }
-.send-btn:active { transform: scale(0.9); }
+.input-glass-premium input { 
+  flex: 1; 
+  border: none; 
+  background: none; 
+  outline: none; 
+  font-size: 16px; 
+  font-weight: 700; 
+  color: #334155; 
+}
+
+.immersive-send-btn { 
+  background: #475569; 
+  color: white; 
+  border: none; 
+  width: 50px; 
+  height: 50px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+  cursor: pointer; 
+  transition: all 0.2s; 
+}
+
+.immersive-send-btn:active { transform: scale(0.9); }
 
 .hub-modal {
   position: fixed;
