@@ -1267,13 +1267,15 @@ const useStore = create(
           durum: 'planda',
           ...activity 
         };
-        set({ sosyal: { ...state.sosyal, aktiviteler: [newActivity, ...state.sosyal.aktiviteler] } });
+        const currentAkt = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
+        set({ sosyal: { ...state.sosyal, aktiviteler: [newActivity, ...currentAkt] } });
         get().saveToSupabase();
       },
 
       updateSocialActivity: (id, updates) => {
         const state = get();
-        const updatedAktiviteler = state.sosyal.aktiviteler.map(a => 
+        const aktList = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
+        const updatedAktiviteler = aktList.map(a => 
           a.id === id ? { ...a, ...updates } : a
         );
         set({ sosyal: { ...state.sosyal, aktiviteler: updatedAktiviteler } });
@@ -1282,11 +1284,12 @@ const useStore = create(
 
       completeSocialActivity: (id, pGorkem, pEsra, cost = 0, comment = '') => {
         const state = get();
-        const act = state.sosyal.aktiviteler.find(x => x.id === id);
+        const aktList2 = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
+        const act = aktList2.find(x => x.id === id);
         if (!act) return;
 
         const completionDate = new Date().toISOString();
-        const yeniAktiviteler = state.sosyal.aktiviteler.map(a => 
+        const yeniAktiviteler = aktList2.map(a => 
           a.id === id ? { 
             ...a, 
             tamamlandi: true, 
@@ -1311,7 +1314,7 @@ const useStore = create(
         }
 
         // 2. Pool Stats Update
-        const yeniHavuz = (state.sosyal.havuz || []).map(p => {
+        const yeniHavuz = (Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : []).map(p => {
           if (p.baslik.toLowerCase() === act.baslik.toLowerCase()) {
             return {
               ...p,
@@ -1328,7 +1331,7 @@ const useStore = create(
 
       cancelSocialActivity: (id) => {
         const state = get();
-        const yeniAktiviteler = state.sosyal.aktiviteler.filter(a => a.id !== id);
+        const yeniAktiviteler = (Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : []).filter(a => a.id !== id);
         set({ sosyal: { ...state.sosyal, aktiviteler: yeniAktiviteler } });
         get().saveToSupabase();
       },
@@ -1336,7 +1339,8 @@ const useStore = create(
       addRutin: (rutin) => {
         const state = get();
         const newRutin = { id: Date.now(), ...rutin };
-        set({ sosyal: { ...state.sosyal, rutinler: [newRutin, ...state.sosyal.rutinler] } });
+        const currentRut = Array.isArray(state.sosyal.rutinler) ? state.sosyal.rutinler : [];
+        set({ sosyal: { ...state.sosyal, rutinler: [newRutin, ...currentRut] } });
         get().saveToSupabase();
       },
 

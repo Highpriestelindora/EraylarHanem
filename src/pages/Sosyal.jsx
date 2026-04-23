@@ -14,7 +14,16 @@ import ConfirmModal from '../components/ConfirmModal';
 import './Sosyal.css';
 
 export default function Sosyal() {
-  const { sosyal, setModuleData } = useStore();
+  const { sosyal: rawSosyal, setModuleData } = useStore();
+  
+  // Normalize: ensure all array fields are actual arrays (localStorage may store {} instead of [])
+  const sosyal = useMemo(() => ({
+    ...rawSosyal,
+    aktiviteler: Array.isArray(rawSosyal?.aktiviteler) ? rawSosyal.aktiviteler : [],
+    havuz: Array.isArray(rawSosyal?.havuz) ? rawSosyal.havuz : [],
+    rutinler: Array.isArray(rawSosyal?.rutinler) ? rawSosyal.rutinler : [],
+  }), [rawSosyal]);
+
   const [activeTab, setActiveTab] = useState(sosyal.tab || 'hafta');
   const [showAddActivity, setShowAddActivity] = useState(null); // null or { date, prefilledData }
   const [showAddRutin, setShowAddRutin] = useState(false);
