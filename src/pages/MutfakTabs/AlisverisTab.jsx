@@ -389,7 +389,7 @@ const AlisverisTab = () => {
         .confirm-btn:active { transform: scale(0.97); }
 
         .checkout-bar {
-          position: fixed; bottom: 85px; left: 20px; right: 20px; 
+          position: fixed; bottom: 115px; left: 20px; right: 20px; 
           background: #1e293b; color: white; padding: 16px 24px;
           border-radius: 24px; display: flex; justify-content: space-between;
           align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 100;
