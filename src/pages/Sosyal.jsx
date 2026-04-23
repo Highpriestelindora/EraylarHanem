@@ -869,70 +869,62 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
 
     if (hasConflict) {
       const conflictAct = existingActivities.find(a => !a.tamamlandi && a.tarih === date && a.saat === saat);
-      toast.error(`Bu saatte zaten "${conflictAct.baslik}" planlanmış! ⚠️`, {
-        style: { borderRadius: '12px', background: '#333', color: '#fff' }
-      });
-      return;
-    }
-
-    addSocialActivity({
-      baslik,
-      emoji,
-      tarih: date,
-      saat,
-      mekan,
-      tur,
-      tahmini_harcama: Number(harcama) || 0,
-      kisi_sayisi: Number(kisiSayisi) || 2
-    });
-    onClose();
-    toast.success('Aktivite planlandı! 🗓️');
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <header className="modal-header">
-          <h3>📅 Yeni Aktivite</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-        <div className="modal-form">
-          <div className="form-group">
-            <label>Aktivite Başlığı</label>
-            <input type="text" value={baslik} onChange={e => setBaslik(e.target.value)} placeholder="Örn: Sinema Gecesi" />
-          </div>
-          <div className="form-group">
-            <label>Tarih</label>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)} lang="tr-TR" />
-          </div>
-          <div className="form-group">
-            <label>Mekan / Yer</label>
-            <input type="text" value={mekan} onChange={e => setMekan(e.target.value)} placeholder="Örn: Emaar AVM" />
-          </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      toast.error(`Bu saatte zaten "${conflictAct.baslik}" planlan  return (
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+          <header className="modal-header">
+            <h3>📅 Yeni Aktivite</h3>
+            <button className="close-btn" onClick={onClose}><X size={20} /></button>
+          </header>
+          <div className="modal-form">
             <div className="form-group">
-              <label>Saat</label>
-              <input type="time" value={saat} onChange={e => setSaat(e.target.value)} />
+              <label>Aktivite Başlığı</label>
+              <input type="text" value={baslik} onChange={e => setBaslik(e.target.value)} placeholder="Örn: Sinema Gecesi" />
             </div>
             <div className="form-group">
-              <label>Emoji</label>
-              <input type="text" value={emoji} onChange={e => setEmoji(e.target.value)} placeholder="🎭" />
-            </div>
-          </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div className="form-group">
-              <label>Tahmini Bütçe (₺)</label>
-              <input type="number" value={harcama} onChange={e => setHarcama(e.target.value)} placeholder="₺0" />
+              <label>Tarih</label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} lang="tr-TR" />
             </div>
             <div className="form-group">
-              <label>Kaç Kişi?</label>
-              <input type="number" value={kisiSayisi} onChange={e => setKisiSayisi(e.target.value)} placeholder="2" />
+              <label>Mekan / Yer</label>
+              <input type="text" value={mekan} onChange={e => setMekan(e.target.value)} placeholder="Örn: Emaar AVM" />
             </div>
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Saat</label>
+                <input type="time" value={saat} onChange={e => setSaat(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Emoji</label>
+                <input type="text" value={emoji} onChange={e => setEmoji(e.target.value)} placeholder="✨" />
+              </div>
+            </div>
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Tahmini Bütçe (₺)</label>
+                <input type="number" value={harcama} onChange={e => setHarcama(e.target.value)} placeholder="₺0" />
+              </div>
+              <div className="form-group">
+                <label>Kaç Kişi?</label>
+                <input type="number" value={kisiSayisi} onChange={e => setKisiSayisi(e.target.value)} placeholder="2" />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Tür</label>
+              <select value={tur} onChange={e => setTur(e.target.value)} style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%' }}>
+                <option value="disari">🌳 Dışarıda</option>
+                <option value="evde">🏠 Evde</option>
+              </select>
+            </div>
+            <button className="submit-btn social-gradient" onClick={handleSave} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '20px', cursor: 'pointer' }}>
+              Planla
+            </button>
           </div>
-          <div className="form-group">
-            <label>Tür</label>
-            <select value={tur} onChange={e => setTur(e.target.value)} style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%' }}>
-              <option value="disari">🌆 Dışarıda</option>
+        </div>
+      </div>
+    </Portal>
+  );ışarıda</option>
               <option value="evde">🏠 Evde</option>
             </select>
           </div>
@@ -1284,14 +1276,6 @@ function AddRutinModal({ onClose }) {
   const [formData, setFormData] = useState({ aktivite: '', kisi: 'Görkem', gunler: [], saati: '09:00', ucret: 0, sure: 'Belirsiz' });
   const gunler = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
-  const toggleDay = (idx) => {
-    const dayVal = idx + 1;
-    const next = formData.gunler.includes(dayVal) 
-      ? formData.gunler.filter(d => d !== dayVal)
-      : [...formData.gunler, dayVal];
-    setFormData({ ...formData, gunler: next });
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     addRutin(formData);
@@ -1300,64 +1284,78 @@ function AddRutinModal({ onClose }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <header className="modal-header">
-          <h3>🏋️ Rutin Ekle</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-        <form className="modal-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-          <div className="form-group">
-            <label>Aktivite Adı</label>
-            <input type="text" value={formData.aktivite} onChange={e => setFormData({...formData, aktivite: e.target.value})} placeholder="ör: Spor Salonu" required />
-          </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+          <header className="modal-header">
+            <h3>📝 Rutin Ekle</h3>
+            <button className="close-btn" onClick={onClose}><X size={20} /></button>
+          </header>
+          <form className="modal-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
             <div className="form-group">
-              <label>Kişi</label>
-              <select value={formData.kisi} onChange={e => setFormData({...formData, kisi: e.target.value})}>
-                <option value="Görkem">👨 Görkem</option>
-                <option value="Esra">👩 Esra</option>
-                <option value="İkisi">👫 İkisi</option>
-              </select>
+              <label>Aktivite Adı</label>
+              <input type="text" value={formData.aktivite} onChange={e => setFormData({...formData, aktivite: e.target.value})} placeholder="Ör: Spor Salonu" required />
+            </div>
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Kişi</label>
+                <select value={formData.kisi} onChange={e => setFormData({...formData, kisi: e.target.value})}>
+                  <option value="Görkem">🧔 Görkem</option>
+                  <option value="Esra">👩‍🦰 Esra</option>
+                  <option value="İkisi">👫 İkisi</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Günün Vakti</label>
+                <select value={formData.vakit} onChange={e => setFormData({...formData, vakit: e.target.value})}>
+                  <option value="sabah">🌅 Sabah</option>
+                  <option value="öğle">☀️ Öğle</option>
+                  <option value="akşam">🌙 Akşam</option>
+                </select>
+              </div>
             </div>
             <div className="form-group">
-              <label>Saat</label>
-              <input type="time" value={formData.saati} onChange={e => setFormData({...formData, saati: e.target.value})} />
+              <label>Hangi Günler?</label>
+              <div className="days-selector" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map(day => (
+                  <button
+                    key={day}
+                    type="button"
+                    className={`day-tag ${formData.gunler.includes(day) ? 'active' : ''}`}
+                    onClick={() => {
+                      const newGunler = formData.gunler.includes(day)
+                        ? formData.gunler.filter(d => d !== day)
+                        : [...formData.gunler, day];
+                      setFormData({...formData, gunler: newGunler});
+                    }}
+                    style={{ 
+                      padding: '8px 12px', 
+                      borderRadius: '10px', 
+                      border: '1px solid var(--brd)',
+                      background: formData.gunler.includes(day) ? 'var(--social)' : 'white',
+                      color: formData.gunler.includes(day) ? 'white' : 'var(--txt)',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="form-group">
-            <label>Günler</label>
-            <div className="day-selector" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {gunler.map((g, idx) => (
-                <button 
-                  key={g} 
-                  type="button"
-                  className={`day-btn ${formData.gunler.includes(idx + 1) ? 'active' : ''}`}
-                  onClick={() => toggleDay(idx)}
-                  style={{ 
-                    padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--brd)',
-                    background: formData.gunler.includes(idx + 1) ? '#8b5cf6' : 'white',
-                    color: formData.gunler.includes(idx + 1) ? 'white' : 'var(--txt-light)',
-                    fontSize: '12px', fontWeight: '800', cursor: 'pointer'
-                  }}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
-          </div>
-          <button type="submit" className="submit-btn social-gradient" style={{ padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '10px', cursor: 'pointer' }}>
-            Rutin Oluştur
-          </button>
-        </form>
+            <button type="submit" className="submit-btn social-gradient" style={{ width: '100%', padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '10px', cursor: 'pointer' }}>
+              Rutini Kaydet
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
 function AddFikirModal({ onClose }) {
   const { addSocialPoolItem } = useStore();
-  const [formData, setFormData] = useState({ baslik: '', tur: 'disari', tahmini_harcama: '', emoji: '💡', freq: 'Aylık' });
+  const [formData, setFormData] = useState({ baslik: '', tur: 'disari', siklik: 3 });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -1367,41 +1365,42 @@ function AddFikirModal({ onClose }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <header className="modal-header">
-          <h3>💡 Fikir Ekle</h3>
-          <button className="close-btn" onClick={onClose}><X size={20} /></button>
-        </header>
-        <form className="modal-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-          <div className="form-group">
-            <label>Fikir</label>
-            <input type="text" value={formData.baslik} onChange={e => setFormData({...formData, baslik: e.target.value})} placeholder="Ne yapalım?" required />
-          </div>
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+          <header className="modal-header">
+            <h3>💡 Fikir Ekle</h3>
+            <button className="close-btn" onClick={onClose}><X size={20} /></button>
+          </header>
+          <form className="modal-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
             <div className="form-group">
-              <label>Tür</label>
-              <select value={formData.tur} onChange={e => setFormData({...formData, tur: e.target.value})}>
-                <option value="disari">🌆 Dışarı</option>
-                <option value="evde">🏠 Evde</option>
-              </select>
+              <label>Fikir</label>
+              <input type="text" value={formData.baslik} onChange={e => setFormData({...formData, baslik: e.target.value})} placeholder="Ne yapalım?" required />
             </div>
-            <div className="form-group">
-              <label>Sıklık</label>
-              <select value={formData.freq} onChange={e => setFormData({...formData, freq: e.target.value})}>
-                <option>Haftalık</option>
-                <option>Aylık</option>
-                <option>Mevsimlik</option>
-                <option>Yıllık</option>
-              </select>
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Tür</label>
+                <select value={formData.tur} onChange={e => setFormData({...formData, tur: e.target.value})}>
+                  <option value="disari">🌳 Dışarı</option>
+                  <option value="evde">🏠 Evde</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Sıklık</label>
+                <select value={formData.siklik} onChange={e => setFormData({...formData, siklik: Number(e.target.value)})}>
+                  <option value="1">⭐ Seyrek</option>
+                  <option value="3">⭐⭐ Normal</option>
+                  <option value="5">⭐⭐⭐ Sık</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <button type="submit" className="submit-btn social-gradient" style={{ padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '10px', cursor: 'pointer' }}>
-            Havuza At
-          </button>
-        </form>
+            <button type="submit" className="submit-btn social-gradient" style={{ width: '100%', padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '10px', cursor: 'pointer' }}>
+              Fikri Kaydet
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -1410,52 +1409,48 @@ function PlanIdeaModal({ idea, onClose, onConfirm }) {
     tarih: new Date().toISOString().split('T')[0],
     saat: '20:00',
     mekan: '',
-    detay: '',
     harcama: idea.tahmini_harcama || ''
   });
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <header className="modal-header">
-          <h3>🎯 {idea.baslik} Planla</h3>
-          <button className="close-btn" onClick={onClose}>✕</button>
-        </header>
-        <div className="modal-form">
-          <p style={{ textAlign: 'center', marginBottom: '15px', fontSize: '13px' }}>{idea.emoji} Bu fikri ne zaman gerçekleştirelim?</p>
-          
-          <div className="form-row">
-            <div className="form-group">
-              <label>Tarih</label>
-              <input type="date" value={formData.tarih} onChange={e => setFormData({...formData, tarih: e.target.value})} lang="tr-TR" required />
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+          <header className="modal-header">
+            <h3>📅 {idea.baslik} Planla</h3>
+            <button className="close-btn" onClick={onClose}><X size={20} /></button>
+          </header>
+          <div className="modal-form">
+            <p style={{ textAlign: 'center', marginBottom: '15px', fontSize: '13px' }}>{idea.emoji} Bu fikri ne zaman gerçekleştirelim?</p>
+            
+            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="form-group">
+                <label>Tarih</label>
+                <input type="date" value={formData.tarih} onChange={e => setFormData({...formData, tarih: e.target.value})} lang="tr-TR" required />
+              </div>
+              <div className="form-group">
+                <label>Saat</label>
+                <input type="time" value={formData.saat} onChange={e => setFormData({...formData, saat: e.target.value})} />
+              </div>
             </div>
+
             <div className="form-group">
-              <label>Saat</label>
-              <input type="time" value={formData.saat} onChange={e => setFormData({...formData, saat: e.target.value})} />
+              <label>Mekan (Opsiyonel)</label>
+              <input type="text" value={formData.mekan} onChange={e => setFormData({...formData, mekan: e.target.value})} placeholder="Nerede?" />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Nerede / Hangi Film / Detay</label>
-            <input 
-              type="text" 
-              value={formData.mekan} 
-              onChange={e => setFormData({...formData, mekan: e.target.value})} 
-              placeholder={idea.baslik?.toLowerCase().includes('film') ? 'Film adı ne?' : 'Mekan neresi?'} 
-            />
-          </div>
+            <div className="form-group">
+              <label>Tahmini Bütçe (₺)</label>
+              <input type="number" value={formData.harcama} onChange={e => setFormData({...formData, harcama: e.target.value})} placeholder="₺0" />
+            </div>
 
-          <div className="form-group">
-            <label>Tahmini Bütçe (₺)</label>
-            <input type="number" value={formData.harcama} onChange={e => setFormData({...formData, harcama: e.target.value})} placeholder="₺0" />
+            <button className="submit-btn social-gradient" onClick={() => onConfirm(formData)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '10px', cursor: 'pointer' }}>
+              Aktiviteye Dönüştür
+            </button>
           </div>
-
-          <button className="submit-btn social-gradient" onClick={() => onConfirm(formData)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '10px', cursor: 'pointer' }}>
-            Takvime İşle
-          </button>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
