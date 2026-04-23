@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Bell, Shield, Moon, LogOut, Trophy, ChevronRight, History, Download, X, Save, VolumeX, BellRing } from 'lucide-react';
+import { User, Bell, Shield, Moon, LogOut, Trophy, ChevronRight, History, Download, X, Save, VolumeX, BellRing, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
