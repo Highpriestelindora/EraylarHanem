@@ -1,6 +1,9 @@
-# 🧠 Eraylar Hanem - Proje Beyni
+# 🧠 Eraylar Hanem - Proje Beyni (Versiyon 1.0.0 🚀)
 
-Bu dökümantasyon, **Eraylar Hanem** uygulamasının tüm mantıksal yapısını, veri akışını ve özelliklerini Obsidian veya benzeri araçlarla bir "dış beyin" olarak kullanabilmeniz için hazırlanmıştır.
+Bu dökümantasyon, **Eraylar Hanem** uygulamasının tüm mantıksal yapısını, veri akışını ve özelliklerini Obsidian veya benzeri araçlarla bir "dış beyin" olarak kullanabilmeniz için hazırlanmıştır. **24 Nisan 2026** itibariyle uygulama tam sürüm olarak yayındadır.
+
+## 📱 iOS Öncelikli Geliştirme (Mutlak Kural)
+Yapılan her yeni özellik ve UI değişikliği, öncelikle **iOS (iPhone)** platformunda kusursuz çalışacak şekilde test edilmelidir. Detaylar için bkz: [[Mimari_ve_Teknoloji#iOS-Uyumluluk--Mobil-Öncelik-Mutlak-Kararlar]].
 
 ## 🗺️ Harita
 - [[Mimari_ve_Teknoloji]]: Uygulamanın teknik altyapısı ve veri akışı.

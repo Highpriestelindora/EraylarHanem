@@ -34,4 +34,14 @@ react-app/
 - **Emoji Odaklı:** Navigasyon ve içeriklerde zengin emoji kullanımı.
 - **Glassmorphism:** Buzlu cam efektli (Glass) kartlar ve paneller.
 - **Premium Renk Paleti:** Her modül için özel belirlenmiş gradient ve gölge setleri.
-- **Animasyonlar:** `framer-motion` benzeri geçişler ve hareketli etkileşimler.
+- **Animasyonlar:** Mikro etkileşimler ve yumuşak sayfa geçişleri.
+
+## 📱 iOS Uyumluluk & Mobil Öncelik (Mutlak Kararlar)
+> [!IMPORTANT]
+> Uygulamanın ana kullanım mecrası iPhone olduğu için, yapılan her geliştirme mutlak suretle iOS standartlarına uygun olmalıdır.
+
+1.  **Versiyon 1.0.0 Canlıda:** Proje 24 Nisan 2026 itibariyle tam fonksiyonel olarak yayına alınmıştır.
+2.  **Safe Area (Çentik) Bilinci:** Üst banner ve alt navigasyon, iPhone çentiği ve "home indicator" alanı ile çakışmayacak şekilde `viewport-fit=cover` ve CSS `env(safe-area-inset-*)` kullanılarak korunmalıdır.
+3.  **Dokunmatik Alanlar:** Butonlar ve tıklanabilir alanlar, parmakla rahat seçilebilmesi için en az 44x44px efektif alana sahip olmalıdır.
+4.  **Z-Index & Modal Düzeni:** iOS Safari'deki katmanlama sorunlarını önlemek için modallar her zaman `React Portal` kullanılarak ana DOM dışına render edilmelidir.
+5.  **Geri Tuşu & Navigasyon:** Sayfa geçişlerinde iOS "swipe back" hissini bozmayacak akışlar tercih edilmelidir.
