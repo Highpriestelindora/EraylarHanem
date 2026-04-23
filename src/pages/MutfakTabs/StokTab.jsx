@@ -471,7 +471,17 @@ const StokTab = () => {
           padding: 12px; border-radius: 14px; border: 1px solid var(--brd);
           background: var(--bg); font-family: inherit; font-size: 14px;
         }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-row { 
+          display: grid; 
+          grid-template-columns: 1fr 1fr; 
+          gap: 12px; 
+        }
+        @media (max-width: 480px) {
+          .form-row {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+        }
         .submit-btn {
           padding: 16px; border-radius: 18px; border: none;
           background: var(--mutfak); color: white; font-weight: 800;

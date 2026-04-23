@@ -20,10 +20,10 @@
 
 /* Calendar Grid Styles */
 .calendar-wrapper {
-  padding: 15px;
-  border-radius: 24px;
+  padding: 10px;
+  border-radius: 20px;
   background: white;
-  margin: 0 20px;
+  margin: 0 10px;
   border: 1px solid var(--brd);
   display: flex;
   flex-direction: column;
@@ -509,7 +509,7 @@
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding: 0 20px 15px;
+  padding: 0 10px 15px;
   scrollbar-width: none;
 }
 .filter-scroll::-webkit-scrollbar { display: none; }
@@ -538,7 +538,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 0 20px;
+  padding: 0 10px;
 }
 
 .event-card {
@@ -664,6 +664,19 @@
 .animate-slideIn:nth-child(2) { animation-delay: 0.1s; }
 .animate-slideIn:nth-child(3) { animation-delay: 0.2s; }
 .animate-slideIn:nth-child(4) { animation-delay: 0.3s; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
 
 /* New Features Styles */
 .add-btn-main {

@@ -9,8 +9,8 @@
 .home-hero-sweet {
   background: #5B21B6;
   padding: 15px 20px;
-  display: grid;
-  grid-template-columns: 1.8fr 0.8fr 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   border-radius: 0 0 35px 35px;
   box-shadow: 0 10px 30px rgba(76, 29, 149, 0.4);
@@ -248,7 +248,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 280px; /* Yaklaşık bir satır sınırı */
+  flex: 1;
 }
 
 .dismiss-btn {
@@ -310,7 +310,8 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
-  padding: 0 10px;
+  padding: 0 20px;
+  padding-bottom: 40px;
 }
 
 .nav-card {

@@ -1423,7 +1423,7 @@ function PlanIdeaModal({ idea, onClose, onConfirm }) {
         <div className="modal-form">
           <p style={{ textAlign: 'center', marginBottom: '15px', fontSize: '13px' }}>{idea.emoji} Bu fikri ne zaman gerçekleştirelim?</p>
           
-          <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-row">
             <div className="form-group">
               <label>Tarih</label>
               <input type="date" value={formData.tarih} onChange={e => setFormData({...formData, tarih: e.target.value})} lang="tr-TR" required />

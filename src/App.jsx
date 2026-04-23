@@ -16,6 +16,7 @@ import Profil from './pages/Profil';
 import Analiz from './pages/Analiz';
 import SplashScreen from './components/SplashScreen';
 import UserSelection from './components/UserSelection';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Additional Modules
 import Sosyal from './pages/Sosyal';
@@ -74,7 +75,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <ErrorBoundary>
       <AnimatePresence>
         {loading && <SplashScreen finishLoading={() => setLoading(false)} />}
       </AnimatePresence>
@@ -101,7 +102,7 @@ function App() {
         />
         <AnimatedRoutes />
       </BrowserRouter>
-    </>
+    </ErrorBoundary>
   );
 }
 
