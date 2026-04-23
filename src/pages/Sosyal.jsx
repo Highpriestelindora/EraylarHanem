@@ -204,13 +204,14 @@ function IstTab({ onAdd }) {
 }
 
 function HaftaTab({ sosyal, onAdd }) {
-  const { saglik, pet, tatil, vehicle, cancelSocialActivity } = useStore();
+  const { saglik, pet, tatil, aracim: vehicle, cancelSocialActivity, addSocialActivity } = useStore();
   const [completeModal, setCompleteModal] = useState(null); 
   const [editingActivity, setEditingActivity] = useState(null);
   const [viewDate, setViewDate] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
   const [deletingId, setDeletingId] = useState(null); 
   const [refreshTrigger, setRefreshTrigger] = useState(0); 
+  const [showAddNote, setShowAddNote] = useState(false);
 
   // --- SMART MULTI-MODULE SCANNER ---
   const allEvents = useMemo(() => {

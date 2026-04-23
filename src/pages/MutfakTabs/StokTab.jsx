@@ -6,13 +6,19 @@ import toast from 'react-hot-toast';
 import ActionSheet from '../../components/ActionSheet';
 
 const StokTab = () => {
-  const { mutfak, setModuleData, setItemFinished, transferStock, bulkFinishItems } = useStore();
+  const { 
+    mutfak, setModuleData, setItemFinished, 
+    transferStock, bulkFinishItems, getAvailableRecipes,
+    updateStockQty, addMissingToShopping 
+  } = useStore();
+
   const [subTab, setSubTab] = useState('buzdolabi'); // buzdolabi, kiler, dondurucu
   const [search, setSearch] = useState('');
   const [editingItem, setEditingItem] = useState(null); // { isNew: bool, item: {} }
   const [showNeYap, setShowNeYap] = useState(false);
+  const [showBulkFinish, setShowBulkFinish] = useState(false);
+  const [bulkItems, setBulkItems] = useState({});
   
-  const { getAvailableRecipes } = useStore();
   const availableRecipes = getAvailableRecipes();
   
   const cookable = availableRecipes.filter(r => r.status === 'ready');
@@ -51,8 +57,6 @@ const StokTab = () => {
     addMissingToShopping([item.n]);
     toast.success(`${item.n} alışveriş listesine eklendi! 🛒`);
   };
-
-  const { updateStockQty, addMissingToShopping } = useStore();
 
   const handleTransfer = (itemName, currentLoc, qty) => {
     if (qty <= 0) return;
