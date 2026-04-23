@@ -19,7 +19,8 @@
       var errText = document.getElementById('error-text');
       var errors = [];
       function showErr(msg) {
-        errors.push(msg);
+        var time = new Date().toLocaleTimeString();
+        errors.push('[' + time + '] ' + msg);
         errBox.style.display = 'block';
         errText.textContent = errors.join('\n\n---\n\n');
       }
