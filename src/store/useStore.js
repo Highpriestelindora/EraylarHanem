@@ -1571,6 +1571,37 @@ const useStore = create(
     {
       name: 'eraylar-state-v5',
       partialize: (state) => extractAppData(state),
+      merge: (persistedState, initialState) => {
+        const merged = { ...initialState, ...persistedState };
+        // Deeply ensure critical modules have their arrays
+        const ensureArray = (obj, key) => {
+          if (obj && key in obj && !Array.isArray(obj[key])) {
+            obj[key] = initialState[key] && Array.isArray(initialState[key]) ? initialState[key] : [];
+          }
+        };
+        
+        // Fix Sosyal
+        if (merged.sosyal) {
+          if (!Array.isArray(merged.sosyal.aktiviteler)) merged.sosyal.aktiviteler = [];
+          if (!Array.isArray(merged.sosyal.havuz)) merged.sosyal.havuz = [];
+          if (!Array.isArray(merged.sosyal.rutinler)) merged.sosyal.rutinler = [];
+        }
+        // Fix Mutfak
+        if (merged.mutfak) {
+          if (!Array.isArray(merged.mutfak.buzdolabi)) merged.mutfak.buzdolabi = [];
+          if (!Array.isArray(merged.mutfak.kiler)) merged.mutfak.kiler = [];
+          if (!Array.isArray(merged.mutfak.dondurucu)) merged.mutfak.dondurucu = [];
+          if (!Array.isArray(merged.mutfak.alisveris)) merged.mutfak.alisveris = [];
+        }
+        // Fix others
+        if (merged.ev && !Array.isArray(merged.ev.faturalar)) merged.ev.faturalar = [];
+        if (merged.saglik && !Array.isArray(merged.saglik.randevular)) merged.saglik.randevular = [];
+        if (merged.tatil && !Array.isArray(merged.tatil.trips)) merged.tatil.trips = [];
+        if (merged.pet && !Array.isArray(merged.pet.vaccines)) merged.pet.vaccines = [];
+        if (!Array.isArray(merged.logs)) merged.logs = [];
+        
+        return merged;
+      }
     }
   )
 );

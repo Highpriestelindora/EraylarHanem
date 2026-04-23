@@ -199,7 +199,7 @@ function HaftaTab({ sosyal, onAdd }) {
     const events = [];
 
     // 1. Social Activities & Notes
-    (sosyal.aktiviteler || []).filter(a => !a.tamamlandi && a.durum !== 'iptal').forEach(a => {
+    (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => !a.tamamlandi && a.durum !== 'iptal').forEach(a => {
       events.push({ 
         date: a.tarih, 
         icon: a.emoji || (a.tur === 'not' ? '📝' : '🎭'), 
@@ -287,7 +287,7 @@ function HaftaTab({ sosyal, onAdd }) {
       pool.push({ baslik: 'Mutfak Stoklarını Güncelle', emoji: '🛒', tur: 'evde', type: 'system', weight: 5 });
 
       // 4. Frequent Past Activities (Additional boost)
-      const counts = (sosyal.aktiviteler || []).filter(a => a.tamamlandi).reduce((acc, curr) => {
+      const counts = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi).reduce((acc, curr) => {
         acc[curr.baslik] = (acc[curr.baslik] || 0) + 1;
         return acc;
       }, {});
@@ -945,7 +945,7 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
 }
 
 function GecmisTab({ sosyal }) {
-  const done = (sosyal.aktiviteler || []).filter(a => a.tamamlandi);
+  const done = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi);
   const totalHarcama = done.reduce((sum, a) => sum + (a.harcama || 0), 0);
   const avgPuan = done.length > 0 
     ? (done.reduce((sum, a) => sum + Number(a.puan_gorkem || 0) + Number(a.puan_esra || 0), 0) / (done.length * 2)).toFixed(1)
@@ -1256,8 +1256,8 @@ function HavuzTab({ sosyal, onAdd, onAddRutin }) {
         <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>🎬 İzlenen Filmler</h3>
       </div>
       <div className="movie-list" style={{ padding: '0 20px' }}>
-        {(sosyal.aktiviteler || []).filter(a => a.tamamlandi && a.baslik.toLowerCase().includes('film')).length > 0 ? (
-          (sosyal.aktiviteler || []).filter(a => a.tamamlandi && a.baslik.toLowerCase().includes('film')).map(m => (
+        {(Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi && a.baslik.toLowerCase().includes('film')).length > 0 ? (
+          (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi && a.baslik.toLowerCase().includes('film')).map(m => (
             <div key={m.id} className="tl-content glass" style={{ marginBottom: '8px', padding: '12px' }}>
                <div style={{ fontSize: '20px' }}>🍿</div>
                <div style={{ flex: 1 }}>

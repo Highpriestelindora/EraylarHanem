@@ -220,7 +220,7 @@ const Home = () => {
     const alerts = [];
 
     // 1. Mutfak Kritik Stok (Özet Alert)
-    const shoppingListNames = (mutfak?.alisveris || []).map(i => i.n.toLowerCase());
+    const shoppingListNames = (Array.isArray(mutfak?.alisveris) ? mutfak.alisveris : []).map(i => i.n.toLowerCase());
     const stockCategories = ['buzdolabi', 'kiler', 'dondurucu'];
     const lowStockItems = [];
 
@@ -285,7 +285,7 @@ const Home = () => {
     // 4. Bekleyen Bayat Alışveriş Ürünü (>30 gün)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const staleItems = (mutfak?.alisveris || []).filter(i => i.dt && new Date(i.dt) < thirtyDaysAgo);
+    const staleItems = (Array.isArray(mutfak?.alisveris) ? mutfak.alisveris : []).filter(i => i.dt && new Date(i.dt) < thirtyDaysAgo);
     if (staleItems.length > 0) {
       alerts.push({
         id: 'mutfak_shopping_stale',
@@ -333,7 +333,7 @@ const Home = () => {
     }
 
     // 7. Ödenmemiş Faturalar
-    const unpaid = (ev?.faturalar || []).filter(f => !f.odendi);
+    const unpaid = (Array.isArray(ev?.faturalar) ? ev.faturalar : []).filter(f => !f.odendi);
     unpaid.forEach(f => {
       alerts.push({
         id: `fatura_${f.id}`,
@@ -417,7 +417,7 @@ const Home = () => {
   }, [mutfak, ev, saglik, tatil, pet, sosyal, aracim, dismissedToday, today, todayIso]);
 
   // --- UI COUNTS ---
-  const unpaidCount = (ev?.faturalar || []).filter(f => !f.odendi).length;
+  const unpaidCount = (Array.isArray(ev?.faturalar) ? ev.faturalar : []).filter(f => !f.odendi).length;
   const appointmentCount = (saglik?.randevular || []).length;
   const tripCount = (tatil?.trips || []).length;
   const vaccineCount = Array.isArray(pet?.vaccines) 
