@@ -233,6 +233,10 @@ const StokTab = () => {
             <button className="submit-btn" onClick={() => setEditingItem({ isNew: true, item: {} })} style={{ margin: '20px auto 0', padding: '12px 24px' }}>
                <Plus size={18} /> Yeni Malzeme Ekle
             </button>
+          </div>
+        )}
+      </div>
+
       <ActionSheet
         isOpen={!!editingItem}
         onClose={() => setEditingItem(null)}
@@ -297,8 +301,6 @@ const StokTab = () => {
           </button>
         </form>
       </ActionSheet>
-          </div>
-        )}
       </div>
 
       <ActionSheet
