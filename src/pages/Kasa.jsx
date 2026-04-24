@@ -242,33 +242,28 @@ export default function Kasa() {
         onClose={() => setUpdateModal(null)}
         title={`${kisiler.find(k => k.key === updateModal)?.emoji} ${kisiler.find(k => k.key === updateModal)?.label} Bakiyesi`}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="modal-form">
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Yeni Bakiye (₺)</label>
+            <label>Yeni Bakiye (₺)</label>
             <input
               type="number"
               value={inputVal}
               onChange={e => setInputVal(e.target.value)}
               autoFocus
-              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '18px', fontWeight: '800' }}
+              style={{ fontSize: '18px', fontWeight: '800' }}
               inputMode="decimal"
             />
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Not (opsiyonel)</label>
+            <label>Not (opsiyonel)</label>
             <input
               type="text"
               value={inputNot}
               onChange={e => setInputNot(e.target.value)}
               placeholder="Maaş, harcama vb."
-              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }}
             />
           </div>
-          <button 
-            className="confirm-btn" 
-            onClick={handleUpdateSave}
-            style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--txt)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px' }}
-          >
+          <button className="submit-btn primary" onClick={handleUpdateSave}>
             Kaydet
           </button>
         </div>
@@ -279,47 +274,42 @@ export default function Kasa() {
         onClose={() => setTransferModal(false)}
         title="💸 Hesaplar Arası Transfer"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div className="modal-form">
+          <div className="form-row">
             <div className="form-group">
-              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Nereden</label>
-              <select value={transferFrom} onChange={e => setTransferFrom(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)' }}>
+              <label>Nereden</label>
+              <select value={transferFrom} onChange={e => setTransferFrom(e.target.value)}>
                 {kisiler.map(k => <option key={k.key} value={k.key}>{k.emoji} {k.label}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Nereye</label>
-              <select value={transferTo} onChange={e => setTransferTo(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)' }}>
+              <label>Nereye</label>
+              <select value={transferTo} onChange={e => setTransferTo(e.target.value)}>
                 {kisiler.map(k => <option key={k.key} value={k.key}>{k.emoji} {k.label}</option>)}
               </select>
             </div>
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Miktar (₺)</label>
+            <label>Miktar (₺)</label>
             <input
               type="number"
               value={transferAmount}
               onChange={e => setTransferAmount(e.target.value)}
               placeholder="0"
-              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '18px', fontWeight: '800' }}
+              style={{ fontSize: '18px', fontWeight: '800' }}
               inputMode="decimal"
             />
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Not</label>
+            <label>Not</label>
             <input
               type="text"
               value={inputNot}
               onChange={e => setInputNot(e.target.value)}
               placeholder="Açıklama"
-              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }}
             />
           </div>
-          <button 
-            className="confirm-btn" 
-            onClick={handleTransferSave}
-            style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'linear-gradient(135deg, #2C3E50, #1a252f)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}
-          >
+          <button className="submit-btn primary" onClick={handleTransferSave}>
             Transferi Gerçekleştir
           </button>
         </div>

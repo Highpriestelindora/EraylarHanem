@@ -572,16 +572,15 @@ function DeliveryForm({ onConfirm, existingRestaurants }) {
   const filtered = existingRestaurants.filter(r => r.toLowerCase().includes(fr.toLowerCase()));
 
   return (
-    <div className="modal-body-standard" style={{ display: 'flex', flexDirection: 'column', gap: '15px', paddingBottom: '30px' }}>
+    <div className="modal-form">
       <div className="form-group" style={{ position: 'relative' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Nereden? (Restaurant)</label>
+        <label>Nereden? (Restaurant)</label>
         <input 
           type="text" 
           placeholder="Örn: Burger King, Köfteci Yusuf..." 
           value={fr} 
           onChange={e => { setFr(e.target.value); setShowSuggestions(true); }}
           onFocus={() => setShowSuggestions(true)}
-          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
         />
         {showSuggestions && filtered.length > 0 && (
           <div className="suggestions-box glass animate-fadeIn" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, border: '1px solid var(--brd)', borderRadius: '12px', background: 'white', maxHeight: '150px', overflowY: 'auto' }}>
@@ -592,29 +591,27 @@ function DeliveryForm({ onConfirm, existingRestaurants }) {
         )}
       </div>
       <div className="form-group">
-        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Ne Söylüyoruz?</label>
+        <label>Ne Söylüyoruz?</label>
         <input 
           type="text" 
           placeholder="Örn: 2 Adet Whopper Menü" 
           value={wh} 
           onChange={e => setWh(e.target.value)}
-          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
         />
       </div>
       <div className="form-group">
-        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Tutar (₺)</label>
+        <label>Tutar (₺)</label>
         <input 
           type="number" 
           placeholder="0₺" 
           value={pr} 
           onChange={e => setPr(e.target.value)}
-          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
         />
       </div>
       <button 
         className="submit-btn" 
         onClick={() => onConfirm({ fr, wh, pr: Number(pr) })}
-        style={{ padding: '16px', borderRadius: '16px', background: 'linear-gradient(135deg, #F1C40F, #F39C12)', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}
+        style={{ background: 'linear-gradient(135deg, #F1C40F, #F39C12)' }}
       >
         Siparişi Kaydet & Finansa İşle
       </button>
@@ -630,16 +627,15 @@ function EatOutForm({ onConfirm, existingRestaurants }) {
   const filtered = existingRestaurants.filter(r => r.toLowerCase().includes(fr.toLowerCase()));
 
   return (
-    <div className="modal-body-standard" style={{ display: 'flex', flexDirection: 'column', gap: '15px', paddingBottom: '30px' }}>
+    <div className="modal-form">
       <div className="form-group" style={{ position: 'relative' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Neresi? (Restoran)</label>
+        <label>Neresi? (Restoran)</label>
         <input 
           type="text" 
           placeholder="Örn: Big Chefs, Nusret..." 
           value={fr} 
           onChange={e => { setFr(e.target.value); setShowSuggestions(true); }}
           onFocus={() => setShowSuggestions(true)}
-          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
         />
         {showSuggestions && filtered.length > 0 && (
           <div className="suggestions-box glass animate-fadeIn" style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100, border: '1px solid var(--brd)', borderRadius: '12px', background: 'white', maxHeight: '150px', overflowY: 'auto' }}>
@@ -650,19 +646,18 @@ function EatOutForm({ onConfirm, existingRestaurants }) {
         )}
       </div>
       <div className="form-group">
-        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.7 }}>Tahmini Tutar (₺)</label>
+        <label>Tahmini Tutar (₺)</label>
         <input 
           type="number" 
           placeholder="0₺" 
           value={pr} 
           onChange={e => setPr(e.target.value)}
-          style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', marginTop: '5px' }}
         />
       </div>
       <button 
         className="submit-btn" 
         onClick={() => onConfirm({ fr, pr: Number(pr) })}
-        style={{ width: '100%', padding: '16px', borderRadius: '16px', background: 'linear-gradient(135deg, #3498DB, #2980B9)', color: 'white', border: 'none', fontWeight: '900', cursor: 'pointer', marginTop: '10px' }}
+        style={{ background: 'linear-gradient(135deg, #3498DB, #2980B9)' }}
       >
         Kaydet & Finansa İşle
       </button>

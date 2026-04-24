@@ -675,18 +675,7 @@
 .animate-slideIn:nth-child(3) { animation-delay: 0.2s; }
 .animate-slideIn:nth-child(4) { animation-delay: 0.3s; }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-@media (max-width: 480px) {
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-}
+/* Form layouts are now global in index.css */
 
 /* New Features Styles */
 .add-btn-main {

@@ -93,26 +93,26 @@ const MedicineTab = () => {
         onClose={() => setModalOpen(false)}
         title="💊 Yeni İlaç Ekle"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="modal-form">
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Kişi</label>
-            <select value={form.kisi} onChange={e => setForm({...form, kisi: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+            <label>Kişi</label>
+            <select value={form.kisi} onChange={e => setForm({...form, kisi: e.target.value})}>
               <option>Görkem</option>
               <option>Esra</option>
             </select>
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>İlaç Adı</label>
-            <input type="text" value={form.ad} onChange={e => setForm({...form, ad: e.target.value})} placeholder="Örn: Parol" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+            <label>İlaç Adı</label>
+            <input type="text" value={form.ad} onChange={e => setForm({...form, ad: e.target.value})} placeholder="Örn: Parol" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-row">
             <div className="form-group">
-              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Dozaj</label>
-              <input type="text" value={form.dozaj} onChange={e => setForm({...form, dozaj: e.target.value})} placeholder="500mg" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+              <label>Dozaj</label>
+              <input type="text" value={form.dozaj} onChange={e => setForm({...form, dozaj: e.target.value})} placeholder="500mg" />
             </div>
             <div className="form-group">
-              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Sıklık</label>
-              <select value={form.sıklık} onChange={e => setForm({...form, sıklık: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+              <label>Sıklık</label>
+              <select value={form.sıklık} onChange={e => setForm({...form, sıklık: e.target.value})}>
                 <option>Günde 1</option>
                 <option>Günde 2</option>
                 <option>Günde 3</option>
@@ -120,7 +120,7 @@ const MedicineTab = () => {
               </select>
             </div>
           </div>
-          <button className="confirm-btn" onClick={handleAdd} style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--saglik-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>
+          <button className="submit-btn primary" onClick={handleAdd}>
             İlacı Kaydet
           </button>
         </div>

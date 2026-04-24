@@ -377,17 +377,19 @@ export default function Profil() {
           padding: 16px;
           display: flex;
           align-items: center;
+          justify-content: space-around;
           gap: 15px;
           margin-bottom: 30px;
           border: 1px solid var(--brd);
           box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+          flex-wrap: wrap;
         }
         
         .contact-item {
-          flex: 1;
           display: flex;
           align-items: center;
           gap: 12px;
+          min-width: 140px;
         }
         
         .contact-icon {
@@ -399,11 +401,14 @@ export default function Profil() {
           align-items: center;
           justify-content: center;
           color: var(--txt-light);
+          flex-shrink: 0;
         }
         
         .contact-text {
           display: flex;
           flex-direction: column;
+          min-width: 0;
+          overflow: hidden;
         }
         
         .contact-text label {
@@ -417,12 +422,21 @@ export default function Profil() {
           font-size: 13px;
           font-weight: 700;
           color: var(--txt);
+          word-break: break-all;
+          overflow-wrap: break-word;
+          display: block;
+          min-width: 0;
         }
         
         .contact-divider {
           width: 1px;
           height: 30px;
           background: var(--brd);
+        }
+
+        @media (max-width: 480px) {
+          .contact-divider { display: none; }
+          .contact-item { width: 100%; }
         }
 
         .form-group label { display: flex; align-items: center; gap: 6px; }

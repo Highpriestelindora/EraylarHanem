@@ -987,19 +987,7 @@
   border-color: var(--mutfak);
 }
 
-/* Modal Enhancements */
-.modal-form .form-group input, 
-.modal-form .form-group select {
-  font-weight: 600;
-}
-
-.modal-form .form-group label {
-  color: var(--txt);
-  font-weight: 800;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+/* Modal forms are now global in index.css */
 
 .toggle-group {
   display: flex;

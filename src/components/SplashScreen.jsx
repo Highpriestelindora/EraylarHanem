@@ -80,9 +80,12 @@ const SplashScreen = ({ finishLoading }) => {
         exit={{ opacity: 0, y: -20 }}
         style={{ height: '80px' }}
       >
-        <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: '36px', marginBottom: '12px', fontWeight: 900 }}>
-          Eraylar Hanem
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '12px' }}>
+          <img src="/eraylar-logo.png" alt="Logo" style={{ height: '40px', filter: 'brightness(0) invert(1)' }} />
+          <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: '36px', margin: 0, fontWeight: 900 }}>
+            Eraylar Hanem
+          </h1>
+        </div>
         <p style={{ opacity: 0.9, fontSize: '16px', fontWeight: 600 }}>{jokes[jokeIndex].t}</p>
       </motion.div>
       
@@ -101,6 +104,17 @@ const SplashScreen = ({ finishLoading }) => {
           transition={{ duration: 9, ease: "linear" }}
           style={{ height: '100%', background: 'white', boxShadow: '0 0 10px white' }}
         />
+      </div>
+
+      <div style={{ 
+        position: 'absolute', 
+        bottom: '20px', 
+        fontSize: '10px', 
+        opacity: 0.5, 
+        fontWeight: 700,
+        letterSpacing: '1px'
+      }}>
+        VERSION: v2.4.24-GOLD
       </div>
     </motion.div>
   );

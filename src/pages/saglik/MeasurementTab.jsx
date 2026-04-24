@@ -70,34 +70,34 @@ const MeasurementTab = () => {
         onClose={() => setModalOpen(false)}
         title="🌡️ Ölçüm Kaydet"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="modal-form">
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Kişi</label>
-            <select value={form.kisi} onChange={e => setForm({...form, kisi: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+            <label>Kişi</label>
+            <select value={form.kisi} onChange={e => setForm({...form, kisi: e.target.value})}>
               <option>Görkem</option>
               <option>Esra</option>
             </select>
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tür</label>
-            <select value={form.tur} onChange={e => setForm({...form, tur: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+            <label>Tür</label>
+            <select value={form.tur} onChange={e => setForm({...form, tur: e.target.value})}>
               <option>Tansiyon</option>
               <option>Şeker</option>
               <option>Ateş</option>
               <option>Kilo</option>
             </select>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-row">
             <div className="form-group">
-              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Değer</label>
-              <input type="text" value={form.deger} onChange={e => setForm({...form, deger: e.target.value})} placeholder="Örn: 12/8" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+              <label>Değer</label>
+              <input type="text" value={form.deger} onChange={e => setForm({...form, deger: e.target.value})} placeholder="Örn: 12/8" />
             </div>
             <div className="form-group">
-              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tarih</label>
-              <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              <label>Tarih</label>
+              <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} />
             </div>
           </div>
-          <button className="confirm-btn" onClick={handleAdd} style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--saglik-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>
+          <button className="submit-btn primary" onClick={handleAdd}>
             Ölçümü Kaydet
           </button>
         </div>

@@ -167,15 +167,21 @@ function PlanningWizardContent({ onAdd }) {
         {step === 1 && (
           <div className="wizard-step animate-fadeIn">
             <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Nereye Gidiyoruz? 🌍</h4>
-            <div className="form-group" style={{ marginBottom: '12px' }}>
-              <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Tatil Başlığı</label>
-              <input type="text" placeholder="Örn: Roma Kaçamağı" value={form.title} onChange={e => setForm({...form, title: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} />
+            <div className="form-group">
+              <label>Tatil Başlığı</label>
+              <input type="text" placeholder="Örn: Roma Kaçamağı" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
             </div>
-            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-              <div className="form-group"><label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Ülke</label><input type="text" value={form.country} onChange={e => setForm({...form, country: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} /></div>
-              <div className="form-group"><label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Şehir</label><input type="text" value={form.city} onChange={e => setForm({...form, city: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} /></div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Ülke</label>
+                <input type="text" value={form.country} onChange={e => setForm({...form, country: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>Şehir</label>
+                <input type="text" value={form.city} onChange={e => setForm({...form, city: e.target.value})} />
+              </div>
             </div>
-            <div className="type-selector" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div className="form-row type-selector" style={{ marginTop: '12px' }}>
                <button 
                 className={form.type === 'yurtdisi' ? 'active' : ''} 
                 onClick={() => setForm({...form, type: 'yurtdisi'})}
@@ -192,9 +198,9 @@ function PlanningWizardContent({ onAdd }) {
         {step === 2 && (
           <div className="wizard-step animate-fadeIn">
             <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Ne Zaman? 📅</h4>
-            <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div className="form-group"><label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Başlangıç</label><input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} /></div>
-              <div className="form-group"><label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Bitiş</label><input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} /></div>
+            <div className="form-row">
+              <div className="form-group"><label>Başlangıç</label><input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} /></div>
+              <div className="form-group"><label>Bitiş</label><input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} /></div>
             </div>
           </div>
         )}
@@ -202,19 +208,19 @@ function PlanningWizardContent({ onAdd }) {
           <div className="wizard-step animate-fadeIn">
             <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Detaylar 💰</h4>
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Tahmini Bütçe (₺)</label>
-              <input type="number" placeholder="0" value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} />
+              <label>Tahmini Bütçe (₺)</label>
+              <input type="number" placeholder="0" value={form.budget} onChange={e => setForm({...form, budget: e.target.value})} />
             </div>
           </div>
         )}
       </div>
 
       <div className="wizard-footer-standard" style={{ display: 'flex', gap: '10px', marginTop: '30px', paddingBottom: '20px' }}>
-        {step > 1 && <button className="submit-btn" onClick={() => setStep(s => s - 1)} style={{ flex: 1, padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'white', fontWeight: '800', cursor: 'pointer' }}>Geri</button>}
+        {step > 1 && <button className="submit-btn" onClick={() => setStep(s => s - 1)} style={{ flex: 1, background: 'white', border: '1px solid var(--brd)', color: 'var(--txt)' }}>Geri</button>}
         {step < 3 ? (
-          <button className="submit-btn tatil-gradient" onClick={() => setStep(s => s + 1)} style={{ flex: 2, padding: '14px', borderRadius: '14px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer' }}>Devam Et</button>
+          <button className="submit-btn tatil" onClick={() => setStep(s => s + 1)} style={{ flex: 2, background: 'var(--tatil)' }}>Devam Et</button>
         ) : (
-          <button className="submit-btn tatil-gradient" onClick={() => onAdd(form)} style={{ flex: 2, padding: '14px', borderRadius: '14px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer' }}>Planı Oluştur ✨</button>
+          <button className="submit-btn tatil" onClick={() => onAdd(form)} style={{ flex: 2, background: 'var(--tatil)' }}>Planı Oluştur ✨</button>
         )}
       </div>
     </div>
@@ -296,21 +302,21 @@ function TripDetailContent({ trip }) {
 function AddTripExpenseContent({ onAdd }) {
   const [form, setForm] = useState({ title: '', amount: '', payer: 'ortak' });
   return (
-    <div className="modal-form-standard" style={{ paddingBottom: '30px' }}>
-      <div className="form-group" style={{ marginBottom: '12px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Harcama Kalemi</label>
-        <input type="text" placeholder="Örn: Akşam Yemeği, Ulaşım..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} required />
+    <div className="modal-form">
+      <div className="form-group">
+        <label>Harcama Kalemi</label>
+        <input type="text" placeholder="Örn: Akşam Yemeği, Ulaşım..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
       </div>
-      <div className="form-group" style={{ marginBottom: '15px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6 }}>Tutar (₺)</label>
-        <input type="number" placeholder="0₺" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', marginTop: '5px' }} required />
+      <div className="form-group">
+        <label>Tutar (₺)</label>
+        <input type="number" placeholder="0₺" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
       </div>
-      <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
+      <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '10px' }}>
         <button type="button" className={form.payer === 'gorkem' ? 'active' : ''} onClick={() => setForm({...form, payer: 'gorkem'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'gorkem' ? 'var(--tatil-light)' : 'white', color: form.payer === 'gorkem' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Görkem</button>
         <button type="button" className={form.payer === 'esra' ? 'active' : ''} onClick={() => setForm({...form, payer: 'esra'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'esra' ? 'var(--tatil-light)' : 'white', color: form.payer === 'esra' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Esra</button>
         <button type="button" className={form.payer === 'ortak' ? 'active' : ''} onClick={() => setForm({...form, payer: 'ortak'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'ortak' ? 'var(--tatil-light)' : 'white', color: form.payer === 'ortak' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Ortak</button>
       </div>
-      <button onClick={() => onAdd(form)} className="submit-btn tatil-gradient" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer' }}>Harcamayı Ekle</button>
+      <button onClick={() => onAdd(form)} className="submit-btn tatil" style={{ background: 'var(--tatil)' }}>Harcamayı Ekle</button>
     </div>
   );
 }

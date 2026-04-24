@@ -42,25 +42,28 @@
 }
 
 html, body {
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
-  min-height: 100dvh;
-  width: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  overscroll-behavior: none; /* Modern way to prevent rubber banding on iOS */
-  background: var(--bg); /* Match app background to eliminate bands */
-}
-
-body {
-  font-family: 'Outfit', sans-serif;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  background: var(--bg);
   color: var(--txt);
+  font-family: 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+#root {
+  width: 100% !important;
+  max-width: 100vw !important;
   min-height: 100vh;
   min-height: -webkit-fill-available;
   min-height: 100dvh;
@@ -68,7 +71,22 @@ body {
   background: var(--bg);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden !important;
+  overflow-y: auto;
+}
+
+/* Universal Responsive Sanitizer */
+* {
+  box-sizing: border-box !important;
+  max-width: 100vw;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text from expanding containers */
+span, p, h1, h2, h3, h4, h5, h6, label, div {
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  min-width: 0;
 }
 
 h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 800; }
@@ -379,4 +397,167 @@ body:has(.modal-overlay) .app-content {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
   100% { transform: translateY(0px); }
+}
+/* --- Unified Form System --- */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--txt-light);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-left: 4px;
+  white-space: normal;
+  line-height: 1.4;
+  display: block;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+  width: 100%;
+  min-width: 0; /* Prevents input from breaking flex/grid layouts */
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--brd);
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  outline: none;
+  display: block;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--txt);
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Safari/iOS Input Fixes */
+input[type="date"], 
+input[type="time"] {
+  min-height: 48px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.form-group input:focus, 
+.form-group select:focus, 
+.form-group textarea:focus {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  align-items: start;
+}
+
+.form-row > .form-group {
+  flex: 1;
+  min-width: 140px;
+}
+
+
+
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 18px;
+  border: none;
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  box-shadow: 0 10px 20px -10px rgba(0,0,0,0.2);
+}
+
+.submit-btn:active {
+  transform: scale(0.96);
+}
+
+/* PERMANENT RESPONSIVE SOLUTION - DO NOT MOVE */
+@media only screen and (max-width: 768px) {
+  .form-row, .modal-form .form-row {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    gap: 16px !important;
+  }
+  
+  .form-row > .form-group, .modal-form .form-row > .form-group {
+    width: 100% !important;
+    flex: none !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  input, select, textarea, button {
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    max-width: 100% !important;
+  }
+}
+
+/* Global Kill-Switch for Horizontal Scrolling */
+html, body {
+  overflow-x: hidden !important;
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+  height: 100%;
+}
+
+#root, .app-container, .ActionSheet, [class*="modal"], .modal-form {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+}
+
+/* Long text protection in cards */
+.glass, .card, .setting-item {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
 }

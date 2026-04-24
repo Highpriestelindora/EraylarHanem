@@ -286,17 +286,17 @@ function AddPetExpenseContent({ petId, onClose }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Harcama Başlığı</label>
-        <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="ör: Mama, Kum, Oyuncak..." required autoFocus style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+        <label>Harcama Başlığı</label>
+        <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="ör: Mama, Kum, Oyuncak..." required autoFocus />
       </div>
       <div className="form-group">
-        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tutar (₺)</label>
-        <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0" required style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} inputMode="decimal" />
+        <label>Tutar (₺)</label>
+        <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0" required inputMode="decimal" />
       </div>
       <div className="form-group">
-        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Kim Ödedi?</label>
+        <label>Kim Ödedi?</label>
         <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
           {['gorkem', 'esra', 'ortak'].map(p => (
             <button key={p} type="button" className={formData.payer === p ? 'active' : ''} onClick={() => setFormData({...formData, payer: p})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: formData.payer === p ? 'var(--pet-header-grad)' : 'white', color: formData.payer === p ? 'white' : 'inherit', fontWeight: 'bold' }}>
@@ -305,7 +305,7 @@ function AddPetExpenseContent({ petId, onClose }) {
           ))}
         </div>
       </div>
-      <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--pet-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(217, 119, 6, 0.2)' }}>Harcamayı Kaydet</button>
+      <button type="submit" className="submit-btn" style={{ background: 'var(--pet-header-grad)', boxShadow: '0 10px 20px rgba(217, 119, 6, 0.2)' }}>Harcamayı Kaydet</button>
     </form>
   );
 }
@@ -323,16 +323,16 @@ function AddWeightContent({ petId, onClose }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Ağırlık (kg)</label>
-        <input type="number" step="0.1" value={formData.w} onChange={e => setFormData({...formData, w: e.target.value})} placeholder="ör: 10.5" required autoFocus style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} inputMode="decimal" />
+        <label>Ağırlık (kg)</label>
+        <input type="number" step="0.1" value={formData.w} onChange={e => setFormData({...formData, w: e.target.value})} placeholder="ör: 10.5" required autoFocus inputMode="decimal" />
       </div>
       <div className="form-group">
-        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tarih</label>
-        <input type="text" value={formData.dt} onChange={e => setFormData({...formData, dt: e.target.value})} placeholder="DD.MM.YYYY" required style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+        <label>Tarih</label>
+        <input type="text" value={formData.dt} onChange={e => setFormData({...formData, dt: e.target.value})} placeholder="DD.MM.YYYY" required />
       </div>
-      <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--pet-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px' }}>Kaydet</button>
+      <button type="submit" className="submit-btn" style={{ background: 'var(--pet-header-grad)' }}>Kaydet</button>
     </form>
   );
 }
@@ -376,23 +376,23 @@ function ManageVaccineContent({ petId, onClose }) {
 
       <div style={{ height: '1px', background: 'var(--brd)', opacity: 0.5 }} />
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <form className="modal-form" onSubmit={handleSubmit}>
         <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px' }}>YENİ AŞI EKLE</label>
         <div className="form-group">
-          <label style={{ fontSize: '13px', fontWeight: 800, marginBottom: '6px', display: 'block' }}>Aşı Adı</label>
-          <input type="text" value={formData.n} onChange={e => setFormData({...formData, n: e.target.value})} placeholder="ör: Karma, Kuduz..." required style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)' }} />
+          <label>Aşı Adı</label>
+          <input type="text" value={formData.n} onChange={e => setFormData({...formData, n: e.target.value})} placeholder="ör: Karma, Kuduz..." required />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <div className="form-row">
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: 800, marginBottom: '6px', display: 'block' }}>Son Tarih</label>
-            <input type="text" value={formData.last} onChange={e => setFormData({...formData, last: e.target.value})} placeholder="DD.MM.YYYY" required style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)' }} />
+            <label>Son Tarih</label>
+            <input type="text" value={formData.last} onChange={e => setFormData({...formData, last: e.target.value})} placeholder="DD.MM.YYYY" required />
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: 800, marginBottom: '6px', display: 'block' }}>Periyot (Gün)</label>
-            <input type="number" value={formData.ev} onChange={e => setFormData({...formData, ev: Number(e.target.value)})} required style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)' }} />
+            <label>Periyot (Gün)</label>
+            <input type="number" value={formData.ev} onChange={e => setFormData({...formData, ev: Number(e.target.value)})} required />
           </div>
         </div>
-        <button type="submit" className="submit-btn" style={{ width: '100%', padding: '16px', borderRadius: '18px', background: 'var(--pet-header-grad)', color: 'white', border: 'none', fontWeight: '900', marginTop: '8px' }}>Takvime Ekle</button>
+        <button type="submit" className="submit-btn" style={{ background: 'var(--pet-header-grad)' }}>Takvime Ekle</button>
       </form>
 
       {deletingVaccine && (
@@ -427,19 +427,19 @@ function AddPetLogContent({ petId, onClose }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label style={{ fontSize: '13px', fontWeight: 800, marginBottom: '8px', display: 'block' }}>Neler Oldu?</label>
+        <label>Neler Oldu?</label>
         <textarea 
           value={note} 
           onChange={e => setNote(e.target.value)} 
           placeholder="ör: Veteriner kontrolü yapıldı, vitamin verildi..."
           rows={4}
           autoFocus
-          style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontFamily: 'inherit', fontSize: '14px', lineHeight: '1.6' }}
+          style={{ resize: 'none' }}
         />
       </div>
-      <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--pet-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px' }}>Kaydet</button>
+      <button type="submit" className="submit-btn" style={{ background: 'var(--pet-header-grad)' }}>Kaydet</button>
     </form>
   );
 }

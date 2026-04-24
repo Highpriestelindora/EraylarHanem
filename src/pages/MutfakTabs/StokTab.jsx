@@ -244,22 +244,22 @@ const StokTab = () => {
         title={editingItem?.isNew ? '✨ Yeni Malzeme Ekle' : '📝 Stok Kartı'}
       >
         {editingItem && (
-          <form onSubmit={handleSaveItem} style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '30px' }}>
+          <form className="modal-form" onSubmit={handleSaveItem}>
             <div className="form-row">
               <div className="form-group">
                 <label>Malzeme Adı</label>
-                <input name="n" defaultValue={editingItem.item?.n || ''} required placeholder="Örn: Süt" style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+                <input name="n" defaultValue={editingItem.item?.n || ''} required placeholder="Örn: Süt" />
               </div>
               <div className="form-group">
                 <label>İkon (Emoji)</label>
-                <input name="ic" defaultValue={editingItem.item?.ic || '📦'} placeholder="🥛" style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+                <input name="ic" defaultValue={editingItem.item?.ic || '📦'} placeholder="🥛" />
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label>Birim</label>
-                <select name="u" defaultValue={editingItem.item?.u || 'adet'} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+                <select name="u" defaultValue={editingItem.item?.u || 'adet'}>
                   <option value="adet">Adet</option>
                   <option value="kg">KG</option>
                   <option value="gram">Gram</option>
@@ -269,7 +269,7 @@ const StokTab = () => {
               </div>
               <div className="form-group">
                 <label>Reyon/Kategori</label>
-                <select name="ct" defaultValue={editingItem.item?.ct || 'Diğer'} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+                <select name="ct" defaultValue={editingItem.item?.ct || 'Diğer'}>
                   {REYON_ORDER.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
@@ -278,26 +278,26 @@ const StokTab = () => {
             <div className="form-row">
               <div className="form-group">
                 <label>Kritik Stok Sınırı (mn)</label>
-                <input name="mn" type="number" step="0.1" defaultValue={editingItem.item?.mn || 0} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+                <input name="mn" type="number" step="0.1" defaultValue={editingItem.item?.mn || 0} required />
               </div>
               <div className="form-group">
                 <label>Mevcut Miktar (cr)</label>
-                <input name="cr" type="number" step="0.1" defaultValue={editingItem.item?.cr || 0} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+                <input name="cr" type="number" step="0.1" defaultValue={editingItem.item?.cr || 0} required />
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label>Marka Tercihi</label>
-                <input name="mk" defaultValue={editingItem.item?.mk || ''} placeholder="Sütaş, BİM vb." style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+                <input name="mk" defaultValue={editingItem.item?.mk || ''} placeholder="Sütaş, BİM vb." />
               </div>
               <div className="form-group">
                 <label>Paket/Ağırlık Bilgisi</label>
-                <input name="pk" defaultValue={editingItem.item?.pk || ''} placeholder="1L, 500g vb." style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+                <input name="pk" defaultValue={editingItem.item?.pk || ''} placeholder="1L, 500g vb." />
               </div>
             </div>
 
-            <button type="submit" className="submit-btn" style={{ background: 'var(--mutfak)', color: 'white', padding: '18px', borderRadius: '20px', border: 'none', fontWeight: '900', fontSize: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(0,0,0,0.1)' }}>
+            <button type="submit" className="submit-btn mutfak">
               <Save size={20} />
               <span>Kaydet</span>
             </button>
@@ -416,24 +416,6 @@ const StokTab = () => {
         }
         .transfer-btn:hover { background: var(--mutfak-light); border-color: var(--mutfak); }
         
-        .modal-form { display: flex; flex-direction: column; gap: 16px; margin-top: 10px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-group label { font-size: 12px; font-weight: 700; color: var(--txt-light); }
-        .form-group input, .form-group select {
-          padding: 12px; border-radius: 14px; border: 1px solid var(--brd);
-          background: var(--bg); font-family: inherit; font-size: 14px;
-        }
-        .form-row { 
-          display: grid; 
-          grid-template-columns: 1fr 1fr; 
-          gap: 12px; 
-        }
-        @media (max-width: 480px) {
-          .form-row {
-            grid-template-columns: 1fr;
-            gap: 16px;
-          }
-        }
         .submit-btn {
           padding: 16px; border-radius: 18px; border: none;
           background: var(--mutfak); color: white; font-weight: 800;

@@ -40,11 +40,13 @@ export default function ActionSheet({
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 zIndex: 999999,
+                touchAction: 'none'
               }}
             />
 
             {/* Sheet */}
             <motion.div
+              className="ActionSheet"
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -69,7 +71,8 @@ export default function ActionSheet({
                 display: 'flex',
                 flexDirection: 'column',
                 boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                overflowX: 'hidden'
               }}
             >
               {/* Drag Handle */}
@@ -81,7 +84,9 @@ export default function ActionSheet({
 
               {/* Header */}
               <div style={{ 
-                padding: 'calc(16px + env(safe-area-inset-top, 40px)) 24px 16px', 
+                padding: fullHeight 
+                  ? 'calc(16px + env(safe-area-inset-top, 0px)) 24px 16px' 
+                  : '16px 24px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'space-between',
@@ -116,6 +121,7 @@ export default function ActionSheet({
               <div style={{ 
                 flex: 1, 
                 overflowY: 'auto', 
+                overflowX: 'hidden',
                 padding: '20px 24px 40px',
                 WebkitOverflowScrolling: 'touch'
               }}>

@@ -209,21 +209,19 @@ const AlisverisTab = () => {
         onClose={() => setEditQtyItem(null)}
         title="📏 Miktarı Güncelle"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="modal-form">
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Yeni Miktar</label>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <label>Yeni Miktar</label>
+            <div className="form-row">
               <input 
                 type="number" 
                 value={editQtyItem?.val || ''} 
                 onChange={(e) => setEditQtyItem({ ...editQtyItem, val: e.target.value })}
-                style={{ flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '16px' }}
                 autoFocus
               />
               <select 
                 value={editQtyItem?.unit || 'adet'} 
                 onChange={(e) => setEditQtyItem({ ...editQtyItem, unit: e.target.value })}
-                style={{ flex: 1, padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '16px', background: 'var(--bg)' }}
               >
                 <option value="adet">adet</option>
                 <option value="kg">kg</option>
@@ -236,7 +234,7 @@ const AlisverisTab = () => {
               </select>
             </div>
           </div>
-          <button className="confirm-btn" onClick={() => updateItemQty(editQtyItem.id, editQtyItem.val, editQtyItem.unit)}>
+          <button className="submit-btn primary" onClick={() => updateItemQty(editQtyItem.id, editQtyItem.val, editQtyItem.unit)}>
             Güncelle
           </button>
         </div>
@@ -247,7 +245,7 @@ const AlisverisTab = () => {
         onClose={() => setShowCheckout(false)}
         title="🛒 Kasaya Git"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="modal-form">
           <div className="checkout-items-list" style={{ maxHeight: '35vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '15px', background: 'var(--bg)', borderRadius: '24px', border: '1px solid var(--brd)' }}>
             <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px', marginBottom: '5px' }}>ÜRÜN BAZLI FİYAT VE MİKTAR</label>
             {checkoutItems.map(item => (
@@ -275,27 +273,27 @@ const AlisverisTab = () => {
           </div>
 
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Toplam Tutar (₺)</label>
+            <label>Toplam Tutar (₺)</label>
             <input 
               type="number" 
               placeholder="0.00" 
               value={totalPrice} 
               onChange={e => setTotalPrice(e.target.value)}
-              style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '18px', fontWeight: '800' }}
+              style={{ fontSize: '18px', fontWeight: '800' }}
               inputMode="decimal"
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-row">
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '800', marginBottom: '6px', display: 'block' }}>Market</label>
-              <select value={market} onChange={e => setMarket(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)' }}>
+              <label>Market</label>
+              <select value={market} onChange={e => setMarket(e.target.value)}>
                 <option>BİM</option><option>Migros</option><option>A101</option><option>ŞOK</option><option>File</option><option>Pazar</option><option>Kasap</option><option>Diğer</option>
               </select>
             </div>
             <div className="form-group">
-              <label style={{ fontSize: '12px', fontWeight: '800', marginBottom: '6px', display: 'block' }}>Ödeme Kartı</label>
-              <select value={cardId} onChange={e => setCardId(e.target.value)} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'var(--bg)' }}>
+              <label>Ödeme Kartı</label>
+              <select value={cardId} onChange={e => setCardId(e.target.value)}>
                 <option value="">Nakit / Diğer</option>
                 {(finans?.kartlar || []).map(card => (
                   <option key={card.id} value={card.id}>{card.banka} - {card.ad}</option>
@@ -305,13 +303,9 @@ const AlisverisTab = () => {
           </div>
 
           <button 
-            className="confirm-btn" 
+            className="submit-btn primary" 
             onClick={handleCheckout} 
             style={{ 
-              width: '100%', padding: '18px', borderRadius: '20px', 
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
-              color: 'white', border: 'none', fontWeight: '900', fontSize: '16px',
-              boxShadow: '0 10px 20px rgba(16, 185, 129, 0.2)',
               marginTop: '10px',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'
             }}

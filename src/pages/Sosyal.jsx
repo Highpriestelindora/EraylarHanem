@@ -6,7 +6,8 @@ import {
   Calendar, Activity, Archive, Lightbulb, 
   CheckCircle2, Plus, Trash2, Star, 
   MapPin, Home as HomeIcon, Clock, ArrowRight,
-  Layers, CreditCard, Smile, ArrowLeft, X, Sparkles
+  Layers, CreditCard, Smile, ArrowLeft, X, Sparkles,
+  RotateCcw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { INITIAL_SOCIAL } from '../constants/data';
@@ -328,37 +329,60 @@ function HaftaTab({ sosyal, onAdd }) {
     const monthActivitiesOnly = monthItems.filter(e => !e.isNote);
 
     if (monthActivitiesOnly.length < 2) {
-      let pool = [];
+      let poolMap = new Map();
       
-      // 1. Mandatory Routines (High Priority)
-      (sosyal.rutinler || []).forEach(r => pool.push({ ...r, type: 'rutin', emoji: '🏋️', weight: 5 }));
+      // 1. Mandatory Routines (High Weight)
+      (sosyal.rutinler || []).forEach(r => {
+        poolMap.set(r.baslik, { ...r, type: 'rutin', emoji: '🏋️', weight: 10 });
+      });
       
-      // 2. Ideas Pool (Weight based on frequency/count)
-      (sosyal.havuz || []).forEach(h => pool.push({ ...h, type: 'fikir', weight: h.count ? Math.min(h.count, 20) : 2 }));
+      // 2. Ideas Pool (Base weight)
+      (sosyal.havuz || []).forEach(h => {
+        const existing = poolMap.get(h.baslik);
+        poolMap.set(h.baslik, { 
+          ...h, 
+          type: 'fikir', 
+          weight: (existing?.weight || 0) + (h.count ? Math.min(h.count, 10) : 5) 
+        });
+      });
       
       // 3. Smart Family Checks
       if (vehicle?.muayene?.next) {
-        pool.push({ baslik: 'Araç Muayene Kontrolü', emoji: '🚗', tur: 'disari', type: 'system', weight: 5 });
+        poolMap.set('Araç Muayene Kontrolü', { baslik: 'Araç Muayene Kontrolü', emoji: '🚗', tur: 'disari', type: 'system', weight: 8 });
       }
-      pool.push({ baslik: 'Mutfak Stoklarını Güncelle', emoji: '🛒', tur: 'evde', type: 'system', weight: 5 });
+      poolMap.set('Mutfak Stoklarını Güncelle', { baslik: 'Mutfak Stoklarını Güncelle', emoji: '🛒', tur: 'evde', type: 'system', weight: 8 });
 
-      // 4. Frequent Past Activities (Additional boost)
+      // 4. Frequent Past Activities (Additional boost to existing or add new)
       const counts = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi).reduce((acc, curr) => {
         acc[curr.baslik] = (acc[curr.baslik] || 0) + 1;
         return acc;
       }, {});
-      const frequent = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
-      frequent.forEach(f => {
-        const original = (sosyal.aktiviteler || []).find(oa => oa.baslik === f);
-        pool.push({ baslik: f, emoji: original?.emoji || '🎭', tur: original?.tur || 'disari', type: 'gecmis', weight: counts[f] });
+      
+      Object.keys(counts).forEach(baslik => {
+        const count = counts[baslik];
+        const existing = poolMap.get(baslik);
+        if (existing) {
+          existing.weight += count;
+        } else {
+          const original = (sosyal.aktiviteler || []).find(oa => oa.baslik === baslik);
+          poolMap.set(baslik, { 
+            baslik, 
+            emoji: original?.emoji || '🎭', 
+            tur: original?.tur || 'disari', 
+            type: 'gecmis', 
+            weight: count 
+          });
+        }
       });
+
+      const pool = Array.from(poolMap.values());
 
       if (pool.length > 0) {
         const plannedTitles = monthActivitiesOnly.map(a => a.title || a.baslik);
         let available = pool.filter(p => !plannedTitles.includes(p.baslik));
         if (available.length === 0) available = pool; // Fallback
 
-        // Ağırlıklı rastgele seçim (Weighted Random)
+        // Weighted Random Selection
         const totalWeight = available.reduce((sum, item) => sum + (item.weight || 1), 0);
         let randomNum = Math.random() * totalWeight;
         let selected = available[0];
@@ -505,7 +529,7 @@ function HaftaTab({ sosyal, onAdd }) {
                       <span className="rg-tag">ASİSTAN ÖNERİSİ</span>
                     </div>
                     <button className="rg-refresh" onClick={refreshRecommendation} title="Farklı Bir Öneri">
-                      <X size={12} />
+                      <RotateCcw size={12} />
                     </button>
                   </div>
                   <div className="rg-body">
@@ -621,7 +645,7 @@ function HaftaTab({ sosyal, onAdd }) {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '20px', paddingBottom: '20px' }}>
+            <div className="form-row" style={{ marginTop: '20px', paddingBottom: '20px' }}>
               <button 
                 className="leaf-action-btn note-btn" 
                 onClick={() => setShowAddNote(true)}
@@ -716,27 +740,25 @@ function AddNoteModal({ date, onClose, onSave }) {
 
   return (
     <div className="modal-form">
-      <div className="form-group" style={{ marginBottom: '15px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Hatırlatılacak Not</label>
+      <div className="form-group">
+        <label>Hatırlatılacak Not</label>
         <input 
           type="text" 
           value={baslik} 
           onChange={e => setBaslik(e.target.value)} 
           placeholder="Örn: Market alışverişi" 
           autoFocus
-          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}
         />
       </div>
-      <div className="form-group" style={{ marginBottom: '20px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Saat</label>
+      <div className="form-group">
+        <label>Saat</label>
         <input 
           type="time" 
           value={saat} 
           onChange={e => setSaat(e.target.value)} 
-          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}
         />
       </div>
-      <button className="submit-btn" onClick={handleSave} style={{ background: 'var(--social)', width: '100%', padding: '16px', borderRadius: '16px', color: 'white', fontWeight: '800', border: 'none', cursor: 'pointer', fontSize: '15px' }}>
+      <button className="submit-btn social" onClick={handleSave}>
         Kaydet
       </button>
     </div>
@@ -768,7 +790,7 @@ function ActivityDetailsModal({ activity, onClose, allActivities }) {
   return (
     <div className="modal-form">
       <div className="form-group" style={{ position: 'relative' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>
+        <label>
           {activity.baslik} Detayı (Film, Oyun, Restoran vb.)
         </label>
         <input 
@@ -780,7 +802,6 @@ function ActivityDetailsModal({ activity, onClose, allActivities }) {
           }}
           onFocus={() => setShowSuggestions(true)}
           placeholder="Hangi film veya oyun?" 
-          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}
         />
         {showSuggestions && filteredSuggestions.length > 0 && (
           <div className="autocomplete-dropdown glass" style={{ 
@@ -804,7 +825,7 @@ function ActivityDetailsModal({ activity, onClose, allActivities }) {
           </div>
         )}
       </div>
-      <button className="submit-btn social-gradient" onClick={handleSave} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '20px', cursor: 'pointer', fontSize: '15px' }}>
+      <button className="submit-btn social" onClick={handleSave}>
         Kaydet
       </button>
     </div>
@@ -826,40 +847,39 @@ function CompleteActivityModal({ activity, onClose }) {
 
   return (
     <div className="modal-form">
-      <div className="form-group" style={{ marginBottom: '15px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Puanlar (1-10)</label>
-        <div className="rating-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="form-group">
+        <label>Puanlar (1-10)</label>
+        <div className="form-row">
           <div className="rate-box glass" style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', textAlign: 'center' }}>
-             <label style={{ fontSize: '11px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '4px' }}>👨 Görkem</label>
+             <label style={{ marginBottom: '4px' }}>👨 Görkem</label>
              <input 
               type="number" min="1" max="10" value={pGorkem} onChange={e => setPGorkem(e.target.value)}
-              style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
+              style={{ border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
              />
           </div>
           <div className="rate-box glass" style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', textAlign: 'center' }}>
-             <label style={{ fontSize: '11px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '4px' }}>👩 Esra</label>
+             <label style={{ marginBottom: '4px' }}>👩 Esra</label>
              <input 
               type="number" min="1" max="10" value={pEsra} onChange={e => setPEsra(e.target.value)}
-              style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
+              style={{ border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
              />
           </div>
         </div>
       </div>
-      <div className="form-group" style={{ marginBottom: '15px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Gerçekleşen Harcama (₺)</label>
+      <div className="form-group">
+        <label>Gerçekleşen Harcama (₺)</label>
         <input 
           type="number" value={cost} onChange={e => setCost(e.target.value)}
-          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}
         />
       </div>
-      <div className="form-group" style={{ marginBottom: '20px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Yorum / Not</label>
+      <div className="form-group">
+        <label>Yorum / Not</label>
         <textarea 
           value={comment} onChange={e => setComment(e.target.value)} placeholder="Nasıl geçti?" rows={2}
-          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px', resize: 'none' }}
+          style={{ resize: 'none' }}
         />
       </div>
-      <button className="submit-btn social-gradient" onClick={handleComplete} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer', fontSize: '15px' }}>
+      <button className="submit-btn social" onClick={handleComplete}>
         Tamamla & Arşivle
       </button>
     </div>
@@ -927,7 +947,7 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
         <label>Mekan / Yer</label>
         <input type="text" value={mekan} onChange={e => setMekan(e.target.value)} placeholder="Örn: Emaar AVM" />
       </div>
-      <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="form-row">
         <div className="form-group">
           <label>Saat</label>
           <input type="time" value={saat} onChange={e => setSaat(e.target.value)} />
@@ -937,7 +957,7 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
           <input type="text" value={emoji} onChange={e => setEmoji(e.target.value)} placeholder="✨" />
         </div>
       </div>
-      <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="form-row">
         <div className="form-group">
           <label>Tahmini Bütçe (₺)</label>
           <input type="number" value={harcama} onChange={e => setHarcama(e.target.value)} placeholder="₺0" />
@@ -949,12 +969,12 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
       </div>
       <div className="form-group">
         <label>Tür</label>
-        <select value={tur} onChange={e => setTur(e.target.value)} style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%' }}>
+        <select value={tur} onChange={e => setTur(e.target.value)}>
           <option value="disari">🌳 Dışarıda</option>
           <option value="evde">🏠 Evde</option>
         </select>
       </div>
-      <button className="submit-btn social-gradient" onClick={handleSave} style={{ width: '100%', padding: '14px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '20px', cursor: 'pointer' }}>
+      <button className="submit-btn social" onClick={handleSave}>
         Planla
       </button>
     </div>
@@ -985,48 +1005,47 @@ function EditHistoryModal({ activity, onClose }) {
 
   return (
     <div className="modal-form">
-      <div className="form-group" style={{ marginBottom: '15px' }}>
+      <div className="form-group">
         <label>Aktivite Başlığı</label>
         <input type="text" value={baslik} onChange={e => setBaslik(e.target.value)} />
       </div>
-      <div className="form-group" style={{ marginBottom: '15px' }}>
+      <div className="form-group">
         <label>Tarih</label>
         <input type="date" value={date} onChange={e => setDate(e.target.value)} />
       </div>
-      <div className="form-group" style={{ marginBottom: '15px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Puanlar (1-10)</label>
-        <div className="rating-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="form-group">
+        <label>Puanlar (1-10)</label>
+        <div className="form-row">
           <div className="rate-box glass" style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', textAlign: 'center' }}>
-             <label style={{ fontSize: '11px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '4px' }}>👨 Görkem</label>
+             <label style={{ marginBottom: '4px' }}>👨 Görkem</label>
              <input 
               type="number" min="1" max="10" value={pGorkem} onChange={e => setPGorkem(e.target.value)}
-              style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
+              style={{ border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
              />
           </div>
           <div className="rate-box glass" style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', textAlign: 'center' }}>
-             <label style={{ fontSize: '11px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '4px' }}>👩 Esra</label>
+             <label style={{ marginBottom: '4px' }}>👩 Esra</label>
              <input 
               type="number" min="1" max="10" value={pEsra} onChange={e => setPEsra(e.target.value)}
-              style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
+              style={{ border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
              />
           </div>
         </div>
       </div>
-      <div className="form-group" style={{ marginBottom: '15px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Harcama (₺)</label>
+      <div className="form-group">
+        <label>Harcama (₺)</label>
         <input 
           type="number" value={cost} onChange={e => setCost(e.target.value)}
-          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}
         />
       </div>
-      <div className="form-group" style={{ marginBottom: '20px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Yorum / Not</label>
+      <div className="form-group">
+        <label>Yorum / Not</label>
         <textarea 
           value={comment} onChange={e => setComment(e.target.value)} placeholder="Nasıl geçti?" rows={2}
-          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px', resize: 'none' }}
+          style={{ resize: 'none' }}
         />
       </div>
-      <button className="submit-btn social-gradient" onClick={handleUpdate} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer', fontSize: '15px' }}>
+      <button className="submit-btn social" onClick={handleUpdate}>
         Değişiklikleri Kaydet
       </button>
     </div>
@@ -1403,23 +1422,23 @@ function AddRutinModal({ onClose }) {
   };
 
   return (
-    <form className="modal-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+    <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Aktivite Adı</label>
-        <input type="text" value={formData.aktivite} onChange={e => setFormData({...formData, aktivite: e.target.value})} placeholder="Ör: Spor Salonu" required style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }} />
+        <label>Aktivite Adı</label>
+        <input type="text" value={formData.aktivite} onChange={e => setFormData({...formData, aktivite: e.target.value})} placeholder="Ör: Spor Salonu" required />
       </div>
-      <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="form-row">
         <div className="form-group">
-          <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Kişi</label>
-          <select value={formData.kisi} onChange={e => setFormData({...formData, kisi: e.target.value})} style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}>
+          <label>Kişi</label>
+          <select value={formData.kisi} onChange={e => setFormData({...formData, kisi: e.target.value})}>
             <option value="Görkem">🧔 Görkem</option>
             <option value="Esra">👩‍🦰 Esra</option>
             <option value="İkisi">👫 İkisi</option>
           </select>
         </div>
         <div className="form-group">
-          <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Günün Vakti</label>
-          <select value={formData.vakit} onChange={e => setFormData({...formData, vakit: e.target.value})} style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}>
+          <label>Günün Vakti</label>
+          <select value={formData.vakit} onChange={e => setFormData({...formData, vakit: e.target.value})}>
             <option value="sabah">🌅 Sabah</option>
             <option value="öğle">☀️ Öğle</option>
             <option value="akşam">🌙 Akşam</option>
@@ -1427,7 +1446,7 @@ function AddRutinModal({ onClose }) {
         </div>
       </div>
       <div className="form-group">
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Hangi Günler?</label>
+        <label>Hangi Günler?</label>
         <div className="days-selector" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map(day => (
             <button
@@ -1456,7 +1475,7 @@ function AddRutinModal({ onClose }) {
           ))}
         </div>
       </div>
-      <button type="submit" className="submit-btn social-gradient" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '10px', cursor: 'pointer', fontSize: '15px' }}>
+      <button type="submit" className="submit-btn social">
         Rutini Kaydet
       </button>
     </form>
@@ -1475,29 +1494,29 @@ function AddFikirModal({ onClose }) {
   };
 
   return (
-    <form className="modal-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+    <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Fikir</label>
-        <input type="text" value={formData.baslik} onChange={e => setFormData({...formData, baslik: e.target.value})} placeholder="Ne yapalım?" required style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }} />
+        <label>Fikir</label>
+        <input type="text" value={formData.baslik} onChange={e => setFormData({...formData, baslik: e.target.value})} placeholder="Ne yapalım?" required />
       </div>
-      <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="form-row">
         <div className="form-group">
-          <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Tür</label>
-          <select value={formData.tur} onChange={e => setFormData({...formData, tur: e.target.value})} style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}>
+          <label>Tür</label>
+          <select value={formData.tur} onChange={e => setFormData({...formData, tur: e.target.value})}>
             <option value="disari">🌳 Dışarı</option>
             <option value="evde">🏠 Evde</option>
           </select>
         </div>
         <div className="form-group">
-          <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Sıklık</label>
-          <select value={formData.siklik} onChange={e => setFormData({...formData, siklik: Number(e.target.value)})} style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}>
+          <label>Sıklık</label>
+          <select value={formData.siklik} onChange={e => setFormData({...formData, siklik: Number(e.target.value)})}>
             <option value="1">⭐ Seyrek</option>
             <option value="3">⭐⭐ Normal</option>
             <option value="5">⭐⭐⭐ Sık</option>
           </select>
         </div>
       </div>
-      <button type="submit" className="submit-btn social-gradient" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', marginTop: '10px', cursor: 'pointer', fontSize: '15px' }}>
+      <button type="submit" className="submit-btn social">
         Fikri Kaydet
       </button>
     </form>
@@ -1516,28 +1535,28 @@ function PlanIdeaModal({ idea, onClose, onConfirm }) {
     <div className="modal-form">
       <p style={{ textAlign: 'center', marginBottom: '20px', fontSize: '14px', color: 'var(--txt-light)' }}>{idea.emoji} Bu fikri ne zaman gerçekleştirelim?</p>
       
-      <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+      <div className="form-row">
         <div className="form-group">
-          <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Tarih</label>
-          <input type="date" value={formData.tarih} onChange={e => setFormData({...formData, tarih: e.target.value})} lang="tr-TR" required style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }} />
+          <label>Tarih</label>
+          <input type="date" value={formData.tarih} onChange={e => setFormData({...formData, tarih: e.target.value})} lang="tr-TR" required />
         </div>
         <div className="form-group">
-          <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Saat</label>
-          <input type="time" value={formData.saat} onChange={e => setFormData({...formData, saat: e.target.value})} style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }} />
+          <label>Saat</label>
+          <input type="time" value={formData.saat} onChange={e => setFormData({...formData, saat: e.target.value})} />
         </div>
       </div>
 
-      <div className="form-group" style={{ marginTop: '15px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Mekan (Opsiyonel)</label>
-        <input type="text" value={formData.mekan} onChange={e => setFormData({...formData, mekan: e.target.value})} placeholder="Nerede?" style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }} />
+      <div className="form-group">
+        <label>Mekan (Opsiyonel)</label>
+        <input type="text" value={formData.mekan} onChange={e => setFormData({...formData, mekan: e.target.value})} placeholder="Nerede?" />
       </div>
 
-      <div className="form-group" style={{ marginTop: '15px' }}>
-        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Tahmini Bütçe (₺)</label>
-        <input type="number" value={formData.harcama} onChange={e => setFormData({...formData, harcama: e.target.value})} placeholder="₺0" style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }} />
+      <div className="form-group">
+        <label>Tahmini Bütçe (₺)</label>
+        <input type="number" value={formData.harcama} onChange={e => setFormData({...formData, harcama: e.target.value})} placeholder="₺0" />
       </div>
 
-      <button className="submit-btn social-gradient" onClick={() => onConfirm(formData)} style={{ width: '100%', padding: '18px', borderRadius: '18px', border: 'none', color: 'white', fontWeight: '800', marginTop: '30px', cursor: 'pointer', fontSize: '16px' }}>
+      <button className="submit-btn social" onClick={() => onConfirm(formData)}>
         Aktiviteye Dönüştür
       </button>
     </div>

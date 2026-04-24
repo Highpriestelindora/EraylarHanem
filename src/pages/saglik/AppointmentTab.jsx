@@ -72,31 +72,39 @@ const AppointmentTab = () => {
         onClose={() => setModalOpenLocal(false)}
         title="🩺 Yeni Randevu"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="modal-form">
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Kişi</label>
-            <div className="user-toggle-mini" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <button className={form.kisi === 'Görkem' ? 'active' : ''} onClick={() => setForm({...form, kisi: 'Görkem'})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: form.kisi === 'Görkem' ? 'var(--saglik-header-grad)' : 'white', color: form.kisi === 'Görkem' ? 'white' : 'inherit', fontWeight: 'bold' }}>Görkem</button>
-              <button className={form.kisi === 'Esra' ? 'active' : ''} onClick={() => setForm({...form, kisi: 'Esra'})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: form.kisi === 'Esra' ? 'var(--saglik-header-grad)' : 'white', color: form.kisi === 'Esra' ? 'white' : 'inherit', fontWeight: 'bold' }}>Esra</button>
+            <label>Kişi</label>
+            <div className="form-row">
+              <button 
+                className={form.kisi === 'Görkem' ? 'active' : ''} 
+                onClick={() => setForm({...form, kisi: 'Görkem'})}
+                style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: form.kisi === 'Görkem' ? 'var(--saglik)' : 'white', color: form.kisi === 'Görkem' ? 'white' : 'inherit', fontWeight: 'bold' }}
+              >Görkem</button>
+              <button 
+                className={form.kisi === 'Esra' ? 'active' : ''} 
+                onClick={() => setForm({...form, kisi: 'Esra'})}
+                style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: form.kisi === 'Esra' ? 'var(--saglik)' : 'white', color: form.kisi === 'Esra' ? 'white' : 'inherit', fontWeight: 'bold' }}
+              >Esra</button>
             </div>
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Doktor / Bölüm</label>
-            <input type="text" value={form.doktor} onChange={e => setForm({...form, doktor: e.target.value})} placeholder="Örn: Diş Hekimi" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+            <label>Doktor / Bölüm</label>
+            <input type="text" value={form.doktor} onChange={e => setForm({...form, doktor: e.target.value})} placeholder="Örn: Diş Hekimi" />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="form-row">
             <div className="form-group">
-              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tarih</label>
-              <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} lang="tr-TR" style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              <label>Tarih</label>
+              <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} lang="tr-TR" />
             </div>
             <div className="form-group">
-              <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Saat</label>
-              <input type="time" value={form.saat} onChange={e => setForm({...form, saat: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }} />
+              <label>Saat</label>
+              <input type="time" value={form.saat} onChange={e => setForm({...form, saat: e.target.value})} />
             </div>
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Tekrar Periyodu</label>
-            <select value={form.rekurans} onChange={e => setForm({...form, rekurans: e.target.value})} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', background: 'white' }}>
+            <label>Tekrar Periyodu</label>
+            <select value={form.rekurans} onChange={e => setForm({...form, rekurans: e.target.value})}>
               <option value="yok">Tek Seferlik</option>
               <option value="Haftalık">Haftalık</option>
               <option value="Aylık">Aylık</option>
@@ -105,10 +113,10 @@ const AppointmentTab = () => {
             </select>
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Not</label>
-            <input type="text" value={form.not} onChange={e => setForm({...form, not: e.target.value})} placeholder="Aç karnına vb." style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} />
+            <label>Not</label>
+            <input type="text" value={form.not} onChange={e => setForm({...form, not: e.target.value})} placeholder="Aç karnına vb." />
           </div>
-          <button className="confirm-btn" onClick={handleAdd} style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--saglik-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>
+          <button className="submit-btn primary" onClick={handleAdd}>
             Randevuyu Ekle
           </button>
         </div>
