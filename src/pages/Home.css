@@ -8,7 +8,7 @@
 /* New Condensed Header - Purple Banner at the Top */
 .home-hero-sweet {
   background: #5B21B6;
-  padding: 15px 20px;
+  padding: calc(10px + env(safe-area-inset-top, 40px)) 20px 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -29,10 +29,10 @@
 }
 
 .user-avatar-sweet {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   background: white;
-  border-radius: 16px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,15 +48,16 @@
 }
 
 .header-center-brand h1 {
-  font-size: 20px;
+  font-size: 16px;
   color: white;
   font-family: 'Fraunces', serif;
   margin: 0;
+  line-height: 1.1;
   text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .header-logo-original {
-  height: 36px;
+  height: 28px;
   width: auto;
   object-fit: contain;
   filter: invert(1) brightness(2);
