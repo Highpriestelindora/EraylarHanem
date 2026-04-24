@@ -36,11 +36,11 @@ const SplashScreen = ({ finishLoading }) => {
       className="splash-screen"
       style={{
         position: 'fixed',
-        inset: 0,
+        inset: '-100px 0', /* Over-extend to cover safe areas */
         width: '100vw',
-        height: '100dvh',
+        height: 'calc(100dvh + 200px)',
         zIndex: 9999,
-        background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
+        background: 'var(--primary)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',

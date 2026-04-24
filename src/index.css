@@ -65,7 +65,6 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-top: env(safe-area-inset-top, 0px);
 }
 
 h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 800; }
