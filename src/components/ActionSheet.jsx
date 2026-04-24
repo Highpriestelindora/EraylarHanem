@@ -81,7 +81,7 @@ export default function ActionSheet({
 
               {/* Header */}
               <div style={{ 
-                padding: '16px 24px', 
+                padding: fullHeight ? 'calc(16px + env(safe-area-inset-top, 40px)) 24px 16px' : '16px 24px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'space-between',
