@@ -400,10 +400,10 @@
   animation: petFloat 3s ease-in-out infinite;
 }
 
-.p1 { bottom: 0px; left: 15px; transform: rotate(-20deg); font-size: 24px; }
-.p2 { bottom: 0px; right: 15px; transform: rotate(20deg); animation-delay: 1s; font-size: 24px; }
-.p3 { bottom: -10px; left: 45px; font-size: 16px; opacity: 0.5; }
-.p4 { bottom: -10px; right: 45px; font-size: 16px; opacity: 0.5; animation-delay: 1.5s; }
+.p1 { bottom: env(safe-area-inset-bottom, 20px); left: 15px; transform: rotate(-20deg); font-size: 24px; }
+.p2 { bottom: env(safe-area-inset-bottom, 20px); right: 15px; transform: rotate(20deg); animation-delay: 1s; font-size: 24px; }
+.p3 { bottom: calc(-5px + env(safe-area-inset-bottom, 20px)); left: 45px; font-size: 16px; opacity: 0.5; }
+.p4 { bottom: calc(-5px + env(safe-area-inset-bottom, 20px)); right: 45px; font-size: 16px; opacity: 0.5; animation-delay: 1.5s; }
 
 @keyframes petFloat {
   0%, 100% { transform: translateY(0) rotate(-20deg); }
