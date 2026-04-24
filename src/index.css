@@ -45,9 +45,9 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  height: 100% !important; height: -webkit-fill-available !important;
   overflow-x: hidden;
-  background: var(--bg);
+  background: var(--primary);
   color: var(--txt);
   font-family: 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -56,7 +56,7 @@ html, body {
 
 #root {
   width: 100%;
-  min-height: 100%;
+  min-height: 100% !important; height: -webkit-fill-available !important;
   overflow-x: hidden;
   position: relative;
 }
@@ -68,7 +68,7 @@ html, body {
   min-height: -webkit-fill-available;
   min-height: 100dvh;
   position: relative;
-  background: var(--bg);
+  background: var(--primary);
   display: flex;
   flex-direction: column;
   overflow-x: hidden !important;
@@ -185,7 +185,7 @@ body:has(.modal-overlay) .app-content {
 .immersive-overlay {
   position: fixed;
   inset: 0;
-  background: var(--bg);
+  background: var(--primary);
   z-index: 2000000 !important;
   display: flex;
   flex-direction: column;
@@ -433,7 +433,7 @@ body:has(.modal-overlay) .app-content {
   padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid var(--brd);
-  background: var(--bg);
+  background: var(--primary);
   color: var(--txt);
   font-family: 'Outfit', sans-serif;
   font-size: 15px;
@@ -448,9 +448,9 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  height: 100% !important; height: -webkit-fill-available !important;
   overflow-x: hidden;
-  background: var(--bg);
+  background: var(--primary);
   color: var(--txt);
   font-family: 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -459,7 +459,7 @@ html, body {
 
 #root {
   width: 100%;
-  min-height: 100%;
+  min-height: 100% !important; height: -webkit-fill-available !important;
   overflow-x: hidden;
   position: relative;
 }
@@ -546,7 +546,7 @@ html, body {
   position: relative !important;
   width: 100% !important;
   max-width: 100vw !important;
-  height: 100%;
+  height: 100% !important; height: -webkit-fill-available !important;
 }
 
 #root, .app-container, .ActionSheet, [class*="modal"], .modal-form {

@@ -48,7 +48,8 @@ const SplashScreen = ({ finishLoading }) => {
         paddingBottom: 'env(safe-area-inset-bottom, 20px)',
         textAlign: 'center',
         width: '100vw',
-        height: '100dvh'
+        height: '110dvh',
+        bottom: '-5dvh'
       }}
     >
       <div className="splash-characters" style={{ display: 'flex', gap: '30px', marginBottom: '40px' }}>
