@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import logo from '../assets/eraylar-logo.png';
 
 const SplashScreen = ({ finishLoading }) => {
   const [text, setText] = useState('Eraylar Hanesi Hazırlanıyor...');
@@ -35,10 +36,7 @@ const SplashScreen = ({ finishLoading }) => {
       exit={{ opacity: 0 }}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
         zIndex: 9999,
         background: 'var(--primary)',
         display: 'flex',
@@ -47,7 +45,10 @@ const SplashScreen = ({ finishLoading }) => {
         justifyContent: 'center',
         color: 'white',
         padding: '20px',
-        textAlign: 'center'
+        paddingBottom: 'env(safe-area-inset-bottom, 20px)',
+        textAlign: 'center',
+        width: '100vw',
+        height: '100dvh'
       }}
     >
       <div className="splash-characters" style={{ display: 'flex', gap: '30px', marginBottom: '40px' }}>
@@ -81,7 +82,7 @@ const SplashScreen = ({ finishLoading }) => {
         style={{ height: '80px' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '12px' }}>
-          <img src="/eraylar-logo.png" alt="Logo" style={{ height: '40px', filter: 'brightness(0) invert(1)' }} />
+          <img src={logo} alt="Logo" style={{ height: '40px', filter: 'brightness(0) invert(1)' }} />
           <h1 style={{ fontFamily: 'Fraunces, serif', fontSize: '36px', margin: 0, fontWeight: 900 }}>
             Eraylar Hanem
           </h1>
