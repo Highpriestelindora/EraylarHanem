@@ -62,11 +62,11 @@ export default function ActionSheet({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                maxHeight: fullHeight ? '100vh' : maxHeight,
-                height: fullHeight ? '100vh' : 'auto',
+                maxHeight: fullHeight ? '94vh' : maxHeight,
+                height: fullHeight ? '94vh' : 'auto',
                 background: 'var(--card)',
-                borderTopLeftRadius: fullHeight ? '0' : '32px',
-                borderTopRightRadius: fullHeight ? '0' : '32px',
+                borderTopLeftRadius: '32px',
+                borderTopRightRadius: '32px',
                 zIndex: 1000000,
                 display: 'flex',
                 flexDirection: 'column',
@@ -76,26 +76,22 @@ export default function ActionSheet({
               }}
             >
               {/* Drag Handle */}
-              {!fullHeight && (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px', cursor: 'grab' }}>
-                  <div style={{ width: '40px', height: '5px', background: 'var(--brd)', borderRadius: '10px' }} />
-                </div>
-              )}
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px', cursor: 'grab', flexShrink: 0 }}>
+                <div style={{ width: '40px', height: '5px', background: 'var(--brd)', borderRadius: '10px' }} />
+              </div>
 
               {/* Header */}
               <div style={{ 
-                padding: fullHeight 
-                  ? 'calc(16px + env(safe-area-inset-top, 0px)) 24px 16px' 
-                  : '16px 24px', 
+                padding: '12px 24px 16px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'space-between',
                 borderBottom: '1px solid var(--brd)',
-                background: 'rgba(255,255,255,0.8)',
-                backdropFilter: 'blur(10px)',
+                background: 'var(--card)',
                 position: 'sticky',
                 top: 0,
-                zIndex: 10
+                zIndex: 10,
+                flexShrink: 0
               }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '800', margin: 0, color: 'var(--txt)' }}>{title}</h3>
                 <button 
