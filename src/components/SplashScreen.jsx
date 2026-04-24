@@ -37,6 +37,8 @@ const SplashScreen = ({ finishLoading }) => {
       style={{
         position: 'fixed',
         inset: 0,
+        width: '100vw',
+        height: '100dvh',
         zIndex: 9999,
         background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))',
         display: 'flex',
