@@ -42,12 +42,14 @@
 }
 
 html, body {
-  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
   width: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden;
-  position: fixed; /* Prevent elastic scroll on iOS */
+  overscroll-behavior: none; /* Modern way to prevent rubber banding on iOS */
   background: var(--bg); /* Match app background to eliminate bands */
 }
 
@@ -59,7 +61,9 @@ body {
 
 #root {
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  min-height: 100dvh;
   position: relative;
   background: var(--bg);
   display: flex;
