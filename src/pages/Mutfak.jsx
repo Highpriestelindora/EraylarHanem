@@ -48,14 +48,16 @@ export default function Mutfak() {
                     i.mn > 0 && i.cr <= i.mn && !shoppingListNames.includes(i.n?.toLowerCase() || '')
                   ).length, 0);
                 return criticalCount > 0 ? (
-                  <div className="critical-container">
-                    <div className="critical-box" onClick={() => setActiveTab('alisveris')}>
-                      <span className="c-emoji">⚠️</span>
-                      <strong>{criticalCount} Ürün Azaldı!</strong>
-                      <ChevronRight size={14} />
+                  <div className="critical-container" style={{ marginTop: '2px' }}>
+                    <div className="critical-box" onClick={() => setActiveTab('alisveris')} style={{ padding: '2px 8px', borderRadius: '8px', minHeight: '15px' }}>
+                      <span className="c-emoji" style={{ fontSize: '10px' }}>⚠️</span>
+                      <strong style={{ fontSize: '10px' }}>{criticalCount} Ürün Azaldı!</strong>
+                      <ChevronRight size={12} />
                     </div>
                   </div>
-                ) : null;
+                ) : (
+                  <p>Menü · Stok · Alışveriş</p>
+                );
               })()}
             </div>
           </div>
