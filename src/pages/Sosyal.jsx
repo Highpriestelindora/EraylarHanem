@@ -44,6 +44,10 @@ export default function Sosyal() {
     { id: 'gecmis', emoji: '📂', label: 'Geçmiş' }
   ];
 
+  const [showEditHistory, setShowEditHistory] = useState(null);
+  const [deletingHistoryId, setDeletingHistoryId] = useState(null);
+  const { cancelSocialActivity } = useStore();
+
   return (
     <AnimatedPage className="sosyal-container">
       <header className="module-header glass" style={{ background: 'var(--social)' }}>
@@ -79,7 +83,13 @@ export default function Sosyal() {
 
       <div className="tab-content">
         {activeTab === 'hafta' && <HaftaTab sosyal={sosyal} onAdd={(date, data) => setShowAddActivity({ date, prefilledData: data })} />}
-        {activeTab === 'gecmis' && <GecmisTab sosyal={sosyal} />}
+        {activeTab === 'gecmis' && (
+          <GecmisTab 
+            sosyal={sosyal} 
+            onEdit={(a) => setShowEditHistory(a)} 
+            onDelete={(id) => setDeletingHistoryId(id)} 
+          />
+        )}
         {activeTab === 'havuz' && <HavuzTab sosyal={sosyal} onAdd={() => setShowAddFikir(true)} onAddRutin={() => setShowAddRutin(true)} />}
         {activeTab === 'ist' && <IstTab onAdd={(date, data) => setShowAddActivity({ date, prefilledData: data })} />}
       </div>
@@ -109,6 +119,32 @@ export default function Sosyal() {
       >
         <AddFikirModal onClose={() => setShowAddFikir(false)} />
       </ActionSheet>
+
+      <ActionSheet
+        isOpen={!!showEditHistory}
+        onClose={() => setShowEditHistory(null)}
+        title="📝 Aktiviteyi Düzenle"
+      >
+        {showEditHistory && (
+          <EditHistoryModal 
+            activity={showEditHistory} 
+            onClose={() => setShowEditHistory(null)} 
+          />
+        )}
+      </ActionSheet>
+
+      {deletingHistoryId && (
+        <ConfirmModal 
+          title="Aktiviteyi Sil"
+          message="Bu geçmiş aktiviteyi silmek istediğine emin misin? Bu işlem geri alınamaz."
+          onConfirm={() => {
+            cancelSocialActivity(deletingHistoryId);
+            setDeletingHistoryId(null);
+            toast.success('Aktivite geçmişten silindi 🗑️');
+          }}
+          onCancel={() => setDeletingHistoryId(null)}
+        />
+      )}
     </AnimatedPage>
   );
 }
@@ -925,7 +961,79 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
   );
 }
 
-function GecmisTab({ sosyal }) {
+function EditHistoryModal({ activity, onClose }) {
+  const { updateSocialActivity } = useStore();
+  const [pGorkem, setPGorkem] = useState(activity.puan_gorkem || 5);
+  const [pEsra, setPEsra] = useState(activity.puan_esra || 5);
+  const [cost, setCost] = useState(activity.harcama || 0);
+  const [comment, setComment] = useState(activity.yorum || '');
+  const [baslik, setBaslik] = useState(activity.baslik || '');
+  const [date, setDate] = useState(activity.doneDate || activity.tarih || '');
+
+  const handleUpdate = () => {
+    updateSocialActivity(activity.id, { 
+      baslik,
+      tarih: date,
+      puan_gorkem: Number(pGorkem), 
+      puan_esra: Number(pEsra), 
+      harcama: Number(cost), 
+      yorum: comment 
+    });
+    onClose();
+    toast.success('Aktivite güncellendi! ✅');
+  };
+
+  return (
+    <div className="modal-form">
+      <div className="form-group" style={{ marginBottom: '15px' }}>
+        <label>Aktivite Başlığı</label>
+        <input type="text" value={baslik} onChange={e => setBaslik(e.target.value)} />
+      </div>
+      <div className="form-group" style={{ marginBottom: '15px' }}>
+        <label>Tarih</label>
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+      </div>
+      <div className="form-group" style={{ marginBottom: '15px' }}>
+        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Puanlar (1-10)</label>
+        <div className="rating-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div className="rate-box glass" style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', textAlign: 'center' }}>
+             <label style={{ fontSize: '11px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '4px' }}>👨 Görkem</label>
+             <input 
+              type="number" min="1" max="10" value={pGorkem} onChange={e => setPGorkem(e.target.value)}
+              style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
+             />
+          </div>
+          <div className="rate-box glass" style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', textAlign: 'center' }}>
+             <label style={{ fontSize: '11px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '4px' }}>👩 Esra</label>
+             <input 
+              type="number" min="1" max="10" value={pEsra} onChange={e => setPEsra(e.target.value)}
+              style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
+             />
+          </div>
+        </div>
+      </div>
+      <div className="form-group" style={{ marginBottom: '15px' }}>
+        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Harcama (₺)</label>
+        <input 
+          type="number" value={cost} onChange={e => setCost(e.target.value)}
+          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px' }}
+        />
+      </div>
+      <div className="form-group" style={{ marginBottom: '20px' }}>
+        <label style={{ fontSize: '12px', fontWeight: '800', color: 'var(--txt-light)', display: 'block', marginBottom: '8px' }}>Yorum / Not</label>
+        <textarea 
+          value={comment} onChange={e => setComment(e.target.value)} placeholder="Nasıl geçti?" rows={2}
+          style={{ padding: '14px', borderRadius: '14px', border: '1px solid var(--brd)', background: 'var(--bg)', width: '100%', fontSize: '15px', resize: 'none' }}
+        />
+      </div>
+      <button className="submit-btn social-gradient" onClick={handleUpdate} style={{ width: '100%', padding: '16px', borderRadius: '16px', border: 'none', color: 'white', fontWeight: '800', cursor: 'pointer', fontSize: '15px' }}>
+        Değişiklikleri Kaydet
+      </button>
+    </div>
+  );
+}
+
+function GecmisTab({ sosyal, onEdit, onDelete }) {
   const done = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi);
   const totalHarcama = done.reduce((sum, a) => sum + (a.harcama || 0), 0);
   const avgPuan = done.length > 0 
@@ -1002,6 +1110,23 @@ function GecmisTab({ sosyal }) {
                         {a.detaylar && <div className="gcc-detay-text">{a.detaylar}</div>}
                       </div>
                       {a.yorum && <div className="gcc-comment-box"><p>"{a.yorum}"</p></div>}
+                      
+                      <div className="gcc-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                        <button 
+                          className="tl-btn edit" 
+                          onClick={(e) => { e.stopPropagation(); onEdit(a); }}
+                          style={{ flex: 1, height: '36px', borderRadius: '12px', background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--social)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', fontWeight: '800' }}
+                        >
+                          <Activity size={14} /> Düzenle
+                        </button>
+                        <button 
+                          className="tl-btn delete" 
+                          onClick={(e) => { e.stopPropagation(); onDelete(a.id); }}
+                          style={{ flex: 1, height: '36px', borderRadius: '12px', background: '#fff5f5', border: '1px solid #fed7d7', color: '#c53030', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', fontWeight: '800' }}
+                        >
+                          <Trash2 size={14} /> Sil
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>

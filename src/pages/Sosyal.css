@@ -797,8 +797,31 @@
 }
 
 .stats-grid.compact .stat-card {
-  padding: 10px;
+  padding: 12px 8px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 80px;
+}
+
+.s-val {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: var(--social);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.s-lbl {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--txt-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .history-month-header {
