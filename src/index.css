@@ -247,18 +247,18 @@ body:has(.modal-overlay) .app-content {
 
 /* --- Premium Module Header (Mutfak Style) --- */
 .module-header {
-  padding: calc(16px + env(safe-area-inset-top, 0px)) 20px 0;
-  border-radius: 0 0 32px 32px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 15px 0;
+  border-radius: 0 0 24px 24px;
   color: white;
   flex-shrink: 0;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 .header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .header-title {
@@ -268,21 +268,21 @@ body:has(.modal-overlay) .app-content {
 }
 
 .header-title h1 {
-  font-size: 24px;
+  font-size: 20px;
   color: white;
   margin: 0;
   line-height: 1;
 }
 
 .header-title p {
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(255, 255, 255, 0.8);
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   font-weight: 600;
 }
 
 .header-emoji {
-  font-size: 32px;
+  font-size: 26px;
 }
 
 .tab-nav {
@@ -292,7 +292,7 @@ body:has(.modal-overlay) .app-content {
   padding: 4px;
   background: white;
   border-radius: 18px;
-  margin-top: 10px;
+  margin-top: 5px;
   scrollbar-width: none;
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
