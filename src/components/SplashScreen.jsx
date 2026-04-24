@@ -116,7 +116,7 @@ const SplashScreen = ({ finishLoading }) => {
         fontWeight: 700,
         letterSpacing: '1px'
       }}>
-        VERSION: v2.4.24-GOLD
+        VERSION: 2.4.25
       </div>
     </motion.div>
   );
