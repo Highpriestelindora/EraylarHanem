@@ -75,11 +75,12 @@
 .hub-main-wrapper {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Align buttons to the top of the wrapper */
   justify-content: center;
   width: 200px;
-  height: calc(80px + env(safe-area-inset-bottom, 20px));
-  padding-bottom: env(safe-area-inset-bottom, 20px);
+  /* Total height includes the 80px curve + safe area */
+  height: calc(75px + env(safe-area-inset-bottom, 20px));
+  padding-top: 10px; /* Push buttons down a bit from the very top edge */
 }
 
 .hub-semi-circle {
@@ -92,6 +93,7 @@
   -webkit-backdrop-filter: blur(25px);
   border-radius: 100px 100px 0 0;
   border: 1px solid rgba(255, 255, 255, 0.4);
+  border-bottom: none;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
   z-index: 1;
 }

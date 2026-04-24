@@ -33,12 +33,12 @@ const SplashScreen = ({ finishLoading }) => {
     <motion.div 
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="splash-screen"
       style={{
         position: 'fixed',
-        inset: '-100px 0', /* Over-extend to cover safe areas */
-        width: '100vw',
-        height: 'calc(100dvh + 200px)',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         zIndex: 9999,
         background: 'var(--primary)',
         display: 'flex',

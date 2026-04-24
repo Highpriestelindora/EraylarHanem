@@ -48,7 +48,7 @@ html, body {
   padding: 0;
   overflow: hidden;
   position: fixed; /* Prevent elastic scroll on iOS */
-  background: #2E1065; /* Fix white bars on iOS */
+  background: var(--bg); /* Match app background to eliminate bands */
 }
 
 body {
@@ -61,7 +61,7 @@ body {
   width: 100%;
   height: 100%;
   position: relative;
-  background: #2E1065;
+  background: var(--bg);
   display: flex;
   flex-direction: column;
   overflow: hidden;
