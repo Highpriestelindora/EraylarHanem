@@ -299,6 +299,12 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      setModuleData: (moduleName, data) => {
+        const state = get();
+        set({ [moduleName]: { ...state[moduleName], ...data } });
+        get().saveToSupabase();
+      },
+
       toggleSilentMode: () => {
         const state = get();
         const newValue = !state.settings.silentMode;
