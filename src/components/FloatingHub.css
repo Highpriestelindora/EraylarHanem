@@ -83,12 +83,12 @@
 }
 
 .hub-capsule-glass {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  padding: 8px 20px calc(env(safe-area-inset-bottom, 0px) + 8px);
-  border-radius: 50px 50px 0 0; /* Semi-circle */
-  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5); /* Glassy, not solid white */
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  padding: 6px 16px env(safe-area-inset-bottom, 0px); /* Minimal bottom padding */
+  border-radius: 40px 40px 0 0; /* Smaller radius */
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.8);
   border-bottom: none;
   display: flex;
@@ -105,7 +105,7 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  height: 24px;
+  height: 20px;
   position: relative;
 }
 
@@ -134,12 +134,13 @@
 .hub-buttons-row {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
+  margin-top: -2px;
 }
 
 .hub-pill-btn {
-  width: 40px; /* Shrunk from 44px */
-  height: 40px;
+  width: 36px; /* Even smaller */
+  height: 36px;
   border-radius: 50%;
   border: none;
   display: flex;
