@@ -56,17 +56,17 @@ const Home = () => {
   }, []);
 
   const modules = [
-    { id: 'mutfak', name: 'Eraylar Mutfak', sub: 'Yemek & Alışveriş', icon: '🍳', color: 'linear-gradient(135deg, #f97316, #ea580c)', path: '/mutfak', comingSoon: false },
-    { id: 'sosyal', name: 'Eraylar Sosyal', sub: 'Aktivite & Rutin', icon: '🎯', color: 'linear-gradient(135deg, #db2777, #c026d3)', path: '/sosyal', comingSoon: false },
-    { id: 'alisveris', name: 'Eraylar Alışveriş', sub: 'Market & Liste', icon: '🛍️', color: 'linear-gradient(135deg, #0ea5e9, #2563eb)', path: '/alisveris', comingSoon: false },
-    { id: 'tatil', name: 'Eraylar Tatil', sub: 'Gezi Planlayıcı', icon: '✈️', color: 'linear-gradient(135deg, #06b6d4, #0891b2)', path: '/tatil', comingSoon: false },
-    { id: 'pet', name: 'Eraylar Pet', sub: 'Waffle & Mayıs', icon: '🐾', color: 'linear-gradient(135deg, #f59e0b, #d97706)', path: '/pet', comingSoon: false },
-    { id: 'health', name: 'Eraylar Sağlık', sub: 'İlaç & Ölçüm', icon: '🏥', color: 'linear-gradient(135deg, #ef4444, #dc2626)', path: '/saglik', comingSoon: false },
-    { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(135deg, #1e1b4b, #312e81)', path: '/finans', comingSoon: false },
-    { id: 'aracim', name: 'Eraylar Kokpit', sub: 'Tiguan R-Line', icon: '🏎️', color: 'linear-gradient(135deg, #334155, #0f172a)', path: '/aracim', comingSoon: false },
-    { id: 'ev', name: 'Eraylar Ev', sub: 'Home Hub', icon: '🏠', color: 'linear-gradient(135deg, #10b981, #059669)', path: '/ev', comingSoon: false },
-    { id: 'hedefler', name: 'Eraylar Vizyon', sub: 'Vision Hub', icon: '🏔️', color: 'linear-gradient(135deg, #6366f1, #4f46e5)', path: '/hedefler', comingSoon: false },
-    { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '💎', color: 'linear-gradient(135deg, #7c3aed, #6d28d9)', path: '/kasa', comingSoon: false }
+    { path: '/mutfak', label: 'Mutfak', icon: '🍳', color: '#f97316' },
+    { path: '/sosyal', label: 'Sosyal', icon: '🎯', color: '#db2777' },
+    { path: '/alisveris', label: 'Market', icon: '🛍️', color: '#0ea5e9' },
+    { path: '/finans', label: 'Finans', icon: '💰', color: '#1e1b4b' },
+    { path: '/kasa', label: 'Kasa', icon: '💎', color: '#7c3aed' },
+    { path: '/aracim', label: 'Aracım', icon: '🏎️', color: '#334155' },
+    { path: '/ev', label: 'Evim', icon: '🏠', color: '#10b981' },
+    { path: '/saglik', label: 'Sağlık', icon: '🏥', color: '#ef4444' },
+    { path: '/tatil', label: 'Tatil', icon: '✈️', color: '#06b6d4' },
+    { path: '/pet', label: 'Pet', icon: '🐾', color: '#f59e0b' },
+    { path: '/hedefler', label: 'Vizyon', icon: '🏔️', color: '#6366f1' }
   ];
 
   return (
@@ -150,29 +150,19 @@ const Home = () => {
           <button className="wic-btn" onClick={() => navigate('/analiz')}>Detaylı Rapor <ChevronRight size={14} /></button>
         </div>
 
-        {/* Module Grid - Premium Golden Master Style */}
-        <div className="module-grid-v2 mt-24">
-          {modules.map((module) => (
-            <motion.div
-              key={module.id}
-              className="module-card-premium"
-              whileHover={{ scale: 1.03, translateY: -5 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate(module.path)}
-              style={{ background: module.color }}
-            >
-              <div className="mc-icon-wrap">
-                <span className="mc-emoji">{module.icon}</span>
-              </div>
-              <div className="mc-info">
-                <h3>{module.name}</h3>
-                <p>{module.sub}</p>
-              </div>
-              <div className="mc-action">
-                <ChevronRight size={20} />
-              </div>
-            </motion.div>
-          ))}
+        {/* Module Grid - Premium Bento Style Reverted */}
+        <div className="bento-grid mt-24">
+           {modules.map(mod => (
+             <Link key={mod.path} to={mod.path} className="bento-item glass">
+                <div className="bi-icon" style={{ backgroundColor: `${mod.color}15`, color: mod.color }}>
+                   {mod.icon}
+                </div>
+                <div className="bi-text">
+                   <strong>{mod.label}</strong>
+                   <ChevronRight size={12} />
+                </div>
+             </Link>
+           ))}
         </div>
 
         {/* Achievement Banner */}
