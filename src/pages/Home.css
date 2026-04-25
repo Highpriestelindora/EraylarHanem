@@ -5,9 +5,9 @@
   flex-direction: column;
 }
 
-/* Premium Rounded Header Banner - 01:47 Style */
+/* Premium Rounded Header Banner - 01:47 Style - iPhone Notch Fix */
 .premium-header-banner {
-  padding: 10px 15px 30px;
+  padding: calc(env(safe-area-inset-top) + 40px) 15px 30px;
   background: linear-gradient(180deg, #6d28d9 0%, #4c1d95 100%);
   border-radius: 0 0 40px 40px;
   box-shadow: 0 10px 25px rgba(109, 40, 217, 0.2);
@@ -141,14 +141,16 @@
   border-radius: 28px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
   color: #fff;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(0,0,0,0.05);
 }
 
 .pmc-icon-wrap {
-  margin-bottom: auto;
+  margin-bottom: 12px;
 }
 
 .pmc-emoji {
