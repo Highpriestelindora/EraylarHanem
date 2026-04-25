@@ -123,9 +123,17 @@ const DEFAULT_STATE = {
   },
   hedefler: [],        
   sosyal: {
-    aktiviteler: INITIAL_SOCIAL,   
-    rutinler: [],      
-    havuz: [],
+    aktiviteler: INITIAL_SOCIAL || [],   
+    rutinler: [
+      { id: 'r1', aktivite: 'Spor Salonu', kisi: 'Görkem', vakit: 'sabah', gunler: ['Pzt', 'Çar', 'Cum'], saati: '08:00', ucret: 0 },
+      { id: 'r2', aktivite: 'Haftalık Temizlik', kisi: 'İkisi', vakit: 'öğle', gunler: ['Cmt'], saati: '11:00', ucret: 0 }
+    ],      
+    havuz: [
+      { id: 'f1', baslik: 'Boğazda Uzun Yürüyüş', emoji: '🚶‍♂️', tur: 'disari', siklik: 5, kisi: 'Ortak' },
+      { id: 'f2', baslik: 'Yeni Bir Puzzle Yapalım', emoji: '🧩', tur: 'evde', siklik: 3, kisi: 'Esra' },
+      { id: 'f3', baslik: 'Atatürk Orman Çiftliği Gezisi', emoji: '🌳', tur: 'disari', siklik: 5, kisi: 'Ortak' },
+      { id: 'f4', baslik: 'Mutfak Dolaplarını Düzenle', emoji: '🧹', tur: 'evde', siklik: 3, kisi: 'Görkem' }
+    ],
     tab: 'hafta'
   },
   aracim: {

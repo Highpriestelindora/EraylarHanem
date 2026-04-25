@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  X, History, Search, Settings, BarChart2,
+  X, RefreshCcw, Search, Settings, 
   ChevronRight, Sparkles
 } from 'lucide-react';
 import useStore from '../store/useStore';
@@ -9,6 +9,8 @@ import AnimatedPage from '../components/AnimatedPage';
 import logo from '../assets/eraylar-logo.png';
 import Portal from '../components/Portal';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PET_QUOTES } from '../constants/petQuotes';
+import toast from 'react-hot-toast';
 import './Home.css';
 
 const Home = () => {
@@ -23,6 +25,43 @@ const Home = () => {
   const [showLogs, setShowLogs] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+  const [aiMessage, setAiMessage] = useState('Bugün her şey yolunda, keyfine bak! 💖');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const refreshAiMessage = () => {
+    setIsRefreshing(true);
+    // Simulate AI "analysis" of store data
+    setTimeout(() => {
+      const insights = [
+        "Bugün her şey yolunda, keyfine bak! 💖",
+        "Waffle'ın maması azalıyor olabilir mi? 🐶",
+        "Harika gidiyorsunuz, bu hafta tasarruf modundasınız! 💰",
+        "Mutfakta yeni bir tarif denemeye ne dersin? 🍳",
+        "Esra bugün 'bunu nereye koysak' demiyor, tadını çıkar! 😂",
+        "Hava bugün dışarıda vakit geçirmek için çok güzel! ☀️",
+        "Mayıs'ın kumunu kontrol ettin mi? 🐈",
+        "Akşama lezzetli bir yemek planlayalım mı? 🍝"
+      ];
+      const random = insights[Math.floor(Math.random() * insights.length)];
+      setAiMessage(random);
+      setIsRefreshing(false);
+      toast.success('Asistan güncellendi ✨', { style: { borderRadius: '12px', background: '#2E1065', color: '#fff' } });
+    }, 800);
+  };
+
+  const handlePetClick = (pet) => {
+    const quotes = PET_QUOTES[pet];
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    toast(randomQuote, {
+      icon: pet === 'waffle' ? '🐶' : '🐱',
+      style: {
+        borderRadius: '15px',
+        background: '#2E1065',
+        color: '#fff',
+        fontWeight: 'bold'
+      }
+    });
+  };
 
   useEffect(() => {
     calculateGlobalScore();
@@ -48,7 +87,7 @@ const Home = () => {
       <div className="premium-header-banner">
         <div className="phb-content">
           <div className="phb-user-area">
-            <div className="phb-avatar">
+            <div className="phb-avatar" onClick={() => navigate('/profil')}>
               <span className="supabase-status-dot"></span>
               👨‍💻
             </div>
@@ -57,18 +96,16 @@ const Home = () => {
                 <img src={logo} alt="Logo" className="phb-logo-img" />
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <h2>Eraylar Hanem</h2>
-                  <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '6px', opacity: 0.8 }}>v{system.version}</span>
                 </div>
               </div>
               <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 
-                <span className="pet-link" onClick={() => navigate('/pet')}>🐶</span> 
-                <span className="pet-link" onClick={() => navigate('/pet')}>🐈</span>
+                <span className="pet-link" onClick={() => handlePetClick('waffle')}>🐶</span> 
+                <span className="pet-link" onClick={() => handlePetClick('mayis')}>🐈</span>
               </p>
             </div>
           </div>
           <div className="phb-actions">
-            <button className="phb-icon-btn" onClick={() => setShowLogs(true)}><BarChart2 size={18} /></button>
-            <button className="phb-icon-btn" onClick={() => navigate('/ayarlar')}><Settings size={18} /></button>
+            <button className="phb-icon-btn" onClick={() => navigate('/ayarlar')}><Settings size={20} /></button>
           </div>
         </div>
       </div>
@@ -78,12 +115,18 @@ const Home = () => {
         <div className="ai-section-premium">
           <div className="ai-header-row">
             <span>✨ AKILLI AİLE ASİSTANI</span>
-            <button className="ai-history-btn" onClick={() => setShowLogs(true)}><History size={18} /></button>
+            <button 
+              className={`ai-refresh-btn ${isRefreshing ? 'spinning' : ''}`} 
+              onClick={refreshAiMessage}
+              disabled={isRefreshing}
+            >
+              <RefreshCcw size={16} />
+            </button>
           </div>
           <div className="ai-status-card-premium">
             <div className="ai-card-inner">
-              <span className="ai-heart">💖</span>
-              <p>Bugün her şey yolunda, keyfine bak!</p>
+              <span className="ai-heart">{isRefreshing ? '✨' : '💖'}</span>
+              <p>{aiMessage}</p>
             </div>
           </div>
         </div>
@@ -116,17 +159,38 @@ const Home = () => {
         <Portal>
           <div className="modal-overlay" onClick={() => setShowLogs(false)}>
             <div className="logs-modal-v2 glass animate-slideUp" onClick={e => e.stopPropagation()}>
-               <div className="modal-header">
-                 <h3>Sistem Hareketleri</h3>
-                 <button onClick={() => setShowLogs(false)}><X size={20} /></button>
+               <div className="modal-header logs-header">
+                 <h3><History size={20} /> Sistem Hareketleri</h3>
+                 <button className="modal-close-btn" onClick={() => setShowLogs(false)}><X size={20} /></button>
                </div>
-               <div className="logs-list">
-                  {logs.slice(-20).reverse().map((log, i) => (
-                    <div key={i} className="log-row">
-                       <small>{new Date(log.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
-                       <span><strong>{log.action}:</strong> {log.detail}</span>
+               <div className="logs-list-premium">
+                  {logs.length > 0 ? logs.slice().reverse().map((log, i) => {
+                    let logDate = new Date(log.date);
+                    if (isNaN(logDate.getTime())) logDate = new Date(log.id);
+                    const timeStr = isNaN(logDate.getTime()) ? '--:--' : logDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+                    
+                    let icon = '📝';
+                    if (log.action?.includes('Harcama')) icon = '💸';
+                    if (log.action?.includes('Ayar')) icon = '⚙️';
+                    if (log.action?.includes('Profil')) icon = '👤';
+                    if (log.action?.includes('Alışveriş')) icon = '🛒';
+                    if (log.action?.includes('Tatil')) icon = '✈️';
+
+                    return (
+                      <div key={log.id || i} className="log-row-premium animate-fadeIn" style={{ animationDelay: `${i * 0.05}s` }}>
+                         <div className="log-time-badge">{timeStr}</div>
+                         <div className="log-icon-circle">{icon}</div>
+                         <div className="log-info-main">
+                            <strong>{log.action}</strong>
+                            <p>{log.detail}</p>
+                         </div>
+                      </div>
+                    );
+                  }) : (
+                    <div className="empty-logs-msg">
+                       <p>Henüz sistem hareketi bulunmuyor.</p>
                     </div>
-                  ))}
+                  )}
                </div>
             </div>
           </div>

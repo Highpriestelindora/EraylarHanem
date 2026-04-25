@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import ActionSheet from '../components/ActionSheet';
 import ConfirmModal from '../components/ConfirmModal';
+import actionIcon from '../assets/eraylar-logo.png';
+import { PET_QUOTES } from '../constants/petQuotes';
 import './Pet.css';
 
 export default function Pet() {
@@ -24,6 +26,20 @@ export default function Pet() {
   const petVaccines = vaccines[activePet] || [];
   const petWeights = weights[activePet] || [];
   const navigate = useNavigate();
+
+  const handlePetClick = (petId) => {
+    const quotes = PET_QUOTES[petId === 'waffle' ? 'waffle' : 'mayis'];
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    toast(randomQuote, {
+      icon: petId === 'waffle' ? '🐶' : '🐱',
+      style: {
+        borderRadius: '15px',
+        background: '#2E1065',
+        color: '#fff',
+        fontWeight: 'bold'
+      }
+    });
+  };
 
   const getVaccineStatus = (v) => {
     if (!v.last) return { label: '?', color: '#94a3b8', days: 0 };
@@ -62,7 +78,13 @@ export default function Pet() {
       <header className="module-header glass pet-honey-grad">
         <div className="header-top">
           <div className="header-title">
-            <span className="header-emoji animate-float">{currentPet.emoji}</span>
+            <span 
+              className="header-emoji animate-float" 
+              onClick={() => handlePetClick(activePet)}
+              style={{ cursor: 'pointer' }}
+            >
+              {currentPet.emoji}
+            </span>
             <div className="header-text-box">
               <h1>{currentPet.name} Assistant</h1>
               <p>Pati & Sağlık Takip</p>

@@ -743,14 +743,14 @@
 }
 
 .category-section {
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .category-title {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 900;
   color: var(--txt);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -774,12 +774,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
+  padding: 10px 12px;
   background: white;
-  border-radius: 28px;
-  margin-bottom: 12px;
-  border: 1.5px solid var(--brd);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  border-radius: 20px;
+  margin-bottom: 8px;
+  border: 1px solid var(--brd);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
   transition: all 0.2s;
   overflow: hidden;
 }
@@ -798,11 +798,11 @@
 }
 
 .stock-icon {
-  font-size: 24px;
-  width: 48px;
-  height: 48px;
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
   background: var(--bg);
-  border-radius: 18px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -816,7 +816,7 @@
 }
 
 .stock-name {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--txt);
 }
@@ -830,7 +830,7 @@
 .stock-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -845,9 +845,9 @@
 }
 
 .qty-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 12px;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
   border: none;
   background: white;
   color: var(--mutfak);
@@ -865,8 +865,8 @@
 .stock-actions-column {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: 76px;
+  gap: 4px;
+  width: 60px;
 }
 
 .shopping-action-btn {
@@ -907,12 +907,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 50px;
+  width: 32px;
   text-align: center;
 }
 
 .current-amount {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 900;
   line-height: 1;
 }
@@ -930,9 +930,9 @@
   color: white;
   border: none;
   width: 100%;
-  padding: 8px 0;
-  border-radius: 12px;
-  font-size: 10px;
+  padding: 6px 0;
+  border-radius: 10px;
+  font-size: 9px;
   font-weight: 900;
   cursor: pointer;
   transition: all 0.2s;

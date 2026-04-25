@@ -427,12 +427,12 @@ export default function MenuTab() {
 
       <style jsx="true">{`
         .menu-tab { padding: 10px; }
-        .week-nav { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 15px; border-radius: 20px; margin-bottom: 10px; position: relative; }
-        .nav-arrow { background: none; border: 1px solid var(--brd); color: var(--txt); width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .today-btn-small { background: white; border: 1px solid var(--mutfak); color: var(--mutfak); font-size: 10px; font-weight: 800; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
-        .week-info { text-align: center; }
-        .week-info strong { display: block; font-size: 16px; }
-        .week-info small { color: var(--mutfak); font-weight: bold; }
+        .week-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 15px; border-radius: 16px; margin-bottom: 8px; position: relative; }
+        .nav-arrow { background: none; border: 1px solid var(--brd); color: var(--txt); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .today-btn-small { background: white; border: 1px solid var(--mutfak); color: var(--mutfak); font-size: 7px; font-weight: 900; padding: 2px 5px; border-radius: 4px; cursor: pointer; text-transform: uppercase; line-height: 1; }
+        .week-info { text-align: center; line-height: 1.1; }
+        .week-info strong { display: block; font-size: 12px; }
+        .week-info small { color: var(--mutfak); font-weight: bold; font-size: 9px; }
         
         .menu-grid { display: flex; flex-direction: column; gap: 10px; }
         .grid-header { display: grid; grid-template-columns: 60px 1fr 1fr; font-size: 11px; font-weight: 800; color: var(--txt-light); margin-bottom: 5px; }
@@ -458,13 +458,14 @@ export default function MenuTab() {
         .status-label.out { background: #EBF5FB; color: #2980B9; }
         .status-label.del { background: #FEF9E7; color: #D4AC0D; }
 
-        .selection-summary { background: var(--bg); padding: 12px; border-radius: 16px; margin-bottom: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .selection-summary div { font-size: 13px; padding: 8px; border-radius: 10px; border: 1px solid transparent; }
+        .selection-summary { background: var(--bg); padding: 8px; border-radius: 12px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .selection-summary div { font-size: 11px; padding: 6px; border-radius: 8px; border: 1px solid transparent; }
         .selection-summary div.active { background: var(--mutfak-light); border-color: var(--mutfak); color: var(--mutfak); }
 
-        .dice-row-compact { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .dice-pill { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 5px; border-radius: 14px; border: none; cursor: pointer; color: white; font-weight: 800; font-size: 10px; transition: transform 0.1s; }
+        .dice-row-compact { display: flex; justify-content: center; gap: 4px; margin-bottom: 10px; }
+        .dice-pill { flex: 0 1 auto; display: flex; align-items: center; justify-content: center; gap: 2px; padding: 4px 10px; border-radius: 6px; border: none; cursor: pointer; color: white; font-weight: 800; font-size: 7px; transition: transform 0.1s; }
         .dice-pill:active { transform: scale(0.95); }
+        .dice-pill span { font-size: 8px !important; }
         .dice-pill.green { background: linear-gradient(135deg, #10b981, #059669); }
         .dice-pill.red { background: linear-gradient(135deg, #ef4444, #dc2626); }
         .dice-pill.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
@@ -488,7 +489,7 @@ export default function MenuTab() {
         .add-missing-btn { align-self: flex-start; margin-top: 8px; font-size: 11px; background: var(--bg); border: 1px solid var(--brd); padding: 6px 12px; border-radius: 10px; cursor: pointer; color: var(--txt-light); font-weight: 600; width: 100%; text-align: center; }
 
         .quick-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .qa-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: 12px; border: 1px solid var(--brd); background: var(--bg); font-weight: 700; font-size: 12px; cursor: pointer; }
+        .qa-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border-radius: 10px; border: 1px solid var(--brd); background: var(--bg); font-weight: 700; font-size: 11px; cursor: pointer; }
         .qa-btn.del { color: #D4AC0D; }
         .qa-btn.out { color: #2980B9; }
 
@@ -498,17 +499,17 @@ export default function MenuTab() {
         .picker-categories { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 15px; margin-bottom: 5px; scrollbar-width: none; }
         .picker-categories::-webkit-scrollbar { display: none; }
         
-        .p-cat-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 15px; background: white; border: 1px solid var(--brd); border-radius: 16px; min-width: 80px; cursor: pointer; transition: all 0.2s; }
-        .p-cat-btn.active { background: var(--mutfak); border-color: var(--mutfak); color: white; transform: scale(1.05); box-shadow: 0 5px 15px rgba(236, 72, 153, 0.2); }
-        .p-cat-btn .p-cat-icon { font-size: 18px; }
-        .p-cat-btn .p-cat-label { font-size: 10px; font-weight: 800; white-space: nowrap; }
+        .p-cat-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 12px; background: white; border: 1px solid var(--brd); border-radius: 14px; min-width: 65px; cursor: pointer; transition: all 0.2s; }
+        .p-cat-btn.active { background: var(--mutfak); border-color: var(--mutfak); color: white; transform: scale(1.02); box-shadow: 0 4px 10px rgba(236, 72, 153, 0.15); }
+        .p-cat-btn .p-cat-icon { font-size: 16px; }
+        .p-cat-btn .p-cat-label { font-size: 9px; font-weight: 800; white-space: nowrap; }
 
-        .recipe-scroll { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
-        .recipe-item-mini { padding: 10px; border-radius: 14px; margin-bottom: 4px; }
+        .recipe-scroll { max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 30px; margin-top: 10px; }
+        .recipe-item-mini { padding: 15px 12px; border-radius: 16px; margin-bottom: 2px; min-height: 60px; display: flex; align-items: center; }
         .ri-content { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
         .ri-info { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
-        .ri-emoji { font-size: 20px; flex-shrink: 0; }
-        .ri-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ri-emoji { font-size: 22px; flex-shrink: 0; }
+        .ri-name { font-size: 14px; font-weight: 800; white-space: normal; line-height: 1.2; }
         .ri-btns { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
         
         .add-missing-mini-btn { 
@@ -523,9 +524,9 @@ export default function MenuTab() {
         .recipe-select-btn {
           background: white;
           border: 1px solid var(--brd);
-          border-radius: 16px;
-          width: 50px;
-          height: 56px;
+          border-radius: 12px;
+          width: 44px;
+          height: 48px;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -544,13 +545,14 @@ export default function MenuTab() {
         .ri-text { display: flex; flex-direction: column; gap: 2px; }
         .ri-missing { font-size: 11px; font-weight: 700; color: #ef4444; }
 
-        .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 16px 5px; border-radius: 20px; background: #f8fafc; border: 1px solid var(--brd); color: #64748b; font-size: 11px; font-weight: 800; }
+        .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 4px; border-radius: 20px; background: rgba(248, 250, 252, 0.5); border: 1px solid rgba(0,0,0,0.03); color: #64748b; font-size: 9px; font-weight: 800; }
         .smart-pill.complete { background: #f0fdf4; border-color: #10b981; color: #10b981; }
 
-        .smart-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 16px 5px; border-radius: 20px; border: 1px solid var(--brd); background: white; color: var(--txt); font-size: 11px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+        .smart-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 4px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); background: white; color: var(--txt); font-size: 9px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
         .smart-btn:active { transform: scale(0.95); }
-        .smart-btn.lucky { border-color: #8b5cf6; color: #8b5cf6; background: #f5f3ff; }
-        .smart-btn.shop { border-color: #ec4899; color: #ec4899; background: #fdf2f8; }
+        .smart-btn.lucky { border-color: rgba(139, 92, 246, 0.2); color: #8b5cf6; background: #f5f3ff; }
+        .smart-btn.shop { border-color: rgba(236, 72, 153, 0.2); color: #ec4899; background: #fdf2f8; }
+        .smart-btn span[style*="font-size: 24px"] { font-size: 16px !important; }
 
         .period-btn { width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--brd); background: white; font-size: 13px; font-weight: 800; color: var(--txt); cursor: pointer; transition: all 0.2s; text-align: left; }
         .period-btn:hover { background: var(--bg); border-color: var(--mutfak); color: var(--mutfak); }

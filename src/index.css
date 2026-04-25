@@ -47,7 +47,7 @@ html, body {
   width: 100%;
   height: 100% !important;
   height: -webkit-fill-available !important;
-  background-color: var(--bg) !important; /* Force app bg */
+  background-color: #2E1065 !important; /* Force premium dark purple bg */
   color: var(--txt);
   font-family: 'Outfit', sans-serif;
   overflow-x: hidden;
@@ -62,7 +62,7 @@ html, body {
   min-height: 100dvh !important; /* Dynamic Viewport Height for iOS */
   display: flex;
   flex-direction: column;
-  background-color: var(--bg) !important;
+  background-color: #2E1065 !important;
   position: relative;
   overflow: hidden;
 }
@@ -257,11 +257,11 @@ body:has(.modal-overlay) .app-content {
 
 /* --- Premium Module Header (Mutfak Style) --- */
 .module-header {
-  padding: 15px 15px 0;
-  border-radius: 0 0 24px 24px;
+  padding: 10px 12px 0;
+  border-radius: 0 0 20px 20px;
   color: white;
   flex-shrink: 0;
-  margin-bottom: 15px;
+  margin-bottom: 8px;
 }
 
 .header-top {
@@ -299,13 +299,13 @@ body:has(.modal-overlay) .app-content {
   display: flex;
   gap: 2px;
   overflow-x: auto;
-  padding: 4px;
+  padding: 3px;
   background: white;
-  border-radius: 18px;
-  margin-top: 5px;
+  border-radius: 16px;
+  margin-top: 4px;
   scrollbar-width: none;
   border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
 }
 
 .tab-nav::-webkit-scrollbar { display: none; }
@@ -313,16 +313,16 @@ body:has(.modal-overlay) .app-content {
 .tab-btn {
   background: transparent;
   border: none;
-  padding: 6px 10px;
-  border-radius: 12px;
+  padding: 4px 8px;
+  border-radius: 10px;
   color: var(--txt-light);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   font-family: 'Outfit', sans-serif;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 10px;
   white-space: nowrap;
   position: relative;
   transition: all 0.3s;

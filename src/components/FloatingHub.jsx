@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Home, MessageSquare, Plus, X, Send, Trash2, Refrigerator, BadgeDollarSign, Archive } from 'lucide-react';
 import { motion } from 'framer-motion';
 import useStore from '../store/useStore';
+import { PET_QUOTES } from '../constants/petQuotes';
 import toast from 'react-hot-toast';
 import './FloatingHub.css';
 
@@ -52,6 +53,20 @@ export default function FloatingHub() {
     setActiveModal(null);
     setIsOpen(false);
     toast.success('Harcama kaydedildi! 💸');
+  };
+
+  const handlePetClick = (pet) => {
+    const quotes = PET_QUOTES[pet];
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    toast(randomQuote, {
+      icon: pet === 'waffle' ? '🐶' : '🐱',
+      style: {
+        borderRadius: '15px',
+        background: '#2E1065',
+        color: '#fff',
+        fontWeight: 'bold'
+      }
+    });
   };
 
   return (
@@ -202,33 +217,34 @@ export default function FloatingHub() {
           </button>
         </div>
 
-        {/* New Capsule Design Hub */}
+        {/* Original Arch Design Hub */}
         <div className="hub-capsule-wrapper">
-          <div className="hub-capsule-glass">
-            <div className="hub-pets-area">
-              <span className="hub-pet cat">🐱</span>
-              <div className="hub-paws">
-                <span className="paw">🐾</span>
-                <span className="paw">🐾</span>
-                <span className="paw">🐾</span>
-              </div>
-              <span className="hub-pet dog">🐶</span>
-            </div>
-
-            <div className="hub-buttons-row">
+          <div className="hub-capsule-main">
+            <div className="hub-buttons-row-original">
               <button 
-                className="hub-pill-btn home" 
+                className="hub-btn-circle white" 
                 onClick={() => { navigate('/'); setIsOpen(false); }}
               >
-                <Home size={22} />
+                <Home size={24} />
               </button>
               
               <button 
-                className={`hub-pill-btn plus ${isOpen ? 'active' : ''}`} 
+                className={`hub-btn-circle purple ${isOpen ? 'active' : ''}`} 
                 onClick={() => setIsOpen(!isOpen)}
               >
-                {isOpen ? <X size={24} /> : <Plus size={24} />}
+                {isOpen ? <X size={26} /> : <Plus size={26} />}
               </button>
+            </div>
+
+            <div className="hub-pets-row-original">
+              <div className="pet-group left">
+                <span className="hub-pet-emoji" onClick={() => handlePetClick('mayis')}>🐱</span>
+                <span className="hub-paws-mini">🐾🐾</span>
+              </div>
+              <div className="pet-group right">
+                <span className="hub-paws-mini">🐾🐾</span>
+                <span className="hub-pet-emoji" onClick={() => handlePetClick('waffle')}>🐶</span>
+              </div>
             </div>
           </div>
         </div>
