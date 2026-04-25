@@ -1,16 +1,11 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  X, Plus, Bell, History, Flame, Search,
-  Utensils, Wallet, Home as HomeIcon, 
-  Stethoscope, Plane, PawPrint, Settings, Smile, BarChart2,
-  Zap, Heart, Shield, TrendingUp, Car, Briefcase, 
-  ChevronRight, Sparkles, MessageCircle, MoreVertical,
-  PlusCircle, LayoutGrid, Award, Filter
+  X, History, Search, Settings, BarChart2,
+  ChevronRight, Sparkles
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
-import toast from 'react-hot-toast';
 import logo from '../assets/eraylar-logo.png';
 import Portal from '../components/Portal';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,8 +16,7 @@ const Home = () => {
     system = { globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
     currentUser, 
     logs = [], 
-    calculateGlobalScore, 
-    globalSearch 
+    calculateGlobalScore 
   } = useStore();
   
   const navigate = useNavigate();
@@ -33,26 +27,6 @@ const Home = () => {
   useEffect(() => {
     calculateGlobalScore();
   }, [calculateGlobalScore]);
-
-  const handleSearch = (e) => {
-    const val = e.target.value;
-    setSearchQuery(val);
-    if (val.length > 2) {
-      setSearchResults(globalSearch(val));
-    } else {
-      setSearchResults([]);
-    }
-  };
-
-  const welcomeMessage = useMemo(() => {
-    const hour = new Date().getHours();
-    let greet = "Merhaba";
-    if (hour < 12) greet = "Günaydın";
-    else if (hour < 18) greet = "Tünaydın";
-    else greet = "İyi Akşamlar";
-    
-    return `${greet}, Görkem & Esra`;
-  }, []);
 
   const modules = [
     { id: 'mutfak', name: 'Eraylar Mutfak', sub: 'Yemek & Alışveriş', icon: '🍳', color: 'linear-gradient(135deg, #f97316, #ea580c)', path: '/mutfak' },
@@ -70,7 +44,7 @@ const Home = () => {
 
   return (
     <AnimatedPage className="home-container-v2">
-      {/* Top Premium Banner - Exactly like the screenshot */}
+      {/* Top Premium Banner - Screenshot Style */}
       <div className="home-banner-premium">
         <div className="banner-content">
           <div className="banner-user">
@@ -97,17 +71,14 @@ const Home = () => {
           <button className="history-btn-v2" onClick={() => setShowLogs(true)}><History size={18} /></button>
         </div>
 
-        <motion.div 
-          className="ai-status-card glass"
-          whileHover={{ scale: 1.02 }}
-        >
+        <motion.div className="ai-status-card glass" whileHover={{ scale: 1.02 }}>
           <div className="ai-content">
             <span className="ai-emoji">💖</span>
             <p>Bugün her şey yolunda, keyfine bak!</p>
           </div>
         </motion.div>
 
-        {/* Module Grid - Large Cards Style from Screenshot */}
+        {/* Module Grid - Large Cards */}
         <div className="module-grid-v2 mt-24">
           {modules.map((module) => (
             <motion.div
@@ -132,52 +103,8 @@ const Home = () => {
           ))}
         </div>
         
-        <div style={{ height: '120px' }} /> {/* Spacing for floating nav */}
+        <div style={{ height: '120px' }} /> 
       </div>
-
-      {/* System Logs Portal */}
-      {showLogs && (
-        <Portal>
-          <div className="modal-overlay" onClick={() => setShowLogs(false)}>
-            <div className="logs-modal-v2 glass animate-slideUp" onClick={e => e.stopPropagation()}>
-               <div className="modal-header">
-                 <h3>Sistem Hareketleri</h3>
-                 <button onClick={() => setShowLogs(false)}><X size={20} /></button>
-               </div>
-               <div className="logs-list">
-                  {logs.slice(-20).reverse().map((log, i) => (
-                    <div key={i} className="log-row">
-                       <small>{new Date(log.time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
-                       <span>{log.text}</span>
-                    </div>
-                  ))}
-               </div>
-            </div>
-          </div>
-        </Portal>
-      )}
-    </AnimatedPage>
-  );
-};
-
-export default Home;
-
-        {/* Achievement Banner */}
-        <div className="achievements-preview mt-24 glass" onClick={() => navigate('/achievements')}>
-           <div className="ap-header">
-             <Award size={18} color="#7c3aed" />
-             <span>BAŞARILARINIZ</span>
-           </div>
-           <div className="badge-stack">
-              {system.achievements.filter(a => a.earned).map(a => (
-                <div key={a.id} className="mini-badge" title={a.title}>{a.icon}</div>
-              ))}
-              <div className="badge-count">+{system.achievements.filter(a => !a.earned).length}</div>
-           </div>
-        </div>
-      </div>
-
-      {/* Redundant FAB removed to match screenshot and FloatingHub logic */}
 
       {/* System Logs Portal */}
       {showLogs && (
