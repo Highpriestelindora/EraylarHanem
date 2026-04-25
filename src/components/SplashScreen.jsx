@@ -16,6 +16,10 @@ const SplashScreen = ({ finishLoading }) => {
   ];
 
   useEffect(() => {
+    // Kalıcı çözüm: Splash ekran süresince body arka planını mor yap
+    const originalBg = document.body.style.backgroundColor;
+    document.body.style.backgroundColor = '#A855F7';
+    
     let step = 0;
     const interval = setInterval(() => {
       step += 1;
@@ -27,7 +31,11 @@ const SplashScreen = ({ finishLoading }) => {
         setTimeout(finishLoading, 1000);
       }
     }, 1500);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      document.body.style.backgroundColor = originalBg;
+    };
   }, [finishLoading]);
 
   return (
@@ -36,22 +44,19 @@ const SplashScreen = ({ finishLoading }) => {
       exit={{ opacity: 0 }}
       style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
+        top: '-100px',
+        left: '-100px',
+        right: '-100px',
         bottom: '-100px',
-        zIndex: 9999,
-        background: '#A855F7',
+        zIndex: 999999,
+        backgroundColor: '#A855F7',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         color: 'white',
-        padding: '20px',
-        paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 20px))',
+        padding: '120px 120px', // Compensate for bleed
         textAlign: 'center',
-        width: '100vw',
-        height: '100dvh',
       }}
     >
       <div className="splash-characters" style={{ display: 'flex', gap: '30px', marginBottom: '40px' }}>
