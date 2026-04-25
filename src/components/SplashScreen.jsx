@@ -48,8 +48,8 @@ const SplashScreen = ({ finishLoading }) => {
         paddingBottom: 'env(safe-area-inset-bottom, 20px)',
         textAlign: 'center',
         width: '100vw',
-        height: '110dvh',
-        bottom: '-5dvh'
+        height: '100%',
+        minHeight: '-webkit-fill-available'
       }}
     >
       <div className="splash-characters" style={{ display: 'flex', gap: '30px', marginBottom: '40px' }}>
@@ -148,7 +148,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v2.5.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>GOLDEN MASTER</span>
+            v2.5.5 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>GOLDEN MASTER</span>
           </span>
         </div>
         <span style={{
