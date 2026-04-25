@@ -102,7 +102,7 @@ const DEFAULT_STATE = {
   },
   // ── Global System ──────────────────────────────────
   system: {
-    version: '2.6.10',
+    version: '2.6.11',
     globalScore: 85,
     onboardingComplete: false,
     notifications: [],
@@ -321,6 +321,7 @@ const useStore = create(
         };
         set({ users: updatedUsers });
         get().addLog('Profil Güncelleme', `${state.users[userId].name} bilgilerini güncelledi.`);
+        get().saveToSupabase();
       },
 
       addMood: (user, mood, note, kategori) => {

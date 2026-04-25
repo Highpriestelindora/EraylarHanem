@@ -5,6 +5,7 @@ import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
+import logo from '../assets/eraylar-logo.png';
 import './Ayarlar.css'; // Reusing common styles, will add profile specific ones
 
 export default function Profil() {
@@ -44,7 +45,7 @@ export default function Profil() {
         <div className="id-card glass">
           <div className="id-card-header">
             <div className="id-card-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img src="/eraylar-logo.png" alt="Logo" style={{ height: '20px', filter: 'brightness(0) invert(0)' }} />
+              <img src={logo} alt="Logo" style={{ height: '20px', filter: 'brightness(0) invert(0)' }} />
               ERAYLAR HANEM
             </div>
             <div className="id-card-type">KİMLİK KARTI</div>

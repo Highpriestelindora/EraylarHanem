@@ -159,7 +159,7 @@ export default function Ayarlar() {
       
       <div className="app-version-card glass">
         <div className="v-info">
-          <strong>Eraylar Hanem v1.0.0</strong>
+          <strong>Eraylar Hanem v2.6.11</strong>
           <span>Live Release Edition</span>
         </div>
         <div className="v-badge">GÜNCEL</div>
