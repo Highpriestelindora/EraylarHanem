@@ -45,12 +45,13 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100% !important; height: -webkit-fill-available !important;
-  overflow: hidden; 
-  background-color: #f8fafc !important; /* Beyaza zorlandı */
-  overscroll-behavior: none;
+  height: 100% !important;
+  height: -webkit-fill-available !important;
+  background-color: #f8fafc !important;
   color: var(--txt);
   font-family: 'Outfit', sans-serif;
+  overflow-x: hidden;
+  overscroll-behavior: none; /* Prevent white gaps during scroll bounce */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -58,11 +59,13 @@ html, body {
 #root {
   width: 100%;
   height: 100%;
-  background-color: #f8fafc !important;
+  min-height: 100% !important;
+  min-height: -webkit-fill-available !important;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
+  background-color: #f8fafc !important;
   position: relative;
+  overflow-x: hidden;
 }
 
 /* Universal Responsive Sanitizer */
@@ -434,25 +437,7 @@ body:has(.modal-overlay) .app-content {
   box-sizing: border-box;
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100% !important; height: -webkit-fill-available !important;
-  overflow-x: hidden;
-  background: var(--primary);
-  color: var(--txt);
-  font-family: 'Outfit', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-#root {
-  width: 100%;
-  min-height: 100% !important; height: -webkit-fill-available !important;
-  overflow-x: hidden;
-  position: relative;
-}
+/* Form and Root Utilities Cleaned Up */
 
 /* Safari/iOS Input Fixes */
 input[type="date"], 
@@ -531,13 +516,7 @@ input[type="time"] {
 }
 
 /* Global Kill-Switch for Horizontal Scrolling */
-html, body {
-  overflow-x: hidden !important;
-  position: relative !important;
-  width: 100% !important;
-  max-width: 100vw !important;
-  height: 100% !important; height: -webkit-fill-available !important;
-}
+/* Horizontal Scroll Kill-Switch */
 
 #root, .app-container, .ActionSheet, [class*="modal"], .modal-form {
   overflow-x: hidden !important;
