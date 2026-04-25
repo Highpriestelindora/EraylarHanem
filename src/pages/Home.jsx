@@ -29,81 +29,68 @@ const Home = () => {
   }, [calculateGlobalScore]);
 
   const modules = [
-    { id: 'mutfak', name: 'Eraylar Mutfak', sub: 'Yemek & Alışveriş', icon: '🍳', color: 'linear-gradient(135deg, #f97316, #ea580c)', path: '/mutfak' },
-    { id: 'sosyal', name: 'Eraylar Sosyal', sub: 'Aktivite & Rutin', icon: '🎯', color: 'linear-gradient(135deg, #db2777, #c026d3)', path: '/sosyal' },
-    { id: 'alisveris', name: 'Eraylar Alışveriş', sub: 'Market & Liste', icon: '🛍️', color: 'linear-gradient(135deg, #0ea5e9, #2563eb)', path: '/alisveris' },
-    { id: 'tatil', name: 'Eraylar Tatil', sub: 'Gezi Planlayıcı', icon: '✈️', color: 'linear-gradient(135deg, #06b6d4, #0891b2)', path: '/tatil' },
-    { id: 'pet', name: 'Eraylar Pet', sub: 'Waffle & Mayıs', icon: '🐾', color: 'linear-gradient(135deg, #f59e0b, #d97706)', path: '/pet' },
-    { id: 'health', name: 'Eraylar Sağlık', sub: 'İlaç & Ölçüm', icon: '🏥', color: 'linear-gradient(135deg, #ef4444, #dc2626)', path: '/saglik' },
-    { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(135deg, #1e1b4b, #312e81)', path: '/finans' },
-    { id: 'aracim', name: 'Eraylar Kokpit', sub: 'Tiguan R-Line', icon: '🏎️', color: 'linear-gradient(135deg, #334155, #0f172a)', path: '/aracim' },
-    { id: 'ev', name: 'Eraylar Ev', sub: 'Home Hub', icon: '🏠', color: 'linear-gradient(135deg, #10b981, #059669)', path: '/ev' },
-    { id: 'hedefler', name: 'Eraylar Vizyon', sub: 'Vision Hub', icon: '🏔️', color: 'linear-gradient(135deg, #6366f1, #4f46e5)', path: '/hedefler' },
-    { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '💎', color: 'linear-gradient(135deg, #7c3aed, #6d28d9)', path: '/kasa' }
+    { id: 'mutfak', name: 'Eraylar Mutfak', sub: 'Yemek & Alışveriş', icon: '🍳', color: '#f97316', path: '/mutfak' },
+    { id: 'sosyal', name: 'Eraylar Sosyal', sub: 'Aktivite & Rutin', icon: '🎯', color: '#db2777', path: '/sosyal' },
+    { id: 'alisveris', name: 'Eraylar Alışveriş', sub: 'Market & Liste', icon: '🛍️', color: '#0ea5e9', path: '/alisveris' },
+    { id: 'tatil', name: 'Eraylar Tatil', sub: 'Gezi Planlayıcı', icon: '✈️', color: '#06b6d4', path: '/tatil' },
+    { id: 'pet', name: 'Eraylar Pet', sub: 'Waffle & Mayıs', icon: '🐾', color: '#f59e0b', path: '/pet' },
+    { id: 'health', name: 'Eraylar Sağlık', sub: 'İlaç & Ölçüm', icon: '🏥', color: '#ef4444', path: '/saglik' },
+    { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: '#1e1b4b', path: '/finans' },
+    { id: 'aracim', name: 'Eraylar Kokpit', sub: 'Tiguan R-Line', icon: '🏎️', color: '#334155', path: '/aracim' },
+    { id: 'ev', name: 'Eraylar Ev', sub: 'Home Hub', icon: '🏠', color: '#10b981', path: '/ev' },
+    { id: 'hedefler', name: 'Eraylar Vizyon', sub: 'Vision Hub', icon: '🏔️', color: '#6366f1', path: '/hedefler' },
+    { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '💎', color: '#7c3aed', path: '/kasa' }
   ];
 
   return (
-    <AnimatedPage className="home-container-v2">
-      {/* Top Premium Banner - Screenshot Style */}
-      <div className="home-banner-premium">
-        <div className="banner-content">
-          <div className="banner-user">
-            <div className="avatar-main">{currentUser?.emoji || '👤'}</div>
-            <div className="banner-text">
-              <div className="brand-row">
-                <img src={logo} alt="Logo" className="banner-logo" />
-                <h2>Eraylar Hanem</h2>
-              </div>
-              <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 🐶 🐈</p>
-            </div>
-          </div>
-          <div className="banner-actions">
-            <button className="banner-btn" onClick={() => setShowLogs(true)}><BarChart2 size={20} /></button>
-            <button className="banner-btn" onClick={() => navigate('/ayarlar')}><Settings size={20} /></button>
-          </div>
+    <AnimatedPage className="home-original-container">
+      {/* Huge Logo Header from Screenshot */}
+      <div className="home-header-original">
+        <img src={logo} alt="Logo" className="huge-logo-top" />
+        <div className="header-text-original">
+          <h1>Eraylar Hanem</h1>
+          <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 🐶 🐈</p>
+        </div>
+        <div className="header-actions-original">
+           <button onClick={() => setShowLogs(true)}><BarChart2 size={20} /></button>
+           <button onClick={() => navigate('/ayarlar')}><Settings size={20} /></button>
         </div>
       </div>
 
       <div className="home-scroll-area">
-        {/* AI Assistant Section */}
-        <div className="section-header-v2">
-          <h3>✨ AKILLI AİLE ASİSTANI</h3>
-          <button className="history-btn-v2" onClick={() => setShowLogs(true)}><History size={18} /></button>
+        {/* Assistant Section */}
+        <div className="assistant-header-original">
+          <span>✨ AKILLI AİLE ASİSTANI</span>
+          <button onClick={() => setShowLogs(true)}><History size={18} /></button>
         </div>
 
-        <motion.div className="ai-status-card glass" whileHover={{ scale: 1.02 }}>
-          <div className="ai-content">
-            <span className="ai-emoji">💖</span>
-            <p>Bugün her şey yolunda, keyfine bak!</p>
-          </div>
-        </motion.div>
+        <div className="ai-status-bar-original">
+           <span className="ai-emoji">💖</span>
+           <p>Bugün her şey yolunda, keyfine bak!</p>
+        </div>
 
-        {/* Module Grid - Large Cards */}
-        <div className="module-grid-v2 mt-24">
+        {/* Full-Width Block Modules from Screenshot */}
+        <div className="module-stack-original">
           {modules.map((module) => (
-            <motion.div
+            <div
               key={module.id}
-              className="module-card-premium"
-              whileHover={{ scale: 1.03, translateY: -5 }}
-              whileTap={{ scale: 0.97 }}
+              className="module-block-item"
               onClick={() => navigate(module.path)}
-              style={{ background: module.color }}
+              style={{ backgroundColor: module.color }}
             >
-              <div className="mc-icon-wrap">
-                <span className="mc-emoji">{module.icon}</span>
+              <div className="mbi-content">
+                <span className="mbi-icon">{module.icon}</span>
+                <div className="mbi-text">
+                  <h3>{module.name}</h3>
+                  <p>{module.sub}</p>
+                </div>
+                <ChevronRight size={24} className="mbi-arrow" />
               </div>
-              <div className="mc-info">
-                <h3>{module.name}</h3>
-                <p>{module.sub}</p>
-              </div>
-              <div className="mc-action">
-                <ChevronRight size={20} />
-              </div>
-            </motion.div>
+            </div>
           ))}
         </div>
         
-        <div style={{ height: '120px' }} /> 
+        <div style={{ height: '120px' }} />
       </div>
 
       {/* System Logs Portal */}
