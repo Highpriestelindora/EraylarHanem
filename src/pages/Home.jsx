@@ -29,7 +29,6 @@ const Home = () => {
   const [showLogs, setShowLogs] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [showFAB, setShowFAB] = useState(false);
 
   useEffect(() => {
     calculateGlobalScore();
