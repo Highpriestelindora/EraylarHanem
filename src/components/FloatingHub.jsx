@@ -202,19 +202,35 @@ export default function FloatingHub() {
           </button>
         </div>
 
-        <div className="hub-main-wrapper">
-          <div className="hub-semi-circle" />
-          <div className="climbing-pet p1">🐱</div>
-          <div className="climbing-pet p2">🐶</div>
-          <div className="climbing-pet p3">🐾</div>
-          <div className="climbing-pet p4">🐾</div>
+        {/* New Capsule Design Hub */}
+        <div className="hub-capsule-wrapper">
+          <div className="hub-capsule-glass">
+            <div className="hub-pets-area">
+              <span className="hub-pet cat">🐱</span>
+              <div className="hub-paws">
+                <span className="paw">🐾</span>
+                <span className="paw">🐾</span>
+                <span className="paw">🐾</span>
+              </div>
+              <span className="hub-pet dog">🐶</span>
+            </div>
 
-          <button className="hub-btn home" onClick={() => { navigate('/'); setIsOpen(false); }}>
-            <Home size={24} />
-          </button>
-          <button className={`hub-btn toggle ${isOpen ? 'active' : ''}`} onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X size={24} /> : <div className="plus-icon">＋</div>}
-          </button>
+            <div className="hub-buttons-row">
+              <button 
+                className="hub-pill-btn home" 
+                onClick={() => { navigate('/'); setIsOpen(false); }}
+              >
+                <Home size={22} />
+              </button>
+              
+              <button 
+                className={`hub-pill-btn plus ${isOpen ? 'active' : ''}`} 
+                onClick={() => setIsOpen(!isOpen)}
+              >
+                {isOpen ? <X size={24} /> : <Plus size={24} />}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </>
