@@ -66,6 +66,7 @@ html, body {
   background-color: #f8fafc;
   position: relative;
   overflow-x: hidden;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 /* Universal Responsive Sanitizer */

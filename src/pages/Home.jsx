@@ -48,13 +48,19 @@ const Home = () => {
       <div className="premium-header-banner">
         <div className="phb-content">
           <div className="phb-user-area">
-            <div className="phb-avatar">👨‍💻</div>
+            <div className="phb-avatar">
+              <span className="supabase-status-dot"></span>
+              👨‍💻
+            </div>
             <div className="phb-text">
               <div className="phb-brand">
                 <img src={logo} alt="Logo" className="phb-logo-img" />
-                <h2>Eraylar Hanem <small style={{ fontSize: '10px', opacity: 0.5, fontWeight: 400 }}>v{system.version}</small></h2>
+                <h2>Eraylar Hanem</h2>
               </div>
-              <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 🐶 🐈</p>
+              <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 
+                <span className="pet-link" onClick={() => navigate('/pet')}>🐶</span> 
+                <span className="pet-link" onClick={() => navigate('/pet')}>🐈</span>
+              </p>
             </div>
           </div>
           <div className="phb-actions">

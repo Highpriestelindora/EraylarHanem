@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: flex-end;
   pointer-events: none;
-  padding-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .floating-hub-container * {
