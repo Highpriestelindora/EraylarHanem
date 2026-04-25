@@ -29,68 +29,77 @@ const Home = () => {
   }, [calculateGlobalScore]);
 
   const modules = [
-    { id: 'mutfak', name: 'Eraylar Mutfak', sub: 'Yemek & Alışveriş', icon: '🍳', color: '#f97316', path: '/mutfak' },
-    { id: 'sosyal', name: 'Eraylar Sosyal', sub: 'Aktivite & Rutin', icon: '🎯', color: '#db2777', path: '/sosyal' },
-    { id: 'alisveris', name: 'Eraylar Alışveriş', sub: 'Market & Liste', icon: '🛍️', color: '#0ea5e9', path: '/alisveris' },
-    { id: 'tatil', name: 'Eraylar Tatil', sub: 'Gezi Planlayıcı', icon: '✈️', color: '#06b6d4', path: '/tatil' },
-    { id: 'pet', name: 'Eraylar Pet', sub: 'Waffle & Mayıs', icon: '🐾', color: '#f59e0b', path: '/pet' },
-    { id: 'health', name: 'Eraylar Sağlık', sub: 'İlaç & Ölçüm', icon: '🏥', color: '#ef4444', path: '/saglik' },
-    { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: '#1e1b4b', path: '/finans' },
-    { id: 'aracim', name: 'Eraylar Kokpit', sub: 'Tiguan R-Line', icon: '🏎️', color: '#334155', path: '/aracim' },
-    { id: 'ev', name: 'Eraylar Ev', sub: 'Home Hub', icon: '🏠', color: '#10b981', path: '/ev' },
-    { id: 'hedefler', name: 'Eraylar Vizyon', sub: 'Vision Hub', icon: '🏔️', color: '#6366f1', path: '/hedefler' },
-    { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '💎', color: '#7c3aed', path: '/kasa' }
+    { id: 'mutfak', name: 'Eraylar Mutfak', sub: 'Yemek & Alışveriş', icon: '🍳', color: 'linear-gradient(135deg, #f97316, #ea580c)', path: '/mutfak' },
+    { id: 'sosyal', name: 'Eraylar Sosyal', sub: 'Aktivite & Rutin', icon: '🎯', color: 'linear-gradient(135deg, #db2777, #c026d3)', path: '/sosyal' },
+    { id: 'alisveris', name: 'Eraylar Alışveriş', sub: 'Market & Liste', icon: '🛍️', color: 'linear-gradient(135deg, #0ea5e9, #2563eb)', path: '/alisveris' },
+    { id: 'tatil', name: 'Eraylar Tatil', sub: 'Gezi Planlayıcı', icon: '✈️', color: 'linear-gradient(135deg, #06b6d4, #0891b2)', path: '/tatil' },
+    { id: 'pet', name: 'Eraylar Pet', sub: 'Waffle & Mayıs', icon: '🐾', color: 'linear-gradient(135deg, #f59e0b, #d97706)', path: '/pet' },
+    { id: 'health', name: 'Eraylar Sağlık', sub: 'İlaç & Ölçüm', icon: '🏥', color: 'linear-gradient(135deg, #ef4444, #dc2626)', path: '/saglik' },
+    { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(135deg, #1e1b4b, #312e81)', path: '/finans' },
+    { id: 'aracim', name: 'Eraylar Kokpit', sub: 'Tiguan R-Line', icon: '🏎️', color: 'linear-gradient(135deg, #334155, #0f172a)', path: '/aracim' },
+    { id: 'ev', name: 'Eraylar Ev', sub: 'Home Hub', icon: '🏠', color: 'linear-gradient(135deg, #10b981, #059669)', path: '/ev' },
+    { id: 'hedefler', name: 'Eraylar Vizyon', sub: 'Vision Hub', icon: '🏔️', color: 'linear-gradient(135deg, #6366f1, #4f46e5)', path: '/hedefler' },
+    { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '💎', color: 'linear-gradient(135deg, #7c3aed, #6d28d9)', path: '/kasa' }
   ];
 
   return (
-    <AnimatedPage className="home-original-container">
-      {/* Huge Logo Header from Screenshot */}
-      <div className="home-header-original">
-        <img src={logo} alt="Logo" className="huge-logo-top" />
-        <div className="header-text-original">
-          <h1>Eraylar Hanem</h1>
-          <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 🐶 🐈</p>
-        </div>
-        <div className="header-actions-original">
-           <button onClick={() => setShowLogs(true)}><BarChart2 size={20} /></button>
-           <button onClick={() => navigate('/ayarlar')}><Settings size={20} /></button>
+    <AnimatedPage className="home-premium-container">
+      {/* Top Rounded Banner - Exactly as 01:47 Screenshot */}
+      <div className="premium-header-banner">
+        <div className="phb-content">
+          <div className="phb-user-area">
+            <div className="phb-avatar">👨‍💻</div>
+            <div className="phb-text">
+              <div className="phb-brand">
+                <img src={logo} alt="Logo" className="phb-logo-img" />
+                <h2>Eraylar Hanem</h2>
+              </div>
+              <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 🐶 🐈</p>
+            </div>
+          </div>
+          <div className="phb-actions">
+            <button className="phb-icon-btn" onClick={() => setShowLogs(true)}><BarChart2 size={18} /></button>
+            <button className="phb-icon-btn" onClick={() => navigate('/ayarlar')}><Settings size={18} /></button>
+          </div>
         </div>
       </div>
 
       <div className="home-scroll-area">
-        {/* Assistant Section */}
-        <div className="assistant-header-original">
-          <span>✨ AKILLI AİLE ASİSTANI</span>
-          <button onClick={() => setShowLogs(true)}><History size={18} /></button>
+        {/* AI Assistant Section */}
+        <div className="ai-section-premium">
+          <div className="ai-header-row">
+            <span>✨ AKILLI AİLE ASİSTANI</span>
+            <button className="ai-history-btn" onClick={() => setShowLogs(true)}><History size={18} /></button>
+          </div>
+          <div className="ai-status-card-premium">
+            <div className="ai-card-inner">
+              <span className="ai-heart">💖</span>
+              <p>Bugün her şey yolunda, keyfine bak!</p>
+            </div>
+          </div>
         </div>
 
-        <div className="ai-status-bar-original">
-           <span className="ai-emoji">💖</span>
-           <p>Bugün her şey yolunda, keyfine bak!</p>
-        </div>
-
-        {/* Full-Width Block Modules from Screenshot */}
-        <div className="module-stack-original">
+        {/* 2-Column Module Grid from 01:47 Screenshot */}
+        <div className="premium-module-grid">
           {modules.map((module) => (
             <div
               key={module.id}
-              className="module-block-item"
+              className="premium-module-card"
               onClick={() => navigate(module.path)}
-              style={{ backgroundColor: module.color }}
+              style={{ background: module.color }}
             >
-              <div className="mbi-content">
-                <span className="mbi-icon">{module.icon}</span>
-                <div className="mbi-text">
-                  <h3>{module.name}</h3>
-                  <p>{module.sub}</p>
-                </div>
-                <ChevronRight size={24} className="mbi-arrow" />
+              <div className="pmc-icon-wrap">
+                <span className="pmc-emoji">{module.icon}</span>
+              </div>
+              <div className="pmc-info">
+                <h3>{module.name}</h3>
+                <p>{module.sub}</p>
               </div>
             </div>
           ))}
         </div>
         
-        <div style={{ height: '120px' }} />
+        <div style={{ height: '140px' }} />
       </div>
 
       {/* System Logs Portal */}
