@@ -114,8 +114,8 @@ const Home = () => {
                <div className="logs-list">
                   {logs.slice(-20).reverse().map((log, i) => (
                     <div key={i} className="log-row">
-                       <small>{new Date(log.time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
-                       <span>{log.text}</span>
+                       <small>{new Date(log.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
+                       <span><strong>{log.action}:</strong> {log.detail}</span>
                     </div>
                   ))}
                </div>
