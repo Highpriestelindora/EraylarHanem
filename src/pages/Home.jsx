@@ -178,26 +178,7 @@ export default Home;
         </div>
       </div>
 
-      {/* Floating Action Button */}
-      <div className={`fab-container ${showFAB ? 'active' : ''}`}>
-        <AnimatePresence>
-          {showFAB && (
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              className="fab-menu glass"
-            >
-              <button className="fm-btn" onClick={() => navigate('/finans')}><PlusCircle size={18} /> Harcama</button>
-              <button className="fm-btn" onClick={() => navigate('/sosyal')}><MessageCircle size={18} /> Not Al</button>
-              <button className="fm-btn" onClick={() => navigate('/aracim')}><Zap size={18} /> KM Güncelle</button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <button className="fab-main" onClick={() => setShowFAB(!showFAB)}>
-          <Plus size={32} className={showFAB ? 'rotate' : ''} />
-        </button>
-      </div>
+      {/* Redundant FAB removed to match screenshot and FloatingHub logic */}
 
       {/* System Logs Portal */}
       {showLogs && (
