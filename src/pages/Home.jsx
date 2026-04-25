@@ -13,7 +13,7 @@ import './Home.css';
 
 const Home = () => {
   const { 
-    system = { version: '2.6.9', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
+    system = { version: '2.6.10', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
     currentUser, 
     logs = [], 
     calculateGlobalScore 
@@ -55,7 +55,10 @@ const Home = () => {
             <div className="phb-text">
               <div className="phb-brand">
                 <img src={logo} alt="Logo" className="phb-logo-img" />
-                <h2>Eraylar Hanem</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h2>Eraylar Hanem</h2>
+                  <span style={{ fontSize: '10px', background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '6px', opacity: 0.8 }}>v2.6.10</span>
+                </div>
               </div>
               <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 
                 <span className="pet-link" onClick={() => navigate('/pet')}>🐶</span> 

@@ -1,16 +1,17 @@
 
 .floating-hub-container {
   position: fixed;
-  bottom: -10px; /* Strong over-stretch */
+  top: 0;
   left: 0;
   right: 0;
+  bottom: 0;
+  height: 100dvh; /* Force full dynamic viewport */
   z-index: 1000;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   pointer-events: none;
-  padding-bottom: 10px; /* Re-balance */
 }
 
 .floating-hub-container * {
@@ -88,7 +89,7 @@
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  padding: 4px 14px calc(env(safe-area-inset-bottom, 12px) + 10px); 
+  padding: 4px 14px env(safe-area-inset-bottom, 12px); 
   border-radius: 40px 40px 0 0;
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.05);
   border: none;
