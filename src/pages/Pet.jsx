@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import { 
-  PawPrint, Calendar, ShieldCheck, 
-  Info, Plus, Trash2, Heart, 
-  Activity, Clock, ChevronRight, Scale, TrendingUp, ArrowLeft, X
+  Plus, Trash2, Heart, 
+  Activity, Scale, ArrowLeft, Camera, ShieldCheck
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -13,7 +12,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import './Pet.css';
 
 export default function Pet() {
-  const { pet, setModuleData, deletePetWeight, deletePetLog, deletePetVaccine } = useStore();
+  const { pet, setModuleData, deletePetLog, deletePetVaccine, addPetVaccine, addPetWeight } = useStore();
   const [activePet, setActivePet] = useState('waffle');
   const [showAddLog, setShowAddLog] = useState(false);
   const [showAddVaccine, setShowAddVaccine] = useState(false);
@@ -24,243 +23,205 @@ export default function Pet() {
   const currentPet = meta[activePet];
   const petVaccines = vaccines[activePet] || [];
   const petWeights = weights[activePet] || [];
+  const navigate = useNavigate();
 
   const getVaccineStatus = (v) => {
-    const lastDate = new Date(v.last.split('.').reverse().join('-'));
+    if (!v.last) return { label: '?', color: '#94a3b8', days: 0 };
+    const parts = v.last.split('.');
+    const lastDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
     const nextDate = new Date(lastDate.getTime() + (v.ev * 864e5));
     const diff = Math.round((nextDate - new Date()) / 864e5);
     
-    if (diff <= 0) return { label: 'GECİKMİŞ', color: 'var(--danger)', days: Math.abs(diff) };
-    if (diff < 15) return { label: 'YAKINDA', color: 'var(--warn)', days: diff };
-    return { label: 'İYİ', color: 'var(--success)', days: diff };
+    if (diff <= 0) return { label: 'GECİKMİŞ', color: '#ef4444', days: Math.abs(diff) };
+    if (diff < 15) return { label: 'YAKINDA', color: '#f59e0b', days: diff };
+    return { label: 'İYİ', color: '#10b981', days: diff };
   };
 
-  const updateVaccineDate = (vaccineName) => {
-    const today = new Date().toLocaleDateString('tr-TR');
-    const targetVaccine = petVaccines.find(v => v.n === vaccineName);
-    const oldDate = targetVaccine?.last || '';
-
-    const updatedVaccines = petVaccines.map(v => 
-      v.n === vaccineName ? { ...v, last: today, h: [today, ...(v.h || [])] } : v
-    );
-    
-    setModuleData('pet', {
-      ...pet,
-      vaccines: { ...vaccines, [activePet]: updatedVaccines },
-      history: [
-        { 
-          id: Date.now(), 
-          pet: activePet, 
-          action: `${vaccineName} aşısı güncellendi.`, 
-          dt: today, 
-          type: 'vaccine',
-          vaccineName,
-          prevDate: oldDate
-        },
-        ...(history || [])
-      ].slice(0, 50)
-    });
-    toast.success(`${vaccineName} aşısı güncellendi! 💉`);
+  const updatePetSupply = (pId, type, val) => {
+    const updatedSupplies = { 
+      ...pet.supplies, 
+      [pId]: { ...(pet.supplies?.[pId] || { mama: 'var', kum: 'var' }), [type]: val } 
+    };
+    setModuleData('pet', { ...pet, supplies: updatedSupplies });
+    toast.success(`${type === 'mama' ? 'Mama' : 'Kum'} durumu güncellendi!`);
   };
 
-  const navigate = useNavigate();
+  const addPetPhoto = (pId, url) => {
+    const updatedGallery = { 
+      ...pet.gallery, 
+      [pId]: [url, ...(pet.gallery?.[pId] || [])].slice(0, 10) 
+    };
+    setModuleData('pet', { ...pet, gallery: updatedGallery });
+    toast.success('Fotoğraf eklendi! 📸');
+  };
+
+  if (!currentPet) return <div className="p-20">Pet datası yüklenemedi...</div>;
 
   return (
     <AnimatedPage className="pet-container">
-      <header className="module-header glass" style={{ background: 'var(--pet-header-grad, linear-gradient(135deg, #f59e0b, #d97706))' }}>
+      <header className="module-header glass pet-honey-grad">
         <div className="header-top">
           <div className="header-title">
-            <span className="header-emoji animate-float">🐾</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h1>Eraylar Pet</h1>
-              <p>Waffle & Mayıs Bakım Günlüğü</p>
+            <span className="header-emoji animate-float">{currentPet.emoji}</span>
+            <div className="header-text-box">
+              <h1>{currentPet.name} Assistant</h1>
+              <p>Pati & Sağlık Takip</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
-              <ArrowLeft size={20} />
-            </button>
+            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
           </div>
         </div>
 
-        <nav className="tab-nav">
+        <nav className="pet-tab-nav">
           {Object.entries(meta).map(([id, p]) => (
             <button 
               key={id} 
-              className={`tab-btn ${activePet === id ? 'active' : ''}`}
+              className={`p-tab-btn ${activePet === id ? 'active' : ''}`}
               onClick={() => setActivePet(id)}
             >
-              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{p.emoji}</span>
-              <span>{p.name}</span>
-              {activePet === id && <div className="tab-dot" />}
+              <span className="p-emoji">{p.emoji}</span>
+              <span className="p-name">{p.name}</span>
             </button>
           ))}
         </nav>
       </header>
 
-      {currentPet && (
-        <div className="pet-content animate-fadeIn">
-          <div className="profile-hero glass" style={{ background: currentPet.grad }}>
-            <div className="hero-emoji animate-pop">{currentPet.emoji}</div>
-            <div className="hero-info">
-              <h2>{currentPet.name}</h2>
-              <p>{currentPet.breed} · {currentPet.gender}</p>
+      <div className="pet-scroll-content animate-fadeIn">
+        {/* Quick Status Bar */}
+        <div className="quick-supply-bar">
+          <div className="supply-item glass">
+            <div className="si-left">
+              <span className="si-icon">🍖</span>
+              <div className="si-text">
+                <strong>Mama</strong>
+                <small>{pet.supplies?.[activePet]?.mama === 'var' ? 'Yeterli ✅' : 'Azalıyor ⚠️'}</small>
+              </div>
             </div>
-            <div className="hero-badge">
-              <Heart size={20} fill="white" />
+            <button 
+              className={`si-toggle ${pet.supplies?.[activePet]?.mama === 'var' ? 'ok' : 'low'}`}
+              onClick={() => updatePetSupply(activePet, 'mama', pet.supplies?.[activePet]?.mama === 'var' ? 'azaldi' : 'var')}
+            >
+              {pet.supplies?.[activePet]?.mama === 'var' ? 'VAR' : 'AZALDI'}
+            </button>
+          </div>
+          {activePet === 'mayis' && (
+            <div className="supply-item glass">
+              <div className="si-left">
+                <span className="si-icon">📦</span>
+                <div className="si-text">
+                  <strong>Kum</strong>
+                  <small>{pet.supplies?.[activePet]?.kum === 'var' ? 'Yeterli ✅' : 'Azalıyor ⚠️'}</small>
+                </div>
+              </div>
+              <button 
+                className={`si-toggle ${pet.supplies?.[activePet]?.kum === 'var' ? 'ok' : 'low'}`}
+                onClick={() => updatePetSupply(activePet, 'kum', pet.supplies?.[activePet]?.kum === 'var' ? 'azaldi' : 'var')}
+              >
+                {pet.supplies?.[activePet]?.kum === 'var' ? 'VAR' : 'AZALDI'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Pati Albümü */}
+        <section className="pet-section">
+          <div className="ps-header">
+            <h3>📸 Pati Albümü</h3>
+            <button className="add-btn-mini" onClick={() => addPetPhoto(activePet, 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400')}><Plus size={14} /></button>
+          </div>
+          <div className="photo-gallery-horizontal">
+            {pet.gallery?.[activePet]?.length > 0 ? (
+              pet.gallery[activePet].map((url, i) => (
+                <div key={i} className="gallery-item glass animate-pop">
+                  <img src={url} alt="Pet" />
+                </div>
+              ))
+            ) : (
+              <div className="gallery-empty glass">
+                <span>📷</span>
+                <p>Henüz fotoğraf eklenmedi.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Health Stats Grid */}
+        <div className="health-stats-grid mt-20">
+          <div className="pet-card-v2 glass">
+            <div className="pc-header-v2">
+              <div className="pch-left"><Activity size={18} /> <strong>Aşı Takvimi</strong></div>
+              <button className="add-btn-mini" onClick={() => setShowAddVaccine(true)}><Plus size={14} /></button>
+            </div>
+            <div className="pc-body-v2">
+              {petVaccines.slice(0, 3).map((v, i) => {
+                const st = getVaccineStatus(v);
+                return (
+                  <div key={i} className="v-row-premium">
+                    <div className="vr-left">
+                      <strong>{v.n}</strong>
+                      <small>{v.last}</small>
+                    </div>
+                    <div className="vr-badge" style={{ background: st.color + '20', color: st.color, fontSize: '10px', fontWeight: 900, padding: '4px 8px', borderRadius: '8px' }}>
+                      {st.label === 'GECİKMİŞ' ? '!' : st.days + ' g.'}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div className="pet-grid mt-20">
-            {/* Kimlik Bilgileri */}
-            <div className="pet-card glass info-card">
-              <div className="pc-header"><span style={{ fontSize: '14px' }}>📝</span> <span>KİMLİK BİLGİLERİ</span></div>
-              <div className="pc-body">
-                <div className="info-row"><span>Doğum:</span> <strong>{currentPet.birth}</strong></div>
-                <div className="info-row"><span>Çip No:</span> <strong>{currentPet.chip}</strong></div>
-                <div className="info-row"><span>Pasaport:</span> <strong>{currentPet.passport}</strong></div>
-                <div className="info-row"><span>Renk:</span> <strong>{currentPet.color}</strong></div>
-              </div>
+          <div className="pet-card-v2 glass">
+            <div className="pc-header-v2">
+              <div className="pch-left"><Scale size={18} /> <strong>Kilo Takibi</strong></div>
+              <button className="add-btn-mini" onClick={() => setShowAddWeight(true)}><Plus size={14} /></button>
             </div>
-
-            {/* Aşı Takibi */}
-            <div className="pet-card glass vaccine-card">
-              <div className="pc-header">
-                <span style={{ fontSize: '14px' }}>💉</span> <span>AŞI TAKİBİ</span>
-                <button className="add-btn-mini" onClick={() => setShowAddVaccine(true)} title="Yeni Aşı Ekle"><Plus size={14} /></button>
-              </div>
-              <div className="pc-body">
-                {petVaccines.map((v, i) => {
-                  const st = getVaccineStatus(v);
-                  return (
-                    <div key={i} className="v-item-wrapper">
-                      <div className="v-item" onClick={() => updateVaccineDate(v.n)} title="Aşıyı Bugün Yapıldı Olarak İşaretle">
-                        <div className="v-main">
-                          <strong>{v.n}</strong>
-                          <small>Son: {v.last}</small>
-                        </div>
-                        <div className="v-status">
-                          <span className="v-days" style={{ color: st.color }}>
-                            {st.label === 'GECİKMİŞ' ? `${st.days} g. geçti` : `${st.days} gün kaldı`}
-                          </span>
-                          <div className="v-dot" style={{ backgroundColor: st.color }} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Kilo İstatistikleri */}
-            <div className="pet-card glass weight-card">
-              <div className="pc-header">
-                <span style={{ fontSize: '14px' }}>⚖️</span> <span>KİLO TAKİBİ</span>
-                <button className="add-btn-mini" onClick={() => setShowAddWeight(true)} title="Kilo Kaydet"><Plus size={14} /></button>
-              </div>
-              <div className="pc-body">
-                <div className="current-weight">
-                  <span className="w-val">{petWeights[0]?.w || '--'}</span>
-                  <span className="w-unit">KG</span>
-                  <div className="w-trend">
-                    {petWeights.length > 1 && (
-                      petWeights[0].w > petWeights[1].w ? 
-                      <span className="up">📈 +{(petWeights[0].w - petWeights[1].w).toFixed(1)}</span> : 
-                      <span className="down">📉 -{(petWeights[1].w - petWeights[0].w).toFixed(1)}</span>
-                    )}
-                  </div>
-                </div>
-                <div className="weight-history">
-                  {petWeights.slice(0, 3).map((w, idx) => (
-                    <div key={w.id} className="w-history-item">
-                      <div className="wh-info">
-                        <span className="wh-dt">{w.dt}</span>
-                        <span className="wh-val">{w.w} kg</span>
-                      </div>
-                      {idx === 0 && (
-                        <button className="del-btn-mini" onClick={() => { 
-                          deletePetWeight(activePet, w.id);
-                          toast.success('Kilo kaydı silindi');
-                        }}>
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="history-section mt-20">
-            <div className="section-header">
-              <h3>⌛ Sağlık & Bakım Günlüğü</h3>
-              <div className="header-actions">
-                <button className="add-btn-small money" onClick={() => setShowAddExpense(true)} title="Harcama Ekle"><Plus size={16} /> Harcama</button>
-                <button className="add-btn-small" onClick={() => setShowAddLog(true)}><Plus size={16} /> Not</button>
-              </div>
-            </div>
-            <div className="history-timeline">
-              {(history || []).filter(h => h.pet === activePet).map((h, idx) => (
-                <div key={h.id} className="history-item glass">
-                  <div className={`h-icon-box ${h.type || 'info'}`}>
-                    {h.type === 'vaccine' ? '💉' : 
-                     h.type === 'weight' ? '⚖️' : '📝'}
-                  </div>
-                  <div className="h-content">
-                    <p>{h.action}</p>
-                    <span>{h.dt}</span>
-                  </div>
-                  {idx === 0 && (
-                    <button className="del-btn-mini" onClick={() => { 
-                      deletePetLog(h.id);
-                      toast.success('Günlük kaydı silindi');
-                    }}>
-                      <Trash2 size={12} />
-                    </button>
-                  )}
-                </div>
-              ))}
-              {(history || []).filter(h => h.pet === activePet).length === 0 && (
-                <div className="empty-state glass">
-                  <Clock size={32} opacity={0.3} />
-                  <p>Henüz işlem kaydı bulunmuyor.</p>
-                </div>
-              )}
+            <div className="pc-body-v2 weight-box">
+               <div className="w-main-val">
+                  <strong>{petWeights[0]?.w || '--'}</strong>
+                  <small>KG</small>
+               </div>
             </div>
           </div>
         </div>
-      )}
 
-      <ActionSheet
-        isOpen={showAddLog}
-        onClose={() => setShowAddLog(false)}
-        title="📝 Günlüğe Ekle"
-      >
+        {/* Günlük & Geçmiş */}
+        <section className="pet-section mt-24">
+          <div className="ps-header">
+            <h3>⌛ Sağlık & Bakım Günlüğü</h3>
+            <div className="ps-actions">
+              <button className="ps-btn finance" onClick={() => setShowAddExpense(true)}><Heart size={14} /> Harcama</button>
+              <button className="ps-btn" onClick={() => setShowAddLog(true)}><Plus size={14} /> Not</button>
+            </div>
+          </div>
+          <div className="history-timeline-premium">
+            {(history || []).filter(h => h.pet === activePet).map((h) => (
+              <div key={h.id} className="history-card-v2 glass">
+                <div className="hc-icon">📝</div>
+                <div className="hc-info">
+                  <p>{h.action}</p>
+                  <span className="hc-time">{h.dt}</span>
+                </div>
+                <button className="hc-del" onClick={() => deletePetLog(h.id)}><Trash2 size={14} /></button>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <ActionSheet isOpen={showAddLog} onClose={() => setShowAddLog(false)} title="📝 Günlüğe Ekle">
         <AddPetLogContent petId={activePet} onClose={() => setShowAddLog(false)} />
       </ActionSheet>
 
-      <ActionSheet
-        isOpen={showAddVaccine}
-        onClose={() => setShowAddVaccine(false)}
-        title="💉 Aşı Yönetim Merkezi"
-      >
+      <ActionSheet isOpen={showAddVaccine} onClose={() => setShowAddVaccine(false)} title="💉 Aşı Ekle">
         <ManageVaccineContent petId={activePet} onClose={() => setShowAddVaccine(false)} />
       </ActionSheet>
 
-      <ActionSheet
-        isOpen={showAddWeight}
-        onClose={() => setShowAddWeight(false)}
-        title="⚖️ Kilo Ölçümü"
-      >
+      <ActionSheet isOpen={showAddWeight} onClose={() => setShowAddWeight(false)} title="⚖️ Kilo Ölçümü">
         <AddWeightContent petId={activePet} onClose={() => setShowAddWeight(false)} />
       </ActionSheet>
 
-      <ActionSheet
-        isOpen={showAddExpense}
-        onClose={() => setShowAddExpense(false)}
-        title={`💸 ${meta[activePet]?.name} Harcaması`}
-      >
+      <ActionSheet isOpen={showAddExpense} onClose={() => setShowAddExpense(false)} title="💸 Harcama Ekle">
         <AddPetExpenseContent petId={activePet} onClose={() => setShowAddExpense(false)} />
       </ActionSheet>
     </AnimatedPage>
@@ -289,23 +250,13 @@ function AddPetExpenseContent({ petId, onClose }) {
     <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
         <label>Harcama Başlığı</label>
-        <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="ör: Mama, Kum, Oyuncak..." required autoFocus />
+        <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="ör: Mama, Kum..." required autoFocus />
       </div>
       <div className="form-group">
         <label>Tutar (₺)</label>
-        <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0" required inputMode="decimal" />
+        <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0" required />
       </div>
-      <div className="form-group">
-        <label>Kim Ödedi?</label>
-        <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-          {['gorkem', 'esra', 'ortak'].map(p => (
-            <button key={p} type="button" className={formData.payer === p ? 'active' : ''} onClick={() => setFormData({...formData, payer: p})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: formData.payer === p ? 'var(--pet-header-grad)' : 'white', color: formData.payer === p ? 'white' : 'inherit', fontWeight: 'bold' }}>
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
-      <button type="submit" className="submit-btn" style={{ background: 'var(--pet-header-grad)', boxShadow: '0 10px 20px rgba(217, 119, 6, 0.2)' }}>Harcamayı Kaydet</button>
+      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Harcamayı Kaydet</button>
     </form>
   );
 }
@@ -326,84 +277,37 @@ function AddWeightContent({ petId, onClose }) {
     <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
         <label>Ağırlık (kg)</label>
-        <input type="number" step="0.1" value={formData.w} onChange={e => setFormData({...formData, w: e.target.value})} placeholder="ör: 10.5" required autoFocus inputMode="decimal" />
+        <input type="number" step="0.1" value={formData.w} onChange={e => setFormData({...formData, w: e.target.value})} placeholder="10.5" required autoFocus />
       </div>
-      <div className="form-group">
-        <label>Tarih</label>
-        <input type="text" value={formData.dt} onChange={e => setFormData({...formData, dt: e.target.value})} placeholder="DD.MM.YYYY" required />
-      </div>
-      <button type="submit" className="submit-btn" style={{ background: 'var(--pet-header-grad)' }}>Kaydet</button>
+      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Kaydet</button>
     </form>
   );
 }
 
 function ManageVaccineContent({ petId, onClose }) {
-  const { pet, addPetVaccine, deletePetVaccine } = useStore();
+  const { addPetVaccine } = useStore();
   const [formData, setFormData] = useState({ n: '', last: new Date().toLocaleDateString('tr-TR'), ev: 60 });
-  const petVaccines = pet.vaccines[petId] || [];
-  const [deletingVaccine, setDeletingVaccine] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.n) return;
     addPetVaccine(petId, formData);
-    setFormData({ n: '', last: new Date().toLocaleDateString('tr-TR'), ev: 60 });
+    onClose();
     toast.success('Aşı takvime eklendi! 💉');
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="current-vaccines-list">
-        <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, marginBottom: '12px', display: 'block', letterSpacing: '1px' }}>MEVCUT AŞILAR</label>
-        {petVaccines.length === 0 ? (
-          <p style={{ fontSize: '13px', opacity: 0.5, textAlign: 'center', padding: '20px' }}>Henüz kayıtlı aşı yok.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {petVaccines.map((v, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', background: 'var(--bg)', borderRadius: '16px', border: '1px solid var(--brd)' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 800 }}>{v.n}</span>
-                  <small style={{ fontSize: '11px', opacity: 0.6 }}>Son: {v.last}</small>
-                </div>
-                <button onClick={() => setDeletingVaccine(v.n)} style={{ background: '#fef2f2', color: '#ef4444', border: 'none', padding: '8px', borderRadius: '10px', cursor: 'pointer' }}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+    <form className="modal-form" onSubmit={handleSubmit}>
+      <div className="form-group">
+        <label>Aşı Adı</label>
+        <input type="text" value={formData.n} onChange={e => setFormData({...formData, n: e.target.value})} placeholder="Karma, Kuduz..." required />
       </div>
-
-      <div style={{ height: '1px', background: 'var(--brd)', opacity: 0.5 }} />
-
-      <form className="modal-form" onSubmit={handleSubmit}>
-        <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px' }}>YENİ AŞI EKLE</label>
-        <div className="form-group">
-          <label>Aşı Adı</label>
-          <input type="text" value={formData.n} onChange={e => setFormData({...formData, n: e.target.value})} placeholder="ör: Karma, Kuduz..." required />
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Son Tarih</label>
-            <input type="text" value={formData.last} onChange={e => setFormData({...formData, last: e.target.value})} placeholder="DD.MM.YYYY" required />
-          </div>
-          <div className="form-group">
-            <label>Periyot (Gün)</label>
-            <input type="number" value={formData.ev} onChange={e => setFormData({...formData, ev: Number(e.target.value)})} required />
-          </div>
-        </div>
-        <button type="submit" className="submit-btn" style={{ background: 'var(--pet-header-grad)' }}>Takvime Ekle</button>
-      </form>
-
-      {deletingVaccine && (
-        <ConfirmModal 
-          title="Aşıyı Sil"
-          message={`${deletingVaccine} aşısını takvimden kaldırmak istediğine emin misin?`}
-          onConfirm={() => { deletePetVaccine(petId, deletingVaccine); setDeletingVaccine(null); toast.success('Aşı silindi'); }}
-          onCancel={() => setDeletingVaccine(null)}
-        />
-      )}
-    </div>
+      <div className="form-group">
+        <label>Periyot (Gün)</label>
+        <input type="number" value={formData.ev} onChange={e => setFormData({...formData, ev: Number(e.target.value)})} required />
+      </div>
+      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Takvime Ekle</button>
+    </form>
   );
 }
 
@@ -430,16 +334,9 @@ function AddPetLogContent({ petId, onClose }) {
     <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
         <label>Neler Oldu?</label>
-        <textarea 
-          value={note} 
-          onChange={e => setNote(e.target.value)} 
-          placeholder="ör: Veteriner kontrolü yapıldı, vitamin verildi..."
-          rows={4}
-          autoFocus
-          style={{ resize: 'none' }}
-        />
+        <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Veteriner kontrolü..." rows={4} autoFocus />
       </div>
-      <button type="submit" className="submit-btn" style={{ background: 'var(--pet-header-grad)' }}>Kaydet</button>
+      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Kaydet</button>
     </form>
   );
 }

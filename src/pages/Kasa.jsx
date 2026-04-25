@@ -1,319 +1,244 @@
-import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, Clock, PlusCircle, X, ArrowRightLeft } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { 
+  TrendingUp, TrendingDown, Clock, PlusCircle, X, ArrowRightLeft,
+  Shield, Landmark, Gem, PieChart, Home, Car, Goal, Eye, EyeOff,
+  Plus, ChevronRight, ArrowLeft, MoreVertical, Coins
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import ActionSheet from '../components/ActionSheet';
 import toast from 'react-hot-toast';
+import { Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import './Kasa.css';
 
-const formatMoney = (val) =>
-  new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+const formatMoney = (val, privacy = false) => {
+  if (privacy) return '••••₺';
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
+};
 
 export default function Kasa() {
-  const [activeTab, setActiveTab] = useState('bakiye');
-  const { kasa, ev, updateKasa, transferKasa } = useStore();
+  const [activeTab, setActiveTab] = useState('varliklar');
+  const navigate = useNavigate();
+  const { 
+    kasa, updateVarlik, updateTasinmaz, transferKasa, 
+    togglePrivacyMode, updateKasaBakiye, finans 
+  } = useStore();
 
-  // Modal states
-  const [updateModal, setUpdateModal] = useState(null); 
-  const [transferModal, setTransferModal] = useState(false);
+  const privacy = kasa?.privacyMode || false;
+  const K = kasa || { bakiyeler: {}, varliklar: [], tasinmazlar: [], kumbaralar: [], rates: { EUR: 35, USD: 32 } };
   
-  const [inputVal, setInputVal] = useState('');
-  const [inputNot, setInputNot] = useState('');
-  
-  const [transferFrom, setTransferFrom] = useState('gorkem');
-  const [transferTo, setTransferTo] = useState('esra');
-  const [transferAmount, setTransferAmount] = useState('');
+  const totalCash = Object.values(K.bakiyeler || {}).reduce((a, b) => a + b, 0);
+  const totalVarlik = (K.varliklar || []).reduce((acc, v) => acc + (v.amount * v.price), 0);
+  const totalTasinmaz = (K.tasinmazlar || []).reduce((acc, t) => acc + t.value, 0);
+  const totalWealth = totalCash + totalVarlik + totalTasinmaz;
 
-  const K = kasa || { bakiyeler: { gorkem: 0, esra: 0, ortak: 0 }, gecmis: [], varliklar: [] };
-  const total = (K.bakiyeler?.gorkem || 0) + (K.bakiyeler?.esra || 0) + (K.bakiyeler?.ortak || 0);
+  const totalDebt = (finans?.borclar || []).reduce((a, b) => a + (b.remaining || 0), 0) + (finans?.kartlar || []).reduce((a, b) => a + (b.balance || 0), 0);
+  const netWorth = totalWealth - totalDebt;
 
-  const kisiler = [
-    { key: 'gorkem', label: 'Görkem', emoji: '👨', cls: 'gorkem' },
-    { key: 'esra',   label: 'Esra',   emoji: '👩', cls: 'esra'   },
-    { key: 'ortak',  label: 'Ortak',  emoji: '🏡', cls: 'ortak'  },
+  const tabs = [
+    { id: 'varliklar', label: 'Birikim', emoji: '🪙' },
+    { id: 'tasinmazlar', label: 'Mülkler', emoji: '🏠' },
+    { id: 'kumbaralar', label: 'Hedefler', emoji: '🎯' },
+    { id: 'bakiyeler', label: 'Nakit', emoji: '💵' }
   ];
 
-  const handleUpdateSave = async () => {
-    const yeniTutar = parseFloat(inputVal.replace(',', '.'));
-    if (isNaN(yeniTutar) || yeniTutar < 0) {
-      toast.error('Geçerli bir tutar gir!');
-      return;
-    }
-    const kisiInfo = kisiler.find(k => k.key === updateModal);
-    try {
-      await updateKasa(updateModal, yeniTutar, inputNot);
-      toast.success(`${kisiInfo.label} bakiyesi güncellendi ✓`);
-      setUpdateModal(null);
-    } catch (err) {
-      toast.error('Hata oluştu!');
-    }
-  };
-
-  const handleTransferSave = async () => {
-    const amount = parseFloat(transferAmount);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error('Geçerli bir miktar gir!');
-      return;
-    }
-    if (transferFrom === transferTo) {
-      toast.error('Aynı hesaplar arası transfer yapılamaz!');
-      return;
-    }
-
-    try {
-      await transferKasa(transferFrom, transferTo, amount, inputNot);
-      toast.success('Transfer başarıyla gerçekleşti! 💸');
-      setTransferModal(false);
-      setTransferAmount('');
-      setInputNot('');
-    } catch (err) {
-      toast.error(err.message || 'Transfer sırasında hata oluştu!');
-    }
+  const portfolioData = {
+    labels: ['Nakit', 'Varlıklar', 'Mülkler'],
+    datasets: [{
+      data: [totalCash, totalVarlik, totalTasinmaz],
+      backgroundColor: ['#10b981', '#f59e0b', '#7c3aed'],
+      borderWidth: 0,
+      cutout: '75%'
+    }]
   };
 
   return (
     <AnimatedPage className="kasa-container">
-      <div className="module-header" style={{ background: 'linear-gradient(135deg,#2C3E50,#1a252f)' }}>
-        <div className="header-info">
-          <h1>Eraylar Kasa</h1>
-          <p>Bakiye, Birikim & Taşınmazlar</p>
-        </div>
-        <div className="header-icon animate-float">🧾</div>
-      </div>
-
-      <div className="tab-nav glass">
-        <button className={`tab-btn ${activeTab === 'bakiye' ? 'active' : ''}`} onClick={() => setActiveTab('bakiye')}>
-          <ArrowRightLeft size={18} />
-          <span>Bakiye</span>
-        </button>
-        <button className={`tab-btn ${activeTab === 'varliklar' ? 'active' : ''}`} onClick={() => setActiveTab('varliklar')}>
-          <PlusCircle size={18} />
-          <span>Varlıklar</span>
-        </button>
-        <button className={`tab-btn ${activeTab === 'gecmis' ? 'active' : ''}`} onClick={() => setActiveTab('gecmis')}>
-          <Clock size={18} />
-          <span>Geçmiş</span>
-        </button>
-      </div>
-
-      <div className="kasa-content">
-        {activeTab === 'bakiye' && (
-          <div className="bakiye-view animate-fadeIn">
-            <div className="total-hero glass" style={{ background: 'linear-gradient(135deg,#2C3E50,#1a252f)' }}>
-              <div className="total-label" style={{ color: 'rgba(255,255,255,0.6)' }}>TOPLAM BİRİKİM</div>
-              <div className="total-value" style={{ color: '#fff' }}>{formatMoney(total)}</div>
-              <button className="transfer-trigger" onClick={() => setTransferModal(true)} style={{ color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }}>
-                <ArrowRightLeft size={14} /> Hesaplar Arası Transfer
-              </button>
-            </div>
-
-            <div className="person-grid">
-              {kisiler.map(({ key, label, emoji, cls }) => (
-                <div key={key} className={`person-card glass ${cls}`}>
-                  <div className="p-header">
-                    <span className="p-emoji">{emoji}</span>
-                    <span className="p-name">{label}</span>
-                  </div>
-                  <div className="p-val">{formatMoney(K[key] || K.bakiyeler?.[key])}</div>
-                  <button className="update-btn" onClick={() => {
-                    setUpdateModal(key);
-                    setInputVal(String(K[key] || K.bakiyeler?.[key] || 0));
-                    setInputNot('');
-                  }}>
-                    <PlusCircle size={14} /> Güncelle
-                  </button>
-                </div>
-              ))}
+      <header className="module-header glass kasa-premium-grad">
+        <div className="header-top">
+          <div className="header-title">
+            <span className="header-emoji animate-float">🏛️</span>
+            <div className="header-text-box">
+              <h1>Varlık Kalesi</h1>
+              <p>Aile Servet Yönetimi</p>
             </div>
           </div>
-        )}
+          <div className="header-actions">
+            <button className="icon-btn-v2" onClick={togglePrivacyMode}>
+              {privacy ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
+          </div>
+        </div>
 
+        <div className="wealth-summary-card glass">
+           <div className="ws-item main">
+             <small>TOPLAM NET VARLIK</small>
+             <h2>{formatMoney(netWorth, privacy)}</h2>
+           </div>
+           <div className="ws-divider" />
+           <div className="ws-grid">
+             <div className="ws-sub">
+               <small>BİRİKİM</small>
+               <strong>{formatMoney(totalCash + totalVarlik, privacy)}</strong>
+             </div>
+             <div className="ws-sub">
+               <small>BORÇLAR</small>
+               <strong className="neg">-{formatMoney(totalDebt, privacy)}</strong>
+             </div>
+           </div>
+        </div>
+
+        <nav className="kasa-tab-nav">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`k-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="k-tab-emoji">{tab.emoji}</span>
+              <span className="k-tab-label">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+      </header>
+
+      <div className="kasa-scroll-content">
+        
         {activeTab === 'varliklar' && (
           <div className="varliklar-view animate-fadeIn">
-            <div className="section-header">
-              <h3>🏠 Taşınmazlar & Varlıklar</h3>
+            <div className="chart-section glass">
+              <div className="chart-box">
+                <Doughnut data={portfolioData} options={{ plugins: { legend: { display: false } } }} />
+                <div className="chart-inner">
+                  <PieChart size={20} color="#f59e0b" />
+                  <small>Dağılım</small>
+                </div>
+              </div>
+              <div className="chart-legend">
+                <div className="legend-item"><span style={{background: '#10b981'}} /> Nakit</div>
+                <div className="legend-item"><span style={{background: '#f59e0b'}} /> Altın/Borsa</div>
+                <div className="legend-item"><span style={{background: '#7c3aed'}} /> Mülkler</div>
+              </div>
             </div>
-            
-            <div className="assets-grid">
-              {/* Taşınmazlar (Home Modülünden) */}
-              {(ev.malVarligi || []).map(asset => (
-                <div key={asset.id} className="asset-card glass">
-                  <div className="asset-icon">{asset.emoji || '🏠'}</div>
-                  <div className="asset-info">
-                    <strong>{asset.ad}</strong>
-                    <span>{asset.il} / {asset.ilce}</span>
+
+            <div className="asset-list-premium mt-24">
+              <div className="section-header-v2">
+                <h3>🪙 Likit Varlıklar</h3>
+                <button className="add-btn-mini"><Plus size={14} /></button>
+              </div>
+              {K.varliklar.map(v => (
+                <div key={v.id} className="asset-card-premium glass">
+                  <div className="acp-left">
+                    <div className="acp-icon">{v.icon}</div>
+                    <div className="acp-info">
+                      <strong>{v.name}</strong>
+                      <small>{v.amount} {v.unit} · Kur: {v.price}₺</small>
+                    </div>
                   </div>
-                  <div className="asset-value">{formatMoney(asset.deger)}</div>
+                  <div className="acp-right">
+                    <div className="acp-value">{formatMoney(v.amount * v.price, privacy)}</div>
+                    <button className="acp-edit"><MoreVertical size={16} /></button>
+                  </div>
                 </div>
               ))}
-
-              {/* Araç (Araç Modülünden) */}
-              <div className="asset-card glass">
-                <div className="asset-icon">🚗</div>
-                <div className="asset-info">
-                  <strong>34 HH 1144</strong>
-                  <span>Tiguan 2021 R-Line</span>
-                </div>
-                <div className="asset-value">{formatMoney(2250000)}</div>
-              </div>
-              
-              {/* Diğer Varlıklar (Manuel Giriş) */}
-              {(K.varliklar || []).map(asset => {
-                const livePrice = asset.type === 'emtia' ? 3150 : 1; 
-                const calculatedValue = asset.amount > 0 ? asset.amount * livePrice : asset.value;
-
-                return (
-                  <div key={asset.id} className="asset-card glass secondary">
-                    <div className="asset-icon">{asset.icon}</div>
-                    <div className="asset-info">
-                      <strong>{asset.name}</strong>
-                      <span>{asset.amount > 0 ? `${asset.amount} ${asset.unit}` : asset.type.toUpperCase()}</span>
-                    </div>
-                    <div className="asset-value" onClick={() => {
-                      const newVal = prompt(`${asset.name} için yeni ${asset.amount > 0 ? 'miktar' : 'değer'} giriniz:`, asset.amount > 0 ? asset.amount : asset.value);
-                      if (newVal) {
-                        const num = Number(newVal);
-                        if (asset.amount > 0) useStore.getState().updateVarlik(asset.id, asset.value, num);
-                        else useStore.getState().updateVarlik(asset.id, num);
-                        toast.success('Güncellendi!');
-                      }
-                    }}>
-                      {formatMoney(calculatedValue)}
-                      {asset.amount > 0 && <small style={{ display: 'block', fontSize: '9px', opacity: 0.6 }}>Kur: {formatMoney(livePrice)}</small>}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="total-assets-summary glass">
-              <div className="summary-item">
-                <span>Taşınmaz + Araç:</span>
-                <strong>{formatMoney((ev.malVarligi?.reduce((a,b)=>a+b.deger,0)||0) + 2250000)}</strong>
-              </div>
-              <div className="summary-item">
-                <span>Birikim Toplamı:</span>
-                <strong>{formatMoney(
-                  (K.varliklar?.reduce((a,asset) => {
-                    const livePrice = asset.type === 'emtia' ? 3150 : 1;
-                    return a + (asset.amount > 0 ? asset.amount * livePrice : asset.value);
-                  }, 0) || 0)
-                )}</strong>
-              </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'gecmis' && (
-          <div className="gecmis-view animate-fadeIn">
-            <div className="section-header">
-              <h3>📋 Bakiye Geçmişi</h3>
+        {activeTab === 'tasinmazlar' && (
+          <div className="tasinmazlar-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>🏠 Gayrimenkul Portföyü</h3>
             </div>
-            <div className="gecmis-list">
-              {K.gecmis && K.gecmis.length > 0 ? K.gecmis.map((item) => {
-                const kisiInfo = kisiler.find(k => k.key === item.kisi);
-                return (
-                  <div key={item.id} className="gecmis-item glass">
-                    <div className="g-icon">
-                      {item.fark >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                    </div>
-                    <div className="g-info">
-                      <strong>{kisiInfo?.emoji} {kisiInfo?.label}</strong>
-                      <span>{item.dt}{item.not ? ` · ${item.not}` : ''}</span>
-                    </div>
-                    <div className={`g-amt ${item.fark >= 0 ? 'pos' : 'neg'}`}>
-                      {item.fark >= 0 ? '+' : ''}{formatMoney(item.fark)}
+            <div className="real-estate-list">
+              {K.tasinmazlar.map(t => (
+                <div key={t.id} className="re-card glass">
+                  <div className="re-header">
+                    <div className="re-icon-box"><Home size={20} /></div>
+                    <div className="re-title">
+                      <strong>{t.name}</strong>
+                      <h3>{formatMoney(t.value, privacy)}</h3>
                     </div>
                   </div>
-                );
-              }) : (
-                <div className="empty-state glass">
-                  <span className="big-emoji">💸</span>
-                  <p>Henüz işlem kaydı yok</p>
+                  <div className="re-details-grid">
+                    <div className="red-item">
+                      <small>VERGİ</small>
+                      <span>{formatMoney(t.tax, privacy)}</span>
+                    </div>
+                    <div className="red-item">
+                      <small>SİGORTA</small>
+                      <span>{formatMoney(t.insurance, privacy)}</span>
+                    </div>
+                    <div className="red-item">
+                      <small>EK MALİYET</small>
+                      <span>{formatMoney(t.extra, privacy)}</span>
+                    </div>
+                  </div>
+                  <button className="re-manage-btn">Detayları Yönet</button>
                 </div>
-              )}
+              ))}
             </div>
           </div>
         )}
+
+        {activeTab === 'kumbaralar' && (
+          <div className="goals-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>🎯 Birikim Hedefleri</h3>
+            </div>
+            <div className="goal-list">
+              {K.kumbaralar.map(g => (
+                <div key={g.id} className="goal-card-premium glass">
+                  <div className="gcp-header">
+                    <div className="gcp-icon-box">{g.icon}</div>
+                    <div className="gcp-title">
+                      <strong>{g.name}</strong>
+                      <small>Hedef: {formatMoney(g.target, privacy)}</small>
+                    </div>
+                    <div className="gcp-perc">%{Math.round((g.current / g.target) * 100)}</div>
+                  </div>
+                  <div className="gcp-progress-container">
+                    <div className="gcp-bar">
+                      <div className="gcp-fill" style={{ width: `${(g.current / g.target) * 100}%` }} />
+                    </div>
+                    <div className="gcp-amounts">
+                      <span>{formatMoney(g.current, privacy)}</span>
+                      <span>{formatMoney(g.target - g.current, privacy)} kaldı</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'bakiyeler' && (
+          <div className="bakiyeler-view animate-fadeIn">
+             <div className="section-header-v2">
+              <h3>💵 Nakit Pozisyonları</h3>
+              <button className="transfer-btn-mini"><ArrowRightLeft size={14} /> Transfer</button>
+            </div>
+            <div className="cash-grid">
+              {Object.entries(K.bakiyeler).map(([kisi, val]) => (
+                <div key={kisi} className="cash-card glass">
+                  <div className="cc-user">
+                    <span className="cc-emoji">{kisi === 'gorkem' ? '👨' : kisi === 'esra' ? '👩' : '🏡'}</span>
+                    <span className="cc-name">{kisi.toUpperCase()}</span>
+                  </div>
+                  <div className="cc-val">{formatMoney(val, privacy)}</div>
+                  <button className="cc-update-btn">Güncelle</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
-
-      <ActionSheet
-        isOpen={!!updateModal}
-        onClose={() => setUpdateModal(null)}
-        title={`${kisiler.find(k => k.key === updateModal)?.emoji} ${kisiler.find(k => k.key === updateModal)?.label} Bakiyesi`}
-      >
-        <div className="modal-form">
-          <div className="form-group">
-            <label>Yeni Bakiye (₺)</label>
-            <input
-              type="number"
-              value={inputVal}
-              onChange={e => setInputVal(e.target.value)}
-              autoFocus
-              style={{ fontSize: '18px', fontWeight: '800' }}
-              inputMode="decimal"
-            />
-          </div>
-          <div className="form-group">
-            <label>Not (opsiyonel)</label>
-            <input
-              type="text"
-              value={inputNot}
-              onChange={e => setInputNot(e.target.value)}
-              placeholder="Maaş, harcama vb."
-            />
-          </div>
-          <button className="submit-btn primary" onClick={handleUpdateSave}>
-            Kaydet
-          </button>
-        </div>
-      </ActionSheet>
-
-      <ActionSheet
-        isOpen={transferModal}
-        onClose={() => setTransferModal(false)}
-        title="💸 Hesaplar Arası Transfer"
-      >
-        <div className="modal-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label>Nereden</label>
-              <select value={transferFrom} onChange={e => setTransferFrom(e.target.value)}>
-                {kisiler.map(k => <option key={k.key} value={k.key}>{k.emoji} {k.label}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Nereye</label>
-              <select value={transferTo} onChange={e => setTransferTo(e.target.value)}>
-                {kisiler.map(k => <option key={k.key} value={k.key}>{k.emoji} {k.label}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Miktar (₺)</label>
-            <input
-              type="number"
-              value={transferAmount}
-              onChange={e => setTransferAmount(e.target.value)}
-              placeholder="0"
-              style={{ fontSize: '18px', fontWeight: '800' }}
-              inputMode="decimal"
-            />
-          </div>
-          <div className="form-group">
-            <label>Not</label>
-            <input
-              type="text"
-              value={inputNot}
-              onChange={e => setInputNot(e.target.value)}
-              placeholder="Açıklama"
-            />
-          </div>
-          <button className="submit-btn primary" onClick={handleTransferSave}>
-            Transferi Gerçekleştir
-          </button>
-        </div>
-      </ActionSheet>
     </AnimatedPage>
   );
 }

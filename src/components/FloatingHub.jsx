@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, MessageSquare, Plus, X, Send, Trash2, Refrigerator, BadgeDollarSign } from 'lucide-react';
+import { Home, MessageSquare, Plus, X, Send, Trash2, Refrigerator, BadgeDollarSign, Archive } from 'lucide-react';
 import { motion } from 'framer-motion';
 import useStore from '../store/useStore';
 import toast from 'react-hot-toast';
@@ -9,11 +9,12 @@ import './FloatingHub.css';
 export default function FloatingHub() {
   const navigate = useNavigate();
   const constraintsRef = useRef(null);
-  const { mutfak, addKitchenNote, removeNote, currentUser, addExpense, updateNotePosition, ui } = useStore();
+  const { mutfak, addKitchenNote, archiveNote, currentUser, addExpense, updateNotePosition, ui } = useStore();
   
   const [isOpen, setIsOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'chat' or 'expense'
   
+  const [focusedNote, setFocusedNote] = useState(null);
   const [noteText, setNoteText] = useState('');
   const notes = mutfak?.sohbet || [];
 
@@ -79,23 +80,29 @@ export default function FloatingHub() {
               {notes.map((note, idx) => {
                 if (!note) return null;
                 const posColor = (idx % 3 === 0) ? '#fff9c4' : (idx % 3 === 1 ? '#e3f2fd' : '#fce7f3');
+                const isFocused = focusedNote === note.id;
+                
                 return (
                   <motion.div 
                     key={note.id} 
-                    drag
+                    drag={!isFocused}
                     dragConstraints={constraintsRef}
                     dragElastic={0.05}
-                    className="immersive-note-wrap"
+                    className={`immersive-note-wrap ${isFocused ? 'focused' : ''}`}
+                    onClick={() => setFocusedNote(isFocused ? null : note.id)}
                     style={{ 
                       backgroundColor: posColor,
-                      left: (note.x || (15 + (idx % 3) * 25)) + '%',
-                      top: (note.y || (20 + (idx % 4) * 18)) + '%',
-                      transform: `rotate(${(idx % 10 - 5) * 2}deg)`,
-                      zIndex: 10 + idx
+                      left: isFocused ? '50%' : (note.x || (15 + (idx % 3) * 25)) + '%',
+                      top: isFocused ? '50%' : (note.y || (20 + (idx % 4) * 18)) + '%',
+                      transform: isFocused ? 'translate(-50%, -50%) scale(1.4) rotate(0deg)' : `rotate(${(idx % 10 - 5) * 2}deg)`,
+                      zIndex: isFocused ? 2000 : 10 + idx,
+                      position: isFocused ? 'fixed' : 'absolute',
+                      cursor: isFocused ? 'zoom-out' : 'grab',
+                      boxShadow: isFocused ? '0 25px 60px rgba(0,0,0,0.4)' : '3px 15px 30px rgba(0,0,0,0.15)'
                     }}
                     whileDrag={{ scale: 1.1, zIndex: 1000, rotate: 0 }}
                     onDragEnd={(event, info) => {
-                      if (!constraintsRef.current) return;
+                      if (!constraintsRef.current || isFocused) return;
                       const board = constraintsRef.current.getBoundingClientRect();
                       const newX = ((info.point.x - board.left) / board.width) * 100;
                       const newY = ((info.point.y - board.top) / board.height) * 100;
@@ -103,10 +110,10 @@ export default function FloatingHub() {
                     }}
                   >
                     <div className="immersive-magnet-cap" />
-                    <p className="note-text-premium">{note.t}</p>
+                    <p className="note-text-premium" style={{ fontSize: isFocused ? '18px' : '15px' }}>{note.t}</p>
                     <div className="note-footer-premium">
                       <span className="writer-tag">{note.w}</span>
-                      <button className="delete-btn-mini" onClick={() => removeNote(note.id)}><Trash2 size={14} /></button>
+                      <button className="delete-btn-mini" onClick={(e) => { e.stopPropagation(); archiveNote(note.id); }} title="Arşivle"><Archive size={14} /></button>
                     </div>
                   </motion.div>
                 );

@@ -108,15 +108,70 @@ const SplashScreen = ({ finishLoading }) => {
         />
       </div>
 
-      <div style={{ 
-        position: 'absolute', 
-        bottom: '20px', 
-        fontSize: '10px', 
-        opacity: 0.5, 
-        fontWeight: 700,
-        letterSpacing: '1px'
+      <div style={{
+        position: 'absolute',
+        bottom: '40px',
+        left: '0',
+        right: '0',
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '4px',
+        zIndex: 100
       }}>
-        VERSION: 2.4.25
+        <div style={{
+          padding: '8px 20px',
+          background: 'rgba(255,255,255,0.07)',
+          borderRadius: '24px',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
+        }}>
+          <span style={{
+            fontSize: '9px',
+            fontWeight: 900,
+            color: 'rgba(255,255,255,0.4)',
+            letterSpacing: '2.5px',
+            textTransform: 'uppercase',
+            marginBottom: '2px'
+          }}>
+            Release Signature
+          </span>
+          <span style={{
+            fontSize: '16px',
+            fontWeight: 900,
+            color: '#fde68a',
+            letterSpacing: '1.2px',
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            v2.5.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>GOLDEN MASTER</span>
+          </span>
+        </div>
+        <span style={{
+          fontSize: '10px',
+          fontWeight: 700,
+          color: 'rgba(255,255,255,0.4)',
+          letterSpacing: '0.8px',
+          marginTop: '6px'
+        }}>
+          SİSTEM STABİLİZE EDİLDİ · GÖRKEM & ESRA © 2025
+        </span>
+      </div>
+
+      <div style={{
+        marginTop: '20px',
+        color: 'white',
+        fontSize: '18px',
+        fontWeight: 900,
+        letterSpacing: '1px',
+        opacity: 0.9,
+        textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+      }}>
+        HOŞ GELDİNİZ
       </div>
     </motion.div>
   );

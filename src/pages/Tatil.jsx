@@ -228,61 +228,127 @@ function PlanningWizardContent({ onAdd }) {
 }
 
 function TripDetailContent({ trip }) {
-  const { toggleTripChecklist, addExpense } = useStore();
+  const { updateTripValiz, addExpense, tatil, setModuleData } = useStore();
   const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState('valiz'); // valiz, dokuman, butce
+
+  const handleUpdateTrip = (updates) => {
+     const trips = tatil.trips.map(t => t.id === trip.id ? { ...t, ...updates } : t);
+     setModuleData('tatil', { ...tatil, trips });
+  };
 
   return (
-    <div className="trip-detail-content-standard">
-      <div className="detail-hero-card glass" style={{ background: trip.type === 'yurtdisi' ? 'var(--tatil-dark)' : 'var(--success-dark)', padding: '20px', borderRadius: '24px', display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '24px' }}>
-         <div className="hero-emoji-large" style={{ fontSize: '48px' }}>{trip.type === 'yurtdisi' ? '✈️' : '🚗'}</div>
-         <div className="hero-meta" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-           <span className="meta-pill" style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '800', color: 'white' }}>{trip.country}</span>
-           <span className="meta-pill" style={{ background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '800', color: 'white' }}>{duration} Gün</span>
-         </div>
-         <button 
-          className="action-btn-circle money" 
-          onClick={() => setShowExpenseModal(true)}
-          style={{ marginLeft: 'auto', background: 'white', color: 'var(--tatil)', border: 'none', width: '44px', height: '44px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-         >
-          <Wallet size={20} />
-         </button>
-      </div>
-
-      <section className="detail-section">
-        <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '900' }}>✅ Hazırlık Listesi</h3>
-          <div className="badge" style={{ background: 'var(--tatil-light)', color: 'var(--tatil)', padding: '4px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '800' }}>
-            {trip.checklists?.filter(c=>c.done).length || 0} / {trip.checklists?.length || 0}
+    <div className="trip-detail-premium animate-fadeIn">
+      {/* Hero Card */}
+      <div className="trip-hero glass" style={{ background: 'linear-gradient(135deg, #0284c7, #38bdf8)' }}>
+        <div className="hero-content">
+          <div className="hero-emoji animate-float">{trip.type === 'yurtdisi' ? '✈️' : '🚗'}</div>
+          <div className="hero-text">
+            <h2>{trip.city}, {trip.country}</h2>
+            <div className="hero-meta-row">
+              <span className="h-meta-pill">📅 {trip.startDate}</span>
+              <span className="h-meta-pill">🌙 {duration} Gece</span>
+            </div>
           </div>
         </div>
-        <div className="checklist-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {(trip.checklists || []).map(item => (
-            <div key={item.id} className={`check-item glass ${item.done ? 'done' : ''}`} onClick={() => toggleTripChecklist(trip.id, item.id)} style={{ padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', background: item.done ? 'var(--bg)' : 'white', opacity: item.done ? 0.6 : 1 }}>
-              <div className={`check-box ${item.done ? 'checked' : ''}`} style={{ width: '20px', height: '20px', borderRadius: '6px', border: '2px solid var(--tatil)', background: item.done ? 'var(--tatil)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {item.done && <CheckSquare size={14} color="white" />}
-              </div>
-              <span style={{ fontSize: '14px', fontWeight: '600', textDecoration: item.done ? 'line-through' : 'none' }}>{item.text}</span>
-            </div>
-          ))}
+        <div className="weather-widget-mini glass">
+          <Cloud size={24} color="white" />
+          <div className="w-temp">24°C</div>
+          <div className="w-city">Güneşli</div>
         </div>
-      </section>
+      </div>
 
-      <section className="detail-section mt-20" style={{ marginTop: '24px', paddingBottom: '40px' }}>
-         <div className="section-title" style={{ marginBottom: '15px' }}>
-           <h3 style={{ fontSize: '16px', fontWeight: '900' }}>🏨 Konaklama</h3>
-         </div>
-         {(trip.hotels || []).length > 0 ? trip.hotels.map((h, i) => (
-           <div key={i} className="hotel-card glass" style={{ padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', marginBottom: '10px' }}>
-             <strong style={{ display: 'block', fontSize: '14px' }}>{h.name}</strong>
-             <p style={{ margin: '4px 0 0', fontSize: '12px', opacity: 0.6 }}>{h.address}</p>
-           </div>
-         )) : (
-           <div className="empty-notes glass" style={{ padding: '20px', borderRadius: '16px', border: '1px dashed var(--brd)', textAlign: 'center', opacity: 0.5, fontSize: '13px' }}>
-             Henüz otel bilgisi eklenmemiş.
-           </div>
-         )}
-      </section>
+      {/* Sub Navigation */}
+      <div className="detail-sub-nav">
+        <button className={activeSubTab === 'valiz' ? 'active' : ''} onClick={() => setActiveSubTab('valiz')}>🧳 Valiz</button>
+        <button className={activeSubTab === 'dokuman' ? 'active' : ''} onClick={() => setActiveSubTab('dokuman')}>📑 Belgeler</button>
+        <button className={activeSubTab === 'butce' ? 'active' : ''} onClick={() => setActiveSubTab('butce')}>💰 Bütçe</button>
+      </div>
+
+      <div className="detail-body">
+        {activeSubTab === 'valiz' && (
+          <div className="packing-lists-container">
+            <div className="packing-section">
+              <h4>👨 Görkem'in Valizi</h4>
+              <div className="p-list">
+                {trip.valiz?.gorkem?.map(item => (
+                  <div key={item.id} className={`p-item glass ${item.done ? 'done' : ''}`} onClick={() => updateTripValiz(trip.id, 'gorkem', item.id)}>
+                    <div className="p-check">{item.done && <CheckSquare size={14} />}</div>
+                    <span>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="packing-section mt-20">
+              <h4>👩 Esra'nın Valizi</h4>
+              <div className="p-list">
+                {trip.valiz?.esra?.map(item => (
+                  <div key={item.id} className={`p-item glass ${item.done ? 'done' : ''}`} onClick={() => updateTripValiz(trip.id, 'esra', item.id)}>
+                    <div className="p-check">{item.done && <CheckSquare size={14} />}</div>
+                    <span>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeSubTab === 'dokuman' && (
+          <div className="docs-view animate-fadeIn">
+            <div className="doc-card glass">
+              <div className="dc-header"><Plane size={18} /> <strong>Uçuş / Rezervasyon</strong></div>
+              <div className="dc-body">
+                <div className="form-group-mini">
+                  <label>PNR Kodu</label>
+                  <input 
+                    type="text" 
+                    value={trip.pnr || ''} 
+                    placeholder="Örn: ABC123"
+                    onChange={e => handleUpdateTrip({ pnr: e.target.value })} 
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="doc-card glass mt-15">
+              <div className="dc-header"><Hotel size={18} /> <strong>Konaklama</strong></div>
+              <div className="dc-body">
+                <div className="form-group-mini">
+                  <label>Otel Adı / Notlar</label>
+                  <textarea 
+                    value={trip.otel || ''} 
+                    placeholder="Adres, giriş saati vb."
+                    onChange={e => handleUpdateTrip({ otel: e.target.value })} 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeSubTab === 'butce' && (
+          <div className="budget-view animate-fadeIn">
+            <div className="budget-stats">
+              <div className="bs-item">
+                <span>Tahmini</span>
+                <strong>{trip.budget?.est || 0}₺</strong>
+              </div>
+              <div className="bs-item">
+                <span>Harcanan</span>
+                <strong style={{ color: 'var(--tatil)' }}>{trip.budget?.real || 0}₺</strong>
+              </div>
+            </div>
+            <div className="budget-bar-container">
+              <div className="b-bar">
+                <div className="b-fill" style={{ width: `${Math.min(100, ((trip.budget?.real || 0) / (trip.budget?.est || 1)) * 100)}%` }} />
+              </div>
+            </div>
+            <button className="btn-action-premium tatil mt-20" onClick={() => setShowExpenseModal(true)}>
+              <Plus size={18} /> Harcama Ekle
+            </button>
+          </div>
+        )}
+      </div>
 
       <ActionSheet
         isOpen={showExpenseModal}
@@ -290,7 +356,14 @@ function TripDetailContent({ trip }) {
         title="💸 Tatil Harcaması"
       >
         <AddTripExpenseContent trip={trip} onAdd={(exp) => { 
-          addExpense({ ...exp, category: 'tatil', title: `✈️ ${trip.title || trip.city}: ${exp.title}` }); 
+          const amount = Number(exp.amount);
+          addExpense({ ...exp, category: 'tatil', title: `✈️ ${trip.city}: ${exp.title}` }); 
+          handleUpdateTrip({ 
+            budget: { 
+              ...trip.budget, 
+              real: (trip.budget?.real || 0) + amount 
+            } 
+          });
           setShowExpenseModal(false); 
           toast.success('Harcama kaydedildi! 💸'); 
         }} />
@@ -302,21 +375,20 @@ function TripDetailContent({ trip }) {
 function AddTripExpenseContent({ onAdd }) {
   const [form, setForm] = useState({ title: '', amount: '', payer: 'ortak' });
   return (
-    <div className="modal-form">
+    <div className="modal-form-premium">
       <div className="form-group">
         <label>Harcama Kalemi</label>
-        <input type="text" placeholder="Örn: Akşam Yemeği, Ulaşım..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} required />
+        <input type="text" placeholder="Örn: Akşam Yemeği, Ulaşım..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="premium-input" />
       </div>
       <div className="form-group">
         <label>Tutar (₺)</label>
-        <input type="number" placeholder="0₺" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required />
+        <input type="number" placeholder="0₺" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="premium-input" />
       </div>
-      <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '10px' }}>
-        <button type="button" className={form.payer === 'gorkem' ? 'active' : ''} onClick={() => setForm({...form, payer: 'gorkem'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'gorkem' ? 'var(--tatil-light)' : 'white', color: form.payer === 'gorkem' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Görkem</button>
-        <button type="button" className={form.payer === 'esra' ? 'active' : ''} onClick={() => setForm({...form, payer: 'esra'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'esra' ? 'var(--tatil-light)' : 'white', color: form.payer === 'esra' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Esra</button>
-        <button type="button" className={form.payer === 'ortak' ? 'active' : ''} onClick={() => setForm({...form, payer: 'ortak'})} style={{ padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: form.payer === 'ortak' ? 'var(--tatil-light)' : 'white', color: form.payer === 'ortak' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', fontSize: '11px', cursor: 'pointer' }}>Ortak</button>
+      <div className="user-select-grid">
+        <button type="button" className={form.payer === 'gorkem' ? 'active' : ''} onClick={() => setForm({...form, payer: 'gorkem'})}>Görkem</button>
+        <button type="button" className={form.payer === 'esra' ? 'active' : ''} onClick={() => setForm({...form, payer: 'esra'})}>Esra</button>
       </div>
-      <button onClick={() => onAdd(form)} className="submit-btn tatil" style={{ background: 'var(--tatil)' }}>Harcamayı Ekle</button>
+      <button onClick={() => onAdd(form)} className="submit-btn-premium tatil">Harcamayı Ekle</button>
     </div>
   );
 }

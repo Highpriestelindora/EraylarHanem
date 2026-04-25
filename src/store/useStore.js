@@ -19,21 +19,21 @@ import toast from 'react-hot-toast';
 
 const DEFAULT_STATE = {
   finans: {
-    harcamalar: [], // { id, title, amount, category, date, payer }
+    harcamalar: [], // { id, title, amount, category, date, payer, confirmed, receipt }
+    approvalPool: [], // { id, title, amount, category, date, source }
     borclar: [
       { id: 1, name: 'Konut Kredisi', total: 1200000, remaining: 850000, monthly: 15400, due_day: 15, type: 'kredi' },
       { id: 2, name: 'Araç Kredisi', total: 400000, remaining: 120000, monthly: 8500, due_day: 5, type: 'kredi' }
     ],
     kartlar: [
-      { id: 1, name: 'Bonus Platinum', limit: 150000, balance: 45000, cutoff_day: 25, owner: 'gorkem' },
-      { id: 2, name: 'Axess Free', limit: 80000, balance: 12000, cutoff_day: 10, owner: 'esra' }
+      { id: 1, name: 'Bonus Platinum', limit: 150000, balance: 45000, cutoff_day: 25, owner: 'gorkem', color: '#1e293b' },
+      { id: 2, name: 'Axess Free', limit: 80000, balance: 12000, cutoff_day: 10, owner: 'esra', color: '#7c3aed' }
     ],
-    history: [],
     rekurans: [
-      { id: 1, title: 'Netflix', amount: 229, category: 'Abonelik', date: '2026-04-25', icon: '📺', owner: 'ortak' },
-      { id: 2, title: 'Spotify', amount: 59, category: 'Abonelik', date: '2026-04-20', icon: '🎵', owner: 'ortak' },
-      { id: 3, title: 'Kira', amount: 25000, category: 'Barınma', date: '2026-05-01', icon: '🏠', owner: 'ortak' }
-    ]
+      { id: 1, title: 'Netflix', amount: 229, category: 'Abonelik', date: '2026-04-25', icon: '📺', owner: 'ortak', paid: false },
+      { id: 2, title: 'Spotify', amount: 59, category: 'Abonelik', date: '2026-04-20', icon: '🎵', owner: 'ortak', paid: true }
+    ],
+    limits: { Mutfak: 15000, Sosyal: 5000, Saglik: 3000 }
   },
   users: {
     gorkem: {
@@ -55,12 +55,20 @@ const DEFAULT_STATE = {
   },
   kasa: {
     bakiyeler: { gorkem: 15000, esra: 12000, ortak: 5000 },
-    tasinmazlar: [], 
+    tasinmazlar: [
+      { id: 1, name: 'Merkez Ev', value: 4500000, tax: 1200, insurance: 3500, extra: 5000, icon: '🏠' }
+    ], 
     varliklar: [
-      { id: 1, name: 'Altın Birikimi', value: 450000, type: 'emtia', icon: '🟡', amount: 120, unit: 'gr' },
-      { id: 2, name: 'Borsa Portföy', value: 850000, type: 'hisse', icon: '📈', amount: 0, unit: 'lot' }
-    ],   
-    gecmis: []
+      { id: 1, name: 'Altın Birikimi', amount: 120, unit: 'gr', price: 2500, type: 'gold', icon: '🟡' },
+      { id: 2, name: 'Borsa Portföy', amount: 1500, unit: 'lot', price: 45.5, type: 'stock', icon: '📈' },
+      { id: 3, name: 'Euro Nakit', amount: 1200, unit: 'EUR', price: 35.2, type: 'currency', icon: '💶' }
+    ],
+    kumbaralar: [
+      { id: 1, name: 'Yeni Araba', target: 1500000, current: 450000, icon: '🚗' },
+      { id: 2, name: 'Yaz Tatili', target: 80000, current: 25000, icon: '🌴' }
+    ],
+    privacyMode: false,
+    rates: { EUR: 35.2, USD: 32.5 }
   },
   mutfak: {
     menu: {},          
@@ -81,18 +89,37 @@ const DEFAULT_STATE = {
     },
     consumption: {}, 
     sohbet: [],        // { id, t, w, d, r } - text, writer, date, read
+    arsiv: [],         // { id, t, w, d, r, archDate }
+    priceHistory: {},  // { itemName: [ { pr, dt, mk } ] }
     ekmeklik: [],      // { id, tip, ic, raf, mk, adet, dt }
   },
   saglik: {
-    randevular: [],    
-    ilaclar: [],       
-    olcumler: [],      
-    moods: [], // { date, user, mood, note }
+    randevular: [],
+    ilaclar: [],     // { id, kisi, ad, dozaj, siklik, stok, minStok }
+    olcumler: [],    // { id, kisi, tur, deger, tarih }
+    moods: [],       // { id, user, mood, note, kategori, date }
+    logs: []
+  },
+  // ── Global System ──────────────────────────────────
+  system: {
+    version: '2.5.0',
+    globalScore: 85,
+    onboardingComplete: false,
+    notifications: [],
+    achievements: [
+      { id: 'saving_king', title: 'Tasarruf Kralı', earned: true, icon: '👑' },
+      { id: 'km_hunter', title: 'Kilometre Avcısı', earned: false, icon: '🏎️' },
+      { id: 'gourmet', title: 'Gurme Aile', earned: true, icon: '🍳' }
+    ],
+    weeklyReports: [
+      { id: 1, week: '15-21 Nisan', spending: 4500, health: 'İyi', goalsReached: 1 }
+    ]
   },
   alisveris: {
     gorkem: [], // { id, nm, link, pr, dt, done, doneDate }
     esra: [],
     ev: [],
+    wishlist: [], // { id, nm, link, pr, dt }
   },
   hedefler: [],        
   sosyal: {
@@ -101,33 +128,82 @@ const DEFAULT_STATE = {
     havuz: [],
     tab: 'hafta'
   },
+  aracim: {
+    km: 45200,
+    parts: [
+      { id: 'oil', name: 'Motor Yağı', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🛢️' },
+      { id: 'filter', name: 'Hava Filtresi', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🌪️' },
+      { id: 'brakes', name: 'Fren Balataları', lastKM: 35000, intervalKM: 30000, lastDate: '2025-05-10', intervalDays: 730, icon: '🛑' }
+    ],
+    fuelLogs: [
+      { id: 1, date: '2026-04-20', km: 45100, amount: 45.5, price: 42.5, station: 'Shell', consumption: 7.2 },
+      { id: 2, date: '2026-04-10', km: 44500, amount: 42.0, price: 41.8, station: 'Opet', consumption: 7.5 }
+    ],
+    services: [
+      { id: 1, date: '2025-10-15', km: 42000, title: 'Periyodik Bakım', detail: 'Yağ ve filtreler değişti', cost: 4500, shop: 'VW Yetkili Servis' }
+    ],
+    documents: [
+      { id: 'muayene', name: 'TÜVTÜRK Muayene', dueDate: '2027-06-15', icon: '🔍' },
+      { id: 'kasko', name: 'Kasko Sigortası', dueDate: '2026-11-20', icon: '🛡️' },
+      { id: 'trafik', name: 'Trafik Sigortası', dueDate: '2026-11-20', icon: '📋' }
+    ],
+    trips: [],
+    tireStatus: { type: 'Yazlık', changeDate: '2026-04-01', condition: 'İyi' },
+    lastCleaned: '2026-04-23',
+    parkLocation: { floor: '', spot: '', photo: null }
+  },
   ev: {
-    faturalar: [],     
-    bakim: [],
-    sigortalar: [],
-    tab: 'fatura'
+    faturalar: [
+      { id: 1, name: 'Elektrik', provider: 'EnerjiSa', amount: 850, dueDate: '2026-04-20', status: 'Ödendi', autoPay: true, icon: '⚡' },
+      { id: 2, name: 'İnternet', provider: 'TurkNet', amount: 399, dueDate: '2026-04-25', status: 'Bekliyor', autoPay: true, icon: '🌐' },
+      { id: 3, name: 'Doğalgaz', provider: 'İGDAŞ', amount: 1250, dueDate: '2026-04-15', status: 'Ödendi', autoPay: false, icon: '🔥' }
+    ],
+    bakimlar: [
+      { id: 'kombi', name: 'Kombi Bakımı', lastDate: '2025-11-01', intervalDays: 365, icon: '🔥' },
+      { id: 'klima', name: 'Klima Temizliği', lastDate: '2025-06-15', intervalDays: 180, icon: '❄️' },
+      { id: 'aritma', name: 'Su Arıtma Filtre', lastDate: '2026-01-10', intervalDays: 180, icon: '💧' }
+    ],
+    demirbaslar: [
+      { id: 1, name: 'Buzdolabı', brand: 'Samsung', warrantyDate: '2027-05-10', photo: null },
+      { id: 2, name: 'Çamaşır Mak.', brand: 'LG', warrantyDate: '2026-12-15', photo: null }
+    ],
+    tamirListesi: [
+      { id: 1, task: 'Mutfak Musluğu Sızıntı', priority: 'High', status: 'Pending' }
+    ],
+    ustaRehberi: [
+      { id: 1, name: 'Tesisatçı Ahmet Usta', phone: '0555 123 4567', category: 'Tesisat', rating: 5 }
+    ],
+    abonelikler: [
+      { id: 1, name: 'Netflix', amount: 189, date: '2026-04-15' },
+      { id: 2, name: 'YouTube Prem.', amount: 59, date: '2026-04-10' }
+    ],
+    bitkiler: [
+      { id: 1, name: 'Salon Çiçeği', lastWatered: '2026-04-22', interval: 3 }
+    ],
+    guvenlik: {
+      wifi: { ssid: 'Eraylar_5G', pass: '********' },
+      alarm: { code: '****', status: 'Armed' },
+      fireExt: '2027-01-01'
+    },
+    yillikPlan: [
+      { id: 1, task: 'Boya Badana', date: '2026-06-01', status: 'Planned' }
+    ]
   },
   pet: {
     meta: PET_META,
     vaccines: VACCINES,
     weights: INITIAL_WEIGHTS,
-    history: []
-  },
-  aracim: {
-    km: INITIAL_VEHICLE.km,
-    bakim: INITIAL_VEHICLE.maintenance,         
-    yakitlar: [],
-    hs: [],
-    ev: INITIAL_VEHICLE.events || []
+    history: [],
+    supplies: { waffle: { mama: 'var', kum: 'var' }, mayis: { mama: 'var', kum: 'var' } },
+    gallery: { waffle: [], mayis: [] }
   },
   tatil: {
-    trips: INITIAL_TRIPS,
-    visas: [],
+    trips: [],       // { id, title, country, city, type, startDate, endDate, pnr, otel, valiz: { gorkem: [], esra: [] }, budget: { est, real }, status }
+    wishlist: [],    // { id, place, notes }
     passport: { 
       gorkem: { name: 'Görkem Eray', no: '', exp: '' }, 
       esra: { name: 'Esra Eray', no: '', exp: '' } 
     },
-    wishlist: [],
     ttab: 'trips'
   },
   achievements: ACHIEVEMENTS,    
@@ -241,18 +317,47 @@ const useStore = create(
         get().addLog('Profil Güncelleme', `${state.users[userId].name} bilgilerini güncelledi.`);
       },
 
-      addMood: (userId, mood, note = '') => {
+      addMood: (user, mood, note, kategori) => {
         const state = get();
         const newMood = {
           id: Date.now(),
-          date: new Date().toISOString(),
-          user: userId,
+          user,
           mood,
-          note
+          note,
+          kategori: kategori || 'Genel',
+          date: new Date().toISOString()
         };
-        const updatedMoods = [newMood, ...state.saglik.moods].slice(0, 100);
+        const updatedMoods = [newMood, ...(state.saglik.moods || [])].slice(0, 100);
         set({ saglik: { ...state.saglik, moods: updatedMoods } });
-        get().addLog('Ruh Hali', `${state.users[userId].name} ruh halini paylaştı: ${mood.label}`);
+        get().saveToSupabase();
+      },
+
+      takeMedicine: (medId) => {
+        const state = get();
+        const meds = [...state.saglik.ilaclar];
+        const idx = meds.findIndex(m => m.id === medId);
+        if (idx === -1) return;
+
+        const med = meds[idx];
+        const newStok = Math.max(0, (med.stok || 0) - 1);
+        meds[idx] = { ...med, stok: newStok };
+
+        const log = { 
+          id: Date.now(), 
+          medId: med.id, 
+          ad: med.ad, 
+          kisi: med.kisi, 
+          dt: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) 
+        };
+        const updatedLogs = [log, ...(state.saglik.logs || [])].slice(0, 50);
+
+        set({ saglik: { ...state.saglik, ilaclar: meds, logs: updatedLogs } });
+        
+        if (newStok <= (med.minStok || 5)) {
+          get().addLog('İlaç Azaldı', `${med.ad} stoğu kritik seviyeye düştü (${newStok} adet kaldı). Yenisini almayı unutmayın!`);
+        }
+        
+        get().saveToSupabase();
       },
 
       initSync: async () => {
@@ -357,36 +462,49 @@ const useStore = create(
       },
 
       // ── Eraylar Finans Actions ───────────────────────────
-      addExpense: async (expense) => {
+      addExpense: (expense) => {
         const state = get();
-        const newExpense = { 
-          id: Date.now(), 
+        const newPoolItem = {
+          id: Date.now(),
           dt: new Date().toISOString().split('T')[0],
-          ...expense 
+          confirmed: false,
+          ...expense
         };
-        
-        // Use kasa.bakiyeler as the unified source
+        set({ finans: { ...state.finans, approvalPool: [newPoolItem, ...(state.finans.approvalPool || [])] } });
+        get().saveToSupabase();
+      },
+
+      approveExpense: (poolId) => {
+        const state = get();
+        const item = state.finans.approvalPool.find(i => i.id === poolId);
+        if (!item) return;
+
+        const newHarcama = { ...item, confirmed: true };
+        const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
+        const updatedHarcamalar = [newHarcama, ...state.finans.harcamalar].slice(0, 500);
+
+        // Update Balance if not card
         const yeniBakiyeler = { ...state.kasa.bakiyeler };
-        const payerKey = (expense.payer || '').toLowerCase();
-        
-        if (payerKey && yeniBakiyeler[payerKey] !== undefined && !expense.cardId) {
-          yeniBakiyeler[payerKey] -= Number(expense.amount);
+        const payerKey = (item.payer || 'ortak').toLowerCase();
+        if (yeniBakiyeler[payerKey] !== undefined && !item.cardId) {
+          yeniBakiyeler[payerKey] -= Number(item.amount);
         }
 
-        set({
-          kasa: {
-            ...state.kasa,
-            bakiyeler: yeniBakiyeler,
-            gecmis: [{ id: Date.now(), tp: 'harcama', ...newExpense }, ...state.kasa.gecmis].slice(0, 200)
-          },
-          finans: {
-            ...state.finans,
-            harcamalar: [newExpense, ...state.finans.harcamalar].slice(0, 500),
-            history: [{ id: Date.now(), tp: 'harcama', ...newExpense }, ...state.finans.history].slice(0, 100)
-          }
+        set({ 
+          finans: { ...state.finans, harcamalar: updatedHarcamalar, approvalPool: updatedPool },
+          kasa: { ...state.kasa, bakiyeler: yeniBakiyeler }
         });
-        get().addLog('Harcama Girişi', `${newExpense.payer || 'Sistem'}: ${newExpense.amount}₺ - ${newExpense.title}`);
+        get().addLog('Harcama Onaylandı', `${item.payer}: ${item.amount}₺ - ${item.title}`);
         get().saveToSupabase();
+        toast.success('Harcama onaylandı! ✅');
+      },
+
+      rejectExpense: (poolId) => {
+        const state = get();
+        const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
+        set({ finans: { ...state.finans, approvalPool: updatedPool } });
+        get().saveToSupabase();
+        toast.error('Harcama reddedildi.');
       },
 
       deleteExpense: async (id) => {
@@ -418,6 +536,43 @@ const useStore = create(
         get().addLog('Harcama Silindi', `${expense.payer || 'Sistem'}: ${expense.amount}₺ - ${expense.title}`);
         get().saveToSupabase();
       },
+      
+      togglePrivacyMode: () => {
+        const state = get();
+        set({ kasa: { ...state.kasa, privacyMode: !state.kasa.privacyMode } });
+      },
+
+      updateVarlik: async (id, updates) => {
+        const state = get();
+        const yeniVarliklar = state.kasa.varliklar.map(v => v.id === id ? { ...v, ...updates } : v);
+        set({ kasa: { ...state.kasa, varliklar: yeniVarliklar } });
+        get().saveToSupabase();
+      },
+
+      updateTasinmaz: async (id, updates) => {
+        const state = get();
+        const yeniTasinmazlar = state.kasa.tasinmazlar.map(t => t.id === id ? { ...t, ...updates } : t);
+        set({ kasa: { ...state.kasa, tasinmazlar: yeniTasinmazlar } });
+        get().saveToSupabase();
+      },
+
+      transferKasa: async (from, to, amount) => {
+        const state = get();
+        if (state.kasa.bakiyeler[from] < amount) throw new Error('Yetersiz bakiye!');
+        
+        set({
+          kasa: {
+            ...state.kasa,
+            bakiyeler: {
+              ...state.kasa.bakiyeler,
+              [from]: state.kasa.bakiyeler[from] - amount,
+              [to]: state.kasa.bakiyeler[to] + amount
+            }
+          }
+        });
+        get().addLog('Kasa Transferi', `${from} -> ${to}: ${amount}₺`);
+        get().saveToSupabase();
+      },
 
       payDebt: async (debtId, amount, payer) => {
         const state = get();
@@ -442,35 +597,14 @@ const useStore = create(
         });
       },
 
-      updateKasa: async (kisi, yeniTutar, not = '') => {
+      updateKasaBakiye: async (kisi, yeniTutar) => {
         const state = get();
-        const eskiTutar = state.kasa.bakiyeler[kisi] || 0;
-        const fark = yeniTutar - eskiTutar;
-        
         set({
           kasa: {
             ...state.kasa,
-            bakiyeler: { ...state.kasa.bakiyeler, [kisi]: yeniTutar },
-            gecmis: [{
-              id: Date.now(),
-              tp: 'guncelleme',
-              kisi, fark, not,
-              dt: new Date().toLocaleDateString('tr-TR')
-            }, ...state.kasa.gecmis].slice(0, 200)
+            bakiyeler: { ...state.kasa.bakiyeler, [kisi]: yeniTutar }
           }
         });
-        get().addLog('Kasa Güncelleme', `${kisi} bakiyesi ${yeniTutar}₺ olarak güncellendi.`);
-        get().saveToSupabase();
-      },
-
-      updateVarlik: async (id, value, amount = null) => {
-        const state = get();
-        const yeniVarliklar = state.kasa.varliklar.map(v => 
-          v.id === id ? { ...v, value, ...(amount !== null ? { amount } : {}) } : v
-        );
-        set({ kasa: { ...state.kasa, varliklar: yeniVarliklar } });
-        const varlik = state.kasa.varliklar.find(v => v.id === id);
-        get().addLog('Varlık Güncelleme', `${varlik.name} değeri ${value}₺ olarak güncellendi.`);
         get().saveToSupabase();
       },
 
@@ -511,28 +645,6 @@ const useStore = create(
         get().addLog('Kredi Ödemesi', `${loan.name} taksiti ödendi. Kalan: ${newRemaining}₺`);
       },
 
-      transferKasa: async (from, to, amount, not = '') => {
-        const state = get();
-        if (state.kasa.bakiyeler[from] < amount) throw new Error('Yetersiz bakiye!');
-        
-        set({
-          kasa: {
-            ...state.kasa,
-            bakiyeler: {
-              ...state.kasa.bakiyeler,
-              [from]: state.kasa.bakiyeler[from] - amount,
-              [to]: state.kasa.bakiyeler[to] + amount
-            },
-            gecmis: [{
-              id: Date.now(),
-              tp: 'transfer',
-              from, to, amount, not,
-              dt: new Date().toLocaleDateString('tr-TR')
-            }, ...state.kasa.gecmis].slice(0, 200)
-          }
-        });
-        get().saveToSupabase();
-      },
 
       addShoppingItem: (owner, item) => {
         const state = get();
@@ -553,15 +665,23 @@ const useStore = create(
 
       toggleShoppingItem: (owner, itemId) => {
         const state = get();
-        const updatedList = state.alisveris[owner].map(item => 
-          item.id === itemId ? { ...item, done: !item.done, doneDate: !item.done ? new Date().toISOString() : null } : item
-        );
-        set({ alisveris: { ...state.alisveris, [owner]: updatedList } });
-        
-        const item = state.alisveris[owner].find(i => i.id === itemId);
-        if (!item.done) {
-          get().addLog('Alışveriş Tamamlandı', `${owner} listesinde alındı: ${item.nm}`);
-        }
+        const list = state.alisveris[owner].map(i => {
+          if (i.id === itemId) {
+            const newDone = !i.done;
+            // If marked as done, send to Finans approval pool
+            if (newDone && i.pr > 0) {
+              get().addExpense({
+                title: `Alışveriş: ${i.nm}`,
+                amount: Number(i.pr),
+                category: 'market',
+                source: 'Alışveriş'
+              });
+            }
+            return { ...i, done: newDone, doneDate: newDone ? new Date().toISOString() : null };
+          }
+          return i;
+        });
+        set({ alisveris: { ...state.alisveris, [owner]: list } });
         get().saveToSupabase();
       },
 
@@ -577,12 +697,19 @@ const useStore = create(
         const newTrip = {
           id: Date.now(),
           status: 'planlandi',
-          checklists: [
-            { id: 1, text: 'Biletler Alındı mı?', done: false },
-            { id: 2, text: 'Konaklama Ayarlandı mı?', done: false },
-            { id: 3, text: 'Valiz Hazırlandı mı?', done: false }
-          ],
-          hotels: [],
+          valiz: { 
+            gorkem: [
+              { id: 1, text: 'Pasaport', done: false },
+              { id: 2, text: 'Şarj Cihazları', done: false },
+              { id: 3, text: 'Kıyafetler', done: false }
+            ],
+            esra: [
+              { id: 1, text: 'Pasaport', done: false },
+              { id: 2, text: 'Kozmetik / Bakım', done: false },
+              { id: 3, text: 'Kıyafetler', done: false }
+            ]
+          },
+          budget: { est: trip.budget || 0, real: 0 },
           ...trip
         };
         const updatedTrips = [...state.tatil.trips, newTrip];
@@ -597,6 +724,17 @@ const useStore = create(
           t.id === tripId ? { ...t, ...updates } : t
         );
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
+        get().saveToSupabase();
+      },
+
+      addTripExpense: (tripId, expense) => {
+        const state = get();
+        get().addExpense({
+          title: `Tatil: ${expense.title}`,
+          amount: expense.amount,
+          category: 'tatil',
+          source: 'Tatil Modülü'
+        });
         get().saveToSupabase();
       },
 
@@ -1126,6 +1264,28 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      archiveNote: (noteId) => {
+        const state = get();
+        const note = state.mutfak.sohbet.find(n => n.id === noteId);
+        if (!note) return;
+        const yeniSohbet = state.mutfak.sohbet.filter(n => n.id !== noteId);
+        const yeniArsiv = [{ ...note, archDate: new Date().toISOString() }, ...state.mutfak.arsiv].slice(0, 100);
+        set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
+        get().addLog('Not Arşivlendi', `${note.w} tarafından yazılan not arşive kaldırıldı.`);
+        get().saveToSupabase();
+      },
+
+      restoreNote: (noteId) => {
+        const state = get();
+        const note = state.mutfak.arsiv.find(n => n.id === noteId);
+        if (!note) return;
+        const yeniArsiv = state.mutfak.arsiv.filter(n => n.id !== noteId);
+        const yeniSohbet = [{ ...note, d: new Date().toISOString() }, ...state.mutfak.sohbet];
+        set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
+        get().addLog('Not Geri Yüklendi', `Arşivden bir not geri yüklendi.`);
+        get().saveToSupabase();
+      },
+
       updateBreadStock: (breadData) => {
         const state = get();
         // breadData can be an array or a single bread update
@@ -1164,6 +1324,12 @@ const useStore = create(
             payer: state.currentUser?.name || 'Görkem',
             cardId: cardId || null
           });
+
+          // 2b. Update Price History
+          const history = state.mutfak.priceHistory || {};
+          const itemHistory = history[item.nm] || [];
+          const newHistory = [{ pr: Number(pr), dt: new Date().toISOString(), mk: mk || 'Market' }, ...itemHistory].slice(0, 5);
+          set({ mutfak: { ...state.mutfak, priceHistory: { ...history, [item.nm]: newHistory } } });
         }
 
         // 3. Add to Stock
@@ -1410,6 +1576,93 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      // ── Ev Actions ─────────────────────────────────────
+      payFatura: (id) => {
+        const state = get();
+        const fatura = state.ev.faturalar.find(f => f.id === id);
+        if (!fatura) return;
+
+        const updatedFaturalar = state.ev.faturalar.map(f => 
+          f.id === id ? { ...f, status: 'Ödendi' } : f
+        );
+
+        set({ ev: { ...state.ev, faturalar: updatedFaturalar } });
+
+        // Sync to Finans
+        get().addExpense({
+          title: `Fatura: ${fatura.name}`,
+          amount: fatura.amount,
+          category: 'fatura',
+          source: 'Ev Hub'
+        });
+
+        get().saveToSupabase();
+        toast.success(`${fatura.name} faturası ödendi! 💸`);
+      },
+
+      addRepairItem: (item) => {
+        const state = get();
+        const newItem = { id: Date.now(), status: 'Pending', ...item };
+        set({ ev: { ...state.ev, tamirListesi: [newItem, ...state.ev.tamirListesi] } });
+        get().saveToSupabase();
+      },
+
+      updateHomeSecurity: (updates) => {
+        const state = get();
+        set({ ev: { ...state.ev, guvenlik: { ...state.ev.guvenlik, ...updates } } });
+        get().saveToSupabase();
+      },
+      updateKM: (newKM) => {
+        const state = get();
+        set({ aracim: { ...state.aracim, km: newKM } });
+        get().addLog('KM Güncelleme', `Araç kilometresi ${newKM} olarak güncellendi.`);
+        get().saveToSupabase();
+      },
+
+      addFuelLog: (log) => {
+        const state = get();
+        const lastLog = state.aracim.fuelLogs[0];
+        let consumption = 0;
+        if (lastLog) {
+          const kmDiff = log.km - lastLog.km;
+          consumption = (log.amount / kmDiff) * 100;
+        }
+
+        const newLog = { 
+          id: Date.now(), 
+          consumption: consumption.toFixed(1),
+          ...log 
+        };
+
+        set({ aracim: { ...state.aracim, fuelLogs: [newLog, ...state.aracim.fuelLogs].slice(0, 50) } });
+        
+        // Also add to Finans approval pool
+        get().addExpense({
+          title: `Yakıt: ${log.station}`,
+          amount: log.amount * log.price,
+          category: 'arac',
+          source: 'Aracım'
+        });
+
+        get().saveToSupabase();
+      },
+
+      addServiceRecord: (record) => {
+        const state = get();
+        const newRecord = { id: Date.now(), ...record };
+        set({ aracim: { ...state.aracim, services: [newRecord, ...state.aracim.services] } });
+        
+        // Add to Finans approval pool
+        get().addExpense({
+          title: `Servis: ${record.title}`,
+          amount: record.cost,
+          category: 'arac',
+          source: 'Aracım'
+        });
+
+        get().saveToSupabase();
+      },
+
       // ── Pet Actions ────────────────────────────────────
       addPetVaccine: (petId, vaccine) => {
         const state = get();
@@ -1474,35 +1727,129 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      // ── Araç Actions ───────────────────────────────────
-      updateAracKm: async (newKm) => {
+      updatePetSupply: (petId, supplyType, status) => {
         const state = get();
-        const oldKm = state.aracim.km || 0;
-        const diff = newKm - oldKm;
-        const yeniEv = (state.aracim.ev || []).map(ev => (ev.tp === 'km' && ev.kmL != null) ? { ...ev, kmL: Math.max(0, ev.kmL - diff) } : ev);
-        set({ aracim: { ...state.aracim, km: newKm, ev: yeniEv } });
-        get().saveToSupabase();
-      },
-
-      addAracMaintenance: async (record) => {
-        const state = get();
-        set({ aracim: { ...state.aracim, hs: [{ id: Date.now(), dt: new Date().toISOString(), ...record }, ...(state.aracim.hs || [])] } });
-        get().saveToSupabase();
-      },
-
-      addAracLog: async (log) => {
-        const state = get();
-        if (log.tp === 'yakit') {
-          set({ aracim: { ...state.aracim, yakitlar: [{ id: Date.now(), ...log }, ...(state.aracim.yakitlar || [])] } });
-        } else {
-          set({ aracim: { ...state.aracim, hs: [{ id: Date.now(), ...log }, ...(state.aracim.hs || [])] } });
+        const supplies = { ...state.pet.supplies };
+        if (!supplies[petId]) supplies[petId] = { mama: 'var', kum: 'var' };
+        supplies[petId] = { ...supplies[petId], [supplyType]: status };
+        set({ pet: { ...state.pet, supplies } });
+        
+        if (status === 'azaldi') {
+          get().addLog('Pet Uyarısı', `${state.pet.meta[petId].name} için ${supplyType} azalıyor!`);
         }
         get().saveToSupabase();
       },
 
-      // ── Helper Actions ───────────────────────────────────
-      setModuleData: (key, data) => {
-        set({ [key]: data });
+      addPetPhoto: (petId, photoUrl) => {
+        const state = get();
+        const gallery = { ...state.pet.gallery } || { waffle: [], mayis: [] };
+        if (!gallery[petId]) gallery[petId] = [];
+        gallery[petId] = [photoUrl, ...(gallery[petId] || [])].slice(0, 20);
+        set({ pet: { ...state.pet, gallery } });
+        get().saveToSupabase();
+      },
+
+      // ── Hedefler Actions ───────────────────────────────
+      updateGoalProgress: (id, current) => {
+        const state = get();
+        const goals = state.hedefler.goals.map(g => 
+          g.id === id ? { ...g, current } : g
+        );
+        set({ hedefler: { ...state.hedefler, goals } });
+        get().saveToSupabase();
+      },
+
+      toggleHabit: (id) => {
+        const state = get();
+        const today = new Date().toISOString().split('T')[0];
+        const habits = state.hedefler.habits.map(h => {
+          if (h.id === id) {
+            const isDone = h.lastDone === today;
+            return { 
+              ...h, 
+              lastDone: isDone ? '' : today,
+              streak: isDone ? Math.max(0, h.streak - 1) : h.streak + 1
+            };
+          }
+          return h;
+        });
+        set({ hedefler: { ...state.hedefler, habits } });
+        get().saveToSupabase();
+      },
+
+      completeGoal: (id) => {
+        const state = get();
+        const goal = state.hedefler.goals.find(g => g.id === id);
+        if (!goal) return;
+
+        const updatedGoals = state.hedefler.goals.filter(g => g.id !== id);
+        const newHallItem = { ...goal, completedDate: new Date().toISOString().split('T')[0] };
+        
+        set({ 
+          hedefler: { 
+            ...state.hedefler, 
+            goals: updatedGoals, 
+            hallOfFame: [newHallItem, ...state.hedefler.hallOfFame] 
+          } 
+        });
+        get().addLog('Hedef Tamamlandı', `🌟 Tebrikler! "${goal.title}" hedefine ulaşıldı!`);
+        get().saveToSupabase();
+      },
+      // ── System Actions ────────────────────────────────
+      calculateGlobalScore: () => {
+        const state = get();
+        // Weighted logic: 30% Finance, 20% Health, 20% Home, 20% Goals, 10% Vehicle
+        let score = 70; // Baseline
+        
+        const goals = state.hedefler?.goals || [];
+        const faturalar = state.ev?.faturalar || [];
+        const km = state.aracim?.km || 0;
+
+        if (goals.length > 0) score += 5;
+        if (faturalar.length > 0 && faturalar.every(f => f.status === 'Ödendi')) score += 10;
+        if (km > 0) score += 5;
+        
+        set({ system: { ...state.system, globalScore: Math.min(100, score) } });
+      },
+
+      addBadge: (badgeId) => {
+        const state = get();
+        const achievements = state.system.achievements.map(a => 
+          a.id === badgeId ? { ...a, earned: true } : a
+        );
+        set({ system: { ...state.system, achievements } });
+        get().addLog('Başarı Kazandın!', `🏆 "${badgeId}" rozeti koleksiyonuna eklendi!`);
+        get().saveToSupabase();
+      },
+
+      globalSearch: (query) => {
+        const state = get();
+        const q = query.toLowerCase();
+        const results = [];
+        
+        // Search in Goals
+        const goals = state.hedefler?.goals || [];
+        goals.forEach(g => {
+          if (g.title.toLowerCase().includes(q)) results.push({ type: 'Hedef', text: g.title, path: '/hedefler' });
+        });
+        
+        // Search in Expenses
+        const pool = state.finans?.approvalPool || [];
+        pool.forEach(e => {
+          if (e.title.toLowerCase().includes(q)) results.push({ type: 'Harcama', text: `${e.title} - ${e.amount}₺`, path: '/finans' });
+        });
+
+        const history = state.kasa?.gecmis || [];
+        history.forEach(e => {
+          if (e.title.toLowerCase().includes(q)) results.push({ type: 'Harcama', text: `${e.title} - ${e.amount}₺`, path: '/kasa' });
+        });
+        
+        return results;
+      },
+
+      completeOnboarding: () => {
+        const state = get();
+        set({ system: { ...state.system, onboardingComplete: true } });
         get().saveToSupabase();
       },
 
@@ -1655,6 +2002,12 @@ const useStore = create(
           if (!Array.isArray(merged.mutfak.kiler)) merged.mutfak.kiler = [];
           if (!Array.isArray(merged.mutfak.dondurucu)) merged.mutfak.dondurucu = [];
           if (!Array.isArray(merged.mutfak.alisveris)) merged.mutfak.alisveris = [];
+          if (!Array.isArray(merged.mutfak.arsiv)) merged.mutfak.arsiv = [];
+          if (typeof merged.mutfak.priceHistory !== 'object') merged.mutfak.priceHistory = {};
+        }
+        // Fix Alisveris
+        if (merged.alisveris) {
+          if (!Array.isArray(merged.alisveris.wishlist)) merged.alisveris.wishlist = [];
         }
         // Fix others
         if (merged.ev && !Array.isArray(merged.ev.faturalar)) merged.ev.faturalar = [];

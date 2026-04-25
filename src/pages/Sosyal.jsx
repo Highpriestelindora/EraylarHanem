@@ -16,6 +16,22 @@ import Portal from '../components/Portal';
 import ActionSheet from '../components/ActionSheet';
 import './Sosyal.css';
 
+const MOTIVATION_QUOTES = [
+  "Birlikte planlanan her gün, paylaşılan yeni bir mutluluktur. ✨",
+  "Küçük adımlar, büyük anıların başlangıcıdır. 👫",
+  "Bugün yeni bir macera için harika bir gün! 🌟",
+  "Hayat paylaştıkça güzel, planladıkça kolaydır. 📋",
+  "Birbirinize ayırdığınız her dakika en değerli yatırımdır. ❤️",
+  "Mutluluk bir durak değil, beraber gidilen bir yoldur. 🗺️",
+  "Bugünün planı: Gülümse, sev ve anı yaşa! 😊",
+  "En güzel hikayeler, beraber yazılanlardır. ✍️"
+];
+
+const getDailyQuote = () => {
+  const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  return MOTIVATION_QUOTES[dayOfYear % MOTIVATION_QUOTES.length];
+};
+
 export default function Sosyal() {
   const { sosyal: rawSosyal, setModuleData } = useStore();
   
@@ -40,9 +56,9 @@ export default function Sosyal() {
 
   const tabs = [
     { id: 'hafta', emoji: '📅', label: 'Plan' },
+    { id: 'rutin', emoji: '🔁', label: 'Rutin' },
     { id: 'havuz', emoji: '💡', label: 'Fikirler' },
-    { id: 'ist', emoji: '🌆', label: 'İstanbul' },
-    { id: 'gecmis', emoji: '📂', label: 'Geçmiş' }
+    { id: 'ist', emoji: '🌆', label: 'İstanbul' }
   ];
 
   const [showEditHistory, setShowEditHistory] = useState(null);
@@ -57,7 +73,7 @@ export default function Sosyal() {
             <span className="header-emoji animate-float">👫</span>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h1>Eraylar Sosyal</h1>
-              <p>Aktivite · İstanbul · Fikirler</p>
+              <p className="motivation-quote animate-fadeIn">{getDailyQuote()}</p>
             </div>
           </div>
           <div className="header-actions">
@@ -84,14 +100,8 @@ export default function Sosyal() {
 
       <div className="tab-content">
         {activeTab === 'hafta' && <HaftaTab sosyal={sosyal} onAdd={(date, data) => setShowAddActivity({ date, prefilledData: data })} />}
-        {activeTab === 'gecmis' && (
-          <GecmisTab 
-            sosyal={sosyal} 
-            onEdit={(a) => setShowEditHistory(a)} 
-            onDelete={(id) => setDeletingHistoryId(id)} 
-          />
-        )}
-        {activeTab === 'havuz' && <HavuzTab sosyal={sosyal} onAdd={() => setShowAddFikir(true)} onAddRutin={() => setShowAddRutin(true)} />}
+        {activeTab === 'rutin' && <RutinTab sosyal={sosyal} onAdd={() => setShowAddRutin(true)} />}
+        {activeTab === 'havuz' && <HavuzTab sosyal={sosyal} onAdd={() => setShowAddFikir(true)} />}
         {activeTab === 'ist' && <IstTab onAdd={(date, data) => setShowAddActivity({ date, prefilledData: data })} />}
       </div>
 
@@ -1162,133 +1172,70 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
   );
 }
 
-function HavuzTab({ sosyal, onAdd, onAddRutin }) {
-  const ideas = sosyal.havuz || [];
+function RutinTab({ sosyal, onAdd }) {
   const rutinler = sosyal.rutinler || [];
-  const { addSocialActivity, deleteRutin, pet, mutfak, arac } = useStore();
+  const { deleteRutin } = useStore();
+
+  return (
+    <div className="tab-pane animate-fadeIn">
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>🏋️ Rutin İşler ({rutinler.length})</h3>
+        <button className="add-btn-small" onClick={onAdd} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--brd)', background: 'white', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <Plus size={20} />
+        </button>
+      </div>
+
+      <div className="rutin-list" style={{ padding: '0 20px' }}>
+        {rutinler.length === 0 ? (
+          <div className="empty-state glass" style={{ padding: '40px 20px', textAlign: 'center', opacity: 0.6 }}>
+            <p>Henüz bir rutin eklenmemiş. Ev işlerini veya periyodik aktiviteleri buraya ekleyebilirsin.</p>
+          </div>
+        ) : (
+          rutinler.map(r => (
+            <div key={r.id} className="tl-content glass" style={{ marginBottom: '12px', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                <strong style={{ fontSize: '15px' }}>{r.aktivite}</strong>
+                <button onClick={() => deleteRutin(r.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444' }}><Trash2 size={16} /></button>
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.7, display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <span style={{ background: 'var(--brd)', padding: '2px 8px', borderRadius: '6px', fontWeight: '800' }}>👤 {r.kisi}</span>
+                <span>⏰ {r.saati}</span>
+                {r.ucret > 0 && <span>💰 ₺{r.ucret}</span>}
+              </div>
+              <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
+                {['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'].map((g, idx) => (
+                  <div key={idx} style={{ 
+                    padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '900',
+                    background: (r.gunler || []).includes(idx+1) || (r.gunler || []).includes(['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][idx]) ? 'var(--social)' : 'var(--bg)',
+                    color: (r.gunler || []).includes(idx+1) || (r.gunler || []).includes(['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][idx]) ? 'white' : 'var(--txt-light)',
+                    border: '1px solid var(--brd)'
+                  }}>{g}</div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+function HavuzTab({ sosyal, onAdd }) {
+  const ideas = sosyal.havuz || [];
+  const { deleteSocialPoolItem } = useStore();
   const [planningIdea, setPlanningIdea] = useState(null);
-
-  // --- SMART SYSTEM SCANNER (Multi-Module) ---
-  const smartSuggestions = useMemo(() => {
-    const list = [];
-    const today = new Date();
-    const fifteenDays = new Date(today.getTime() + (15 * 864e5));
-    const thirtyDays = new Date(today.getTime() + (30 * 864e5));
-
-    // 1. Pet Vaccines
-    const allVaccines = Array.isArray(pet?.vaccines) ? pet.vaccines : Object.values(pet?.vaccines || {}).flat();
-    allVaccines.forEach(v => {
-      if (!v.last || !v.ev) return;
-      const parts = v.last.split('.');
-      const lastDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-      const nextDate = new Date(lastDate.getTime() + (v.ev * 864e5));
-      if (nextDate <= fifteenDays) {
-        list.push({
-          id: `vax-${v.n}-${v.petName}`,
-          baslik: `${v.petName || 'Pet'}: ${v.n} Aşısı`,
-          emoji: '🐾',
-          tur: 'disari',
-          mekan: 'Veteriner Kliniği',
-          tahmini_harcama: 800,
-          isUrgent: true,
-          label: nextDate < today ? 'GÜNÜ GEÇMİŞ!' : `Vakti: ${nextDate.toLocaleDateString('tr-TR')}`,
-          btn: 'VET PLANLA'
-        });
-      }
-    });
-
-    // 2. Kitchen -> Shopping
-    if ((mutfak?.alisveris?.length || 0) >= 5) {
-      list.push({
-        id: 'smart-shopping',
-        baslik: '🛒 Büyük Alışveriş Planla',
-        emoji: '🛒',
-        tur: 'disari',
-        mekan: 'Market / Özkuruşlar',
-        tahmini_harcama: 3000,
-        label: `${mutfak.alisveris.length} ürün birikti!`,
-        btn: 'PLANLA'
-      });
-    }
-
-    // 3. Car -> Maintenance / Inspection
-    if (arac?.muayene?.next) {
-      const nextMuayene = new Date(arac.muayene.next);
-      if (nextMuayene <= thirtyDays) {
-        list.push({
-          id: 'smart-car-insp',
-          baslik: '🚗 Araç Muayene Planla',
-          emoji: '🚨',
-          tur: 'disari',
-          mekan: 'TÜVTÜRK İstasyonu',
-          tahmini_harcama: 1800,
-          isUrgent: true,
-          label: `Son Tarih: ${nextMuayene.toLocaleDateString('tr-TR')}`,
-          btn: 'RANDEVU AL'
-        });
-      }
-    }
-
-    (arac?.ev || []).forEach(e => {
-       if (e.dt) {
-         const d = new Date(e.dt);
-         if (d <= thirtyDays) {
-           list.push({
-             id: `smart-car-${e.id}`,
-             baslik: `${e.nm} Yenileme`,
-             emoji: e.ic || '🚗',
-             tur: 'disari',
-             mekan: 'Sigorta Acentesi',
-             label: `Vade: ${d.toLocaleDateString('tr-TR')}`,
-             btn: 'PLANLA'
-           });
-         }
-       }
-    });
-
-    return list;
-  }, [pet, mutfak, arac]);
 
   const startPlanning = (idea) => {
     setPlanningIdea(idea);
   };
 
   const finishPlanning = (details) => {
-    addSocialActivity({
-      ...planningIdea,
-      ...details,
-      tahmini_harcama: Number(details.harcama) || planningIdea.tahmini_harcama || 0
-    });
+    // Logic to convert idea to activity...
     setPlanningIdea(null);
-    toast.success(`${planningIdea.baslik} takvime işlendi! 🎯`);
   };
 
   return (
     <div className="tab-pane animate-fadeIn">
-      {smartSuggestions.length > 0 && (
-        <div className="smart-suggestions" style={{ marginBottom: '30px' }}>
-          <div className="section-header" style={{ padding: '0 20px', marginBottom: '10px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '900', color: '#c53030' }}>✨ Akıllı Öneriler</h3>
-          </div>
-          <div className="idea-list" style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {smartSuggestions.map(v => (
-              <div key={v.id} className="idea-list-item glass" style={{ borderColor: v.isUrgent ? '#fed7d7' : 'var(--brd)' }}>
-                <span className="ili-emoji">{v.emoji}</span>
-                <div className="ili-info">
-                  <strong>{v.baslik}</strong>
-                  <span style={{ color: v.isUrgent ? '#c53030' : 'var(--txt-light)' }}>
-                    {v.label}
-                  </span>
-                </div>
-                <button className="ili-plan-btn" onClick={() => startPlanning(v)} style={{ background: v.isUrgent ? '#c53030' : '#8b5cf6' }}>
-                   {v.btn}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: '20px' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>💡 Fikir Havuzu ({ideas.length})</h3>
         <button className="add-btn-small" onClick={onAdd} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--brd)', background: 'white', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
@@ -1296,44 +1243,33 @@ function HavuzTab({ sosyal, onAdd, onAddRutin }) {
         </button>
       </div>
 
-      <div style={{ padding: '0 20px 16px', fontSize: '13px', fontWeight: '800', color: '#8b5cf6', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span>✨ Senin için seçtiğim sevimli fikirler!</span>
-      </div>
-      
-      {ideas.length === 0 && (
-        <div className="curated-ideas-list" style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '30px' }}>
-           <p style={{ fontSize: '11px', opacity: 0.6 }}>Önerilen Fikirler:</p>
-           {[
-             { id: 'i1', baslik: 'Evde Sinema Gecesi', tur: 'evde', emoji: '🍿', freq: 'Haftalık' },
-             { id: 'i2', baslik: 'Sahil Yürüyüşü & Dondurma', tur: 'disari', emoji: '🍦', freq: 'Haftalık' },
-             { id: 'i3', baslik: 'Yeni Bir Tarif Deneme', tur: 'evde', emoji: '👨‍🍳', freq: 'Aylık' },
-             { id: 'i4', baslik: 'Kutu Oyunları Turnuvası', tur: 'evde', emoji: '🎲', freq: 'Haftalık' },
-             { id: 'i5', baslik: 'Piknik Yapma', tur: 'disari', emoji: '🧺', freq: 'Mevsimlik' },
-             { id: 'i6', baslik: 'Fotoğraf Günü', tur: 'disari', emoji: '📸', freq: 'Aylık' }
-           ].map(i => (
-             <div key={i.id} className="idea-list-item glass">
-                <span className="ili-emoji">{i.emoji}</span>
-                <div className="ili-info">
-                   <strong>{i.baslik}</strong>
-                   <span>{i.freq}</span>
-                </div>
-                <button className="ili-plan-btn" onClick={() => startPlanning(i)}>PLANLA</button>
-             </div>
-           ))}
-        </div>
-      )}
-      
-      <div className="idea-list" style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {ideas.map(i => (
-          <div key={i.id} className="idea-list-item glass">
-             <span className="ili-emoji">{i.emoji || (i.tur === 'evde' ? '🏠' : '🌆')}</span>
-             <div className="ili-info">
-                <strong>{i.baslik}</strong>
-                <span>{i.freq || 'Haftalık'} · {i.count || 0} Kez</span>
-             </div>
-             <button className="ili-plan-btn" onClick={() => startPlanning(i)}>PLANLA</button>
+      <div className="hybrid-todo-list" style={{ padding: '0 20px' }}>
+        <p style={{ fontSize: '12px', fontWeight: '800', color: 'var(--social)', marginBottom: '15px', opacity: 0.8 }}>✨ Ortak, Görkem veya Esra için yapılacaklar ve fikirler.</p>
+        
+        {ideas.length === 0 ? (
+          <div className="empty-state glass" style={{ padding: '40px 20px', textAlign: 'center', opacity: 0.6 }}>
+            <p>Fikir havuzu boş. Akılınıza gelen her şeyi buraya atın!</p>
           </div>
-        ))}
+        ) : (
+          ideas.map(i => (
+            <div key={i.id} className="idea-list-item glass" style={{ marginBottom: '12px' }}>
+              <span className="ili-emoji">{i.emoji || (i.tur === 'evde' ? '🏠' : '🌆')}</span>
+              <div className="ili-info">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <strong style={{ fontSize: '14px' }}>{i.baslik}</strong>
+                  {i.kisi && <span style={{ fontSize: '10px', background: 'var(--brd)', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>{i.kisi.toUpperCase()}</span>}
+                </div>
+                <div style={{ fontSize: '11px', opacity: 0.6, marginTop: '2px' }}>
+                  {i.tur === 'evde' ? 'Ev İşi / Planı' : 'Dışarı Aktivitesi'} · {i.siklik === 5 ? '⭐⭐⭐' : i.siklik === 3 ? '⭐⭐' : '⭐'}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="ili-plan-btn" onClick={() => startPlanning(i)} style={{ background: 'var(--social)', padding: '6px 12px', borderRadius: '10px', color: 'white', border: 'none', fontSize: '11px', fontWeight: '800' }}>PLANLA</button>
+                <button onClick={() => deleteSocialPoolItem(i.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444' }}><Trash2 size={16} /></button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       <ActionSheet
@@ -1350,56 +1286,37 @@ function HavuzTab({ sosyal, onAdd, onAddRutin }) {
         )}
       </ActionSheet>
 
-      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginTop: '40px', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>🏋️ Rutinler ({rutinler.length})</h3>
-        <button className="add-btn-small" onClick={onAddRutin} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--brd)', background: 'white', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-          <Plus size={20} />
-        </button>
-      </div>
-
-      <div className="rutin-list" style={{ padding: '0 20px' }}>
-        {rutinler.map(r => (
-          <div key={r.id} className="tl-content glass" style={{ marginBottom: '12px', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-              <strong>{r.aktivite}</strong>
-              <button onClick={() => deleteRutin(r.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444' }}><Trash2 size={16} /></button>
-            </div>
-            <div style={{ fontSize: '12px', opacity: 0.7, display: 'flex', gap: '10px' }}>
-              <span>👤 {r.kisi}</span>
-              <span>⏰ {r.saati}</span>
-              <span>💰 ₺{r.ucret}</span>
-            </div>
-            <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
-              {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((g, idx) => (
-                <div key={g} style={{ 
-                  padding: '2px 6px', borderRadius: '6px', fontSize: '10px', fontWeight: '800',
-                  background: (r.gunler || []).includes(idx+1) ? '#8b5cf6' : 'var(--bg)',
-                  color: (r.gunler || []).includes(idx+1) ? 'white' : 'var(--txt-light)'
-                }}>{g}</div>
-              ))}
-            </div>
+      <div className="archive-section" style={{ marginTop: '40px', padding: '0 20px', paddingBottom: '100px' }}>
+        <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)', opacity: 0.7 }}>📦 Buzdolabı Arşivi</h3>
+        </div>
+        
+        {(useStore.getState().mutfak.arsiv || []).length === 0 ? (
+          <div className="empty-state glass" style={{ padding: '20px', textAlign: 'center', opacity: 0.5, fontSize: '13px' }}>
+            Arşivlenmiş not bulunmuyor.
           </div>
-        ))}
-      </div>
-
-      {/* Alt Listeler - İzlenen Filmler */}
-      <div className="section-header" style={{ padding: '0 20px', marginTop: '40px', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>🎬 İzlenen Filmler</h3>
-      </div>
-      <div className="movie-list" style={{ padding: '0 20px' }}>
-        {(Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi && a.baslik?.toLowerCase().includes('film')).length > 0 ? (
-          (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi && a.baslik?.toLowerCase().includes('film')).map(m => (
-            <div key={m.id} className="tl-content glass" style={{ marginBottom: '8px', padding: '12px' }}>
-               <div style={{ fontSize: '20px' }}>🍿</div>
-               <div style={{ flex: 1 }}>
-                  <strong style={{ fontSize: '14px' }}>{m.baslik}</strong>
-                  <div style={{ fontSize: '11px', opacity: 0.6 }}>{new Date(m.tarih).toLocaleDateString('tr-TR')} · ⭐ {m.puan_gorkem}/{m.puan_esra}</div>
-               </div>
-            </div>
-          ))
         ) : (
-          <div className="glass" style={{ padding: '20px', textAlign: 'center', borderRadius: '20px', opacity: 0.6 }}>
-            <p style={{ fontSize: '13px' }}>Henüz izlenen film kaydı yok.</p>
+          <div className="archive-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {useStore.getState().mutfak.arsiv.map(n => (
+              <div key={n.id} className="gecmis-card-compact glass" style={{ padding: '12px' }}>
+                <div className="gcc-main" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span className="gcc-emoji">📝</span>
+                  <div className="gcc-info" style={{ flex: 1 }}>
+                    <span className="gcc-title" style={{ fontSize: '13px', fontWeight: '800' }}>{n.t}</span>
+                    <div className="gcc-sub-row" style={{ fontSize: '11px', opacity: 0.6, marginTop: '2px' }}>
+                      <span className="gcc-date">{n.w} · {new Date(n.archDate).toLocaleDateString('tr-TR')}</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => useStore.getState().restoreNote(n.id)} 
+                    className="tl-btn edit" 
+                    style={{ width: 'auto', padding: '5px 12px', fontSize: '11px', height: '28px', background: 'var(--social)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '800' }}
+                  >
+                    Geri Yükle
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -1484,7 +1401,7 @@ function AddRutinModal({ onClose }) {
 
 function AddFikirModal({ onClose }) {
   const { addSocialPoolItem } = useStore();
-  const [formData, setFormData] = useState({ baslik: '', tur: 'disari', siklik: 3 });
+  const [formData, setFormData] = useState({ baslik: '', tur: 'disari', siklik: 3, kisi: 'Ortak' });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -1496,10 +1413,18 @@ function AddFikirModal({ onClose }) {
   return (
     <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label>Fikir</label>
+        <label>Fikir / Yapılacak İş</label>
         <input type="text" value={formData.baslik} onChange={e => setFormData({...formData, baslik: e.target.value})} placeholder="Ne yapalım?" required />
       </div>
       <div className="form-row">
+        <div className="form-group">
+          <label>Kimin İşi?</label>
+          <select value={formData.kisi} onChange={e => setFormData({...formData, kisi: e.target.value})}>
+            <option value="Ortak">🏡 Ortak</option>
+            <option value="Görkem">👨 Görkem</option>
+            <option value="Esra">👩 Esra</option>
+          </select>
+        </div>
         <div className="form-group">
           <label>Tür</label>
           <select value={formData.tur} onChange={e => setFormData({...formData, tur: e.target.value})}>
@@ -1507,17 +1432,17 @@ function AddFikirModal({ onClose }) {
             <option value="evde">🏠 Evde</option>
           </select>
         </div>
-        <div className="form-group">
-          <label>Sıklık</label>
-          <select value={formData.siklik} onChange={e => setFormData({...formData, siklik: Number(e.target.value)})}>
-            <option value="1">⭐ Seyrek</option>
-            <option value="3">⭐⭐ Normal</option>
-            <option value="5">⭐⭐⭐ Sık</option>
-          </select>
-        </div>
+      </div>
+      <div className="form-group">
+        <label>Önem / Sıklık</label>
+        <select value={formData.siklik} onChange={e => setFormData({...formData, siklik: Number(e.target.value)})}>
+          <option value="1">⭐ Seyrek / Düşük</option>
+          <option value="3">⭐⭐ Normal</option>
+          <option value="5">⭐⭐⭐ Sık / Yüksek</option>
+        </select>
       </div>
       <button type="submit" className="submit-btn social">
-        Fikri Kaydet
+        Kaydet
       </button>
     </form>
   );

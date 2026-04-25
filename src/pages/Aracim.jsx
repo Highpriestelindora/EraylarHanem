@@ -1,367 +1,337 @@
-import React, { useState } from 'react';
-import useStore from '../store/useStore';
-import AnimatedPage from '../components/AnimatedPage';
+import React, { useState, useMemo } from 'react';
 import { 
-  Car, Fuel, Wrench, History, 
-  Plus, Gauge, ArrowUpRight, 
-  Settings, Info, TrendingDown, ArrowLeft
+  Car, Fuel, Wrench, History, Plus, Gauge, ArrowUpRight, 
+  Shield, Landmark, AlertCircle, Sparkles, Home, Camera,
+  MapPin, Phone, FileText, Settings, ArrowLeft, MoreVertical,
+  ChevronRight, Droplets, Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import useStore from '../store/useStore';
+import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
+import { Doughnut, Line } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
 import './Aracim.css';
 
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
+
+const formatMoney = (val) =>
+  new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
+
 export default function Aracim() {
-  const { aracim, updateAracKm, addAracMaintenance, addAracLog, addExpense, setModuleData } = useStore();
-  const [modal, setModal] = useState(null);
-  const [tempKm, setTempKm] = useState(aracim?.km || 0);
-  const [expenseModal, setExpenseModal] = useState(null);
-
-  const { km, yakitlar, bakim, hs, ev, plaka, model } = aracim || { 
-    km: 0, yakitlar: [], bakim: [], hs: [], ev: [], plaka: '', model: '' 
-  };
-
-  const getStatus = (item) => {
-    if (item.tp === 'km') {
-      const left = item.kmL || 0;
-      if (left <= 0) return { label: 'GECİKMİŞ', color: 'var(--danger)', txt: `${Math.abs(left)} km geçti!` };
-      if (left < 1000) return { label: 'YAKINDA', color: 'var(--warn)', txt: `${left} km kaldı` };
-      return { label: 'İYİ', color: 'var(--success)', txt: `${left} km kaldı` };
-    } else {
-      const diff = Math.round((new Date(item.dt) - new Date()) / 864e5);
-      if (diff < 0) return { label: 'GECİKMİŞ', color: 'var(--danger)', txt: `${Math.abs(diff)} gün geçti!` };
-      if (diff < 30) return { label: 'YAKINDA', color: 'var(--warn)', txt: `${diff} gün kaldı` };
-      return { label: 'İYİ', color: 'var(--success)', txt: `${diff} gün kaldı` };
-    }
-  };
-
+  const [activeTab, setActiveTab] = useState('panel');
   const navigate = useNavigate();
+  const { aracim, updateKM, addFuelLog, addServiceRecord } = useStore();
+  
+  const [showAddFuel, setShowAddFuel] = useState(false);
+  const [showUpdateKM, setShowUpdateKM] = useState(false);
+  const [tempKM, setTempKM] = useState(aracim?.km || 0);
+
+  const { 
+    km, parts, fuelLogs, services, documents, 
+    lastCleaned, parkLocation, tireStatus 
+  } = aracim || { km: 0, parts: [], fuelLogs: [], services: [], documents: [] };
+
+  // AI Insights
+  const aiNote = useMemo(() => {
+    const lastFuel = fuelLogs[0];
+    if (lastFuel?.consumption > 8.5) return "Son yakıt alımında tüketim normalin biraz üzerinde. Şehir içi trafik mi? 🤔";
+    return "Tiguan formunda! Yakıt verimliliği harika seviyelerde. 🌟";
+  }, [fuelLogs]);
+
+  const tabs = [
+    { id: 'panel', label: 'Panel', emoji: '🏎️' },
+    { id: 'servis', label: 'Servis', emoji: '🛠️' },
+    { id: 'torpido', label: 'Torpido', emoji: '📂' },
+    { id: 'analiz', label: 'Analiz', emoji: '📊' }
+  ];
 
   return (
     <AnimatedPage className="aracim-container">
-      <header className="module-header glass" style={{ background: 'var(--aracim-header-grad, linear-gradient(135deg, #3b82f6, #60a5fa))' }}>
+      <header className="module-header glass aracim-premium-grad">
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">🚗</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div className="car-badge" style={{ padding: '2px 8px', fontSize: '10px' }}>{plaka || '34 GNK 437'}</div>
-              <h1>{model || 'Toyota C-HR'}</h1>
+            <div className="header-text-box">
+              <div className="plaka-badge">34 HH 1144</div>
+              <h1>Tiguan R-Line</h1>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
-              <ArrowLeft size={20} />
-            </button>
+            <button className="icon-btn-v2"><Settings size={20} /></button>
+            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
           </div>
         </div>
 
-        <nav className="tab-nav">
-           <button className="tab-btn active">
-             <span style={{ fontSize: '16px', marginBottom: '2px' }}>🏎️</span>
-             <span>Genel Bakış</span>
-             <div className="tab-dot" />
-           </button>
-           <button className="tab-btn" onClick={() => setModal('history')}>
-             <span style={{ fontSize: '16px', marginBottom: '2px' }}>📋</span>
-             <span>Geçmiş</span>
-           </button>
+        <nav className="aracim-tab-nav">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`a-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="a-tab-emoji">{tab.emoji}</span>
+              <span className="a-tab-label">{tab.label}</span>
+            </button>
+          ))}
         </nav>
       </header>
 
-      <div className="km-hero glass" onClick={() => { setTempKm(km); setModal('km'); }}>
-        <div className="kh-label">GÜNCEL KİLOMETRE</div>
-        <div className="kh-value">
-          <Gauge size={32} />
-          <span>{km?.toLocaleString('tr-TR')}</span>
-          <small>KM</small>
+      <div className="aracim-scroll-content">
+        {/* AI Note */}
+        <div className="ai-insight-card glass animate-fadeIn">
+          <Sparkles size={18} className="sparkle-icon" />
+          <p>{aiNote}</p>
         </div>
-        <div className="kh-footer">Güncellemek için dokun <ArrowUpRight size={14} /></div>
-      </div>
 
-      <div className="maintenance-timeline">
-        <div className="section-header">
-          <h3>📅 Yaklaşan İşlemler</h3>
-          <span className="badge">{ev.length} İşlem</span>
-        </div>
-        <div className="ev-list">
-          {ev.map(item => {
-            const st = getStatus(item);
-            return (
-              <div key={item.id} className="ev-card glass" style={{ borderLeft: `4px solid ${st.color}` }}>
-                <div className="ev-icon">{item.ic || '🔧'}</div>
-                <div className="ev-info">
-                  <strong>{item.nm}</strong>
-                  <span style={{ color: st.color }}>{st.txt}</span>
-                </div>
-                <div className="ev-status">
-                  <span className="st-badge" style={{ backgroundColor: st.color }}>{st.label}</span>
+        {activeTab === 'panel' && (
+          <div className="panel-view animate-fadeIn">
+            {/* KM Widget */}
+            <div className="km-widget-premium glass" onClick={() => setShowUpdateKM(true)}>
+              <div className="kmw-main">
+                <Gauge size={40} className="kmw-icon" />
+                <div className="kmw-text">
+                  <small>GÜNCEL KİLOMETRE</small>
+                  <h2>{km?.toLocaleString('tr-TR')} <span>KM</span></h2>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="action-grid mt-20">
-        <button className="action-btn-large glass" onClick={() => setExpenseModal('Benzin')}>
-          <div className="ab-icon"><Fuel size={24} /></div>
-          <span>Benzin Al</span>
-        </button>
-        <button className="action-btn-large glass" onClick={() => setModal('bakim')}>
-          <div className="ab-icon"><Wrench size={24} /></div>
-          <span>Bakım Kaydı</span>
-        </button>
-      </div>
-
-      <div className="quick-expenses mt-20">
-        <div className="section-header">
-          <h3>💸 Hızlı Harcama</h3>
-        </div>
-        <div className="quick-expense-grid">
-          {['Otopark', 'Ceza', 'Yıkama', 'Sigorta', 'Diğer'].map(type => (
-            <button key={type} className="qe-btn glass" onClick={() => setExpenseModal(type)}>
-              {type === 'Otopark' && '🅿️'}
-              {type === 'Ceza' && '📑'}
-              {type === 'Yıkama' && '🧼'}
-              {type === 'Sigorta' && '🛡️'}
-              {type === 'Diğer' && '📋'}
-              <span>{type}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="muayene-card glass mt-20">
-        <div className="pc-header">
-          <Info size={16} /> <span>TESCİL & MUAYENE</span>
-        </div>
-        <div className="muayene-body">
-          <div className="m-main">
-            <div className="m-left">
-              <strong>{new Date(aracim.muayene?.next || '2026-07-24').toLocaleDateString('tr-TR')}</strong>
-              <span>Sonraki Muayene</span>
+              <ArrowUpRight size={20} className="kmw-arrow" />
             </div>
-            <div className="m-right">
-              <span className="m-days-badge bp">
-                {Math.round((new Date(aracim.muayene?.next || '2026-07-24') - new Date()) / 864e5)} Gün Kaldı
-              </span>
+
+            {/* Analog-Style Gauges Grid */}
+            <div className="gauges-grid mt-24">
+              {parts.map(part => {
+                const used = km - part.lastKM;
+                const perc = Math.min(100, (used / part.intervalKM) * 100);
+                const color = perc > 85 ? '#f87171' : perc > 60 ? '#f59e0b' : '#10b981';
+                
+                return (
+                  <div key={part.id} className="gauge-card glass">
+                    <div className="gauge-box">
+                       <svg viewBox="0 0 36 36" className="circular-chart">
+                         <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                         <path className="circle" stroke={color} strokeDasharray={`${perc}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                         <text x="18" y="20.35" className="percentage">%{Math.round(perc)}</text>
+                       </svg>
+                       <div className="gauge-icon-inner">{part.icon}</div>
+                    </div>
+                    <div className="gauge-info">
+                      <strong>{part.name}</strong>
+                      <small>{part.intervalKM - used} KM kaldı</small>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="arac-quick-actions mt-24">
+              <button className="aq-card glass" onClick={() => setShowAddFuel(true)}>
+                <div className="aq-icon fuel"><Fuel size={24} /></div>
+                <span>Yakıt Al</span>
+              </button>
+              <button className="aq-card glass">
+                <div className="aq-icon clean"><Droplets size={24} /></div>
+                <span>Yıkama</span>
+              </button>
+              <button className="aq-card glass">
+                <div className="aq-icon park"><MapPin size={24} /></div>
+                <span>Park Yeri</span>
+              </button>
+            </div>
+
+            {/* Emergency Support */}
+            <div className="emergency-support mt-24 glass">
+               <div className="es-header">
+                 <AlertCircle size={18} color="#f87171" />
+                 <span>ACİL DESTEK</span>
+               </div>
+               <div className="es-buttons">
+                 <button className="es-btn"><Phone size={14} /> Yol Yardım</button>
+                 <button className="es-btn"><Shield size={14} /> Sigorta</button>
+               </div>
             </div>
           </div>
-          <div className="m-details">
-            <div className="md-row"><span>Son Muayene:</span> <span>{new Date(aracim.muayene?.last || '2024-07-24').toLocaleDateString('tr-TR')}</span></div>
-            <div className="md-row"><span>Sonuç:</span> <span style={{ color: 'var(--success)', fontWeight: 'bold' }}>{aracim.muayene?.result}</span></div>
-            <div className="md-row"><span>Rapor No:</span> <span>{aracim.muayene?.report}</span></div>
+        )}
+
+        {activeTab === 'servis' && (
+          <div className="servis-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>🛠️ Servis Defteri</h3>
+              <button className="add-btn-mini"><Plus size={14} /></button>
+            </div>
+            <div className="service-timeline-premium">
+              {services.map(s => (
+                <div key={s.id} className="s-timeline-item glass">
+                  <div className="sti-date">
+                    <span>{new Date(s.date).getDate()}</span>
+                    <small>{new Date(s.date).toLocaleString('tr-TR', { month: 'short' })}</small>
+                  </div>
+                  <div className="sti-content">
+                    <div className="sti-main">
+                      <strong>{s.title}</strong>
+                      <small>{s.km.toLocaleString()} KM · {s.shop}</small>
+                    </div>
+                    <div className="sti-cost">{formatMoney(s.cost)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      <div className="logs-section mt-20">
-        <div className="section-header">
-          <h3>📋 İşlem Geçmişi</h3>
-          <button className="text-btn" onClick={() => setModal('history')}>Tümünü Gör</button>
-        </div>
-        <div className="log-list">
-          {hs.slice(0, 3).map(h => (
-            <div key={h.id} className="log-item glass">
-              <div className="l-icon maintenance"><Wrench size={16} /></div>
-              <div className="l-info">
-                <strong>{h.tp}</strong>
-                <span>{new Date(h.dt).toLocaleDateString('tr-TR')} · {h.km?.toLocaleString('tr-TR')} KM</span>
-              </div>
-              <div className="l-amt">₺{h.co || 0}</div>
+        {activeTab === 'torpido' && (
+          <div className="glovebox-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>📂 Dijital Torpido</h3>
             </div>
-          ))}
-          {yakitlar.slice(0, 3).map(y => (
-            <div key={y.id} className="log-item glass">
-              <div className="l-icon fuel"><Fuel size={16} /></div>
-              <div className="l-info">
-                <strong>Yakıt Alımı</strong>
-                <span>{new Date(y.tarih || y.dt).toLocaleDateString('tr-TR')} · {y.litre}L</span>
-              </div>
-              <div className="l-amt">₺{y.tutar}</div>
+            <div className="docs-list">
+              {documents.map(doc => {
+                const diff = Math.round((new Date(doc.dueDate) - new Date()) / 864e5);
+                return (
+                  <div key={doc.id} className="doc-card-premium glass">
+                    <div className="dcp-left">
+                      <div className="dcp-icon">{doc.icon}</div>
+                      <div className="dcp-info">
+                        <strong>{doc.name}</strong>
+                        <small>Bitiş: {new Date(doc.dueDate).toLocaleDateString('tr-TR')}</small>
+                      </div>
+                    </div>
+                    <div className={`dcp-status ${diff < 15 ? 'warn' : 'ok'}`}>
+                      {diff} Gün
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-          {hs.length === 0 && yakitlar.length === 0 && (
-            <div className="empty-state glass">Henüz kayıt yok.</div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
 
-      {/* MODALS */}
-      {modal === 'km' && (
-        <div className="modal-overlay" onClick={() => setModal(null)}>
-          <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-            <h3>🔢 KM Güncelle</h3>
-            <div className="form-group mt-10">
-              <label>Yeni Kilometre</label>
-              <input 
-                type="number" 
-                value={tempKm} 
-                onChange={e => setTempKm(Number(e.target.value))}
-                autoFocus
+        {activeTab === 'analiz' && (
+          <div className="analysis-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>📊 Yakıt Verimliliği</h3>
+              <small>L/100km</small>
+            </div>
+            <div className="fuel-chart-box glass">
+              <Line 
+                data={{
+                  labels: fuelLogs.map(l => new Date(l.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })),
+                  datasets: [{
+                    label: 'Tüketim',
+                    data: fuelLogs.map(l => l.consumption),
+                    borderColor: '#f87171',
+                    tension: 0.4,
+                    fill: false
+                  }]
+                }}
+                options={{
+                  plugins: { legend: { display: false } },
+                  scales: { y: { beginAtZero: false } }
+                }}
               />
             </div>
-            <div className="modal-actions mt-20">
-              <button className="btn bg" onClick={() => setModal(null)}>İptal</button>
-              <button className="btn bp" onClick={() => { updateAracKm(tempKm); setModal(null); toast.success('KM Güncellendi'); }}>Kaydet</button>
+
+            <div className="fuel-history-list mt-24">
+               <div className="section-header-v2">
+                <h3>⛽ Yakıt Geçmişi</h3>
+              </div>
+              {fuelLogs.map(l => (
+                <div key={l.id} className="fuel-item-premium glass">
+                  <div className="fip-left">
+                    <div className="fip-station">{l.station}</div>
+                    <small>{l.date} · {l.km.toLocaleString()} KM</small>
+                  </div>
+                  <div className="fip-right">
+                    <div className="fip-cons">{l.consumption} L</div>
+                    <div className="fip-cost">{formatMoney(l.amount * l.price)}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showUpdateKM && (
+        <KMUpdateModal 
+          currentKM={km} 
+          onClose={() => setShowUpdateKM(false)} 
+          onSave={updateKM} 
+        />
       )}
 
-      {modal === 'yakit' && <AddYakitModal onClose={() => setModal(null)} />}
-      {modal === 'bakim' && <AddBakimModal onClose={() => setModal(null)} />}
-      {expenseModal && <AddQuickExpenseModal type={expenseModal} onClose={() => setExpenseModal(null)} />}
+      {showAddFuel && (
+        <FuelLogModal 
+          onClose={() => setShowAddFuel(false)} 
+          onSave={addFuelLog} 
+          currentKM={km}
+        />
+      )}
+
     </AnimatedPage>
   );
 }
 
-function AddQuickExpenseModal({ type, onClose }) {
-  const { addExpense, aracim, addAracLog } = useStore();
-  const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    addExpense({
-      title: `${type} (${aracim.plaka})`,
-      amount: Number(amount),
-      category: 'Araç Gideri',
-      payer: 'ortak',
-      note: note
-    });
-    
-    // Log it to car history too
-    addAracLog({
-      id: Date.now(),
-      tp: type,
-      ds: note || type,
-      co: Number(amount),
-      dt: new Date().toISOString().split('T')[0],
-      km: aracim.km
-    });
-
-    onClose();
-    toast.success(`${type} harcaması kaydedildi!`);
-  };
-
+function KMUpdateModal({ currentKM, onClose, onSave }) {
+  const [val, setVal] = useState(currentKM);
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <h3>🚗 {type} Harcaması</h3>
-        <form onSubmit={handleSubmit} className="modal-form mt-10">
-          <div className="form-group">
-            <label>Tutar (₺)</label>
-            <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" required autoFocus />
+        <div className="modal-header-v2">
+          <Gauge size={24} color="#7c3aed" />
+          <h3>KM Güncelle</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="form-group-v2">
+            <label>Güncel Kilometre</label>
+            <input 
+              type="number" 
+              value={val} 
+              onChange={e => setVal(Number(e.target.value))} 
+              autoFocus 
+              className="premium-input"
+            />
           </div>
-          <div className="form-group">
-            <label>Not (Opsiyonel)</label>
-            <input type="text" value={note} onChange={e => setNote(e.target.value)} placeholder="Açıklama..." />
-          </div>
-          <div className="modal-actions mt-20">
-            <button type="button" className="btn bg" onClick={onClose}>İptal</button>
-            <button type="submit" className="btn bp">Harcamayı Kaydet</button>
-          </div>
-        </form>
+          <button className="submit-btn-premium" onClick={() => { onSave(val); onClose(); toast.success('Kilometre güncellendi 🏎️'); }}>Kaydet</button>
+        </div>
       </div>
     </div>
   );
 }
 
-function AddYakitModal({ onClose }) {
-  const { aracim, addAracLog, addExpense } = useStore();
-  const [formData, setFormData] = useState({
-    tp: 'yakit', litre: '', tutar: '', km: aracim.km, dt: new Date().toISOString().split('T')[0]
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    addAracLog(formData);
-    addExpense({
-      title: `${formData.litre}L Yakıt (${aracim.plaka})`,
-      amount: formData.tutar,
-      category: 'arac',
-      payer: 'ortak'
-    });
-    onClose();
-    toast.success('Yakıt kaydı eklendi');
-  };
-
+function FuelLogModal({ onClose, onSave, currentKM }) {
+  const [form, setForm] = useState({ km: currentKM, amount: '', price: '42.5', station: 'Shell', date: new Date().toISOString().split('T')[0] });
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <h3>⛽ Yakıt Alımı</h3>
-        <form onSubmit={handleSubmit} className="modal-form mt-10">
-          <div className="form-row">
-            <div className="form-group">
-              <label>Litre</label>
-              <input type="number" step="0.01" value={formData.litre} onChange={e => setFormData({...formData, litre: e.target.value})} required />
-            </div>
-            <div className="form-group">
-              <label>Tutar (₺)</label>
-              <input type="number" value={formData.tutar} onChange={e => setFormData({...formData, tutar: e.target.value})} required />
-            </div>
+        <div className="modal-header-v2">
+          <Fuel size={24} color="#f87171" />
+          <h3>Yakıt Girişi</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="form-grid-v2">
+             <div className="form-group-v2">
+               <label>KM</label>
+               <input type="number" value={form.km} onChange={e => setForm({...form, km: Number(e.target.value)})} className="premium-input" />
+             </div>
+             <div className="form-group-v2">
+               <label>Litre</label>
+               <input type="number" value={form.amount} onChange={e => setForm({...form, amount: Number(e.target.value)})} className="premium-input" />
+             </div>
           </div>
-          <div className="form-group">
-            <label>Güncel KM</label>
-            <input type="number" value={formData.km} onChange={e => setFormData({...formData, km: e.target.value})} required />
+          <div className="form-group-v2 mt-12">
+            <label>İstasyon</label>
+            <select value={form.station} onChange={e => setForm({...form, station: e.target.value})} className="premium-select">
+              <option value="Shell">Shell</option>
+              <option value="Opet">Opet</option>
+              <option value="BP">BP</option>
+              <option value="Petrol Ofisi">Petrol Ofisi</option>
+            </select>
           </div>
-          <div className="modal-actions mt-20">
-            <button type="button" className="btn bg" onClick={onClose}>İptal</button>
-            <button type="submit" className="btn bp">Kaydet</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function AddBakimModal({ onClose }) {
-  const { aracim, addAracMaintenance, addExpense } = useStore();
-  const [formData, setFormData] = useState({
-    tp: '', ds: '', co: '', km: aracim.km, dt: new Date().toISOString().split('T')[0]
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    addAracMaintenance(formData);
-    addExpense({
-      title: `${formData.tp} (${aracim.plaka})`,
-      amount: formData.co,
-      category: 'arac',
-      payer: 'ortak'
-    });
-    onClose();
-    toast.success('Bakım kaydı eklendi');
-  };
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
-        <h3>🔧 Bakım Kaydı</h3>
-        <form onSubmit={handleSubmit} className="modal-form mt-10">
-          <div className="form-group">
-            <label>İşlem Türü</label>
-            <input type="text" placeholder="Yağ Değişimi, Lastik vb." value={formData.tp} onChange={e => setFormData({...formData, tp: e.target.value})} required />
-          </div>
-          <div className="form-group">
-            <label>Açıklama</label>
-            <input type="text" value={formData.ds} onChange={e => setFormData({...formData, ds: e.target.value})} />
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label>KM</label>
-              <input type="number" value={formData.km} onChange={e => setFormData({...formData, km: e.target.value})} required />
-            </div>
-            <div className="form-group">
-              <label>Maliyet (₺)</label>
-              <input type="number" value={formData.co} onChange={e => setFormData({...formData, co: e.target.value})} />
-            </div>
-          </div>
-          <div className="modal-actions mt-20">
-            <button type="button" className="btn bg" onClick={onClose}>İptal</button>
-            <button type="submit" className="btn bp">Kaydet</button>
-          </div>
-        </form>
+          <button className="submit-btn-premium red mt-20" onClick={() => { onSave(form); onClose(); toast.success('Yakıt kaydı ve masraf eklendi ⛽'); }}>Kaydet</button>
+        </div>
       </div>
     </div>
   );

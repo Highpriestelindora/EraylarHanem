@@ -46,9 +46,9 @@ html, body {
   padding: 0;
   width: 100%;
   height: 100% !important; height: -webkit-fill-available !important;
-  overflow-x: hidden;
-  background: var(--bg); /* Reverted to white/bg */
-  overscroll-behavior: none; /* Prevents bouncing white areas */
+  overflow: hidden; 
+  background-color: #f8fafc !important; /* Beyaza zorlandı */
+  overscroll-behavior: none;
   color: var(--txt);
   font-family: 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -57,23 +57,12 @@ html, body {
 
 #root {
   width: 100%;
-  min-height: 100% !important; height: -webkit-fill-available !important;
-  overflow-x: hidden;
-  position: relative;
-}
-
-#root {
-  width: 100% !important;
-  max-width: 100vw !important;
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
-  min-height: 100dvh;
-  position: relative;
-  background: var(--primary);
+  height: 100%;
+  background-color: #f8fafc !important;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden !important;
-  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
 }
 
 /* Universal Responsive Sanitizer */

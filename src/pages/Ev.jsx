@@ -1,209 +1,281 @@
-import React, { useState } from 'react';
-import useStore from '../store/useStore';
-import AnimatedPage from '../components/AnimatedPage';
+import React, { useState, useMemo } from 'react';
 import { 
   Lightbulb, Wrench, ShieldCheck, 
   CheckCircle2, Plus, Trash2, 
-  AlertTriangle, DollarSign, Calendar
+  AlertTriangle, DollarSign, Calendar, Sparkles,
+  Droplets, Zap, Flame, Globe, ChevronRight,
+  Shield, Key, Phone, User, Star, MoreVertical,
+  PlusCircle, ArrowLeft, Camera, Settings, Info
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import useStore from '../store/useStore';
+import AnimatedPage from '../components/AnimatedPage';
+import toast from 'react-hot-toast';
+import { Bar, Line } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement } from 'chart.js';
 import './Ev.css';
 
-export default function Ev() {
-  const { ev, setModuleData } = useStore();
-  const [activeTab, setActiveTab] = useState(ev.tab || 'fatura');
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement);
 
-  const updateTab = (tab) => {
-    setActiveTab(tab);
-    setModuleData('ev', { ...ev, tab });
-  };
+const formatMoney = (val) =>
+  new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
+
+export default function Ev() {
+  const [activeTab, setActiveTab] = useState('faturalar');
+  const navigate = useNavigate();
+  const { ev, payFatura, addRepairItem, updateHomeSecurity } = useStore();
+
+  const { 
+    faturalar, bakimlar, demirbaslar, tamirListesi, 
+    ustaRehberi, abonelikler, bitkiler, guvenlik, yillikPlan 
+  } = ev || { faturalar: [], bakimlar: [], tamirListesi: [], ustaRehberi: [], bitkiler: [] };
+
+  const [showSafeCode, setShowSafeCode] = useState(false);
+
+  // AI Analysis
+  const aiNote = useMemo(() => {
+    const totalCurrent = faturalar.filter(f => f.status === 'Ödendi').reduce((a, b) => a + b.amount, 0);
+    if (totalCurrent > 3000) return "Bu ay enerji tüketimi normalin %15 üzerinde. Bir sızıntı veya kaçak olabilir mi? 🕵️‍♂️";
+    return "Harika! Ev verimliliği bu ay yeşil bölgede. 🌟";
+  }, [faturalar]);
 
   const tabs = [
-    { id: 'fatura', icon: <Lightbulb size={18} />, label: 'Fatura' },
-    { id: 'bakim', icon: <Wrench size={18} />, label: 'Bakım' },
-    { id: 'sigorta', icon: <ShieldCheck size={18} />, label: 'Sigorta' },
-    { id: 'malVarligi', icon: <DollarSign size={18} />, label: 'Mal Varlığı' }
+    { id: 'faturalar', label: 'Faturalar', emoji: '🧾' },
+    { id: 'bakim', label: 'Bakım', emoji: '🔧' },
+    { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
+    { id: 'guvenlik', label: 'Güvenlik', emoji: '🛡️' }
   ];
 
   return (
     <AnimatedPage className="ev-container">
-      <div className="module-header ev-gradient">
-        <div className="header-info">
-          <h1>Eraylar Ev</h1>
-          <p>Fatura · Bakım · Sigorta</p>
+      <header className="module-header glass ev-premium-grad">
+        <div className="header-top">
+          <div className="header-title">
+            <span className="header-emoji animate-float">🏡</span>
+            <div className="header-text-box">
+              <h1>Eraylar Malikanesi</h1>
+              <p>Ev Hub & Operasyon Merkezi</p>
+            </div>
+          </div>
+          <div className="header-actions">
+            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
+          </div>
         </div>
-        <div className="header-icon">🏠</div>
-      </div>
 
-      <div className="tab-nav glass">
-        {tabs.map(tab => (
-          <button 
-            key={tab.id}
-            className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-            onClick={() => updateTab(tab.id)}
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
+        <nav className="ev-tab-nav">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`e-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="e-tab-emoji">{tab.emoji}</span>
+              <span className="e-tab-label">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+      </header>
 
-      <div className="tab-content">
-        {activeTab === 'fatura' && <FaturaTab ev={ev} />}
-        {activeTab === 'bakim' && <BakimTab ev={ev} />}
-        {activeTab === 'sigorta' && <SigortaTab ev={ev} />}
-        {activeTab === 'malVarligi' && <MalVarligiTab ev={ev} />}
+      <div className="ev-scroll-content">
+        {/* AI Insight */}
+        <div className="ai-insight-card glass animate-fadeIn">
+          <Sparkles size={18} className="sparkle-icon" />
+          <p>{aiNote}</p>
+        </div>
+
+        {activeTab === 'faturalar' && (
+          <div className="faturalar-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>🧾 Ödeme Takvimi</h3>
+              <button className="add-btn-mini"><Plus size={14} /></button>
+            </div>
+            
+            <div className="bill-cards-grid">
+              {faturalar.map(f => (
+                <div key={f.id} className={`bill-card-premium glass ${f.status === 'Ödendi' ? 'paid' : 'pending'}`}>
+                   <div className="bcp-header">
+                     <div className="bcp-icon">{f.icon}</div>
+                     <div className="bcp-info">
+                       <strong>{f.name}</strong>
+                       <small>{f.dueDate} · {f.provider}</small>
+                     </div>
+                   </div>
+                   <div className="bcp-footer">
+                     <div className="bcp-amount">{formatMoney(f.amount)}</div>
+                     {f.status === 'Bekliyor' ? (
+                       <button className="bcp-pay-btn" onClick={() => payFatura(f.id)}>Öde</button>
+                     ) : (
+                       <div className="bcp-status-tag">Ödendi</div>
+                     )}
+                   </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="energy-chart-section mt-24 glass">
+               <div className="section-header-v2">
+                <h3>📊 Tüketim Analizi</h3>
+              </div>
+              <Bar 
+                data={{
+                  labels: ['Ocak', 'Şubat', 'Mart', 'Nisan'],
+                  datasets: [{
+                    label: 'Fatura Toplamı',
+                    data: [2800, 3100, 2900, 2500],
+                    backgroundColor: '#84cc16',
+                    borderRadius: 8
+                  }]
+                }}
+                options={{ plugins: { legend: { display: false } } }}
+              />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'bakim' && (
+          <div className="bakim-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>🔧 Periyodik Bakımlar</h3>
+            </div>
+            <div className="maintenance-gauges">
+               {bakimlar.map(b => {
+                 const diff = Math.round((new Date() - new Date(b.lastDate)) / 864e5);
+                 const perc = Math.min(100, (diff / b.intervalDays) * 100);
+                 return (
+                   <div key={b.id} className="m-gauge-card glass">
+                      <div className="mg-box">
+                        <svg viewBox="0 0 36 36" className="circular-chart">
+                          <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                          <path className="circle" stroke={perc > 80 ? '#f87171' : '#84cc16'} strokeDasharray={`${perc}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        </svg>
+                        <div className="mg-icon">{b.icon}</div>
+                      </div>
+                      <strong>{b.name}</strong>
+                      <small>{b.intervalDays - diff} Gün Kaldı</small>
+                   </div>
+                 );
+               })}
+            </div>
+
+            <div className="repair-list-section mt-24">
+              <div className="section-header-v2">
+                <h3>🔨 Ev Tamir Listesi</h3>
+                <button className="add-btn-mini"><Plus size={14} /></button>
+              </div>
+              <div className="repair-items">
+                {tamirListesi.map(t => (
+                  <div key={t.id} className="repair-card glass">
+                    <div className="rc-info">
+                      <AlertTriangle size={16} color={t.priority === 'High' ? '#f87171' : '#f59e0b'} />
+                      <strong>{t.task}</strong>
+                    </div>
+                    <button className="rc-done"><CheckCircle2 size={18} /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="pro-directory mt-24">
+              <div className="section-header-v2">
+                <h3>📞 Usta Rehberi</h3>
+              </div>
+              <div className="pro-list">
+                {ustaRehberi.map(u => (
+                  <div key={u.id} className="pro-card glass">
+                    <div className="pc-left">
+                       <div className="pc-avatar"><User size={20} /></div>
+                       <div className="pc-info">
+                         <strong>{u.name}</strong>
+                         <small>{u.category} · {u.rating} <Star size={10} fill="#f59e0b" color="#f59e0b" /></small>
+                       </div>
+                    </div>
+                    <button className="pc-call"><Phone size={18} /></button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'yasam' && (
+          <div className="yasam-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>🪴 Bitki Bakımı</h3>
+            </div>
+            <div className="plant-grid">
+              {bitkiler.map(p => (
+                <div key={p.id} className="plant-card glass">
+                  <div className="p-emoji">🌿</div>
+                  <strong>{p.name}</strong>
+                  <small>3 Gün Sonra Sula</small>
+                  <button className="water-btn"><Droplets size={14} /> Sulandı</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="subs-list-section mt-24">
+              <div className="section-header-v2">
+                <h3>📺 Dijital Abonelikler</h3>
+                <strong>{formatMoney(abonelikler.reduce((a, b) => a + b.amount, 0))} / ay</strong>
+              </div>
+              {abonelikler.map(s => (
+                <div key={s.id} className="sub-item-premium glass">
+                  <strong>{s.name}</strong>
+                  <span>{formatMoney(s.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'guvenlik' && (
+          <div className="guvenlik-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>🛡️ Güvenlik & Şifreler</h3>
+              <button className="icon-btn-mini" onClick={() => setShowSafeCode(!showSafeCode)}>
+                {showSafeCode ? <CheckCircle2 size={16} /> : <Key size={16} />}
+              </button>
+            </div>
+            
+            <div className="safety-codes glass">
+               <div className="code-item">
+                 <small>WI-FI ŞİFRESİ</small>
+                 <strong>{showSafeCode ? guvenlik.wifi.pass : '••••••••'}</strong>
+               </div>
+               <div className="code-item">
+                 <small>ALARM KODU</small>
+                 <strong>{showSafeCode ? guvenlik.alarm.code : '••••'}</strong>
+               </div>
+            </div>
+
+            <div className="guest-mode-card mt-24 glass">
+               <div className="gm-header">
+                 <Sparkles size={20} color="#7c3aed" />
+                 <h3>MİSAFİR MODU</h3>
+               </div>
+               <p>Misafirlerin için Wi-Fi ve ev bilgilerini içeren hızlı erişim kartı.</p>
+               <button className="gm-btn">Kartı Göster</button>
+            </div>
+
+            <div className="safety-checkup mt-24">
+              <div className="section-header-v2">
+                <h3>🚨 Güvenlik Check-up</h3>
+              </div>
+              <div className="checkup-list">
+                 <div className="cu-item glass">
+                   <strong>Yangın Tüpü Kontrolü</strong>
+                   <small>12.05.2026</small>
+                 </div>
+                 <div className="cu-item glass">
+                   <strong>Deprem Çantası Güncelleme</strong>
+                   <small>01.06.2026</small>
+                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </AnimatedPage>
-  );
-}
-
-function FaturaTab({ ev }) {
-  const faturalar = ev.faturalar || [];
-  const total = faturalar.reduce((sum, f) => sum + (f.tutar || 0), 0);
-  const pending = faturalar.filter(f => !f.odendi).length;
-
-  return (
-    <div className="tab-pane animate-fadeIn">
-      <div className="summary-card glass ev-primary">
-        <div className="s-header">
-          <div className="s-label">Aylık Toplam</div>
-          <div className="s-val">₺{total.toLocaleString('tr-TR')}</div>
-        </div>
-        <div className="s-stats">
-          <span>✅ {faturalar.length - pending} Ödendi</span>
-          <span className={pending > 0 ? 'alert' : ''}>⏳ {pending} Bekliyor</span>
-        </div>
-      </div>
-
-      <button className="add-btn glass"><Plus size={18} /> Fatura Ekle</button>
-
-      <div className="bill-list">
-        {faturalar.length > 0 ? faturalar.map(f => (
-          <div key={f.id} className="bill-item glass">
-            <div className={`b-check ${f.odendi ? 'checked' : ''}`}>
-              {f.odendi ? <CheckCircle2 size={20} /> : <div className="circle" />}
-            </div>
-            <div className="b-info">
-              <strong>{f.ad}</strong>
-              <span>{f.ay} · {f.kategori}</span>
-            </div>
-            <div className="b-amt">
-              <strong>₺{f.tutar}</strong>
-              <button className="del-btn-small"><Trash2 size={14} /></button>
-            </div>
-          </div>
-        )) : (
-          <div className="empty-state glass">
-            <span className="big-emoji">💡</span>
-            <p>Henüz fatura eklenmedi</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function BakimTab({ ev }) {
-  const bakim = ev.bakim || [];
-  const active = bakim.filter(b => !b.tamamlandi);
-
-  return (
-    <div className="tab-pane animate-fadeIn">
-      <button className="add-btn glass"><Plus size={18} /> Bakım/İş Ekle</button>
-      
-      <div className="maintenance-list">
-        {active.length > 0 ? active.map(b => (
-          <div key={b.id} className={`maintenance-card glass priority-${b.oncelik}`}>
-            <div className="m-main">
-              <div className="m-header">
-                <strong>{b.ad}</strong>
-                <span className="p-badge">{b.oncelik}</span>
-              </div>
-              {b.notlar && <p className="m-notes">{b.notlar}</p>}
-              <div className="m-date">📅 {b.tarih}</div>
-            </div>
-            <div className="m-actions">
-              <button className="done-btn">Bitti</button>
-              <button className="del-btn-small"><Trash2 size={14} /></button>
-            </div>
-          </div>
-        )) : (
-          <div className="empty-state glass">
-            <span className="big-emoji">🔧</span>
-            <p>Bekleyen bakım yok 🎉</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function SigortaTab({ ev }) {
-  const sigorta = ev.sigortalar || [];
-  return (
-    <div className="tab-pane animate-fadeIn">
-      <button className="add-btn glass"><Plus size={18} /> Sigorta Ekle</button>
-      
-      <div className="insurance-list">
-        {sigorta.length > 0 ? sigorta.map(s => (
-          <div key={s.id} className="insurance-card glass">
-            <div className="i-main">
-              <strong>🛡️ {s.ad}</strong>
-              <span className="i-company">{s.sirket}</span>
-              <div className="i-dates">
-                <span>Baş: {s.bas}</span>
-                <span className="alert">Bitiş: {s.bitis}</span>
-              </div>
-            </div>
-            <button className="del-btn-small"><Trash2 size={14} /></button>
-          </div>
-        )) : (
-          <div className="empty-state glass">
-            <span className="big-emoji">🛡️</span>
-            <p>Henüz sigorta eklenmedi</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-function MalVarligiTab({ ev }) {
-  const assets = ev.malVarligi || [];
-
-  return (
-    <div className="tab-pane animate-fadeIn">
-      <div className="section-header">
-        <h3>🏙️ Taşınmaz Listesi ({assets.length})</h3>
-        <button className="add-btn-small"><Plus size={16} /></button>
-      </div>
-
-      <div className="assets-grid">
-        {assets.map(a => (
-          <div key={a.id} className="asset-card glass">
-            <div className="a-header">
-              <span className="a-emoji">{a.emoji}</span>
-              <div className="a-title">
-                <strong>{a.ad}</strong>
-                <span>{a.il} / {a.ilce}</span>
-              </div>
-            </div>
-            <div className="a-details">
-              <div className="ad-row"><span>Mahalle:</span> <strong>{a.mahalle}</strong></div>
-              <div className="ad-row"><span>Ada/Parsel:</span> <strong>{a.adaParsel}</strong></div>
-              <div className="ad-row"><span>Tip:</span> <strong>{a.tip}</strong></div>
-              <div className="ad-row"><span>Nitelik:</span> <strong>{a.nitelik}</strong></div>
-              {a.bbNo && <div className="ad-row"><span>BB No:</span> <strong>{a.bbNo}</strong></div>}
-            </div>
-            <div className="a-footer">
-              <div className="a-value">
-                <small>Tahmini Değer</small>
-                <strong>₺{a.deger.toLocaleString('tr-TR')}</strong>
-              </div>
-              <button className="edit-btn-mini"><Plus size={14} /></button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
