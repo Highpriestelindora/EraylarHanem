@@ -47,11 +47,11 @@ html, body {
   width: 100%;
   height: 100% !important;
   height: -webkit-fill-available !important;
-  background-color: #f8fafc !important;
+  background-color: #f8fafc;
   color: var(--txt);
   font-family: 'Outfit', sans-serif;
   overflow-x: hidden;
-  overscroll-behavior: none; /* Prevent white gaps during scroll bounce */
+  overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -63,7 +63,7 @@ html, body {
   min-height: -webkit-fill-available !important;
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc !important;
+  background-color: #f8fafc;
   position: relative;
   overflow-x: hidden;
 }
