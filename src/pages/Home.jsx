@@ -13,7 +13,7 @@ import './Home.css';
 
 const Home = () => {
   const { 
-    system = { version: '2.6.7', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
+    system = { version: '2.6.8', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
     currentUser, 
     logs = [], 
     calculateGlobalScore 
