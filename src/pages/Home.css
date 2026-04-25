@@ -1,9 +1,10 @@
 .home-premium-container {
   min-height: 100vh;
-  background: #FDFBFF;
+  background: transparent; /* Show root gradient */
   display: flex;
   flex-direction: column;
 }
+
 
 /* Premium Rounded Header Banner - 01:47 Style - iPhone Notch Fix */
 .premium-header-banner {
@@ -229,4 +230,8 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   background: #FDFBFF;
+  border-radius: 45px 45px 0 0; /* Premium rounded flow */
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 -15px 30px rgba(0,0,0,0.05);
 }
