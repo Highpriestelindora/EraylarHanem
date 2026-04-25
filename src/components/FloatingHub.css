@@ -84,13 +84,14 @@
 }
 
 .hub-capsule-glass {
-  background: rgba(255, 255, 255, 0.2); /* Ghostly transparent */
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  padding: 4px 14px env(safe-area-inset-bottom, 0px); /* Absolute minimal padding */
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  padding: 4px 14px env(safe-area-inset-bottom, 12px); 
   border-radius: 40px 40px 0 0;
-  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.03);
-  border: none; /* Removed border for smoother transition */
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.05);
+  border: none;
+  margin-bottom: -1px; 
   border-bottom: none;
   display: flex;
   flex-direction: column;

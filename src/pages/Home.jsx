@@ -13,7 +13,7 @@ import './Home.css';
 
 const Home = () => {
   const { 
-    system = { version: '2.6.6', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
+    system = { version: '2.6.7', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
     currentUser, 
     logs = [], 
     calculateGlobalScore 
@@ -105,7 +105,7 @@ const Home = () => {
           ))}
         </div>
         
-        <div style={{ height: '140px' }} />
+        <div style={{ height: '60px' }} />
       </div>
 
       {/* System Logs Portal */}
