@@ -35,11 +35,11 @@ const Home = () => {
     { id: 'tatil', name: 'Eraylar Tatil', sub: 'Gezi Planlayıcı', icon: '✈️', color: 'linear-gradient(135deg, #06b6d4, #0891b2)', path: '/tatil' },
     { id: 'pet', name: 'Eraylar Pet', sub: 'Waffle & Mayıs', icon: '🐾', color: 'linear-gradient(135deg, #f59e0b, #d97706)', path: '/pet' },
     { id: 'health', name: 'Eraylar Sağlık', sub: 'İlaç & Ölçüm', icon: '🏥', color: 'linear-gradient(135deg, #ef4444, #dc2626)', path: '/saglik' },
-    { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(135deg, #1e1b4b, #312e81)', path: '/finans' },
-    { id: 'aracim', name: 'Eraylar Aracım', sub: 'Tiguan R-Line', icon: '🏎️', color: 'linear-gradient(135deg, #334155, #0f172a)', path: '/aracim' },
     { id: 'ev', name: 'Eraylar Ev', sub: 'Home Hub', icon: '🏠', color: 'linear-gradient(135deg, #10b981, #059669)', path: '/ev' },
-    { id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏔️', color: 'linear-gradient(135deg, #6366f1, #4f46e5)', path: '/hedefler' },
-    { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '💎', color: 'linear-gradient(135deg, #7c3aed, #6d28d9)', path: '/kasa' }
+    { id: 'aracim', name: 'Eraylar Aracım', sub: 'Tiguan R-Line', icon: '🏎️', color: 'linear-gradient(135deg, #334155, #0f172a)', path: '/aracim' },
+    { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '💎', color: 'linear-gradient(135deg, #7c3aed, #6d28d9)', path: '/kasa' },
+    { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(135deg, #1e1b4b, #312e81)', path: '/finans' },
+    { id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏆', color: 'linear-gradient(135deg, #fbbf24, #d97706)', path: '/hedefler', fullWidth: true }
   ];
 
   return (
@@ -84,7 +84,7 @@ const Home = () => {
           {modules.map((module) => (
             <div
               key={module.id}
-              className="premium-module-card"
+              className={`premium-module-card ${module.fullWidth ? 'full-width' : ''}`}
               onClick={() => navigate(module.path)}
               style={{ background: module.color }}
             >

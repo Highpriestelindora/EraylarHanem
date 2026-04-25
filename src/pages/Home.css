@@ -149,6 +149,24 @@
   box-shadow: 0 8px 20px rgba(0,0,0,0.05);
 }
 
+.premium-module-card.full-width {
+  grid-column: span 2;
+  aspect-ratio: auto;
+  height: 100px;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 20px;
+  padding: 0 30px;
+}
+
+.premium-module-card.full-width .pmc-icon-wrap {
+  margin-bottom: 0;
+}
+
+.premium-module-card.full-width .pmc-info {
+  text-align: left;
+}
+
 .pmc-icon-wrap {
   margin-bottom: 12px;
 }
