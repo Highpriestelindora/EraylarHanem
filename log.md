@@ -1,1 +1,0 @@
-- 2026-04-25T12:15:30Z: **v2.6.5** yayýna alýndý. Floating Hub 'Ultra Compact' ve 'Glassy' hale getirildi. Alt bar yüksekliði düþürüldü ve saydamlýk artýrýldý.
