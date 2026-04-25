@@ -36,20 +36,22 @@ const SplashScreen = ({ finishLoading }) => {
       exit={{ opacity: 0 }}
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: '-100px',
         zIndex: 9999,
-        background: 'var(--primary)',
+        background: '#A855F7',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         color: 'white',
         padding: '20px',
-        paddingBottom: 'env(safe-area-inset-bottom, 20px)',
+        paddingBottom: 'calc(100px + env(safe-area-inset-bottom, 20px))',
         textAlign: 'center',
         width: '100vw',
-        height: '100%',
-        minHeight: '-webkit-fill-available'
+        height: '100dvh',
       }}
     >
       <div className="splash-characters" style={{ display: 'flex', gap: '30px', marginBottom: '40px' }}>
