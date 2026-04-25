@@ -13,7 +13,7 @@ import './Home.css';
 
 const Home = () => {
   const { 
-    system = { globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
+    system = { version: '2.5.0', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
     currentUser, 
     logs = [], 
     calculateGlobalScore 
@@ -52,7 +52,7 @@ const Home = () => {
             <div className="phb-text">
               <div className="phb-brand">
                 <img src={logo} alt="Logo" className="phb-logo-img" />
-                <h2>Eraylar Hanem</h2>
+                <h2>Eraylar Hanem <small style={{ fontSize: '10px', opacity: 0.5, fontWeight: 400 }}>v{system.version}</small></h2>
               </div>
               <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 🐶 🐈</p>
             </div>

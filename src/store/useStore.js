@@ -102,7 +102,7 @@ const DEFAULT_STATE = {
   },
   // ── Global System ──────────────────────────────────
   system: {
-    version: '2.5.5',
+    version: '2.5.7',
     globalScore: 85,
     onboardingComplete: false,
     notifications: [],
