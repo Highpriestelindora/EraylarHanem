@@ -723,6 +723,7 @@ function HotelMap({ name, address }) {
         setError('Harita yüklenirken hata oluştu.');
         setLoading(false);
       }
+    };
     initMap();
 
     return () => {
