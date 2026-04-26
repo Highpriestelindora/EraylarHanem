@@ -1513,8 +1513,19 @@ function WeatherWidget({ city, country }) {
       setLoading(true);
       try {
         const normalize = (text) => text?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase();
+        
+        // Turkish to International City Name Map
+        const trToEn = {
+          'viyana': 'vienna', 'roma': 'rome', 'londra': 'london', 'paris': 'paris',
+          'marsilya': 'marseille', 'munih': 'munich', 'atina': 'athens',
+          'venedik': 'venice', 'floransa': 'florence', 'milano': 'milan',
+          'barselona': 'barcelona', 'bruksel': 'brussels', 'prag': 'prague',
+          'budapeste': 'budapest', 'varsova': 'warsaw', 'bukres': 'bucharest'
+        };
+
         const cleanCity = normalize(city);
-        const searchName = country ? `${cleanCity}, ${normalize(country)}` : cleanCity;
+        const translatedCity = trToEn[cleanCity] || cleanCity;
+        const searchName = country ? `${translatedCity}, ${normalize(country)}` : translatedCity;
 
         const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchName)}&count=1&language=en&format=json`);
         const geoData = await geoRes.json();
@@ -1529,6 +1540,21 @@ function WeatherWidget({ city, country }) {
               temp: Math.round(weatherData.current_weather.temperature),
               isSun: weatherData.current_weather.weathercode < 3
             });
+          }
+        } else {
+          // If searchName failed, try just the translated city without country
+          const geoRes2 = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(translatedCity)}&count=1&language=en&format=json`);
+          const geoData2 = await geoRes2.json();
+          if (geoData2.results?.length) {
+             const { latitude, longitude } = geoData2.results[0];
+             const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+             const weatherData = await weatherRes.json();
+             if (weatherData.current_weather) {
+               setData({ 
+                 temp: Math.round(weatherData.current_weather.temperature),
+                 isSun: weatherData.current_weather.weathercode < 3
+               });
+             }
           }
         }
       } catch (err) {
