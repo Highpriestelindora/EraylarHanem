@@ -625,6 +625,8 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
     if (code <= 67) return <CloudRain size={14} className="text-blue-500" />;
     if (code <= 77) return <CloudSnow size={14} className="text-white" />;
     return <CloudLightning size={14} className="text-purple-500" />;
+  };
+
   const handleUpdateTrip = (updates) => {
      const trips = tatil.trips.map(t => t.id === trip.id ? { ...t, ...updates } : t);
      setModuleData('tatil', { ...tatil, trips });
@@ -667,17 +669,19 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
             <Calendar size={14} />
             <span>{trip.startDate}</span>
           </div>
-            <span>{Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0} Gece</span>
+          <div className="h-stat">
+            <Moon size={14} />
+            <span>{Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) + 1} Gece</span>
           </div>
         </div>
 
-        {weatherForecast.length > 0 && (
+        {weatherForecast?.daily?.time && (
           <div className="weather-forecast-scroll animate-slideRight">
-            {weatherForecast.map(w => (
-              <div key={w.date} className="wf-day glass">
-                <small>{new Date(w.date).toLocaleDateString('tr-TR', { weekday: 'short' })}</small>
-                {getWeatherIcon(w.code)}
-                <strong>{w.temp}°</strong>
+            {weatherForecast.daily.time.map((t, i) => (
+              <div key={t} className="wf-day glass">
+                <small>{new Date(t).toLocaleDateString('tr-TR', { weekday: 'short' })}</small>
+                {getWeatherIcon(weatherForecast.daily.weathercode[i])}
+                <strong>{Math.round(weatherForecast.daily.temperature_2m_max[i])}°</strong>
               </div>
             ))}
           </div>
