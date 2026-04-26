@@ -515,6 +515,75 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
   );
 }
 
+function TripReviewPanel({ trip, onComplete }) {
+  const [form, setForm] = useState({
+    gorkemNote: '',
+    gorkemStar: 10,
+    esraNote: '',
+    esraStar: 10,
+    finalPrice: ''
+  });
+
+  const StarRating = ({ value, onChange, label }) => (
+    <div className="star-rating-box">
+      <label>{label} Puanı (1-10)</label>
+      <div className="stars-grid">
+        {[...Array(10)].map((_, i) => (
+          <button 
+            key={i} 
+            type="button"
+            className={`star-btn ${value > i ? 'active' : ''}`}
+            onClick={() => onChange(i + 1)}
+          >
+            <Star size={16} fill={value > i ? "currentColor" : "none"} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="trip-review-panel">
+      <div className="review-user-section glass gorkem">
+        <h4>👨 Görkem'in Değerlendirmesi</h4>
+        <StarRating label="Görkem" value={form.gorkemStar} onChange={v => setForm({...form, gorkemStar: v})} />
+        <textarea 
+          placeholder="Tatil nasıldı Görkem? En sevdiğin an neydi?" 
+          value={form.gorkemNote}
+          onChange={e => setForm({...form, gorkemNote: e.target.value})}
+        />
+      </div>
+
+      <div className="review-user-section glass esra">
+        <h4>👩 Esra'nın Değerlendirmesi</h4>
+        <StarRating label="Esra" value={form.esraStar} onChange={v => setForm({...form, esraStar: v})} />
+        <textarea 
+          placeholder="Esra, senin için tatilin yıldızı neydi?" 
+          value={form.esraNote}
+          onChange={e => setForm({...form, esraNote: e.target.value})}
+        />
+      </div>
+
+      <div className="review-finance-section glass">
+        <h4>💰 Toplam Harcama (Finansa İşlenecek)</h4>
+        <div className="price-input-wrapper">
+          <input 
+            type="number" 
+            placeholder="0" 
+            value={form.finalPrice}
+            onChange={e => setForm({...form, finalPrice: e.target.value})}
+          />
+          <span>₺</span>
+        </div>
+      </div>
+
+      <button className="finalize-trip-btn" onClick={() => onComplete(form)}>
+        <CheckSquare size={20} /> Değerlendirmeyi Kaydet & Tatili Kapat
+      </button>
+    </div>
+  );
+}
+
 function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
   const [editingSection, setEditingSection] = useState(null); // 'dep', 'ret', 'acc'
   
