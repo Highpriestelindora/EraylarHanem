@@ -665,22 +665,34 @@ function HotelMap({ name, address }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
+  const mapInstance = useRef(null);
 
   useEffect(() => {
-    // Inject Leaflet CSS
-    if (!document.getElementById('leaflet-css')) {
-      const link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
+    const initMap = async () => {
+      // 1. Load CSS
+      if (!document.getElementById('leaflet-css')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+      }
 
-    // Load Leaflet JS and Geocode
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-    script.async = true;
-    script.onload = async () => {
+      // 2. Load JS if not present
+      if (!window.L) {
+        await new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+          script.onload = resolve;
+          document.body.appendChild(script);
+        });
+      }
+
+      // 3. Clean up existing map
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+      }
+
       try {
         const trySearch = async (queryText) => {
           if (!queryText.trim()) return null;
@@ -690,19 +702,18 @@ function HotelMap({ name, address }) {
           return data && data.length > 0 ? data[0] : null;
         };
 
-        // Kademeli Arama Mantığı
-        let result = await trySearch(`${name} ${address}`); // 1. Otel + Adres
-        if (!result) result = await trySearch(name);        // 2. Sadece Otel
-        if (!result) result = await trySearch(address);     // 3. Sadece Adres
+        let result = await trySearch(`${name} ${address}`);
+        if (!result) result = await trySearch(name);
+        if (!result) result = await trySearch(address);
 
-        if (result) {
+        if (result && mapRef.current) {
           const { lat, lon } = result;
           const L = window.L;
-          const map = L.map(mapRef.current).setView([lat, lon], 15);
+          mapInstance.current = L.map(mapRef.current).setView([lat, lon], 15);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
-          }).addTo(map);
-          L.marker([lat, lon]).addTo(map).bindPopup(name || address).openPopup();
+          }).addTo(mapInstance.current);
+          L.marker([lat, lon]).addTo(mapInstance.current).bindPopup(name || address).openPopup();
           setLoading(false);
         } else {
           setError('Konum bulunamadı. Lütfen bilgileri kontrol edin.');
