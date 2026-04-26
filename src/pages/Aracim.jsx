@@ -27,7 +27,7 @@ export default function Aracim() {
     addVehicle, updateVehicle, deleteVehicle,
     addWashRecord, startParking, finishParking,
     deleteServiceRecord, deleteDocument, addDocument,
-    updatePartMaintenance
+    updatePartMaintenance, deleteFuelLog
   } = useStore();
   
   const vehicle = useMemo(() => 
@@ -292,9 +292,12 @@ export default function Aracim() {
                     <div className="fip-station">{l.station}</div>
                     <small>{l.date} · {l.km.toLocaleString()} KM</small>
                   </div>
-                  <div className="fip-right">
-                    <div className="fip-cons">{l.consumption} L</div>
-                    <div className="fip-cost">{formatMoney(l.amount * l.price)}</div>
+                  <div className="fip-right-actions">
+                    <div className="fip-stats">
+                      <div className="fip-cons">{l.consumption} L</div>
+                      <div className="fip-cost">{formatMoney(l.amount * l.price)}</div>
+                    </div>
+                    <button className="delete-btn-mini" onClick={() => { if(window.confirm('Bu yakıt kaydını silmek istediğinize emin misiniz?')) deleteFuelLog(vehicle.id, l.id); }}><Trash2 size={12} /></button>
                   </div>
                 </div>
               ))}

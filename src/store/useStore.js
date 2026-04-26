@@ -2081,6 +2081,15 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      deleteFuelLog: (vehicleId, logId) => {
+        const state = get();
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === vehicleId ? { ...v, fuelLogs: v.fuelLogs.filter(l => l.id !== logId) } : v
+        );
+        set({ garaj: updatedGaraj });
+        get().saveToSupabase();
+      },
+
       // ── Pet Actions ────────────────────────────────────
       addPetVaccine: (petId, vaccine) => {
         const state = get();

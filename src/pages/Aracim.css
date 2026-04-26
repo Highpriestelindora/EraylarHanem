@@ -365,3 +365,14 @@
 .header-top { margin-bottom: 8px !important; }
 .ai-insight-card { margin: 8px 16px !important; padding: 10px 14px !important; }
 
+
+.fip-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fip-stats {
+  text-align: right;
+}
+
