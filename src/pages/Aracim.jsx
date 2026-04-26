@@ -630,3 +630,100 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
     </div>
   );
 }
+
+function ServiceFormModal({ onSave, onClose }) {
+  const [form, setForm] = useState({ title: '', km: '', shop: '', cost: '', date: new Date().toISOString().split('T')[0] });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2">
+          <Wrench size={24} color="#7c3aed" />
+          <h3>Servis Kaydı Ekle</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="form-group-v2">
+            <label>İşlem Başlığı</label>
+            <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="premium-input" placeholder="Periyodik Bakım" />
+          </div>
+          <div className="form-grid-v2 mt-12">
+            <div className="form-group-v2">
+              <label>KM</label>
+              <input type="number" value={form.km} onChange={e => setForm({...form, km: Number(e.target.value)})} className="premium-input" />
+            </div>
+            <div className="form-group-v2">
+              <label>Maliyet (TL)</label>
+              <input type="number" value={form.cost} onChange={e => setForm({...form, cost: Number(e.target.value)})} className="premium-input" />
+            </div>
+          </div>
+          <div className="form-group-v2 mt-12">
+            <label>Servis / Usta</label>
+            <input value={form.shop} onChange={e => setForm({...form, shop: e.target.value})} className="premium-input" placeholder="VW Yetkili Servis" />
+          </div>
+          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); toast.success('Servis kaydı eklendi 🛠️'); }}>Kaydet</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DocFormModal({ doc, onSave, onClose }) {
+  const [form, setForm] = useState(doc || { name: '', dueDate: '', icon: '📄' });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2">
+          <FileText size={24} color="#3b82f6" />
+          <h3>Belge Ekle</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="form-group-v2">
+            <label>Belge Adı</label>
+            <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="premium-input" placeholder="Kasko Sigortası" />
+          </div>
+          <div className="form-group-v2 mt-12">
+            <label>Bitiş Tarihi</label>
+            <input type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} className="premium-input" />
+          </div>
+          <div className="form-group-v2 mt-12">
+            <label>İkon</label>
+            <select value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} className="premium-select">
+              <option value="📄">📄 Belge</option>
+              <option value="🛡️">🛡️ Sigorta</option>
+              <option value="📋">📋 Liste</option>
+              <option value="🔍">🔍 Muayene</option>
+            </select>
+          </div>
+          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); toast.success('Belge torpidoya eklendi 📂'); }}>Kaydet</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PartMaintenanceModal({ part, onSave, onClose }) {
+  const [form, setForm] = useState({ lastKM: part.lastKM, lastDate: part.lastDate || new Date().toISOString().split('T')[0] });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2">
+          <Settings size={24} color="#10b981" />
+          <h3>{part.label} Bakımı</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="form-group-v2">
+            <label>Son Değişim / Bakım KM</label>
+            <input type="number" value={form.lastKM} onChange={e => setForm({...form, lastKM: Number(e.target.value)})} className="premium-input" placeholder="45000" />
+          </div>
+          <div className="form-group-v2 mt-12">
+            <label>Son Değişim Tarihi</label>
+            <input type="date" value={form.lastDate} onChange={e => setForm({...form, lastDate: e.target.value})} className="premium-input" />
+          </div>
+          <p style={{ fontSize: '11px', opacity: 0.7, marginTop: '12px' }}>
+            Bu bilgiye göre bir sonraki bakım zamanınız otomatik hesaplanacaktır.
+          </p>
+          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); toast.success(`${part.label} bilgisi güncellendi ✨`); }}>Kaydet</button>
+        </div>
+      </div>
+    </div>
+  );
+}
