@@ -62,8 +62,24 @@ const DEFAULT_STATE = {
   kasa: {
     bakiyeler: { gorkem: 15000, esra: 12000, ortak: 5000 },
     tasinmazlar: [
-      { id: 1, name: 'Antalya Kepez Mesken', value: 4500000, tax: 1200, insurance: 3500, extra: 5000, icon: '🏠', tapuNo: 'Ada 1204 / Parsel 12', status: 'Mülk Sahibi', taxPaid: true, lastUpdate: '2026-04-20' },
-      { id: 2, name: 'Didim Prefabrik Ev', value: 2800000, tax: 800, insurance: 1500, extra: 2000, icon: '🏡', tapuNo: 'Ada 345 / Parsel 8', status: 'Kiracı Var', taxPaid: false, lastUpdate: '2026-03-15' }
+      { 
+        id: 1, name: 'Antalya Kepez Daire', city: 'Antalya', district: 'Kepez', neighborhood: 'Ulus',
+        type: 'Kat İrtifakı (Daire)', adaParsel: '1382 / 7', unit: '7', floor: '1', area: '648.51', share: '4/40',
+        nitelik: 'Mesken', propertyNo: '16783065', icon: '🏢', status: 'Mülk Sahibi',
+        income: 0, expense: 0, tax: 1500, taxPaid: false, value: 5500000
+      },
+      { 
+        id: 2, name: 'Didim Prefabrik Ev', city: 'Aydın', district: 'Didim', neighborhood: 'Akyeniköy',
+        type: 'Ana Taşınmaz', adaParsel: '1268 / 20', unit: '-', floor: '0', area: '300', share: 'Tam',
+        nitelik: 'Tek Katlı Prefabrik Ev', propertyNo: '14680312', icon: '🏡', status: 'Mülk Sahibi',
+        income: 0, expense: 500, tax: 800, taxPaid: true, value: 3200000
+      },
+      { 
+        id: 3, name: 'Eskişehir Tepebaşı Arsa', city: 'Eskişehir', district: 'Tepebaşı', neighborhood: 'Ömerağa',
+        type: 'Arsa + Kat İrtifakı', adaParsel: '1012 / 38', unit: '5', floor: '-', area: '232.55', share: '1/8',
+        nitelik: 'Arsa', propertyNo: '13738275', icon: '🗺️', status: 'Mülk Sahibi',
+        income: 0, expense: 0, tax: 1200, taxPaid: false, value: 4800000
+      }
     ],
     varliklar: [
       { id: 1, name: 'Altın Birikimi', amount: 125, unit: 'gr', price: 2500, type: 'gold', icon: '🟡' },
@@ -1765,7 +1781,8 @@ const useStore = create(
           id: Date.now(), 
           value: 0, 
           tax: 0, 
-          insurance: 0, 
+          income: 0,
+          expense: 0,
           icon: '🏠', 
           status: 'Mülk Sahibi', 
           taxPaid: false, 
@@ -1779,17 +1796,19 @@ const useStore = create(
 
       updateTasinmaz: (id, updates) => {
         const state = get();
-        const yeniTasinmazlar = state.kasa.tasinmazlar.map(t => t.id === id ? { ...t, ...updates } : t);
-        set({ kasa: { ...state.kasa, tasinmazlar: yeniTasinmazlar } });
+        const updated = state.kasa.tasinmazlar.map(t => 
+          t.id === id ? { ...t, ...updates, lastUpdate: new Date().toISOString().split('T')[0] } : t
+        );
+        set({ kasa: { ...state.kasa, tasinmazlar: updated } });
         get().saveToSupabase();
       },
 
       deleteTasinmaz: (id) => {
         const state = get();
-        const yeniTasinmazlar = state.kasa.tasinmazlar.filter(t => t.id !== id);
-        set({ kasa: { ...state.kasa, tasinmazlar: yeniTasinmazlar } });
+        const updated = state.kasa.tasinmazlar.filter(t => t.id !== id);
+        set({ kasa: { ...state.kasa, tasinmazlar: updated } });
         get().saveToSupabase();
-        toast.error('Taşınmaz kaydı silindi.');
+        toast.success('Taşınmaz kaydı silindi.');
       },
 
       addBakimItem: (item) => {

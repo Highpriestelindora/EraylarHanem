@@ -11,6 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import ActionSheet from '../components/ActionSheet';
 import toast from 'react-hot-toast';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement } from 'chart.js';
@@ -38,6 +39,7 @@ export default function Ev() {
 
   const [showSafeCode, setShowSafeCode] = useState(false);
   const [faturaForm, setFaturaForm] = useState({ name: '', amount: '', provider: '', dueDate: '', icon: '📜' });
+  const [editingTasinmaz, setEditingTasinmaz] = useState(null);
 
   // AI Analysis
   const aiNote = useMemo(() => {
@@ -114,66 +116,74 @@ export default function Ev() {
             <div className="portfolio-total glass mb-16">
               <div className="pt-info">
                 <span>Toplam Gayrimenkul Değeri</span>
-                <strong>{formatMoney((kasa?.tasinmazlar || []).reduce((a, b) => a + (b.value || 0), 0))}</strong>
+                <strong>{formatMoney((kasa?.tasinmazlar || []).reduce((a, b) => a + (Number(b.value) || 0), 0))}</strong>
               </div>
               <Building size={32} opacity={0.2} />
             </div>
 
             <div className="section-header-v2">
-              <h3>🏗️ Gayrimenkul Portföyü</h3>
-              <button className="add-btn-mini" onClick={() => {
-                const name = prompt('Taşınmaz Adı:');
-                if (!name) return;
-                const tapu = prompt('Tapu Bilgisi (Ada/Parsel):');
-                const val = prompt('Yaklaşık Değer (₺):');
-                addTasinmaz({ name, tapuNo: tapu, value: Number(val) });
-              }}><Plus size={14} /></button>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <h3>🏗️ Gayrimenkul Portföyü</h3>
+                <small style={{ opacity: 0.5 }}>{kasa?.tasinmazlar?.length || 0} Adet Taşınmaz</small>
+              </div>
+              <button className="add-btn-mini" onClick={() => setEditingTasinmaz({ isNew: true })}><Plus size={14} /></button>
             </div>
 
             <div className="tasinmaz-grid">
-              {(kasa?.tasinmazlar || []).map(t => (
-                <div key={t.id} className="tasinmaz-card-premium glass">
-                  <div className="tc-header">
-                    <div className="tc-icon-box">{t.icon}</div>
-                    <div className="tc-main-info">
-                      <strong>{t.name}</strong>
-                      <small><FileText size={10} /> {t.tapuNo}</small>
+              {(kasa?.tasinmazlar || []).map(t => {
+                const netIncome = (Number(t.income) || 0) - (Number(t.expense) || 0);
+                return (
+                  <div key={t.id} className="tasinmaz-card-premium glass">
+                    <div className="tc-header">
+                      <div className="tc-icon-box">{t.icon || '🏠'}</div>
+                      <div className="tc-main-info">
+                        <strong>{t.name}</strong>
+                        <div className="tc-technical">
+                          <small><MapPin size={10} /> {t.city} / {t.district}</small>
+                          <small><FileText size={10} /> {t.adaParsel}</small>
+                        </div>
+                      </div>
+                      <div className="tc-status-pill" style={{ background: t.status === 'Mülk Sahibi' ? '#dcfce7' : '#fef3c7', color: t.status === 'Mülk Sahibi' ? '#15803d' : '#b45309' }}>
+                        {t.status}
+                      </div>
                     </div>
-                    <button className="tc-update-btn" onClick={() => findRealValue(t.id, t.name)}>
-                      <Globe size={14} />
-                    </button>
-                  </div>
 
-                  <div className="tc-stats">
-                    <div className="tc-stat">
-                      <span>Değer</span>
-                      <strong>{formatMoney(t.value)}</strong>
+                    <div className="tc-financial-summary">
+                      <div className="tc-fin-item">
+                        <span>Piyasa Değeri</span>
+                        <strong>{formatMoney(t.value)}</strong>
+                      </div>
+                      <div className="tc-fin-item">
+                        <span>Net Getiri / Ay</span>
+                        <strong style={{ color: netIncome > 0 ? '#10b981' : (netIncome < 0 ? '#ef4444' : 'inherit') }}>
+                          {netIncome > 0 ? '+' : ''}{formatMoney(netIncome)}
+                        </strong>
+                      </div>
                     </div>
-                    <div className="tc-stat">
-                      <span>Durum</span>
-                      <strong className={t.status === 'Kiracı Var' ? 'orange' : 'green'}>{t.status}</strong>
-                    </div>
-                  </div>
 
-                  <div className="tc-details">
-                    <div className={`tc-tag-status ${t.taxPaid ? 'paid' : 'unpaid'}`}>
-                      {t.taxPaid ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
-                      Emlak Vergisi {t.taxPaid ? 'Ödendi' : 'Ödenmedi'}
+                    <div className="tc-details-grid">
+                      <div className="tc-detail-item">
+                        <small>Alan</small>
+                        <span>{t.area} m²</span>
+                      </div>
+                      <div className="tc-detail-item">
+                        <small>Nitelik</small>
+                        <span>{t.nitelik}</span>
+                      </div>
+                      <div className="tc-detail-item">
+                        <small>Vergi Durumu</small>
+                        <span className={t.taxPaid ? 'green' : 'red'}>{t.taxPaid ? 'Ödendi' : 'Ödenmedi'}</span>
+                      </div>
                     </div>
-                    <small className="tc-last-update">Son Güncelleme: {t.lastUpdate}</small>
-                  </div>
 
-                  <div className="tc-actions">
-                    <button className="tc-btn-secondary" onClick={() => {
-                      const newStatus = t.status === 'Mülk Sahibi' ? 'Kiracı Var' : 'Mülk Sahibi';
-                      updateTasinmaz(t.id, { status: newStatus });
-                    }}><Settings size={14} /> Durum Değiştir</button>
-                    <button className="tc-btn-secondary" onClick={() => deleteTasinmaz(t.id)}>
-                      <Trash2 size={14} color="#ef4444" /> Sil
-                    </button>
+                    <div className="tc-actions-v2">
+                      <button className="tc-manage-btn" onClick={() => setEditingTasinmaz(t)}>
+                        <Settings size={14} /> Yönet & Düzenle
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -376,6 +386,117 @@ export default function Ev() {
         )}
 
       </div>
+      <ActionSheet
+        isOpen={!!editingTasinmaz}
+        onClose={() => setEditingTasinmaz(null)}
+        title={editingTasinmaz?.isNew ? '🏗️ Yeni Taşınmaz Ekle' : `🏢 ${editingTasinmaz?.name}`}
+        fullHeight
+      >
+        {editingTasinmaz && (
+          <ManageTasinmazContent 
+            data={editingTasinmaz} 
+            onClose={() => setEditingTasinmaz(null)} 
+          />
+        )}
+      </ActionSheet>
     </AnimatedPage>
+  );
+}
+
+function ManageTasinmazContent({ data, onClose }) {
+  const { addTasinmaz, updateTasinmaz, deleteTasinmaz } = useStore();
+  const [form, setForm] = useState(data.isNew ? {
+    name: '', city: '', district: '', neighborhood: '',
+    type: '', adaParsel: '', unit: '', floor: '', area: '', share: '',
+    nitelik: '', propertyNo: '', icon: '🏢', status: 'Mülk Sahibi',
+    income: 0, expense: 0, tax: 0, taxPaid: false, value: 0
+  } : data);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (data.isNew) {
+      addTasinmaz(form);
+    } else {
+      updateTasinmaz(data.id, form);
+      toast.success('Değişiklikler kaydedildi! ✨');
+    }
+    onClose();
+  };
+
+  return (
+    <form className="modal-form-premium" onSubmit={handleSubmit}>
+      <div className="form-section-premium">
+        <h4><Info size={16} /> Genel Bilgiler</h4>
+        <div className="form-group">
+          <label>Taşınmaz Adı</label>
+          <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Örn: Antalya Kepez Daire" required />
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label>Şehir</label><input type="text" value={form.city} onChange={e => setForm({...form, city: e.target.value})} placeholder="İl" /></div>
+          <div className="form-group"><label>İlçe</label><input type="text" value={form.district} onChange={e => setForm({...form, district: e.target.value})} placeholder="İlçe" /></div>
+        </div>
+        <div className="form-group">
+          <label>Nitelik / Tip</label>
+          <input type="text" value={form.nitelik} onChange={e => setForm({...form, nitelik: e.target.value})} placeholder="Örn: Mesken, Arsa..." />
+        </div>
+      </div>
+
+      <div className="form-section-premium mt-24">
+        <h4><FileText size={16} /> Tapu & Teknik Detaylar</h4>
+        <div className="form-row">
+          <div className="form-group"><label>Ada/Parsel</label><input type="text" value={form.adaParsel} onChange={e => setForm({...form, adaParsel: e.target.value})} /></div>
+          <div className="form-group"><label>Alan (m²)</label><input type="text" value={form.area} onChange={e => setForm({...form, area: e.target.value})} /></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label>Kat</label><input type="text" value={form.floor} onChange={e => setForm({...form, floor: e.target.value})} /></div>
+          <div className="form-group"><label>Bağımsız Bölüm</label><input type="text" value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} /></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label>Arsa Payı</label><input type="text" value={form.share} onChange={e => setForm({...form, share: e.target.value})} /></div>
+          <div className="form-group"><label>Taşınmaz No</label><input type="text" value={form.propertyNo} onChange={e => setForm({...form, propertyNo: e.target.value})} /></div>
+        </div>
+      </div>
+
+      <div className="form-section-premium mt-24">
+        <h4><DollarSign size={16} /> Finansal Durum</h4>
+        <div className="form-group">
+          <label>Tahmini Piyasa Değeri (₺)</label>
+          <input type="number" value={form.value} onChange={e => setForm({...form, value: e.target.value})} />
+        </div>
+        <div className="form-row">
+          <div className="form-group"><label>Aylık Kira (Getiri)</label><input type="number" value={form.income} onChange={e => setForm({...form, income: e.target.value})} /></div>
+          <div className="form-group"><label>Aylık Gider (Götürü)</label><input type="number" value={form.expense} onChange={e => setForm({...form, expense: e.target.value})} /></div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Emlak Vergisi (Yıllık)</label>
+            <input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} />
+          </div>
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '20px' }}>
+             <input type="checkbox" checked={form.taxPaid} onChange={e => setForm({...form, taxPaid: e.target.checked})} id="taxPaid" style={{ width: '20px', height: '20px' }} />
+             <label htmlFor="taxPaid" style={{ margin: 0 }}>Vergi Ödendi</label>
+          </div>
+        </div>
+      </div>
+
+      <div className="form-section-premium mt-24">
+        <label>Durum</label>
+        <div className="user-select-grid">
+           <button type="button" className={form.status === 'Mülk Sahibi' ? 'active' : ''} onClick={() => setForm({...form, status: 'Mülk Sahibi'})}>Mülk Sahibi</button>
+           <button type="button" className={form.status === 'Kiracı Var' ? 'active' : ''} onClick={() => setForm({...form, status: 'Kiracı Var'})}>Kiracı Var</button>
+        </div>
+      </div>
+
+      <div className="modal-actions-premium mt-32">
+        {!data.isNew && (
+          <button type="button" className="delete-btn-premium" onClick={() => { if(window.confirm('Emin misiniz?')) { deleteTasinmaz(data.id); onClose(); } }}>
+            <Trash2 size={18} /> Sil
+          </button>
+        )}
+        <button type="submit" className="submit-btn-premium" style={{ background: 'var(--ev)' }}>
+          {data.isNew ? 'Taşınmazı Ekle' : 'Değişiklikleri Kaydet'}
+        </button>
+      </div>
+    </form>
   );
 }

@@ -563,3 +563,199 @@
 }
 
 .tc-btn-secondary:active { background: #f8fafc; }
+
+/* --- REAL ESTATE PORTFOLIO STYLES --- */
+.tasinmaz-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.tasinmaz-card-premium {
+  padding: 20px;
+  border-radius: 28px;
+  border: 1px solid var(--brd);
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.tc-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+.tc-icon-box {
+  width: 48px;
+  height: 48px;
+  background: #f1f5f9;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.tc-main-info {
+  flex: 1;
+}
+
+.tc-main-info strong {
+  display: block;
+  font-size: 16px;
+  color: var(--txt);
+  margin-bottom: 4px;
+  font-weight: 900;
+}
+
+.tc-technical {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tc-technical small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--txt-light);
+  font-weight: 700;
+}
+
+.tc-status-pill {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.tc-financial-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 20px;
+}
+
+.tc-fin-item span {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--txt-light);
+  margin-bottom: 2px;
+}
+
+.tc-fin-item strong {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--txt);
+}
+
+.tc-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.tc-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tc-detail-item small {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--txt-light);
+  text-transform: uppercase;
+}
+
+.tc-detail-item span {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--txt);
+}
+
+.tc-detail-item .green { color: #10b981; }
+.tc-detail-item .red { color: #ef4444; }
+
+.tc-actions-v2 {
+  margin-top: 5px;
+}
+
+.tc-manage-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--brd);
+  background: #f1f5f9;
+  color: var(--txt);
+  font-size: 12px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tc-manage-btn:active {
+  background: var(--brd);
+  transform: scale(0.98);
+}
+
+.portfolio-total {
+  padding: 24px;
+  border-radius: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  border: 1px solid var(--brd);
+}
+
+.pt-info span {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--txt-light);
+  margin-bottom: 4px;
+}
+
+.pt-info strong {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--ev);
+}
+
+/* Modal Form Specifics */
+.form-section-premium h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--txt);
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.delete-btn-premium {
+  padding: 14px 20px;
+  border-radius: 16px;
+  border: 1.5px solid #fee2e2;
+  background: #fffafa;
+  color: #ef4444;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
