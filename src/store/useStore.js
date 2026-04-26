@@ -2261,7 +2261,13 @@ const useStore = create(
         if (merged.alisveris) {
           if (!Array.isArray(merged.alisveris.wishlist)) merged.alisveris.wishlist = [];
         }
-        // Fix others
+        // Fix Kasa
+        if (merged.kasa) {
+          if (!Array.isArray(merged.kasa.tasinmazlar)) merged.kasa.tasinmazlar = [];
+          if (merged.kasa.tasinmazlar.length === 0 && initialState.kasa.tasinmazlar.length > 0) {
+            merged.kasa.tasinmazlar = initialState.kasa.tasinmazlar;
+          }
+        }
         if (merged.ev && !Array.isArray(merged.ev.faturalar)) merged.ev.faturalar = [];
         if (merged.saglik && !Array.isArray(merged.saglik.randevular)) merged.saglik.randevular = [];
         if (merged.tatil && !Array.isArray(merged.tatil.trips)) merged.tatil.trips = [];
