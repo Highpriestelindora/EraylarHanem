@@ -1573,8 +1573,6 @@ function WeatherWidget({ city, country, startDate }) {
       setLoading(true);
       try {
         const normalize = (text) => text?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase();
-        
-        // Turkish to International City Name Map
         const trToEn = {
           'viyana': 'vienna', 'roma': 'rome', 'londra': 'london', 'paris': 'paris',
           'marsilya': 'marseille', 'munih': 'munich', 'atina': 'athens',
@@ -1597,38 +1595,44 @@ function WeatherWidget({ city, country, startDate }) {
           const daysDiff = (start - today) / 864e5;
           const isHistorical = daysDiff > 14;
           
-          let weatherUrl;
+          let success = false;
+
           if (isHistorical) {
-            const lastYear = new Date(start);
-            lastYear.setFullYear(lastYear.getFullYear() - 1);
-            const startArchive = lastYear.toISOString().split('T')[0];
-            const endArchive = new Date(lastYear.setDate(lastYear.getDate() + 7)).toISOString().split('T')[0];
-            weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=weathercode,temperature_2m_max&timezone=auto`;
-          } else {
-            weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=auto`;
+            try {
+              const lastYear = new Date(start);
+              lastYear.setFullYear(lastYear.getFullYear() - 1);
+              const startArchive = lastYear.toISOString().split('T')[0];
+              const endArchive = new Date(lastYear.getTime() + 7 * 864e5).toISOString().split('T')[0];
+              
+              const archiveRes = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=temperature_2m_max&timezone=auto`);
+              const archData = await archiveRes.json();
+              
+              if (archData.daily?.temperature_2m_max) {
+                const temps = archData.daily.temperature_2m_max.filter(t => t != null);
+                if (temps.length > 0) {
+                  const avg = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
+                  const monthName = start.toLocaleString('tr-TR', { month: 'long' });
+                  setData({ temp: avg, isSun: true, label: `${monthName} Ort.` });
+                  success = true;
+                }
+              }
+            } catch (e) { console.warn('Archive fetch failed, falling back...'); }
           }
 
-          const weatherRes = await fetch(weatherUrl);
-          const weatherData = await weatherRes.json();
-          console.log('🌍 Weather Data Received:', { isHistorical, weatherData });
-          
-          if (isHistorical && weatherData.daily?.temperature_2m_max) {
-             const temps = weatherData.daily.temperature_2m_max.filter(t => t !== null && t !== undefined);
-             if (temps.length > 0) {
-               const avg = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
-               const month = start.toLocaleString('tr-TR', { month: 'long' });
-               setData({ temp: avg, isSun: true, label: `${month} Ort.` });
-             }
-          } else if (weatherData.current_weather) {
-            setData({ 
-              temp: Math.round(weatherData.current_weather.temperature),
-              isSun: weatherData.current_weather.weathercode < 3,
-              label: 'Tahmin'
-            });
+          if (!success) {
+            const forecastRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`);
+            const forecastData = await forecastRes.json();
+            if (forecastData.current_weather) {
+              setData({ 
+                temp: Math.round(forecastData.current_weather.temperature),
+                isSun: forecastData.current_weather.weathercode < 3,
+                label: 'Güncel'
+              });
+            }
           }
         }
       } catch (err) {
-        console.error('Helper weather fetch error:', err);
+        console.error('Weather widget error:', err);
       } finally {
         setLoading(false);
       }
