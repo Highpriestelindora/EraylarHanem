@@ -12,7 +12,9 @@ import {
   INITIAL_TRIPS,
   INITIAL_VEHICLE,
   INITIAL_SOCIAL,
-  INITIAL_WEIGHTS
+  INITIAL_WEIGHTS,
+  INITIAL_SOCIAL_POOL,
+  SOCIAL_ROUTINES
 } from '../constants/data';
 import { notificationService } from '../lib/notificationService';
 import toast from 'react-hot-toast';
@@ -147,13 +149,10 @@ const DEFAULT_STATE = {
     rutinler: [
       { id: 'r1', aktivite: 'Spor Salonu', kisi: 'Görkem', vakit: 'sabah', gunler: ['Pzt', 'Çar', 'Cum'], saati: '08:00', ucret: 0 },
       { id: 'r2', aktivite: 'Haftalık Temizlik', kisi: 'İkisi', vakit: 'öğle', gunler: ['Cmt'], saati: '11:00', ucret: 0 }
-    ],      
-    havuz: [
-      { id: 'f1', baslik: 'Boğazda Uzun Yürüyüş', emoji: '🚶‍♂️', tur: 'disari', siklik: 5, kisi: 'Ortak' },
-      { id: 'f2', baslik: 'Yeni Bir Puzzle Yapalım', emoji: '🧩', tur: 'evde', siklik: 3, kisi: 'Esra' },
-      { id: 'f3', baslik: 'Atatürk Orman Çiftliği Gezisi', emoji: '🌳', tur: 'disari', siklik: 5, kisi: 'Ortak' },
-      { id: 'f4', baslik: 'Mutfak Dolaplarını Düzenle', emoji: '🧹', tur: 'evde', siklik: 3, kisi: 'Görkem' }
     ],
+    havuz: [], // User custom ideas
+    poolItems: INITIAL_SOCIAL_POOL || [], // The 50 activities
+    routinePackages: SOCIAL_ROUTINES || [], // The 10 routines
     tab: 'hafta'
   },
   aracim: {
@@ -1607,15 +1606,46 @@ const useStore = create(
       addSocialPoolItem: (item) => {
         const state = get();
         const newItem = { id: Date.now(), ...item };
-        const currentPool = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
-        set({ sosyal: { ...state.sosyal, havuz: [newItem, ...currentPool] } });
+        const currentPool = Array.isArray(state.sosyal.poolItems) ? state.sosyal.poolItems : [];
+        set({ sosyal: { ...state.sosyal, poolItems: [newItem, ...currentPool] } });
+        get().saveToSupabase();
+      },
+
+      updateSocialPoolItem: (id, updates) => {
+        const state = get();
+        const pool = Array.isArray(state.sosyal.poolItems) ? state.sosyal.poolItems : [];
+        const newPool = pool.map(item => item.id === id ? { ...item, ...updates } : item);
+        set({ sosyal: { ...state.sosyal, poolItems: newPool } });
         get().saveToSupabase();
       },
 
       deleteSocialPoolItem: (id) => {
         const state = get();
-        const currentPool = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
-        set({ sosyal: { ...state.sosyal, havuz: currentPool.filter(i => i.id !== id) } });
+        const currentPool = Array.isArray(state.sosyal.poolItems) ? state.sosyal.poolItems : [];
+        set({ sosyal: { ...state.sosyal, poolItems: currentPool.filter(i => i.id !== id) } });
+        get().saveToSupabase();
+      },
+
+      addSocialRoutinePackage: (pkg) => {
+        const state = get();
+        const newPkg = { id: 'rp-' + Date.now(), ...pkg };
+        const currentPkgs = Array.isArray(state.sosyal.routinePackages) ? state.sosyal.routinePackages : [];
+        set({ sosyal: { ...state.sosyal, routinePackages: [newPkg, ...currentPkgs] } });
+        get().saveToSupabase();
+      },
+
+      updateSocialRoutinePackage: (id, updates) => {
+        const state = get();
+        const pkgs = Array.isArray(state.sosyal.routinePackages) ? state.sosyal.routinePackages : [];
+        const newPkgs = pkgs.map(p => p.id === id ? { ...p, ...updates } : p);
+        set({ sosyal: { ...state.sosyal, routinePackages: newPkgs } });
+        get().saveToSupabase();
+      },
+
+      deleteSocialRoutinePackage: (id) => {
+        const state = get();
+        const currentPkgs = Array.isArray(state.sosyal.routinePackages) ? state.sosyal.routinePackages : [];
+        set({ sosyal: { ...state.sosyal, routinePackages: currentPkgs.filter(p => p.id !== id) } });
         get().saveToSupabase();
       },
 
@@ -1625,7 +1655,7 @@ const useStore = create(
         
         routine.items.forEach((itemTitle, index) => {
           // Find activity info from pool or use defaults
-          const poolItem = (state.sosyal.havuz || []).find(h => h.baslik === itemTitle) || 
+          const poolItem = (state.sosyal.poolItems || []).find(h => h.title === itemTitle) || 
                            (INITIAL_SOCIAL_POOL || []).find(p => p.title === itemTitle);
           
           addSocialActivity({

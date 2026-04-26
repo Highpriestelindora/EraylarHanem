@@ -1225,20 +1225,48 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
 }
 
 function RutinTab({ sosyal, onAdd }) {
-  const { applySocialRoutine } = useStore();
-  const [selectedRoutine, setSelectedRoutine] = useState(null);
+  const routines = sosyal.routinePackages || [];
+  const { applySocialRoutine, addSocialRoutinePackage, updateSocialRoutinePackage, deleteSocialRoutinePackage } = useStore();
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [managingPkg, setManagingPkg] = useState(null); // { mode: 'add' | 'edit', pkg: null | object }
 
   const handleApply = (routine) => {
     applySocialRoutine(routine, startDate);
     toast.success(`${routine.name} plana eklendi! 📅`);
   };
 
+  const handleSavePkg = (pkgData) => {
+    if (managingPkg.mode === 'edit') {
+      updateSocialRoutinePackage(managingPkg.pkg.id, pkgData);
+      toast.success('Rutin paketi güncellendi! 🔁');
+    } else {
+      addSocialRoutinePackage(pkgData);
+      toast.success('Yeni rutin paketi eklendi! 🔁');
+    }
+    setManagingPkg(null);
+  };
+
+  const handleDeletePkg = (e, id) => {
+    e.stopPropagation();
+    if (window.confirm('Bu rutin paketini silmek istediğine emin misin?')) {
+      deleteSocialRoutinePackage(id);
+      toast.success('Rutin paketi silindi.');
+    }
+  };
+
   return (
     <div className="tab-pane animate-fadeIn">
-      <div className="section-header" style={{ padding: '0 20px', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>🔁 Hazır Rutinler</h3>
-        <p style={{ fontSize: '12px', opacity: 0.6 }}>Gün boyu sürecek hazır aktivite paketleri.</p>
+      <div className="section-header" style={{ padding: '0 20px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)', margin: 0 }}>🔁 Hazır Rutinler</h3>
+          <p style={{ fontSize: '12px', opacity: 0.6, margin: 0 }}>Gün boyu sürecek hazır aktivite paketleri.</p>
+        </div>
+        <button 
+          onClick={() => setManagingPkg({ mode: 'add', pkg: null })}
+          style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '5px' }}
+        >
+          <Plus size={14} /> YENİ
+        </button>
       </div>
 
       <div className="routine-date-selector" style={{ padding: '0 20px', marginBottom: '20px' }}>
@@ -1254,7 +1282,7 @@ function RutinTab({ sosyal, onAdd }) {
       </div>
 
       <div className="routines-grid" style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '15px', paddingBottom: '100px' }}>
-        {SOCIAL_ROUTINES.map(r => (
+        {routines.map(r => (
           <div key={r.id} className="routine-combo-card glass" style={{ padding: '20px', borderRadius: '24px', border: '1px solid var(--brd)', position: 'relative', overflow: 'hidden' }}>
             <div className="rc-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1264,16 +1292,30 @@ function RutinTab({ sosyal, onAdd }) {
                   <span style={{ fontSize: '12px', color: 'var(--social)', fontWeight: '800' }}>💰 {r.cost}</span>
                 </div>
               </div>
-              <button 
-                className="apply-routine-btn"
-                onClick={() => handleApply(r)}
-                style={{ 
-                  padding: '8px 16px', borderRadius: '12px', border: 'none', 
-                  background: 'var(--social)', color: 'white', fontSize: '11px', fontWeight: '800'
-                }}
-              >
-                UYGULA
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  onClick={() => setManagingPkg({ mode: 'edit', pkg: r })}
+                  style={{ background: 'var(--bg)', color: 'var(--txt-light)', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Activity size={16} />
+                </button>
+                <button 
+                  onClick={(e) => handleDeletePkg(e, r.id)}
+                  style={{ background: '#fff5f5', color: '#f87171', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Trash2 size={16} />
+                </button>
+                <button 
+                  className="apply-routine-btn"
+                  onClick={() => handleApply(r)}
+                  style={{ 
+                    padding: '8px 16px', borderRadius: '12px', border: 'none', 
+                    background: 'var(--social)', color: 'white', fontSize: '11px', fontWeight: '800'
+                  }}
+                >
+                  UYGULA
+                </button>
+              </div>
             </div>
             
             <div className="rc-items" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1287,30 +1329,65 @@ function RutinTab({ sosyal, onAdd }) {
           </div>
         ))}
       </div>
+
+      <ActionSheet
+        isOpen={!!managingPkg}
+        onClose={() => setManagingPkg(null)}
+        title={managingPkg?.mode === 'edit' ? '📝 Rutin Paketini Düzenle' : '🔁 Yeni Rutin Paketi Ekle'}
+      >
+        {managingPkg && (
+          <ManageRoutinePackageModal 
+            pkg={managingPkg.pkg} 
+            onClose={() => setManagingPkg(null)} 
+            onSave={handleSavePkg} 
+          />
+        )}
+      </ActionSheet>
     </div>
   );
 }
 
 
 function HavuzTab({ sosyal, onAdd }) {
-  const userIdeas = sosyal.havuz || [];
-  const { deleteSocialPoolItem } = useStore();
+  const pool = sosyal.poolItems || [];
+  const { deleteSocialPoolItem, addSocialPoolItem, updateSocialPoolItem } = useStore();
   const [planningIdea, setPlanningIdea] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Hepsi');
+  const [managingItem, setManagingItem] = useState(null); // { mode: 'add' | 'edit', item: null | object }
 
-  const categories = ['Hepsi', ...new Set(INITIAL_SOCIAL_POOL.map(p => p.category))];
+  const categories = ['Hepsi', ...new Set(pool.map(p => p.category))];
 
   const filteredPool = selectedCategory === 'Hepsi' 
-    ? INITIAL_SOCIAL_POOL 
-    : INITIAL_SOCIAL_POOL.filter(p => p.category === selectedCategory);
+    ? pool 
+    : pool.filter(p => p.category === selectedCategory);
 
   const startPlanning = (idea) => {
     setPlanningIdea({
       baslik: idea.title || idea.baslik,
       emoji: idea.icon || idea.emoji,
       harcama: idea.cost?.replace(/[^0-9-]/g, '') || '',
-      tur: idea.category === 'Park & Doğa' || idea.category === 'Sahil & Açık Alan' ? 'disari' : 'disari'
+      tur: idea.category === 'Park & Doğa' || idea.category === 'Sahil & Açık Alan' ? 'disari' : 'disari',
+      masterCategory: idea.category || 'Genel'
     });
+  };
+
+  const handleSaveItem = (itemData) => {
+    if (managingItem.mode === 'edit') {
+      updateSocialPoolItem(managingItem.item.id, itemData);
+      toast.success('Aktivite güncellendi! ✨');
+    } else {
+      addSocialPoolItem(itemData);
+      toast.success('Yeni aktivite eklendi! ✨');
+    }
+    setManagingItem(null);
+  };
+
+  const handleDeleteItem = (e, id) => {
+    e.stopPropagation();
+    if (window.confirm('Bu aktiviteyi havuzdan silmek istediğine emin misin?')) {
+      deleteSocialPoolItem(id);
+      toast.success('Aktivite silindi.');
+    }
   };
 
   const finishPlanning = (details) => {
@@ -1325,6 +1402,16 @@ function HavuzTab({ sosyal, onAdd }) {
 
   return (
     <div className="tab-pane animate-fadeIn">
+      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: '15px' }}>
+        <p style={{ fontSize: '12px', opacity: 0.6, margin: 0 }}>Fikir havuzundan seçim yap veya yeni ekle.</p>
+        <button 
+          onClick={() => setManagingItem({ mode: 'add', item: null })}
+          style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '5px' }}
+        >
+          <Plus size={14} /> YENİ EKLE
+        </button>
+      </div>
+
       <div className="category-filter-scroll" style={{ padding: '0 20px', marginBottom: '20px', display: 'flex', gap: '10px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
         {categories.map(cat => (
           <button 
@@ -1343,20 +1430,34 @@ function HavuzTab({ sosyal, onAdd }) {
         ))}
       </div>
 
-      <div className="pool-grid" style={{ padding: '0 20px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+      <div className="pool-grid" style={{ padding: '0 20px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', paddingBottom: '100px' }}>
         {filteredPool.map(item => (
-          <div key={item.id} className="pool-card glass" style={{ padding: '15px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div key={item.id} className="pool-card glass" style={{ padding: '15px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
             <div className="pc-top" style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '24px' }}>{item.icon}</span>
-              <button 
-                onClick={() => startPlanning(item)}
-                style={{ background: 'var(--social-light)', color: 'var(--social)', border: 'none', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Plus size={16} />
-              </button>
+              <div style={{ display: 'flex', gap: '5px' }}>
+                <button 
+                  onClick={() => setManagingItem({ mode: 'edit', item })}
+                  style={{ background: 'var(--bg)', color: 'var(--txt-light)', border: 'none', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Activity size={12} />
+                </button>
+                <button 
+                  onClick={(e) => handleDeleteItem(e, item.id)}
+                  style={{ background: '#fff5f5', color: '#f87171', border: 'none', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Trash2 size={12} />
+                </button>
+                <button 
+                  onClick={() => startPlanning(item)}
+                  style={{ background: 'var(--social)', color: 'white', border: 'none', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
             </div>
             <div className="pc-info">
-              <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px' }}>{item.title}</strong>
+              <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px', lineHeight: '1.2' }}>{item.title}</strong>
               <div style={{ fontSize: '10px', opacity: 0.6, display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span>⏱️ {item.duration}</span>
                 <span>💰 {item.cost}</span>
@@ -1365,27 +1466,6 @@ function HavuzTab({ sosyal, onAdd }) {
           </div>
         ))}
       </div>
-
-      {userIdeas.length > 0 && (
-        <div className="user-ideas-section" style={{ marginTop: '30px', padding: '0 20px' }}>
-          <h4 style={{ fontSize: '14px', fontWeight: '900', marginBottom: '15px', opacity: 0.7 }}>💡 Sizin Fikirleriniz</h4>
-          <div className="hybrid-todo-list">
-            {userIdeas.map(i => (
-              <div key={i.id} className="idea-list-item glass" style={{ marginBottom: '12px' }}>
-                <span className="ili-emoji">{i.emoji || '💡'}</span>
-                <div className="ili-info">
-                  <strong>{i.baslik}</strong>
-                  <div style={{ fontSize: '11px', opacity: 0.6 }}>{i.kisi} · {i.tur}</div>
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="ili-plan-btn" onClick={() => startPlanning(i)}>PLANLA</button>
-                  <button onClick={() => deleteSocialPoolItem(i.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444' }}><Trash2 size={16} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       <ActionSheet
         isOpen={!!planningIdea}
@@ -1397,6 +1477,20 @@ function HavuzTab({ sosyal, onAdd }) {
             idea={planningIdea} 
             onClose={() => setPlanningIdea(null)} 
             onConfirm={finishPlanning} 
+          />
+        )}
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={!!managingItem}
+        onClose={() => setManagingItem(null)}
+        title={managingItem?.mode === 'edit' ? '📝 Aktiviteyi Düzenle' : '✨ Yeni Aktivite Ekle'}
+      >
+        {managingItem && (
+          <ManagePoolItemModal 
+            item={managingItem.item} 
+            onClose={() => setManagingItem(null)} 
+            onSave={handleSaveItem} 
           />
         )}
       </ActionSheet>
@@ -1566,5 +1660,88 @@ function PlanIdeaModal({ idea, onClose, onConfirm }) {
       </button>
     </div>
   );
+function ManagePoolItemModal({ item, onClose, onSave }) {
+  const [formData, setFormData] = useState(item || { title: '', duration: '1 saat', cost: '0 TL', category: 'Genel', icon: '✨' });
+  const categories = ['Sahil & Açık Alan', 'Park & Doğa', 'Yakın Lokasyon Keşif', 'Sosyal & Eğlence', 'Deneyim & Kaçamak', 'Genel'];
+
+  return (
+    <div className="modal-form">
+      <div className="form-group">
+        <label>Aktivite Başlığı</label>
+        <input type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} placeholder="Örn: Boğaz Turu" required />
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Süre</label>
+          <input type="text" value={formData.duration} onChange={e => setFormData({...formData, duration: e.target.value})} placeholder="Örn: 2 saat" />
+        </div>
+        <div className="form-group">
+          <label>Maliyet</label>
+          <input type="text" value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value})} placeholder="Örn: 100 TL" />
+        </div>
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Kategori</label>
+          <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Emoji</label>
+          <input type="text" value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})} placeholder="✨" />
+        </div>
+      </div>
+      <button className="submit-btn social" onClick={() => onSave(formData)}>
+        {item ? 'Güncelle' : 'Ekle'}
+      </button>
+    </div>
+  );
 }
 
+function ManageRoutinePackageModal({ pkg, onClose, onSave }) {
+  const [formData, setFormData] = useState(pkg || { name: '', items: ['', '', ''], cost: '0 TL', icon: '📅' });
+
+  const updateItem = (idx, val) => {
+    const newItems = [...formData.items];
+    newItems[idx] = val;
+    setFormData({...formData, items: newItems});
+  };
+
+  return (
+    <div className="modal-form">
+      <div className="form-group">
+        <label>Rutin Adı</label>
+        <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Örn: Pazar Keyfi" required />
+      </div>
+      <div className="form-row">
+        <div className="form-group">
+          <label>Tahmini Maliyet</label>
+          <input type="text" value={formData.cost} onChange={e => setFormData({...formData, cost: e.target.value})} placeholder="Örn: 200 TL" />
+        </div>
+        <div className="form-group">
+          <label>Emoji</label>
+          <input type="text" value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})} placeholder="📅" />
+        </div>
+      </div>
+      <div className="form-group">
+        <label>Aktiviteler (Sabah, Öğle, Akşam)</label>
+        {formData.items.map((it, idx) => (
+          <input 
+            key={idx}
+            type="text" 
+            value={it} 
+            onChange={e => updateItem(idx, e.target.value)} 
+            placeholder={idx === 0 ? 'Sabah aktivitesi' : idx === 1 ? 'Öğle aktivitesi' : 'Akşam aktivitesi'}
+            style={{ marginBottom: '8px' }}
+          />
+        ))}
+      </div>
+      <button className="submit-btn social" onClick={() => onSave(formData)}>
+        {pkg ? 'Güncelle' : 'Ekle'}
+      </button>
+    </div>
+  );
+}
+
+export default Sosyal;
