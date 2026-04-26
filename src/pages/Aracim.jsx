@@ -26,7 +26,8 @@ export default function Aracim() {
     updateKM, addFuelLog, addServiceRecord,
     addVehicle, updateVehicle, deleteVehicle,
     addWashRecord, startParking, finishParking,
-    deleteServiceRecord, deleteDocument, addDocument
+    deleteServiceRecord, deleteDocument, addDocument,
+    updatePartMaintenance
   } = useStore();
   
   const vehicle = useMemo(() => 
@@ -44,6 +45,8 @@ export default function Aracim() {
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [showDocForm, setShowDocForm] = useState(false);
   const [editingDoc, setEditingDoc] = useState(null);
+  const [showPartModal, setShowPartForm] = useState(false);
+  const [selectedPart, setSelectedPart] = useState(null);
 
   const { 
     km, parts, fuelLogs, services, documents, 
@@ -53,9 +56,9 @@ export default function Aracim() {
   // AI Insights
   const aiNote = useMemo(() => {
     const lastFuel = fuelLogs[0];
-    if (lastFuel?.consumption > 8.5) return "Son yakıt alımında tüketim normalin biraz üzerinde. Şehir içi trafik mi? 🤔";
-    return "Tiguan formunda! Yakıt verimliliği harika seviyelerde. 🌟";
-  }, [fuelLogs]);
+    if (lastFuel?.consumption > 8.5) return `Son yakıt alımında tüketim normalin biraz üzerinde. Şehir içi trafik mi? 🤔`;
+    return `${vehicle.model} formunda! Yakıt verimliliği harika seviyelerde. 🌟`;
+  }, [fuelLogs, vehicle.model]);
 
   const tabs = [
     { id: 'panel', label: 'Panel', emoji: '🏎️' },
@@ -121,15 +124,15 @@ export default function Aracim() {
         {activeTab === 'panel' && (
           <div className="panel-view animate-fadeIn">
             {/* KM Widget */}
-            <div className="km-widget-premium glass" onClick={() => setShowUpdateKM(true)}>
+            <div className="km-widget-premium glass" onClick={() => setShowUpdateKM(true)} style={{ marginTop: '0', padding: '16px 20px' }}>
               <div className="kmw-main">
-                <Gauge size={40} className="kmw-icon" />
+                <Gauge size={32} className="kmw-icon" />
                 <div className="kmw-text">
                   <small>GÜNCEL KİLOMETRE</small>
-                  <h2>{km?.toLocaleString('tr-TR')} <span>KM</span></h2>
+                  <h2 style={{ fontSize: '24px' }}>{km?.toLocaleString('tr-TR')} <span>KM</span></h2>
                 </div>
               </div>
-              <ArrowUpRight size={20} className="kmw-arrow" />
+              <ArrowUpRight size={18} className="kmw-arrow" />
             </div>
 
             {/* Analog-Style Gauges Grid */}
@@ -140,7 +143,7 @@ export default function Aracim() {
                 const color = perc > 85 ? '#f87171' : perc > 60 ? '#f59e0b' : '#10b981';
                 
                 return (
-                  <div key={part.id} className="gauge-card glass">
+                  <div key={part.id} className="gauge-card glass animate-fadeIn" onClick={() => { setSelectedPart(part); setShowPartForm(true); }} style={{ cursor: 'pointer' }}>
                     <div className="gauge-box">
                        <svg viewBox="0 0 36 36" className="circular-chart">
                          <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -177,15 +180,19 @@ export default function Aracim() {
             </div>
 
             {/* Emergency Support */}
-            <div className="emergency-support mt-24 glass">
-               <div className="es-header">
-                 <AlertCircle size={18} color="#f87171" />
-                 <span>ACİL DESTEK</span>
-               </div>
-               <div className="es-buttons">
-                 <button className="es-btn"><Phone size={14} /> Yol Yardım</button>
-                 <button className="es-btn"><Shield size={14} /> Sigorta</button>
-               </div>
+            <div className="emergency-support mt-24" style={{ padding: '12px' }}>
+              <div className="es-header" style={{ marginBottom: '8px' }}>
+                <AlertCircle size={16} color="#b91c1c" />
+                <span style={{ fontSize: '10px' }}>ACİL DESTEK HATTI</span>
+              </div>
+              <div className="es-buttons" style={{ gap: '8px' }}>
+                <a href="tel:08503999999" className="es-btn" style={{ padding: '8px', fontSize: '11px' }}>
+                  <Phone size={14} /> Yol Yardım
+                </a>
+                <a href="tel:02123346262" className="es-btn" style={{ padding: '8px', fontSize: '11px' }}>
+                  <Shield size={14} /> Sigorta
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -360,6 +367,14 @@ export default function Aracim() {
           doc={editingDoc}
           onSave={(data) => addDocument(vehicle.id, data)}
           onClose={() => setShowDocForm(false)}
+        />
+      )}
+
+      {showPartModal && (
+        <PartMaintenanceModal 
+          part={selectedPart}
+          onSave={(data) => updatePartMaintenance(vehicle.id, selectedPart.id, data)}
+          onClose={() => setShowPartForm(false)}
         />
       )}
 

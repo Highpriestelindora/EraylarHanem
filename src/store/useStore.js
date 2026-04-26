@@ -2066,6 +2066,21 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      updatePartMaintenance: (vehicleId, partId, { lastKM, lastDate }) => {
+        const state = get();
+        const updatedGaraj = state.garaj.map(v => {
+          if (v.id === vehicleId) {
+            const updatedParts = v.parts.map(p => 
+              p.id === partId ? { ...p, lastKM, lastDate } : p
+            );
+            return { ...v, parts: updatedParts };
+          }
+          return v;
+        });
+        set({ garaj: updatedGaraj });
+        get().saveToSupabase();
+      },
+
       // ── Pet Actions ────────────────────────────────────
       addPetVaccine: (petId, vaccine) => {
         const state = get();
