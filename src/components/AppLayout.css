@@ -1,12 +1,9 @@
 .app-container {
-  position: fixed;
-  inset: 0;
-  width: 100% !important;
-  height: 100% !important;
-  height: 100dvh !important;
   display: flex;
   flex-direction: column;
-  background: white;
+  height: 100%;
+  min-height: 100dvh;
+  background: #F8FAFC;
   /* Softer, more professional background */
   position: relative;
 }
