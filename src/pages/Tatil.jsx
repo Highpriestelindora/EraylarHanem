@@ -332,6 +332,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
   const { addExpense, tatil, setModuleData, deleteTrip } = useStore();
   const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('valiz');
 
   const handleUpdateTrip = (updates) => {
@@ -353,9 +354,14 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
         <div className="hero-content">
           <Plane className="hero-plane-icon" size={28} />
           <div className="hero-text">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="hero-title-row">
               <h2>{trip.title || trip.city}</h2>
-              {trip.status === 'kesin' && <span className="hero-kesin-badge">Kesinleşti</span>}
+              {trip.status === 'kesin' && (
+                <div className="sleek-confirmed-tag">
+                  <Check size={10} strokeWidth={4} />
+                  <span>KESİNLEŞTİ</span>
+                </div>
+              )}
             </div>
             <p>{trip.city || 'Belirtilmedi'}</p>
           </div>
@@ -398,9 +404,44 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
           </button>
         )}
         {trip.status === 'kesin' && (
-           <div className="archive-badge-full">Bu tatil başarıyla tamamlandı. ❤️</div>
+           <button 
+             className="archive-trigger-btn animate-bounce-slow"
+             onClick={() => setShowReview(true)}
+           >
+             🏁 Tatili Başarıyla Tamamla & Değerlendir ❤️
+           </button>
         )}
       </div>
+
+      <ActionSheet
+        isOpen={showReview}
+        onClose={() => setShowReview(false)}
+        title="🌟 Tatil Değerlendirmesi"
+      >
+        <TripReviewPanel 
+            trip={trip} 
+            onComplete={(finalData) => {
+                const updatedTrips = tatil.trips.map(t => t.id === trip.id ? { ...t, ...finalData, status: 'tamamlandi' } : t);
+                setModuleData('tatil', { ...tatil, trips: updatedTrips });
+                
+                // Finans Entegrasyonu
+                if (finalData.finalPrice) {
+                    addExpense({
+                        id: Date.now().toString(),
+                        title: `✈️ Tatil Kapanış: ${trip.city}`,
+                        amount: finalData.finalPrice,
+                        category: 'tatil',
+                        date: new Date().toISOString().split('T')[0],
+                        payer: 'ortak'
+                    });
+                }
+                
+                setShowReview(false);
+                setSelectedTrip(null);
+                toast.success('Tatil hatıralara eklendi ve harcama finansa işlendi! 📖💸');
+            }}
+        />
+      </ActionSheet>
 
       {/* Sub Navigation */}
       <div className="sub-tab-nav-cute">

@@ -1993,3 +1993,103 @@
   border-color: #10b981;
 }
 
+
+/* --- SLEEK CONFIRMED TAG --- */
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sleek-confirmed-tag {
+  background: #10b981;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+  animation: float-mini 3s ease-in-out infinite;
+}
+
+@keyframes float-mini {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* --- TRIP REVIEW PANEL --- */
+.archive-trigger-btn {
+  width: 100%;
+  background: white;
+  border: 1px dashed #cbd5e1;
+  color: #64748b;
+  padding: 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.archive-trigger-btn:hover {
+  border-color: var(--tatil);
+  color: var(--tatil);
+  background: #fdf2ff;
+}
+
+.trip-review-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding-bottom: 20px;
+}
+
+.review-user-section {
+  padding: 15px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-user-section.gorkem { border-left: 4px solid #3b82f6; }
+.review-user-section.esra { border-left: 4px solid #ec4899; }
+
+.review-user-section h4 { margin: 0; font-size: 14px; color: #1e293b; }
+
+.star-rating-box label { font-size: 11px; color: #64748b; display: block; margin-bottom: 5px; }
+
+.stars-grid { display: flex; gap: 4px; }
+
+.star-btn {
+  background: none; border: none; padding: 0; color: #e2e8f0; cursor: pointer; transition: all 0.2s;
+}
+
+.star-btn.active { color: #f59e0b; }
+
+.review-user-section textarea {
+  width: 100%; min-height: 60px; background: rgba(255,255,255,0.5); border: 1px solid #f1f5f9; 
+  border-radius: 12px; padding: 10px; font-size: 13px; outline: none; resize: none;
+}
+
+.review-finance-section { padding: 15px; border-radius: 20px; border-left: 4px solid #10b981; }
+
+.price-input-wrapper { display: flex; align-items: center; gap: 10px; background: white; padding: 10px 15px; border-radius: 12px; margin-top: 5px; }
+
+.price-input-wrapper input { border: none; outline: none; font-size: 18px; font-weight: 800; width: 100%; color: #10b981; }
+
+.finalize-trip-btn {
+  background: linear-gradient(135deg, #2e1065 0%, #4c1d95 100%);
+  color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 20px rgba(46, 16, 101, 0.2);
+}
+
