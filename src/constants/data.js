@@ -3436,29 +3436,51 @@ export const INITIAL_WEIGHTS = {
 
 export const INITIAL_TRIPS = [
   {
+    id: 't_vienna',
+    title: 'Viyana Kaçamağı',
+    country: 'Avusturya',
+    city: 'Viyana',
+    startDate: '2026-05-10',
+    endDate: '2026-05-14',
+    type: 'yurtdisi',
+    who: 'ikisi',
+    schengen: true,
+    status: 'planlandi',
+    notes: 'Pegasus ile Viyana kaçamağı! 🇦🇹',
+    transportation: { 
+      departure: { flightNo: 'PC903', airline: 'Pegasus', pnr: '1TG17K', time: '10:15 (SAW)', status: 'Planlandı' },
+      return: { flightNo: 'PC904', airline: 'Pegasus', pnr: '1TG17K', time: '12:20 (VIE)', status: 'Planlandı' }
+    },
+    accommodation: { 
+      hotel: 'Austria Trend Hotel Europa Wien', 
+      address: 'Kärntner Str. 18, 1010 Wien', 
+      bookingId: '3824.152.941', 
+      link: 'https://www.booking.com/hotel/at/austriatrendhoteleuropa.tr.html' 
+    }
+  },
+  {
     id:'t1',title:'Marsilya',country:'Fransa',city:'Marsilya',startDate:'2023-02-03',endDate:'2023-02-07',type:'yurtdisi',who:'ikisi',schengen:true,status:'tamamlandi',notes:'İlk yurt dışı gezimiz ❤️',
-    hotels:[{name:'New Hotel Le Quai - Vieux Port',address:'Vieux Port, Marsilya, Fransa'}]
+    accommodation: { hotel: 'New Hotel Le Quai - Vieux Port', address: 'Vieux Port, Marsilya, Fransa' }
   },
   {
     id:'t2',title:'Londra',country:'İngiltere',city:'Londra',startDate:'2024-02-02',endDate:'2024-02-08',type:'yurtdisi',who:'ikisi',schengen:false,status:'tamamlandi',notes:'',
-    hotels:[{name:'AirBnb',address:'Piccadilly Circus, Londra'}]
+    accommodation: { hotel: 'AirBnb', address: 'Piccadilly Circus, Londra' }
   },
   {
     id:'t3',title:'Saraybosna & Kotor',country:'Bosna Hersek',city:'Saraybosna',startDate:'2024-09-19',endDate:'2024-09-21',type:'yurtdisi',who:'ikisi',schengen:false,status:'tamamlandi',notes:'Ucakla gidip araba kiralayip Kotora gectik.',
-    hotels:[{name:"AirBnb",address:"Bascarsı, Saraybosna"},{name:"AirBnb",address:"Old Town, Kotor, Karadağ"}],
-    car:{company:"Kiralik Arac",notes:"Saraybosnadan Kotora"}
+    accommodation: { hotel: 'AirBnb', address: 'Bascarsı, Saraybosna' }
   },
   {
     id:'t4',title:'Berlin',country:'Almanya',city:'Berlin',startDate:'2025-05-23',endDate:'2025-05-26',type:'yurtdisi',who:'ikisi',schengen:true,status:'tamamlandi',notes:'',
-    hotels:[{name:'Hotel Motel One Berlin',address:'Alexanderplatz, Berlin, Almanya'}]
+    accommodation: { hotel: 'Hotel Motel One Berlin', address: 'Alexanderplatz, Berlin, Almanya' }
   },
   {
     id:'t5',title:'Kavala & Selanik',country:'Yunanistan',city:'Kavala',startDate:'2025-10-31',endDate:'2025-11-02',type:'yurtdisi',who:'ikisi',schengen:true,status:'tamamlandi',notes:'',
-    hotels:[{name:'Hotel Galaxy',address:'Kavala, Yunanistan'},{name:'AirBnb',address:'Selanik, Yunanistan'}]
+    accommodation: { hotel: 'Hotel Galaxy', address: 'Kavala, Yunanistan' }
   },
   {
     id:'t6',title:'Sofya',country:'Bulgaristan',city:'Sofya',startDate:'2026-01-15',endDate:'2026-01-16',type:'yurtdisi',who:'ikisi',schengen:true,status:'tamamlandi',notes:'',
-    hotels:[{name:'Hotel Coop',address:'Sofya, Bulgaristan'}]
+    accommodation: { hotel: 'Hotel Coop', address: 'Sofya, Bulgaristan' }
   }
 ];
 

@@ -2270,7 +2270,36 @@ const useStore = create(
         }
         if (merged.ev && !Array.isArray(merged.ev.faturalar)) merged.ev.faturalar = [];
         if (merged.saglik && !Array.isArray(merged.saglik.randevular)) merged.saglik.randevular = [];
-        if (merged.tatil && !Array.isArray(merged.tatil.trips)) merged.tatil.trips = [];
+        if (merged.tatil) {
+          if (!Array.isArray(merged.tatil.trips)) merged.tatil.trips = [];
+          // Migration for new trip structure (departure/return)
+          merged.tatil.trips = merged.tatil.trips.map(t => {
+            const hasNewStructure = t.transportation && t.transportation.departure;
+            if (!hasNewStructure) {
+              return {
+                ...t,
+                transportation: { 
+                  departure: { flightNo: t.transportation?.flightNo || '', airline: t.transportation?.airline || '', pnr: t.transportation?.pnr || '', time: t.transportation?.time || '', status: 'Planlandı' },
+                  return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
+                }
+              };
+            }
+            return t;
+          });
+
+          // Specially update Viyana trip if it's the one from the screenshot
+          const viennaTrip = merged.tatil.trips.find(t => t.title?.includes('Viyana'));
+          if (viennaTrip && !viennaTrip.transportation?.return?.flightNo) {
+             viennaTrip.transportation.departure = { flightNo: 'PC903', airline: 'Pegasus', pnr: '1TG17K', time: '10:15 (SAW)', status: 'Planlandı' };
+             viennaTrip.transportation.return = { flightNo: 'PC904', airline: 'Pegasus', pnr: '1TG17K', time: '12:20 (VIE)', status: 'Planlandı' };
+             viennaTrip.accommodation = { 
+               hotel: 'Austria Trend Hotel Europa Wien', 
+               address: 'Kärntner Str. 18, 1010 Wien', 
+               bookingId: '3824.152.941', 
+               link: 'https://www.booking.com/hotel/at/austriatrendhoteleuropa.tr.html' 
+             };
+          }
+        }
         if (merged.pet && !Array.isArray(merged.pet.vaccines)) merged.pet.vaccines = [];
         if (!Array.isArray(merged.logs)) merged.logs = [];
         
