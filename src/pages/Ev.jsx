@@ -6,7 +6,7 @@ import {
   Droplets, Zap, Flame, Globe, ChevronRight,
   Shield, Key, Phone, User, Star, MoreVertical,
   PlusCircle, ArrowLeft, Camera, Settings, Info,
-  Building, FileText, Landmark, Home
+  Building, FileText, Landmark, Home, MapPin
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
