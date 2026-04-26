@@ -1173,7 +1173,7 @@ function HotelMap({ name, address, city, country }) {
 
 function ValizSection({ trip, weatherForecast, onAutoFill }) {
   const { updateTripValiz, setModuleData, tatil, syncValizToDepo, currentUser } = useStore();
-  const [activePackingUser, setActivePackingUser] = useState(currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem');
+  const activePackingUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
   const [newItem, setNewItem] = useState('');
   const [showAssistant, setShowAssistant] = useState(false);
   
@@ -1240,7 +1240,19 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
     syncValizToDepo(text.trim(), 'Seyahat');
     
     setNewItem('');
-    toast.success(`${text} eklendi ve depoya işlendi! 🏠`);
+    toast.success(`${text} eklendi! ✨`);
+  };
+
+  const removeItem = (itemId) => {
+    const owner = activePackingUser;
+    const ownerList = trip.valiz?.[owner] || [];
+    const updatedValiz = {
+      ...trip.valiz,
+      [owner]: ownerList.filter(item => item.id !== itemId)
+    };
+    const updatedTrips = tatil.trips.map(t => t.id === trip.id ? { ...t, valiz: updatedValiz } : t);
+    setModuleData('tatil', { ...tatil, trips: updatedTrips });
+    toast.success('Ürün listeden kaldırıldı. 🗑️');
   };
 
   return (
@@ -1267,28 +1279,12 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
         </div>
       )}
 
-      {/* User Switcher */}
-      <div className="valiz-user-tabs mb-15">
-        <button 
-          className={`v-utab ${activePackingUser === 'gorkem' ? 'active gorkem' : ''}`}
-          onClick={() => setActivePackingUser('gorkem')}
-        >
-          <span>👨</span> Görkem
-        </button>
-        <button 
-          className={`v-utab ${activePackingUser === 'esra' ? 'active esra' : ''}`}
-          onClick={() => setActivePackingUser('esra')}
-        >
-          <span>👩</span> Esra
-        </button>
-      </div>
-
       <div className="valiz-column-premium glass">
         <div className={`vc-header ${activePackingUser}`}>
           <div className="vc-input-group">
             <input 
               type="text" 
-              placeholder={`${activePackingUser === 'esra' ? 'Esra' : 'Görkem'} için ürün...`}
+              placeholder={`${activePackingUser === 'esra' ? 'Esra' : 'Görkem'} için alınacaklar...`}
               value={newItem} 
               onChange={e => setNewItem(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addItem(newItem)}
@@ -1299,9 +1295,14 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
 
         <div className="vc-list">
           {(trip.valiz?.[activePackingUser] || []).map(item => (
-            <div key={item.id} className={`vc-item glass ${item.done ? 'done' : ''}`} onClick={() => updateTripValiz(trip.id, activePackingUser, item.id)}>
-              <div className="vc-check">{item.done && <Check size={12} />}</div>
-              <span>{item.text}</span>
+            <div key={item.id} className={`vc-item glass ${item.done ? 'done' : ''}`}>
+              <div className="vci-main" onClick={() => updateTripValiz(trip.id, activePackingUser, item.id)}>
+                <div className="vc-check">{item.done && <Check size={12} />}</div>
+                <span>{item.text}</span>
+              </div>
+              <button className="vci-delete-btn" onClick={() => removeItem(item.id)}>
+                <Trash2 size={14} />
+              </button>
             </div>
           ))}
           {(trip.valiz?.[activePackingUser] || []).length === 0 && (

@@ -2664,10 +2664,49 @@
 
 .premium-action-btn {
   width: 100%;
-  padding: 12px;
-  border-radius: 14px;
+  padding: 16px;
+  border-radius: 18px;
   border: none;
-  font-size: 13px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  transition: all 0.2s;
+}
+
+.vc-item {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px !important;
+  gap: 10px;
+}
+
+.vci-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.vci-delete-btn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.vci-delete-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
   font-weight: 800;
   display: flex;
   align-items: center;
