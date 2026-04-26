@@ -11,6 +11,7 @@ import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
+import { INITIAL_VEHICLE } from '../constants/data';
 import './Aracim.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
@@ -53,8 +54,10 @@ export default function Aracim() {
           <div className="header-title">
             <span className="header-emoji animate-float">🚗</span>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <div className="plaka-badge" style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(255,255,255,0.2)', borderRadius: '6px', width: 'fit-content', marginBottom: '2px' }}>34 HH 1144</div>
-              <h1>Tiguan R-Line</h1>
+              <div className="plaka-badge" style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(255,255,255,0.2)', borderRadius: '6px', width: 'fit-content', marginBottom: '2px' }}>
+                {INITIAL_VEHICLE.plaka}
+              </div>
+              <h1>{INITIAL_VEHICLE.model.replace('Volkswagen ', '')}</h1>
             </div>
           </div>
           <div className="header-actions">

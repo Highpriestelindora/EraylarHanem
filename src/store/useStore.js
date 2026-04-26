@@ -42,6 +42,8 @@ const DEFAULT_STATE = {
       birthPlace: 'Eskişehir',
       phone: '+905070222666',
       email: 'gorkemeray@hotmail.com',
+      bloodType: 'A Rh+',
+      job: 'Software Architect',
       emoji: '👨‍💻'
     },
     esra: {
@@ -50,16 +52,19 @@ const DEFAULT_STATE = {
       birthPlace: 'Antalya',
       phone: '+905394245664',
       email: 'eesra_yldrm@gmail.com',
+      bloodType: '0 Rh+',
+      job: 'Interior Designer',
       emoji: '👩‍🍳'
     }
   },
   kasa: {
     bakiyeler: { gorkem: 15000, esra: 12000, ortak: 5000 },
     tasinmazlar: [
-      { id: 1, name: 'Merkez Ev', value: 4500000, tax: 1200, insurance: 3500, extra: 5000, icon: '🏠' }
-    ], 
+      { id: 1, name: 'Antalya Kepez Mesken', value: 4500000, tax: 1200, insurance: 3500, extra: 5000, icon: '🏠', tapuNo: 'Ada 1204 / Parsel 12', status: 'Mülk Sahibi', taxPaid: true, lastUpdate: '2026-04-20' },
+      { id: 2, name: 'Didim Prefabrik Ev', value: 2800000, tax: 800, insurance: 1500, extra: 2000, icon: '🏡', tapuNo: 'Ada 345 / Parsel 8', status: 'Kiracı Var', taxPaid: false, lastUpdate: '2026-03-15' }
+    ],
     varliklar: [
-      { id: 1, name: 'Altın Birikimi', amount: 120, unit: 'gr', price: 2500, type: 'gold', icon: '🟡' },
+      { id: 1, name: 'Altın Birikimi', amount: 125, unit: 'gr', price: 2500, type: 'gold', icon: '🟡' },
       { id: 2, name: 'Borsa Portföy', amount: 1500, unit: 'lot', price: 45.5, type: 'stock', icon: '📈' },
       { id: 3, name: 'Euro Nakit', amount: 1200, unit: 'EUR', price: 35.2, type: 'currency', icon: '💶' }
     ],
@@ -88,22 +93,36 @@ const DEFAULT_STATE = {
       history: [] 
     },
     consumption: {}, 
-    sohbet: [],        // { id, t, w, d, r } - text, writer, date, read
-    arsiv: [],         // { id, t, w, d, r, archDate }
-    history: [],       // Persistent log of ALL notes
-    priceHistory: {},  // { itemName: [ { pr, dt, mk } ] }
+    sohbet: [],        
+    arsiv: [],         
+    history: [
+      { id: 1714045200000, t: 'Akşama ne yesek? Mantı var dondurucuda.', w: 'Esra', d: '2026-04-25T17:00:00Z' },
+      { id: 1714048800000, t: 'Olur, yanına da yoğurt sosu yaparız.', w: 'Görkem', d: '2026-04-25T18:00:00Z' },
+      { id: 1714052400000, t: 'Waffle\'ın aşısı yaklaşıyor, hatırlatıcı kurdum.', w: 'Esra', d: '2026-04-25T19:00:00Z' },
+      { id: 1713958800000, t: 'Marketten süt ve ekmek aldım.', w: 'Görkem', d: '2026-04-24T18:00:00Z' }
+    ],       
+    priceHistory: {},  
     ekmeklik: [],      // { id, tip, ic, raf, mk, adet, dt }
   },
   saglik: {
-    randevular: [],
-    ilaclar: [],     // { id, kisi, ad, dozaj, siklik, stok, minStok }
-    olcumler: [],    // { id, kisi, tur, deger, tarih }
-    moods: [],       // { id, user, mood, note, kategori, date }
+    randevular: [
+      { id: 1, kisi: 'Esra', doktor: 'Diş Hekimi (Kontrol)', tarih: '2026-04-30', saat: '14:00', not: 'Alt dolgu kontrolü', rekurans: 'yok' },
+      { id: 2, kisi: 'Görkem', doktor: 'Göz Hastalıkları', tarih: '2026-05-15', saat: '10:30', not: 'Numara ölçümü', rekurans: 'Yıllık' }
+    ],
+    ilaclar: [
+      { id: 1, kisi: 'Esra', ad: 'Magnesium', dozaj: '1 Adet', siklik: 'Her Gece', stok: 20, minStok: 5 },
+      { id: 2, kisi: 'Görkem', ad: 'Vitamin D', dozaj: '10 Damla', siklik: 'Her Sabah', stok: 15, minStok: 5 }
+    ],
+    olcumler: [
+      { id: 1, kisi: 'Görkem', tur: 'Tansiyon', deger: '12/8', tarih: '2026-04-20' },
+      { id: 2, kisi: 'Esra', tur: 'Ateş', deger: '36.5', tarih: '2026-04-25' }
+    ],
+    moods: [],       
     logs: []
   },
   // ── Global System ──────────────────────────────────
   system: {
-    version: '2.6.11',
+    version: '2.7.1',
     globalScore: 85,
     onboardingComplete: false,
     notifications: [],
@@ -144,13 +163,8 @@ const DEFAULT_STATE = {
       { id: 'filter', name: 'Hava Filtresi', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🌪️' },
       { id: 'brakes', name: 'Fren Balataları', lastKM: 35000, intervalKM: 30000, lastDate: '2025-05-10', intervalDays: 730, icon: '🛑' }
     ],
-    fuelLogs: [
-      { id: 1, date: '2026-04-20', km: 45100, amount: 45.5, price: 42.5, station: 'Shell', consumption: 7.2 },
-      { id: 2, date: '2026-04-10', km: 44500, amount: 42.0, price: 41.8, station: 'Opet', consumption: 7.5 }
-    ],
-    services: [
-      { id: 1, date: '2025-10-15', km: 42000, title: 'Periyodik Bakım', detail: 'Yağ ve filtreler değişti', cost: 4500, shop: 'VW Yetkili Servis' }
-    ],
+    fuelLogs: INITIAL_VEHICLE.yakitlar,
+    services: INITIAL_VEHICLE.hs,
     documents: [
       { id: 'muayene', name: 'TÜVTÜRK Muayene', dueDate: '2027-06-15', icon: '🔍' },
       { id: 'kasko', name: 'Kasko Sigortası', dueDate: '2026-11-20', icon: '🛡️' },
@@ -159,7 +173,7 @@ const DEFAULT_STATE = {
     trips: [],
     tireStatus: { type: 'Yazlık', changeDate: '2026-04-01', condition: 'İyi' },
     lastCleaned: '2026-04-23',
-    parkLocation: { floor: '', spot: '', photo: null }
+    parkLocation: { floor: 'P2', spot: 'A-15', photo: null }
   },
   ev: {
     depo: [], // { id, nm, qt, dt, pr, cardId, payer }
@@ -179,6 +193,9 @@ const DEFAULT_STATE = {
     ],
     tamirListesi: [
       { id: 1, task: 'Mutfak Musluğu Sızıntı', priority: 'High', status: 'Pending' }
+    ],
+    bakimListesi: [
+      { id: 1, task: 'Bahçe Sulama Sistemi Kontrolü', priority: 'Normal', status: 'Pending' }
     ],
     ustaRehberi: [
       { id: 1, name: 'Tesisatçı Ahmet Usta', phone: '0555 123 4567', category: 'Tesisat', rating: 5 }
@@ -208,11 +225,14 @@ const DEFAULT_STATE = {
     gallery: { waffle: [], mayis: [] }
   },
   tatil: {
-    trips: [],       // { id, title, country, city, type, startDate, endDate, pnr, otel, valiz: { gorkem: [], esra: [] }, budget: { est, real }, status }
-    wishlist: [],    // { id, place, notes }
+    trips: INITIAL_TRIPS,       
+    wishlist: [
+      { id: 1, place: 'Tokyo, Japonya', notes: 'Kiraz çiçekleri zamanı gitmeli 🌸' },
+      { id: 2, place: 'İzlanda', notes: 'Kuzey ışıkları ve road trip 🇮🇸' }
+    ],
     passport: { 
-      gorkem: { name: 'Görkem Eray', no: '', exp: '' }, 
-      esra: { name: 'Esra Eray', no: '', exp: '' } 
+      gorkem: { name: 'Görkem Eray', no: 'U28345678', exp: '2030-10-15' }, 
+      esra: { name: 'Esra Eray', no: 'U29456789', exp: '2031-03-22' } 
     },
     ttab: 'trips'
   },
@@ -1606,6 +1626,30 @@ const useStore = create(
       },
 
       // ── Ev Actions ─────────────────────────────────────
+      addFatura: (fatura) => {
+        const state = get();
+        const newFatura = {
+          id: Date.now(),
+          status: 'Bekliyor',
+          ...fatura
+        };
+        
+        const updatedFaturalar = [newFatura, ...(state.ev.faturalar || [])];
+        set({ ev: { ...state.ev, faturalar: updatedFaturalar } });
+
+        // Finance Integration
+        get().addExpense({
+          title: `Fatura: ${fatura.name}`,
+          amount: Number(fatura.amount),
+          category: 'fatura',
+          source: 'Ev Hub',
+          payer: 'ortak'
+        });
+
+        get().saveToSupabase();
+        toast.success('Fatura kaydedildi ve Finans\'a aktarıldı! 🧾');
+      },
+
       payFatura: (id) => {
         const state = get();
         const fatura = state.ev.faturalar.find(f => f.id === id);
@@ -1616,15 +1660,6 @@ const useStore = create(
         );
 
         set({ ev: { ...state.ev, faturalar: updatedFaturalar } });
-
-        // Sync to Finans
-        get().addExpense({
-          title: `Fatura: ${fatura.name}`,
-          amount: fatura.amount,
-          category: 'fatura',
-          source: 'Ev Hub'
-        });
-
         get().saveToSupabase();
         toast.success(`${fatura.name} faturası ödendi! 💸`);
       },
@@ -1633,6 +1668,62 @@ const useStore = create(
         const state = get();
         const newItem = { id: Date.now(), status: 'Pending', ...item };
         set({ ev: { ...state.ev, tamirListesi: [newItem, ...state.ev.tamirListesi] } });
+        get().saveToSupabase();
+      },
+
+      addTasinmaz: (item) => {
+        const state = get();
+        const newItem = { 
+          id: Date.now(), 
+          value: 0, 
+          tax: 0, 
+          insurance: 0, 
+          icon: '🏠', 
+          status: 'Mülk Sahibi', 
+          taxPaid: false, 
+          lastUpdate: new Date().toISOString().split('T')[0],
+          ...item 
+        };
+        set({ kasa: { ...state.kasa, tasinmazlar: [...state.kasa.tasinmazlar, newItem] } });
+        get().saveToSupabase();
+        toast.success('Yeni taşınmaz portföye eklendi! 🏗️');
+      },
+
+      updateTasinmaz: (id, updates) => {
+        const state = get();
+        const yeniTasinmazlar = state.kasa.tasinmazlar.map(t => t.id === id ? { ...t, ...updates } : t);
+        set({ kasa: { ...state.kasa, tasinmazlar: yeniTasinmazlar } });
+        get().saveToSupabase();
+      },
+
+      deleteTasinmaz: (id) => {
+        const state = get();
+        const yeniTasinmazlar = state.kasa.tasinmazlar.filter(t => t.id !== id);
+        set({ kasa: { ...state.kasa, tasinmazlar: yeniTasinmazlar } });
+        get().saveToSupabase();
+        toast.error('Taşınmaz kaydı silindi.');
+      },
+
+      addBakimItem: (item) => {
+        const state = get();
+        const newItem = { id: Date.now(), status: 'Pending', ...item };
+        set({ ev: { ...state.ev, bakimListesi: [newItem, ...(state.ev.bakimListesi || [])] } });
+        get().saveToSupabase();
+      },
+
+      toggleHomeTask: (listType, id) => {
+        const state = get();
+        const list = state.ev[listType].map(item => 
+          item.id === id ? { ...item, status: item.status === 'Completed' ? 'Pending' : 'Completed' } : item
+        );
+        set({ ev: { ...state.ev, [listType]: list } });
+        get().saveToSupabase();
+      },
+
+      deleteHomeTask: (listType, id) => {
+        const state = get();
+        const list = state.ev[listType].filter(item => item.id !== id);
+        set({ ev: { ...state.ev, [listType]: list } });
         get().saveToSupabase();
       },
 

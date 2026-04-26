@@ -3463,30 +3463,36 @@ export const INITIAL_TRIPS = [
 ];
 
 export const INITIAL_VEHICLE = {
-  km: 47230,
-  plaka: '34 GNK 437',
-  model: 'Toyota C-HR Hybrid',
+  km: 45200,
+  plaka: '34 HH 1144',
+  model: 'Volkswagen Tiguan R-Line',
   muayene: {
-    last: '2024-07-24',
-    next: '2026-07-24',
-    result: 'HAFİF KUSURLU - Geçti',
+    last: '2025-06-15',
+    next: '2027-06-15',
+    result: 'KUSURSUZ',
     type: 'Periyodik Muayene',
-    report: '3413195978201'
+    report: '984521360012'
   },
   ev: [
-    {id:1,ic:'🚨',nm:'Araç Muayenesi',dt:'2026-07-24',tp:'date'},
-    {id:2,ic:'🛡️',nm:'Kasko',dt:'2026-05-10',tp:'date'},
-    {id:3,ic:'🚗',nm:'Trafik Sigortası',dt:'2026-05-10',tp:'date'},
-    {id:4,ic:'🛢️',nm:'Periyodik Bakım',kmL:12000,tp:'km'}
+    {id:1,ic:'🚨',nm:'Araç Muayenesi',dt:'2027-06-15',tp:'date'},
+    {id:2,ic:'🛡️',nm:'Kasko',dt:'2026-11-20',tp:'date'},
+    {id:3,ic:'🚗',nm:'Trafik Sigortası',dt:'2026-11-20',tp:'date'},
+    {id:4,ic:'🛢️',nm:'Periyodik Bakım',kmL:15000,tp:'km'}
   ],
-  hs: [],
-  yakitlar: []
+  hs: [
+    { id: 1, date: '2025-10-15', km: 42000, title: 'Periyodik Bakım', detail: 'Yağ ve filtreler değişti', cost: 4500, shop: 'VW Yetkili Servis' }
+  ],
+  yakitlar: [
+    { id: 1, date: '2026-04-20', km: 45100, amount: 45.5, price: 42.5, station: 'Shell', consumption: 7.2 },
+    { id: 2, date: '2026-04-10', km: 44500, amount: 42.0, price: 41.8, station: 'Opet', consumption: 7.5 }
+  ]
 };
 
 export const INITIAL_SOCIAL = {
   tab: 'hafta',
   aktiviteler: [
-    { id: 1, baslik: "Özkuruşlardan alışveriş", tarih: "2026-04-19", mekan: "Özkuruşlar", harcama: 3500, tur: "disari", durum: "planda" }
+    { id: 1, baslik: "Özkuruşlardan alışveriş", tarih: "2026-04-19", mekan: "Özkuruşlar", harcama: 3500, tur: "disari", durum: "tamamlandi" },
+    { id: 2, baslik: "Haftalık Sinema Gecesi", tarih: "2026-04-26", mekan: "Ev", harcama: 0, tur: "evde", durum: "planda" }
   ],
   havuz: [
     { id: 'h1', baslik: 'Film Gecesi', tur: 'evde', emoji: '🎬', count: 5, freq: 'Haftalık', last: 'Inception - 1 hafta önce' },
@@ -3514,10 +3520,21 @@ export const INITIAL_SOCIAL = {
 };
 
 export const INITIAL_EV = {
-  tab: 'fatura',
-  faturalar: [],
-  bakim: [],
-  sigortalar: [],
+  tab: 'faturalar',
+  faturalar: [
+    { id: 1, name: 'Elektrik', provider: 'EnerjiSa', amount: 850, dueDate: '2026-04-20', status: 'Ödendi', autoPay: true, icon: '⚡' },
+    { id: 2, name: 'İnternet', provider: 'TurkNet', amount: 399, dueDate: '2026-04-25', status: 'Bekliyor', autoPay: true, icon: '🌐' },
+    { id: 3, name: 'Doğalgaz', provider: 'İGDAŞ', amount: 1250, dueDate: '2026-04-15', status: 'Ödendi', autoPay: false, icon: '🔥' }
+  ],
+  bakim: [
+    { id: 'kombi', name: 'Kombi Bakımı', lastDate: '2025-11-01', intervalDays: 365, icon: '🔥' },
+    { id: 'klima', name: 'Klima Temizliği', lastDate: '2025-06-15', intervalDays: 180, icon: '❄️' },
+    { id: 'aritma', name: 'Su Arıtma Filtre', lastDate: '2026-01-10', intervalDays: 180, icon: '💧' }
+  ],
+  sigortalar: [
+    { id: 1, name: 'DASK', dueDate: '2026-09-10', provider: 'Aksigorta' },
+    { id: 2, name: 'Konut Sigortası', dueDate: '2026-09-10', provider: 'Aksigorta' }
+  ],
   malVarligi: [
     {
       id: 'tapu1',

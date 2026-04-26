@@ -134,7 +134,7 @@ export default function Kasa() {
                 <h3>🪙 Likit Varlıklar</h3>
                 <button className="add-btn-mini"><Plus size={14} /></button>
               </div>
-              {K.varliklar.map(v => (
+              {K.varliklar?.map(v => (
                 <div key={v.id} className="asset-card-premium glass">
                   <div className="acp-left">
                     <div className="acp-icon">{v.icon}</div>
@@ -159,7 +159,7 @@ export default function Kasa() {
               <h3>🏠 Gayrimenkul Portföyü</h3>
             </div>
             <div className="real-estate-list">
-              {K.tasinmazlar.map(t => (
+              {K.tasinmazlar?.map(t => (
                 <div key={t.id} className="re-card glass">
                   <div className="re-header">
                     <div className="re-icon-box"><Home size={20} /></div>
@@ -195,7 +195,7 @@ export default function Kasa() {
               <h3>🎯 Birikim Hedefleri</h3>
             </div>
             <div className="goal-list">
-              {K.kumbaralar.map(g => (
+              {K.kumbaralar?.map(g => (
                 <div key={g.id} className="goal-card-premium glass">
                   <div className="gcp-header">
                     <div className="gcp-icon-box">{g.icon}</div>
@@ -227,7 +227,7 @@ export default function Kasa() {
               <button className="transfer-btn-mini"><ArrowRightLeft size={14} /> Transfer</button>
             </div>
             <div className="cash-grid">
-              {Object.entries(K.bakiyeler).map(([kisi, val]) => (
+              {Object.entries(K.bakiyeler || {}).map(([kisi, val]) => (
                 <div key={kisi} className="cash-card glass">
                   <div className="cc-user">
                     <span className="cc-emoji">{kisi === 'gorkem' ? '👨' : kisi === 'esra' ? '👩' : '🏡'}</span>

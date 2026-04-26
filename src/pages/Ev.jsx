@@ -5,7 +5,8 @@ import {
   AlertTriangle, DollarSign, Calendar, Sparkles,
   Droplets, Zap, Flame, Globe, ChevronRight,
   Shield, Key, Phone, User, Star, MoreVertical,
-  PlusCircle, ArrowLeft, Camera, Settings, Info
+  PlusCircle, ArrowLeft, Camera, Settings, Info,
+  Building, FileText, Landmark, Home
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -21,31 +22,51 @@ const formatMoney = (val) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
 
 export default function Ev() {
-  const [activeTab, setActiveTab] = useState('faturalar');
+  const [activeTab, setActiveTab] = useState('yasam');
   const navigate = useNavigate();
-  const { ev, payFatura, addRepairItem, updateHomeSecurity } = useStore();
+  const { 
+    ev, kasa, addFatura, addRepairItem, addBakimItem, 
+    toggleHomeTask, deleteHomeTask, updateHomeSecurity, 
+    updateTasinmaz, addTasinmaz, deleteTasinmaz
+  } = useStore();
 
   const { 
-    faturalar, bakimlar, demirbaslar, tamirListesi, 
+    faturalar, bakimlar, demirbaslar, tamirListesi, bakimListesi,
     ustaRehberi, abonelikler, bitkiler, guvenlik, yillikPlan, depo
-  } = ev || { faturalar: [], bakimlar: [], tamirListesi: [], ustaRehberi: [], bitkiler: [], depo: [] };
+  } = ev || { faturalar: [], bakimlar: [], tamirListesi: [], bakimListesi: [], ustaRehberi: [], bitkiler: [], depo: [] };
 
   const [showSafeCode, setShowSafeCode] = useState(false);
+  const [faturaForm, setFaturaForm] = useState({ name: '', amount: '', provider: '', dueDate: '', icon: '📜' });
 
   // AI Analysis
   const aiNote = useMemo(() => {
-    const totalCurrent = faturalar.filter(f => f.status === 'Ödendi').reduce((a, b) => a + b.amount, 0);
+    const totalCurrent = (faturalar || []).filter(f => f.status === 'Ödendi').reduce((a, b) => a + b.amount, 0);
     if (totalCurrent > 3000) return "Bu ay enerji tüketimi normalin %15 üzerinde. Bir sızıntı veya kaçak olabilir mi? 🕵️‍♂️";
     return "Harika! Ev verimliliği bu ay yeşil bölgede. 🌟";
   }, [faturalar]);
 
   const tabs = [
-    { id: 'faturalar', label: 'Faturalar', emoji: '🧾' },
-    { id: 'bakim', label: 'Bakım', emoji: '🔧' },
-    { id: 'depo', label: 'Depo', emoji: '📦' },
     { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
+    { id: 'tasinmaz', label: 'Taşınmaz', emoji: '🏗️' },
+    { id: 'depo', label: 'Depo', emoji: '📦' },
     { id: 'guvenlik', label: 'Güvenlik', emoji: '🛡️' }
   ];
+
+  const handleAddFatura = (e) => {
+    e.preventDefault();
+    if (!faturaForm.name || !faturaForm.amount) return toast.error('İsim ve tutar giriniz');
+    addFatura(faturaForm);
+    setFaturaForm({ name: '', amount: '', provider: '', dueDate: '', icon: '📜' });
+  };
+
+  const findRealValue = async (id, name) => {
+    toast.loading(`${name} için güncel piyasa değeri araştırılıyor...`, { id: 'search' });
+    setTimeout(() => {
+      const newValue = 4500000 + Math.floor(Math.random() * 500000);
+      updateTasinmaz(id, { value: newValue, lastUpdate: new Date().toISOString().split('T')[0] });
+      toast.success('Piyasa değeri güncellendi! 📈', { id: 'search' });
+    }, 2000);
+  };
 
   return (
     <AnimatedPage className="ev-container">
@@ -87,117 +108,165 @@ export default function Ev() {
           <p>{aiNote}</p>
         </div>
 
-        {activeTab === 'faturalar' && (
-          <div className="faturalar-view animate-fadeIn">
-            <div className="section-header-v2">
-              <h3>🧾 Ödeme Takvimi</h3>
-              <button className="add-btn-mini"><Plus size={14} /></button>
-            </div>
-            
-            <div className="bill-cards-grid">
-              {faturalar.map(f => (
-                <div key={f.id} className={`bill-card-premium glass ${f.status === 'Ödendi' ? 'paid' : 'pending'}`}>
-                   <div className="bcp-header">
-                     <div className="bcp-icon">{f.icon}</div>
-                     <div className="bcp-info">
-                       <strong>{f.name}</strong>
-                       <small>{f.dueDate} · {f.provider}</small>
-                     </div>
-                   </div>
-                   <div className="bcp-footer">
-                     <div className="bcp-amount">{formatMoney(f.amount)}</div>
-                     {f.status === 'Bekliyor' ? (
-                       <button className="bcp-pay-btn" onClick={() => payFatura(f.id)}>Öde</button>
-                     ) : (
-                       <div className="bcp-status-tag">Ödendi</div>
-                     )}
-                   </div>
-                </div>
-              ))}
+        {activeTab === 'tasinmaz' && (
+          <div className="tasinmaz-view animate-fadeIn">
+            <div className="portfolio-total glass mb-16">
+              <div className="pt-info">
+                <span>Toplam Gayrimenkul Değeri</span>
+                <strong>{formatMoney((kasa?.tasinmazlar || []).reduce((a, b) => a + (b.value || 0), 0))}</strong>
+              </div>
+              <Building size={32} opacity={0.2} />
             </div>
 
-            <div className="energy-chart-section mt-24 glass">
-               <div className="section-header-v2">
-                <h3>📊 Tüketim Analizi</h3>
-              </div>
-              <Bar 
-                data={{
-                  labels: ['Ocak', 'Şubat', 'Mart', 'Nisan'],
-                  datasets: [{
-                    label: 'Fatura Toplamı',
-                    data: [2800, 3100, 2900, 2500],
-                    backgroundColor: '#84cc16',
-                    borderRadius: 8
-                  }]
-                }}
-                options={{ plugins: { legend: { display: false } } }}
-              />
+            <div className="section-header-v2">
+              <h3>🏗️ Gayrimenkul Portföyü</h3>
+              <button className="add-btn-mini" onClick={() => {
+                const name = prompt('Taşınmaz Adı:');
+                if (!name) return;
+                const tapu = prompt('Tapu Bilgisi (Ada/Parsel):');
+                const val = prompt('Yaklaşık Değer (₺):');
+                addTasinmaz({ name, tapuNo: tapu, value: Number(val) });
+              }}><Plus size={14} /></button>
+            </div>
+
+            <div className="tasinmaz-grid">
+              {(kasa?.tasinmazlar || []).map(t => (
+                <div key={t.id} className="tasinmaz-card-premium glass">
+                  <div className="tc-header">
+                    <div className="tc-icon-box">{t.icon}</div>
+                    <div className="tc-main-info">
+                      <strong>{t.name}</strong>
+                      <small><FileText size={10} /> {t.tapuNo}</small>
+                    </div>
+                    <button className="tc-update-btn" onClick={() => findRealValue(t.id, t.name)}>
+                      <Globe size={14} />
+                    </button>
+                  </div>
+
+                  <div className="tc-stats">
+                    <div className="tc-stat">
+                      <span>Değer</span>
+                      <strong>{formatMoney(t.value)}</strong>
+                    </div>
+                    <div className="tc-stat">
+                      <span>Durum</span>
+                      <strong className={t.status === 'Kiracı Var' ? 'orange' : 'green'}>{t.status}</strong>
+                    </div>
+                  </div>
+
+                  <div className="tc-details">
+                    <div className={`tc-tag-status ${t.taxPaid ? 'paid' : 'unpaid'}`}>
+                      {t.taxPaid ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
+                      Emlak Vergisi {t.taxPaid ? 'Ödendi' : 'Ödenmedi'}
+                    </div>
+                    <small className="tc-last-update">Son Güncelleme: {t.lastUpdate}</small>
+                  </div>
+
+                  <div className="tc-actions">
+                    <button className="tc-btn-secondary" onClick={() => {
+                      const newStatus = t.status === 'Mülk Sahibi' ? 'Kiracı Var' : 'Mülk Sahibi';
+                      updateTasinmaz(t.id, { status: newStatus });
+                    }}><Settings size={14} /> Durum Değiştir</button>
+                    <button className="tc-btn-secondary" onClick={() => deleteTasinmaz(t.id)}>
+                      <Trash2 size={14} color="#ef4444" /> Sil
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {activeTab === 'bakim' && (
-          <div className="bakim-view animate-fadeIn">
-            <div className="section-header-v2">
-              <h3>🔧 Periyodik Bakımlar</h3>
-            </div>
-            <div className="maintenance-gauges">
-               {bakimlar.map(b => {
-                 const diff = Math.round((new Date() - new Date(b.lastDate)) / 864e5);
-                 const perc = Math.min(100, (diff / b.intervalDays) * 100);
-                 return (
-                   <div key={b.id} className="m-gauge-card glass">
-                      <div className="mg-box">
-                        <svg viewBox="0 0 36 36" className="circular-chart">
-                          <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                          <path className="circle" stroke={perc > 80 ? '#f87171' : '#84cc16'} strokeDasharray={`${perc}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        </svg>
-                        <div className="mg-icon">{b.icon}</div>
-                      </div>
+        {activeTab === 'yasam' && (
+          <div className="yasam-view animate-fadeIn">
+            {/* Shrunk Periodic Maintenance */}
+            <div className="mini-bakim-row">
+              {bakimlar.map(b => {
+                const diff = Math.round((new Date() - new Date(b.lastDate)) / 864e5);
+                const perc = Math.min(100, (diff / b.intervalDays) * 100);
+                return (
+                  <div key={b.id} className="mini-m-card glass">
+                    <div className="mm-icon" style={{ borderColor: perc > 80 ? '#ef4444' : '#22c55e' }}>{b.icon}</div>
+                    <div className="mm-info">
                       <strong>{b.name}</strong>
-                      <small>{b.intervalDays - diff} Gün Kaldı</small>
-                   </div>
-                 );
-               })}
+                      <small>{b.intervalDays - diff} gün</small>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="repair-list-section mt-24">
+            {/* Fatura Girişi */}
+            <div className="fatura-giris-section mt-16 glass">
               <div className="section-header-v2">
-                <h3>🔨 Ev Tamir Listesi</h3>
-                <button className="add-btn-mini"><Plus size={14} /></button>
+                <h3>🧾 Fatura Girişi</h3>
               </div>
-              <div className="repair-items">
-                {tamirListesi.map(t => (
-                  <div key={t.id} className="repair-card glass">
-                    <div className="rc-info">
-                      <AlertTriangle size={16} color={t.priority === 'High' ? '#f87171' : '#f59e0b'} />
-                      <strong>{t.task}</strong>
+              <form className="mini-form" onSubmit={handleAddFatura}>
+                <div className="form-row-compact">
+                  <input 
+                    type="text" 
+                    placeholder="Fatura Adı (Örn: Elektrik)" 
+                    value={faturaForm.name}
+                    onChange={e => setFaturaForm({...faturaForm, name: e.target.value})}
+                  />
+                  <input 
+                    type="number" 
+                    placeholder="Tutar (₺)" 
+                    value={faturaForm.amount}
+                    onChange={e => setFaturaForm({...faturaForm, amount: e.target.value})}
+                  />
+                </div>
+                <div className="form-row-compact">
+                  <input 
+                    type="text" 
+                    placeholder="Kurum / Sağlayıcı" 
+                    value={faturaForm.provider}
+                    onChange={e => setFaturaForm({...faturaForm, provider: e.target.value})}
+                  />
+                  <button type="submit" className="fatura-submit">Kaydet</button>
+                </div>
+              </form>
+            </div>
+
+            {/* Bakım & Tamir Listeleri */}
+            <div className="lists-grid mt-16">
+              <div className="list-column glass">
+                <div className="section-header-v2">
+                  <h3>🔧 Bakım Listesi</h3>
+                  <button className="add-btn-mini" onClick={() => {
+                    const task = prompt('Bakım görevi:');
+                    if (task) addBakimItem({ task });
+                  }}><Plus size={14} /></button>
+                </div>
+                <div className="task-items">
+                  {bakimListesi.map(t => (
+                    <div key={t.id} className={`task-card ${t.status === 'Completed' ? 'done' : ''}`} onClick={() => toggleHomeTask('bakimListesi', t.id)}>
+                      <div className="tc-check">{t.status === 'Completed' ? <CheckCircle2 size={16} color="#22c55e" /> : <div className="circle-check" />}</div>
+                      <span>{t.task}</span>
                     </div>
-                    <button className="rc-done"><CheckCircle2 size={18} /></button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              <div className="list-column glass">
+                <div className="section-header-v2">
+                  <h3>🔨 Tamir Listesi</h3>
+                  <button className="add-btn-mini" onClick={() => {
+                    const task = prompt('Tamir görevi:');
+                    if (task) addRepairItem({ task });
+                  }}><Plus size={14} /></button>
+                </div>
+                <div className="task-items">
+                  {tamirListesi.map(t => (
+                    <div key={t.id} className={`task-card ${t.status === 'Completed' ? 'done' : ''}`} onClick={() => toggleHomeTask('tamirListesi', t.id)}>
+                      <div className="tc-check">{t.status === 'Completed' ? <CheckCircle2 size={16} color="#22c55e" /> : <div className="circle-check" />}</div>
+                      <span>{t.task}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="pro-directory mt-24">
-              <div className="section-header-v2">
-                <h3>📞 Usta Rehberi</h3>
-              </div>
-              <div className="pro-list">
-                {ustaRehberi.map(u => (
-                  <div key={u.id} className="pro-card glass">
-                    <div className="pc-left">
-                       <div className="pc-avatar"><User size={20} /></div>
-                       <div className="pc-info">
-                         <strong>{u.name}</strong>
-                         <small>{u.category} · {u.rating} <Star size={10} fill="#f59e0b" color="#f59e0b" /></small>
-                       </div>
-                    </div>
-                    <button className="pc-call"><Phone size={18} /></button>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
@@ -231,37 +300,6 @@ export default function Ev() {
                   </div>
                 ))
               )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'yasam' && (
-          <div className="yasam-view animate-fadeIn">
-            <div className="section-header-v2">
-              <h3>🪴 Bitki Bakımı</h3>
-            </div>
-            <div className="plant-grid">
-              {bitkiler.map(p => (
-                <div key={p.id} className="plant-card glass">
-                  <div className="p-emoji">🌿</div>
-                  <strong>{p.name}</strong>
-                  <small>3 Gün Sonra Sula</small>
-                  <button className="water-btn"><Droplets size={14} /> Sulandı</button>
-                </div>
-              ))}
-            </div>
-
-            <div className="subs-list-section mt-24">
-              <div className="section-header-v2">
-                <h3>📺 Dijital Abonelikler</h3>
-                <strong>{formatMoney(abonelikler.reduce((a, b) => a + b.amount, 0))} / ay</strong>
-              </div>
-              {abonelikler.map(s => (
-                <div key={s.id} className="sub-item-premium glass">
-                  <strong>{s.name}</strong>
-                  <span>{formatMoney(s.amount)}</span>
-                </div>
-              ))}
             </div>
           </div>
         )}
