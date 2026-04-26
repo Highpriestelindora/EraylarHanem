@@ -1660,6 +1660,8 @@ function PlanIdeaModal({ idea, onClose, onConfirm }) {
       </button>
     </div>
   );
+}
+
 function ManagePoolItemModal({ item, onClose, onSave }) {
   const [formData, setFormData] = useState(item || { title: '', duration: '1 saat', cost: '0 TL', category: 'Genel', icon: '✨' });
   const categories = ['Sahil & Açık Alan', 'Park & Doğa', 'Yakın Lokasyon Keşif', 'Sosyal & Eğlence', 'Deneyim & Kaçamak', 'Genel'];
@@ -1743,5 +1745,3 @@ function ManageRoutinePackageModal({ pkg, onClose, onSave }) {
     </div>
   );
 }
-
-export default Sosyal;
