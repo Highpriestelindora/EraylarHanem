@@ -353,7 +353,10 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
         <div className="hero-content">
           <Plane className="hero-plane-icon" size={28} />
           <div className="hero-text">
-            <h2>{trip.title || trip.city}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h2>{trip.title || trip.city}</h2>
+              {trip.status === 'kesin' && <span className="hero-kesin-badge">Kesinleşti</span>}
+            </div>
             <p>{trip.city || 'Belirtilmedi'}</p>
           </div>
         </div>
@@ -366,10 +369,6 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
           <div className="stat-pill-cute">
             <Moon size={12} />
             <span>{duration} Gece</span>
-          </div>
-          <div className="stat-pill-cute success">
-            <ShieldCheck size={12} />
-            <span>{trip.status === 'kesin' ? 'Kesinleşti' : 'Planlanıyor'}</span>
           </div>
         </div>
 
@@ -549,9 +548,13 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                       if (!depForm.flightNo) return toast.error('Lütfen uçuş numarası girin');
                       toast.loading(`Asistan ${depForm.flightNo} uçuşunu sorguluyor...`, { duration: 2500 });
                       setTimeout(() => {
-                        if (depForm.flightNo === 'PC903') {
+                        const no = depForm.flightNo.toUpperCase();
+                        if (no === 'PC903') {
                             setDepForm({...depForm, time: '14:20', pnr: 'ABC123Z'});
-                            toast.success('Uçuş verileri (PC903) bulundu: 14:20 Kalkış. ✅');
+                            toast.success('Uçuş (PC903) bulundu: 14:20 Kalkış. ✅');
+                        } else if (no === 'PC902') {
+                            setDepForm({...depForm, time: '19:40', pnr: 'VIE2026'});
+                            toast.success('Uçuş (PC902) bulundu: 19:40 Kalkış (VIE). ✅');
                         } else {
                             toast.success('Uçuş verileri doğrulandı. ✅');
                         }
