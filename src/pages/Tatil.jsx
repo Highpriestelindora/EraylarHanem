@@ -677,9 +677,43 @@ function HaritaTab({ tatil }) {
           <div className="map-overlay-vignette" />
           <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=1200" alt="World Map" className="explorer-map-bg" />
           <div className="map-pins-layer">
-            <div className="map-pin-pulse" style={{ top: '45%', left: '55%' }} />
-            <div className="map-pin-pulse" style={{ top: '40%', left: '48%' }} />
-            <div className="map-pin-pulse" style={{ top: '42%', left: '51%' }} />
+            {/* Generate pins for all confirmed and completed trips */}
+            {(tatil.trips || []).filter(t => t.status === 'kesin' || t.status === 'tamamlandi').map((t, tidx) => {
+              // Deterministic random positions based on city name to keep them consistent
+              const getHash = (str) => {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                return Math.abs(hash);
+              };
+              
+              const baseHash = getHash(t.city || t.title || 'trip');
+              const top = (baseHash % 60) + 20; // 20% to 80%
+              const left = ((baseHash * 7) % 60) + 20; // 20% to 80%
+              
+              const duration = Math.ceil((new Date(t.endDate) - new Date(t.startDate)) / 864e5) || 1;
+              const pins = [];
+              
+              // Show one pin for each city mentioned or at least one
+              const cities = (t.city || '').split(/[&,]| ve /).filter(c => c.trim().length > 0);
+              const pinCount = Math.max(cities.length, Math.min(duration, 3)); // Max 3 pins per trip to avoid clutter
+              
+              for (let i = 0; i < pinCount; i++) {
+                pins.push(
+                  <div 
+                    key={`${t.id}-${i}`}
+                    className={`map-pin-pulse ${t.status}`} 
+                    style={{ 
+                      top: `${top + (i * 4) - (pinCount * 2)}%`, 
+                      left: `${left + (i * 6) - (pinCount * 3)}%`,
+                      animationDelay: `${i * 0.5}s`,
+                      background: t.status === 'kesin' ? 'var(--tatil)' : '#10b981'
+                    }} 
+                    title={`${t.city}: Day ${i+1}`}
+                  />
+                );
+              }
+              return pins;
+            })}
           </div>
           <div className="map-bottom-info">
             <div className="last-adventure glass">

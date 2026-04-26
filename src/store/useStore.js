@@ -1598,10 +1598,49 @@ const useStore = create(
 
       cancelSocialActivity: (id) => {
         const state = get();
-        const yeniAktiviteler = (Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : []).filter(a => a.id !== id);
+        const aktList3 = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
+        const yeniAktiviteler = aktList3.filter(a => a.id !== id);
         set({ sosyal: { ...state.sosyal, aktiviteler: yeniAktiviteler } });
         get().saveToSupabase();
       },
+
+      addSocialPoolItem: (item) => {
+        const state = get();
+        const newItem = { id: Date.now(), ...item };
+        const currentPool = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
+        set({ sosyal: { ...state.sosyal, havuz: [newItem, ...currentPool] } });
+        get().saveToSupabase();
+      },
+
+      deleteSocialPoolItem: (id) => {
+        const state = get();
+        const currentPool = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
+        set({ sosyal: { ...state.sosyal, havuz: currentPool.filter(i => i.id !== id) } });
+        get().saveToSupabase();
+      },
+
+      applySocialRoutine: (routine, startDate) => {
+        const state = get();
+        const { addSocialActivity } = get();
+        
+        routine.items.forEach((itemTitle, index) => {
+          // Find activity info from pool or use defaults
+          const poolItem = (state.sosyal.havuz || []).find(h => h.baslik === itemTitle) || 
+                           (INITIAL_SOCIAL_POOL || []).find(p => p.title === itemTitle);
+          
+          addSocialActivity({
+            baslik: itemTitle,
+            tarih: startDate,
+            saat: index === 0 ? '10:00' : index === 1 ? '14:00' : '20:00',
+            emoji: poolItem?.icon || '🎭',
+            tur: 'disari',
+            harcama: 0,
+            kisiSayisi: 2,
+            masterCategory: poolItem?.category || 'Genel'
+          });
+        });
+      },
+
 
       addRutin: (rutin) => {
         const state = get();

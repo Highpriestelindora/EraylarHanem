@@ -10,7 +10,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { INITIAL_SOCIAL } from '../constants/data';
+import { INITIAL_SOCIAL_POOL, SOCIAL_ROUTINES } from '../constants/data';
 import ConfirmModal from '../components/ConfirmModal';
 import Portal from '../components/Portal';
 import ActionSheet from '../components/ActionSheet';
@@ -927,6 +927,7 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
   const [mekan, setMekan] = useState(prefilledData?.mekan || '');
   const [harcama, setHarcama] = useState(prefilledData?.harcama || '');
   const [tur, setTur] = useState(prefilledData?.tur || 'disari');
+  const [category, setCategory] = useState(prefilledData?.masterCategory || 'Genel');
   const [kisiSayisi, setKisiSayisi] = useState('2');
 
   const handleSave = () => {
@@ -957,6 +958,7 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
       mekan,
       harcama: Number(harcama),
       tur,
+      masterCategory: category,
       kisiSayisi: Number(kisiSayisi),
       tamamlandi: false
     });
@@ -1000,7 +1002,18 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
         </div>
       </div>
       <div className="form-group">
-        <label>Tür</label>
+        <label>Kategori (İstatistik için)</label>
+        <select value={category} onChange={e => setCategory(e.target.value)}>
+           <option value="Sahil & Açık Alan">🌊 Sahil & Açık Alan</option>
+           <option value="Park & Doğa">🌳 Park & Doğa</option>
+           <option value="Yakın Lokasyon Keşif">🏙️ Yakın Lokasyon Keşif</option>
+           <option value="Sosyal & Eğlence">🎭 Sosyal & Eğlence</option>
+           <option value="Deneyim & Kaçamak">✨ Deneyim & Kaçamak</option>
+           <option value="Genel">📂 Diğer / Genel</option>
+        </select>
+      </div>
+      <div className="form-group">
+        <label>Ortam</label>
         <select value={tur} onChange={e => setTur(e.target.value)}>
           <option value="disari">🌳 Dışarıda</option>
           <option value="evde">🏠 Evde</option>
@@ -1108,6 +1121,12 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
     return dateB - dateA; // Newest months first
   });
 
+  const categoryStats = done.reduce((acc, a) => {
+    const cat = a.masterCategory || 'Genel';
+    acc[cat] = (acc[cat] || 0) + 1;
+    return acc;
+  }, {});
+
   return (
     <div className="tab-pane animate-fadeIn">
       <div className="stats-grid compact">
@@ -1122,6 +1141,17 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
         <div className="stat-card glass">
           <span className="s-val">⭐ {avgPuan}</span>
           <span className="s-lbl">Puan</span>
+        </div>
+      </div>
+
+      <div className="category-stats-bar glass" style={{ margin: '0 16px 20px', padding: '15px', borderRadius: '20px', border: '1px solid var(--brd)' }}>
+        <h4 style={{ fontSize: '12px', fontWeight: '900', marginBottom: '10px', opacity: 0.7 }}>📊 Kategori Dağılımı</h4>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {Object.entries(categoryStats).map(([cat, count]) => (
+            <div key={cat} className="cat-stat-pill" style={{ background: 'var(--bg)', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', border: '1px solid var(--brd)' }}>
+              <strong>{cat}:</strong> {count}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -1195,109 +1225,172 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
 }
 
 function RutinTab({ sosyal, onAdd }) {
-  const rutinler = sosyal.rutinler || [];
-  const { deleteRutin } = useStore();
+  const { applySocialRoutine } = useStore();
+  const [selectedRoutine, setSelectedRoutine] = useState(null);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const handleApply = (routine) => {
+    applySocialRoutine(routine, startDate);
+    toast.success(`${routine.name} plana eklendi! 📅`);
+  };
 
   return (
     <div className="tab-pane animate-fadeIn">
-      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>🏋️ Rutin İşler ({rutinler.length})</h3>
-        <button className="add-btn-small" onClick={onAdd} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--brd)', background: 'white', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-          <Plus size={20} />
-        </button>
+      <div className="section-header" style={{ padding: '0 20px', marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>🔁 Hazır Rutinler</h3>
+        <p style={{ fontSize: '12px', opacity: 0.6 }}>Gün boyu sürecek hazır aktivite paketleri.</p>
       </div>
 
-      <div className="rutin-list" style={{ padding: '0 20px' }}>
-        {rutinler.length === 0 ? (
-          <div className="empty-state glass" style={{ padding: '40px 20px', textAlign: 'center', opacity: 0.6 }}>
-            <p>Henüz bir rutin eklenmemiş. Ev işlerini veya periyodik aktiviteleri buraya ekleyebilirsin.</p>
-          </div>
-        ) : (
-          rutinler.map(r => (
-            <div key={r.id} className="tl-content glass" style={{ marginBottom: '12px', flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <strong style={{ fontSize: '15px' }}>{r.aktivite}</strong>
-                <button onClick={() => deleteRutin(r.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444' }}><Trash2 size={16} /></button>
+      <div className="routine-date-selector" style={{ padding: '0 20px', marginBottom: '20px' }}>
+        <div className="form-group glass" style={{ padding: '15px', borderRadius: '16px', border: '1px solid var(--brd)' }}>
+          <label style={{ fontSize: '12px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Uygulama Tarihi</label>
+          <input 
+            type="date" 
+            value={startDate} 
+            onChange={e => setStartDate(e.target.value)}
+            style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: 'var(--bg)' }}
+          />
+        </div>
+      </div>
+
+      <div className="routines-grid" style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '15px', paddingBottom: '100px' }}>
+        {SOCIAL_ROUTINES.map(r => (
+          <div key={r.id} className="routine-combo-card glass" style={{ padding: '20px', borderRadius: '24px', border: '1px solid var(--brd)', position: 'relative', overflow: 'hidden' }}>
+            <div className="rc-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '32px' }}>{r.icon}</span>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '900' }}>{r.name}</h4>
+                  <span style={{ fontSize: '12px', color: 'var(--social)', fontWeight: '800' }}>💰 {r.cost}</span>
+                </div>
               </div>
-              <div style={{ fontSize: '12px', opacity: 0.7, display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <span style={{ background: 'var(--brd)', padding: '2px 8px', borderRadius: '6px', fontWeight: '800' }}>👤 {r.kisi}</span>
-                <span>⏰ {r.saati}</span>
-                {r.ucret > 0 && <span>💰 ₺{r.ucret}</span>}
-              </div>
-              <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
-                {['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'].map((g, idx) => (
-                  <div key={idx} style={{ 
-                    padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '900',
-                    background: (r.gunler || []).includes(idx+1) || (r.gunler || []).includes(['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][idx]) ? 'var(--social)' : 'var(--bg)',
-                    color: (r.gunler || []).includes(idx+1) || (r.gunler || []).includes(['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][idx]) ? 'white' : 'var(--txt-light)',
-                    border: '1px solid var(--brd)'
-                  }}>{g}</div>
-                ))}
-              </div>
+              <button 
+                className="apply-routine-btn"
+                onClick={() => handleApply(r)}
+                style={{ 
+                  padding: '8px 16px', borderRadius: '12px', border: 'none', 
+                  background: 'var(--social)', color: 'white', fontSize: '11px', fontWeight: '800'
+                }}
+              >
+                UYGULA
+              </button>
             </div>
-          ))
-        )}
+            
+            <div className="rc-items" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {r.items.map((item, idx) => (
+                <div key={idx} className="rc-item-mini" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', opacity: 0.8 }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--social)' }} />
+                  <span>{idx === 0 ? 'Sabah' : idx === 1 ? 'Öğle' : 'Akşam'}: <strong>{item}</strong></span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
+
 function HavuzTab({ sosyal, onAdd }) {
-  const ideas = sosyal.havuz || [];
+  const userIdeas = sosyal.havuz || [];
   const { deleteSocialPoolItem } = useStore();
   const [planningIdea, setPlanningIdea] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState('Hepsi');
+
+  const categories = ['Hepsi', ...new Set(INITIAL_SOCIAL_POOL.map(p => p.category))];
+
+  const filteredPool = selectedCategory === 'Hepsi' 
+    ? INITIAL_SOCIAL_POOL 
+    : INITIAL_SOCIAL_POOL.filter(p => p.category === selectedCategory);
 
   const startPlanning = (idea) => {
-    setPlanningIdea(idea);
+    setPlanningIdea({
+      baslik: idea.title || idea.baslik,
+      emoji: idea.icon || idea.emoji,
+      harcama: idea.cost?.replace(/[^0-9-]/g, '') || '',
+      tur: idea.category === 'Park & Doğa' || idea.category === 'Sahil & Açık Alan' ? 'disari' : 'disari'
+    });
   };
 
   const finishPlanning = (details) => {
-    // Logic to convert idea to activity...
+    const { addSocialActivity } = useStore.getState();
+    addSocialActivity({
+      ...details,
+      tamamlandi: false
+    });
     setPlanningIdea(null);
+    toast.success('Aktivite plana eklendi! 📅');
   };
 
   return (
     <div className="tab-pane animate-fadeIn">
-      <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: '20px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>💡 Fikir Havuzu ({ideas.length})</h3>
-        <button className="add-btn-small" onClick={onAdd} style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid var(--brd)', background: 'white', color: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-          <Plus size={20} />
-        </button>
+      <div className="category-filter-scroll" style={{ padding: '0 20px', marginBottom: '20px', display: 'flex', gap: '10px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+        {categories.map(cat => (
+          <button 
+            key={cat}
+            className={`filter-chip ${selectedCategory === cat ? 'active' : ''}`}
+            onClick={() => setSelectedCategory(cat)}
+            style={{ 
+              padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--brd)',
+              background: selectedCategory === cat ? 'var(--social)' : 'white',
+              color: selectedCategory === cat ? 'white' : 'var(--txt)',
+              fontSize: '12px', fontWeight: '800'
+            }}
+          >
+            {cat}
+          </button>
+        ))}
       </div>
 
-      <div className="hybrid-todo-list" style={{ padding: '0 20px' }}>
-        <p style={{ fontSize: '12px', fontWeight: '800', color: 'var(--social)', marginBottom: '15px', opacity: 0.8 }}>✨ Ortak, Görkem veya Esra için yapılacaklar ve fikirler.</p>
-        
-        {ideas.length === 0 ? (
-          <div className="empty-state glass" style={{ padding: '40px 20px', textAlign: 'center', opacity: 0.6 }}>
-            <p>Fikir havuzu boş. Akılınıza gelen her şeyi buraya atın!</p>
-          </div>
-        ) : (
-          ideas.map(i => (
-            <div key={i.id} className="idea-list-item glass" style={{ marginBottom: '12px' }}>
-              <span className="ili-emoji">{i.emoji || (i.tur === 'evde' ? '🏠' : '🌆')}</span>
-              <div className="ili-info">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <strong style={{ fontSize: '14px' }}>{i.baslik}</strong>
-                  {i.kisi && <span style={{ fontSize: '10px', background: 'var(--brd)', padding: '2px 6px', borderRadius: '4px', fontWeight: '900' }}>{i.kisi.toUpperCase()}</span>}
-                </div>
-                <div style={{ fontSize: '11px', opacity: 0.6, marginTop: '2px' }}>
-                  {i.tur === 'evde' ? 'Ev İşi / Planı' : 'Dışarı Aktivitesi'} · {i.siklik === 5 ? '⭐⭐⭐' : i.siklik === 3 ? '⭐⭐' : '⭐'}
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="ili-plan-btn" onClick={() => startPlanning(i)} style={{ background: 'var(--social)', padding: '6px 12px', borderRadius: '10px', color: 'white', border: 'none', fontSize: '11px', fontWeight: '800' }}>PLANLA</button>
-                <button onClick={() => deleteSocialPoolItem(i.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444' }}><Trash2 size={16} /></button>
+      <div className="pool-grid" style={{ padding: '0 20px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+        {filteredPool.map(item => (
+          <div key={item.id} className="pool-card glass" style={{ padding: '15px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="pc-top" style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '24px' }}>{item.icon}</span>
+              <button 
+                onClick={() => startPlanning(item)}
+                style={{ background: 'var(--social-light)', color: 'var(--social)', border: 'none', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Plus size={16} />
+              </button>
+            </div>
+            <div className="pc-info">
+              <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px' }}>{item.title}</strong>
+              <div style={{ fontSize: '10px', opacity: 0.6, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span>⏱️ {item.duration}</span>
+                <span>💰 {item.cost}</span>
               </div>
             </div>
-          ))
-        )}
+          </div>
+        ))}
       </div>
+
+      {userIdeas.length > 0 && (
+        <div className="user-ideas-section" style={{ marginTop: '30px', padding: '0 20px' }}>
+          <h4 style={{ fontSize: '14px', fontWeight: '900', marginBottom: '15px', opacity: 0.7 }}>💡 Sizin Fikirleriniz</h4>
+          <div className="hybrid-todo-list">
+            {userIdeas.map(i => (
+              <div key={i.id} className="idea-list-item glass" style={{ marginBottom: '12px' }}>
+                <span className="ili-emoji">{i.emoji || '💡'}</span>
+                <div className="ili-info">
+                  <strong>{i.baslik}</strong>
+                  <div style={{ fontSize: '11px', opacity: 0.6 }}>{i.kisi} · {i.tur}</div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="ili-plan-btn" onClick={() => startPlanning(i)}>PLANLA</button>
+                  <button onClick={() => deleteSocialPoolItem(i.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444' }}><Trash2 size={16} /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <ActionSheet
         isOpen={!!planningIdea}
         onClose={() => setPlanningIdea(null)}
-        title={`📅 ${planningIdea?.baslik} Planla`}
+        title={`📅 Aktivite Planla`}
       >
         {planningIdea && (
           <PlanIdeaModal 
@@ -1307,41 +1400,6 @@ function HavuzTab({ sosyal, onAdd }) {
           />
         )}
       </ActionSheet>
-
-      <div className="archive-section" style={{ marginTop: '40px', padding: '0 20px', paddingBottom: '100px' }}>
-        <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)', opacity: 0.7 }}>📦 Buzdolabı Arşivi</h3>
-        </div>
-        
-        {(useStore.getState().mutfak.arsiv || []).length === 0 ? (
-          <div className="empty-state glass" style={{ padding: '20px', textAlign: 'center', opacity: 0.5, fontSize: '13px' }}>
-            Arşivlenmiş not bulunmuyor.
-          </div>
-        ) : (
-          <div className="archive-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {useStore.getState().mutfak.arsiv.map(n => (
-              <div key={n.id} className="gecmis-card-compact glass" style={{ padding: '12px' }}>
-                <div className="gcc-main" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span className="gcc-emoji">📝</span>
-                  <div className="gcc-info" style={{ flex: 1 }}>
-                    <span className="gcc-title" style={{ fontSize: '13px', fontWeight: '800' }}>{n.t}</span>
-                    <div className="gcc-sub-row" style={{ fontSize: '11px', opacity: 0.6, marginTop: '2px' }}>
-                      <span className="gcc-date">{n.w} · {new Date(n.archDate).toLocaleDateString('tr-TR')}</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => useStore.getState().restoreNote(n.id)} 
-                    className="tl-btn edit" 
-                    style={{ width: 'auto', padding: '5px 12px', fontSize: '11px', height: '28px', background: 'var(--social)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '800' }}
-                  >
-                    Geri Yükle
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
