@@ -227,29 +227,6 @@ function TripCard({ trip, onClick }) {
   );
 }
 
-function HaritaTab({ tatil }) {
-  return <div className="tab-pane p-20 animate-fadeIn"><h3>🗺️ Seyahat Haritanız</h3><p className="helper-text">Çok yakında: Tüm gezdiğiniz yerler tek bir haritada!</p></div>;
-}
-
-function PasaportTab({ tatil, onEdit }) {
-  return (
-    <div className="tab-pane p-20 animate-fadeIn">
-      <div className="passport-grid">
-        {['gorkem', 'esra'].map(p => (
-          <div key={p} className="passport-card-cute glass" onClick={() => onEdit(p)}>
-            <Flag size={20} />
-            <strong>{p.charAt(0).toUpperCase() + p.slice(1)}</strong>
-            <span>Detayları Gör</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function HayalTab({ tatil }) {
-  return <div className="tab-pane p-20 animate-fadeIn"><h3>⭐ Hayallerdeki Duraklar</h3><p className="helper-text">Gelecek maceralarınızı buraya not edin.</p></div>;
-}
 
 function AddTripWizard({ onClose }) {
   const { addTrip } = useStore();
