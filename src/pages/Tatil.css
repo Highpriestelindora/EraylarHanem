@@ -3552,3 +3552,97 @@
   border-top-right-radius: 30px;
 }
 .review-active-user-badge { display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255, 255, 255, 0.5); padding: 8px 16px; border-radius: 20px; font-size: 13px; color: #475569; border: 1px solid rgba(0,0,0,0.05); } .review-active-user-badge span { font-weight: 800; color: #7e22ce; }
+
+/* --- VALIZ 2.0 WEATHER ORACLE --- */
+.valiz-weather-oracle {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #ddd6fe;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+}
+
+.oracle-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.oracle-emoji {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  animation: float-mini 3s infinite ease-in-out;
+}
+
+@keyframes float-mini {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.oracle-header strong {
+  display: block;
+  font-size: 14px;
+  color: #4c1d95;
+  font-weight: 800;
+}
+
+.oracle-header p {
+  font-size: 11px;
+  color: #7c3aed;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.oracle-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.oracle-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.oracle-alert:hover {
+  transform: translateX(4px);
+  background: #fafafa;
+  border-color: #ddd6fe;
+}
+
+.oracle-alert.high {
+  border-left: 4px solid #ef4444;
+}
+
+.oracle-alert.med {
+  border-left: 4px solid #f59e0b;
+}
+
+.oracle-alert .a-icon {
+  font-size: 18px;
+}
+
+.oracle-alert .a-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  flex: 1;
+}
+
+.spinner-mini {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0,0,0,0.1);
+  border-top: 2px solid #7c3aed;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+

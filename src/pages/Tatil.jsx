@@ -555,33 +555,48 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
         const today = new Date().toISOString().split('T')[0];
         const tripStart = trip.startDate || today;
         
-        // Open-Meteo forecast is only valid for -2 to +16 days
-        // We check if trip start is too far or in the past
         const daysDiff = (new Date(tripStart) - new Date(today)) / 864e5;
-        const isFetchable = daysDiff >= -2 && daysDiff <= 14;
+        const isForecastable = daysDiff >= -2 && daysDiff <= 14;
 
-        let weatherUrl;
-        if (isFetchable) {
+        let forecast = [];
+        if (isForecastable) {
           const endDateObj = new Date(tripStart);
           endDateObj.setDate(endDateObj.getDate() + 6);
           const end = endDateObj.toISOString().split('T')[0];
-          weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&start_date=${tripStart}&end_date=${end}&daily=weathercode,temperature_2m_max&timezone=auto`;
+          const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&start_date=${tripStart}&end_date=${end}&daily=weathercode,temperature_2m_max&timezone=auto`;
+          const weatherRes = await fetch(weatherUrl);
+          const weatherData = await weatherRes.json();
+          
+          if (weatherData.daily?.time) {
+            forecast = weatherData.daily.time.map((t, i) => ({
+              date: t,
+              code: weatherData.daily.weathercode[i],
+              temp: Math.round(weatherData.daily.temperature_2m_max[i]),
+              isHistorical: false
+            }));
+          }
         } else {
-          // Fallback: Show current 7-day forecast for the city
-          weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weathercode,temperature_2m_max&timezone=auto`;
+          // Historical Archive Logic: Fetch same period from last year
+          const lastYear = new Date(tripStart);
+          lastYear.setFullYear(lastYear.getFullYear() - 1);
+          const startArchive = lastYear.toISOString().split('T')[0];
+          lastYear.setDate(lastYear.getDate() + 14); // 2 weeks window
+          const endArchive = lastYear.toISOString().split('T')[0];
+          
+          const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=weathercode,temperature_2m_max&timezone=auto`;
+          const archRes = await fetch(archiveUrl);
+          const archData = await archRes.json();
+          
+          if (archData.daily?.time) {
+            forecast = archData.daily.time.map((t, i) => ({
+              date: t,
+              code: archData.daily.weathercode[i],
+              temp: Math.round(archData.daily.temperature_2m_max[i]),
+              isHistorical: true
+            }));
+          }
         }
-
-        const weatherRes = await fetch(weatherUrl);
-        const weatherData = await weatherRes.json();
-        
-        if (weatherData.daily?.time) {
-          const forecast = weatherData.daily.time.map((t, i) => ({
-            date: t,
-            code: weatherData.daily.weathercode[i],
-            temp: Math.round(weatherData.daily.temperature_2m_max[i])
-          }));
-          setWeatherForecast(forecast);
-        }
+        setWeatherForecast(forecast);
       } catch (err) {
         console.error('Weather fetch error:', err);
       }
@@ -734,7 +749,11 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
 
       <div className="detail-body">
         {activeSubTab === 'valiz' && (
-          <ValizSection trip={trip} onAutoFill={(items) => handleUpdateTrip({ valiz: items })} />
+          <ValizSection 
+            trip={trip} 
+            weatherForecast={weatherForecast}
+            onAutoFill={(items) => handleUpdateTrip({ valiz: items })} 
+          />
         )}
 
         {activeSubTab === 'details' && (
@@ -1152,12 +1171,30 @@ function HotelMap({ name, address, city, country }) {
   return <div ref={mapRef} style={{ width: '100%', height: '400px', borderRadius: '16px', zIndex: 1 }} />;
 }
 
-function ValizSection({ trip, onAutoFill }) {
+function ValizSection({ trip, weatherForecast, onAutoFill }) {
   const { updateTripValiz, setModuleData, tatil, syncValizToDepo, currentUser } = useStore();
   const [activePackingUser, setActivePackingUser] = useState(currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem');
   const [newItem, setNewItem] = useState('');
   const [showAssistant, setShowAssistant] = useState(false);
   
+  const weatherAdvice = useMemo(() => {
+    if (!weatherForecast || weatherForecast.length === 0) return null;
+    
+    const isHistorical = weatherForecast[0].isHistorical;
+    const avgTemp = weatherForecast.reduce((acc, curr) => acc + curr.temp, 0) / weatherForecast.length;
+    const hasRain = weatherForecast.some(f => f.code >= 51 && f.code <= 67);
+    const hasSnow = weatherForecast.some(f => f.code >= 71 && f.code <= 77);
+    
+    let alerts = [];
+    if (hasSnow || avgTemp < 8) alerts.push({ icon: '🧥', text: 'Hava dondurucu! Kalın mont, bot ve eldiven şart.', priority: 'high' });
+    else if (avgTemp < 16) alerts.push({ icon: '🧥', text: 'Serin bir hava bekleniyor, mont/ceket almayı unutma.', priority: 'med' });
+    
+    if (hasRain) alerts.push({ icon: '☂️', text: 'Yağmur riski! Şemsiye veya yağmurluk ekle.', priority: 'high' });
+    if (avgTemp > 25) alerts.push({ icon: '👕', text: 'Sıcak hava! Şort, tişört ve güneş kremi al.', priority: 'med' });
+
+    return { isHistorical, avgTemp: Math.round(avgTemp), alerts };
+  }, [weatherForecast]);
+
   const tripDuration = useMemo(() => {
     const start = new Date(trip.startDate);
     const end = new Date(trip.endDate);
@@ -1208,6 +1245,28 @@ function ValizSection({ trip, onAutoFill }) {
 
   return (
     <div className="valiz-2-container animate-fadeIn">
+      {/* Weather Advice 2.0 */}
+      {weatherAdvice && weatherAdvice.alerts.length > 0 && (
+        <div className="valiz-weather-oracle glass mb-15">
+          <div className="oracle-header">
+             <span className="oracle-emoji">🔮</span>
+             <div>
+               <strong>Valiz 2.0: İklim Kahini</strong>
+               <p>{weatherAdvice.isHistorical ? 'Geçen yılın ortalamalarına göre:' : 'Hava durumu tahminine göre:'}</p>
+             </div>
+          </div>
+          <div className="oracle-alerts">
+            {weatherAdvice.alerts.map((alert, i) => (
+              <div key={i} className={`oracle-alert ${alert.priority}`} onClick={() => addItem(alert.text.split('!')[0].split(',')[0].trim())}>
+                <span className="a-icon">{alert.icon}</span>
+                <span className="a-text">{alert.text}</span>
+                <Plus size={12} opacity={0.5} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* User Switcher */}
       <div className="valiz-user-tabs mb-15">
         <button 
