@@ -90,6 +90,7 @@ const DEFAULT_STATE = {
     consumption: {}, 
     sohbet: [],        // { id, t, w, d, r } - text, writer, date, read
     arsiv: [],         // { id, t, w, d, r, archDate }
+    history: [],       // Persistent log of ALL notes
     priceHistory: {},  // { itemName: [ { pr, dt, mk } ] }
     ekmeklik: [],      // { id, tip, ic, raf, mk, adet, dt }
   },
@@ -1255,8 +1256,12 @@ const useStore = create(
           x: Math.floor(Math.random() * 50) + 10,
           y: Math.floor(Math.random() * 50) + 10
         };
-        const yeniSohbet = [newNote, ...state.mutfak.sohbet].slice(0, 15);
-        set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet } });
+        // Sohbet keeps only 12 for the board view
+        const yeniSohbet = [newNote, ...state.mutfak.sohbet].slice(0, 12);
+        // History keeps everything (up to 500)
+        const yeniHistory = [newNote, ...(state.mutfak.history || [])].slice(0, 500);
+        
+        set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, history: yeniHistory } });
         get().saveToSupabase();
       },
 
@@ -1278,8 +1283,13 @@ const useStore = create(
 
       removeNote: (noteId) => {
         const state = get();
+        const note = state.mutfak.sohbet.find(n => n.id === noteId);
         const yeniSohbet = state.mutfak.sohbet.filter(n => n.id !== noteId);
-        set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet } });
+        
+        // When removed from board, move to archive just in case, but history already has it
+        const yeniArsiv = note ? [{ ...note, archDate: new Date().toISOString() }, ...state.mutfak.arsiv].slice(0, 100) : state.mutfak.arsiv;
+        
+        set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
         get().saveToSupabase();
       },
 
