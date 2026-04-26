@@ -2147,106 +2147,157 @@ function HayalTab({ tatil }) {
     setModuleData('tatil', { ...tatil, wishlist: newList });
   };
 
+  const dreamProgress = useMemo(() => {
+    const total = BUCKET_LIST.length;
+    const added = wishlist.filter(w => !w.isManual).length;
+    return Math.round((added / total) * 100);
+  }, [wishlist]);
+
   return (
     <div className="tab-pane animate-fadeIn">
-      {/* Smart Assistant Header */}
-      <div className="dream-assistant-box glass mb-20">
-        <div className="da-header">
-          <div className="da-title-row">
-            <span className="da-emoji">🤖</span>
+      {/* Discovery Oracle Header */}
+      <div className="discovery-oracle-premium glass mb-20">
+        <div className="oracle-glow"></div>
+        <div className="do-header">
+          <div className="do-title-group">
+            <div className="do-icon-box">
+              <Map className="do-icon" size={24} />
+            </div>
             <div>
-              <strong>Dünya Deneyim Asistanı</strong>
-              <p>Sıradaki maceranı keşfetmeye hazır mısın?</p>
+              <h3 className="do-title">Keşif Kahini</h3>
+              <p className="do-subtitle">Sıradaki maceranı keşfetmeye hazır mısın?</p>
             </div>
           </div>
-          <button className="da-refresh-btn icon-btn-mini" onClick={refreshRecommendation} title="Yenile">
-            <Moon size={16} /> {/* Using Moon as a generic refresh-like icon or similar */}
+          <button className="do-refresh-btn" onClick={refreshRecommendation}>
+            <Moon size={18} />
           </button>
         </div>
-        <div className="da-recommendation glass">
-          <p>“{recommendation.flag} {recommendation.title} denemek ister misin? {recommendation.city} seni bekliyor!”</p>
-          <button className="da-action-btn" onClick={() => toggleWishlist(recommendation)}>
-            {wishlist.some(w => w.bucketId === recommendation.id) ? 'Hayallerimde ❤️' : 'Hayallere Ekle ⭐'}
+
+        <div className="do-content glass">
+          <div className="do-recommendation-box">
+             <span className="do-flag">{recommendation.flag}</span>
+             <div className="do-text">
+               <strong>{recommendation.title}</strong>
+               <p>{recommendation.city} seni bekliyor!</p>
+             </div>
+          </div>
+          <button className={`do-action-btn ${wishlist.some(w => w.bucketId === recommendation.id) ? 'active' : ''}`} onClick={() => toggleWishlist(recommendation)}>
+            {wishlist.some(w => w.bucketId === recommendation.id) ? <Check size={18} /> : <Plus size={18} />}
           </button>
+        </div>
+
+        <div className="do-footer">
+          <div className="do-progress-bar">
+            <div className="do-progress-fill" style={{ width: `${dreamProgress}%` }}></div>
+          </div>
+          <span className="do-progress-text">Dünya Deneyimlerinin %{dreamProgress}'i Hayallerinde</span>
         </div>
       </div>
 
       <div className="sub-tab-nav-cute mb-20">
         <button className={`sub-tab-btn-cute ${activeSubTab === 'experiences' ? 'active' : ''}`} onClick={() => setActiveSubTab('experiences')}>
           <span className="btn-emoji">🗺️</span>
-          <span>Deneyim Listesi</span>
+          <span>Keşif Dünyası</span>
         </button>
         <button className={`sub-tab-btn-cute ${activeSubTab === 'my_list' ? 'active' : ''}`} onClick={() => setActiveSubTab('my_list')}>
           <span className="btn-emoji">⭐</span>
-          <span>Hayallerimiz ({wishlist.length})</span>
+          <span>Bizim Hayallerimiz ({wishlist.length})</span>
         </button>
       </div>
 
       {activeSubTab === 'experiences' && (
-        <>
-          <div className="category-scroll mb-15">
+        <div className="experiences-view animate-fadeIn">
+          <div className="category-chips-scroll mb-20">
             {categories.map(c => (
-              <button key={c} className={`cat-tag ${filter === c ? 'active' : ''}`} onClick={() => setFilter(c)}>{c}</button>
+              <button key={c} className={`chip-tag ${filter === c ? 'active' : ''}`} onClick={() => setFilter(c)}>
+                {c}
+              </button>
             ))}
           </div>
           
-          <div className="experiences-grid">
+          <div className="experiences-grid-premium">
             {filteredBucket.map(item => (
-              <div key={item.id} className="experience-card glass">
-                <div className="ec-top">
-                  <span className="ec-flag">{item.flag}</span>
-                  <div className="ec-info">
-                    <strong>{item.title}</strong>
-                    <span>{item.city}, {item.country}</span>
+              <div key={item.id} className="exp-card-premium glass">
+                <div className="exp-card-top">
+                  <span className="exp-badge">{item.category}</span>
+                  <button className={`exp-fav-btn ${wishlist.some(w => w.bucketId === item.id) ? 'active' : ''}`} onClick={() => toggleWishlist(item)}>
+                    <Star size={16} fill={wishlist.some(w => w.bucketId === item.id) ? "currentColor" : "none"} />
+                  </button>
+                </div>
+                <div className="exp-card-main">
+                  <div className="exp-visual">
+                    <span className="exp-emoji">{item.flag}</span>
+                  </div>
+                  <div className="exp-info">
+                    <h4>{item.title}</h4>
+                    <p>{item.city}, {item.country}</p>
                   </div>
                 </div>
-                <div className="ec-footer">
-                  <div className="ec-meta">
-                    <div className="ec-meta-item"><Timer size={10} /> {item.duration}</div>
-                    <div className="ec-meta-item"><Wallet size={10} /> {item.budget}</div>
-                    <div className="ec-meta-item"><Calendar size={10} /> {item.season}</div>
+                <div className="exp-card-footer">
+                  <div className="exp-stats">
+                    <div className="exp-stat"><Timer size={12} /> {item.duration}</div>
+                    <div className="exp-stat"><Wallet size={12} /> {item.budget}</div>
                   </div>
-                  <button className={`ec-add-btn ${wishlist.some(w => w.bucketId === item.id) ? 'active' : ''}`} onClick={() => toggleWishlist(item)}>
-                    {wishlist.some(w => w.bucketId === item.id) ? <Check size={14} /> : <Plus size={14} />}
-                  </button>
+                  <div className="exp-season">
+                    <Calendar size={12} /> {item.season}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {activeSubTab === 'my_list' && (
-        <div className="my-wishlist-section animate-fadeIn">
-          <div className="section-header-cute">
-            <h4>Özel Hayallerimiz</h4>
-            <button className="add-mini-btn" onClick={() => setShowManualForm(!showManualForm)}>
-              {showManualForm ? <X size={14} /> : <Plus size={14} />}
-            </button>
+        <div className="my-wishlist-view animate-fadeIn">
+          <div className="wishlist-hero-action glass mb-20" onClick={() => setShowManualForm(true)}>
+             <div className="wh-icon"><PlusCircle size={28} /></div>
+             <div className="wh-text">
+               <strong>Yeni Bir Hayal Kur</strong>
+               <p>Henüz listede olmayan o özel yeri ekle...</p>
+             </div>
           </div>
 
           {showManualForm && (
-            <div className="manual-dream-form glass mb-20 animate-slideDown">
-              <div className="mdf-row">
-                <input placeholder="Nereye? (Şehir/Yer)" value={manualDream.place} onChange={e => setManualDream({...manualDream, place: e.target.value})} />
-                <input placeholder="Ülke" value={manualDream.country} onChange={e => setManualDream({...manualDream, country: e.target.value})} />
+            <div className="manual-dream-overlay animate-fadeIn">
+              <div className="manual-dream-modal glass animate-slideDown">
+                <div className="md-modal-header">
+                  <h3>✨ Özel Hayal Ekle</h3>
+                  <button className="close-btn" onClick={() => setShowManualForm(false)}><X size={20} /></button>
+                </div>
+                <div className="md-modal-body">
+                  <div className="md-input-row">
+                    <div className="md-input-field">
+                      <label>Nereye?</label>
+                      <input placeholder="Şehir/Yer" value={manualDream.place} onChange={e => setManualDream({...manualDream, place: e.target.value})} />
+                    </div>
+                    <div className="md-input-field">
+                      <label>Ülke</label>
+                      <input placeholder="Ülke" value={manualDream.country} onChange={e => setManualDream({...manualDream, country: e.target.value})} />
+                    </div>
+                  </div>
+                  <div className="md-input-field">
+                    <label>Bütçe</label>
+                    <input placeholder="Tahmini Bütçe (örn: €1.500)" value={manualDream.budget} onChange={e => setManualDream({...manualDream, budget: e.target.value})} />
+                  </div>
+                  <div className="md-input-field">
+                    <label>Notlarımız</label>
+                    <textarea placeholder="Neden gitmek istiyoruz?" value={manualDream.notes} onChange={e => setManualDream({...manualDream, notes: e.target.value})} />
+                  </div>
+                  <button className="md-submit-btn" onClick={() => {
+                    if (!manualDream.place) return toast.error('Yer ismi gerekli!');
+                    const newItem = { id: Date.now(), isManual: true, ...manualDream };
+                    setModuleData('tatil', { ...tatil, wishlist: [...wishlist, newItem] });
+                    setManualDream({ place: '', country: '', budget: '', notes: '' });
+                    setShowManualForm(false);
+                    toast.success('Özel hayal eklendi! ✈️');
+                  }}>Hayallerimize Mühürle</button>
+                </div>
               </div>
-              <div className="mdf-row">
-                <input placeholder="Tahmini Bütçe (örn: €1.500)" value={manualDream.budget} onChange={e => setManualDream({...manualDream, budget: e.target.value})} />
-              </div>
-              <textarea placeholder="Neden gitmek istiyoruz?" value={manualDream.notes} onChange={e => setManualDream({...manualDream, notes: e.target.value})} />
-              <button className="mdf-save-btn" onClick={() => {
-                if (!manualDream.place) return toast.error('Yer ismi gerekli!');
-                const newItem = { id: Date.now(), isManual: true, ...manualDream };
-                setModuleData('tatil', { ...tatil, wishlist: [...wishlist, newItem] });
-                setManualDream({ place: '', country: '', budget: '', notes: '' });
-                setShowManualForm(false);
-                toast.success('Özel hayal eklendi! ✈️');
-              }}>Hayallere Mühürle</button>
             </div>
           )}
 
-          <div className="wishlist-grid">
+          <div className="wishlist-grid-premium">
             {wishlist.map(w => {
               const bucketItem = !w.isManual ? BUCKET_LIST.find(b => b.id === w.bucketId) : null;
               const displayPlace = w.isManual ? w.place : bucketItem?.title;
@@ -2255,28 +2306,33 @@ function HayalTab({ tatil }) {
               const displayBudget = w.isManual ? w.budget : bucketItem?.budget;
 
               return (
-                <div key={w.id} className="wish-item-card-premium glass animate-slideRight">
-                  <div className="wic-top">
-                    <span className="wic-flag">{bucketItem?.flag || '🌍'}</span>
-                    <div className="wic-info">
+                <div key={w.id} className="wish-card-premium glass animate-slideRight">
+                  <div className="wc-top">
+                    <div className="wc-flag-box">{bucketItem?.flag || '🌍'}</div>
+                    <div className="wc-info">
                       <strong>{displayPlace}</strong>
                       <small>{displayCountry}</small>
                     </div>
-                    <button className="wic-del-btn" onClick={() => {
-                      const filtered = wishlist.filter(item => item.id !== w.id);
-                      setModuleData('tatil', { ...tatil, wishlist: filtered });
+                    <button className="wc-del-btn" onClick={() => {
+                      if(window.confirm('Bu hayali listeden çıkarmak istiyor musun?')) {
+                        const filtered = wishlist.filter(item => item.id !== w.id);
+                        setModuleData('tatil', { ...tatil, wishlist: filtered });
+                      }
                     }}>
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
-                  {displayBudget && <div className="wic-budget">💰 {displayBudget}</div>}
-                  {displayNotes && <p className="wic-notes">“{displayNotes}”</p>}
+                  <div className="wc-content">
+                    {displayBudget && <div className="wc-budget"><DollarSign size={12} /> {displayBudget}</div>}
+                    {displayNotes && <p className="wc-notes">“{displayNotes}”</p>}
+                  </div>
                 </div>
               );
             })}
             {wishlist.length === 0 && (
-              <div className="empty-state-cute">
-                <p>Henüz bir hayal eklemediniz. Deneyim listesine göz atın veya manuel ekleyin!</p>
+              <div className="empty-dream-state">
+                <Map size={48} opacity={0.1} />
+                <p>Henüz bir hayal eklemediniz. Deneyim listesine göz atın veya kendi hayalinizi yaratın!</p>
               </div>
             )}
           </div>
@@ -2284,6 +2340,7 @@ function HayalTab({ tatil }) {
       )}
     </div>
   );
+}
 }
 
 function AddDreamContent({ onAdd }) {
