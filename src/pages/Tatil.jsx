@@ -723,11 +723,13 @@ function HotelMap({ name, address }) {
         setError('Harita yüklenirken hata oluştu.');
         setLoading(false);
       }
-    };
-    document.body.appendChild(script);
+    initMap();
 
     return () => {
-      if (document.body.contains(script)) document.body.removeChild(script);
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
     };
   }, [name, address]);
 
