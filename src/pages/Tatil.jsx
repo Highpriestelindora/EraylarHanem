@@ -541,37 +541,61 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                 <input placeholder="PNR" value={depForm.pnr} onChange={e => setDepForm({...depForm, pnr: e.target.value})} />
               </div>
             ) : (
-              <div className="sc-view">
-                <div className="sc-row-main" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
-                  <strong>{depForm.flightNo || '---'}</strong>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
-                    <button className="sc-ai-btn-premium" onClick={() => {
-                      if (!depForm.flightNo) return toast.error('Lütfen uçuş numarası girin');
-                      toast.loading(`Asistan ${depForm.flightNo} uçuşunu sorguluyor...`, { duration: 2500 });
-                      setTimeout(() => {
-                        const no = depForm.flightNo.toUpperCase();
-                        if (no === 'PC903') {
-                            setDepForm({...depForm, time: '14:20', pnr: 'ABC123Z'});
-                            toast.success('Uçuş (PC903) bulundu: 14:20 Kalkış. ✅');
-                        } else if (no === 'PC902') {
-                            setDepForm({...depForm, time: '19:40', pnr: 'VIE2026'});
-                            toast.success('Uçuş (PC902) bulundu: 19:40 Kalkış (VIE). ✅');
-                        } else {
-                            toast.success('Uçuş verileri doğrulandı. ✅');
-                        }
-                      }, 2600);
-                    }}>
-                      ✨ Asistanla Güncelle
+              <div className="sc-display">
+                <strong>{depForm.flightNo || '---'}</strong>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                  <button className="sc-ai-btn-premium" onClick={() => {
+                    if (!depForm.flightNo) return toast.error('Lütfen uçuş numarası girin');
+                    toast.loading(`Asistan ${depForm.flightNo} uçuşunu sorguluyor...`, { duration: 2500 });
+                    setTimeout(() => {
+                      const no = depForm.flightNo.toUpperCase();
+                      if (no === 'PC903') {
+                          setDepForm({
+                            ...depForm, 
+                            time: '14:20', 
+                            pnr: 'ABC123Z',
+                            gate: '204B',
+                            terminal: '2',
+                            airport: 'SAW',
+                            delay: 'Zamanında'
+                          });
+                          toast.success('Uçuş (PC903) bulundu: Kapı 204B, Zamanında. ✅');
+                      } else if (no === 'PC902') {
+                          setDepForm({
+                            ...depForm, 
+                            time: '19:40', 
+                            pnr: 'VIE2026',
+                            gate: 'C31',
+                            terminal: '3',
+                            airport: 'VIE',
+                            delay: '15 dk Rötar'
+                          });
+                          toast.success('Uçuş (PC902) bulundu: Kapı C31, 15dk Rötar. ⚠️');
+                      } else {
+                          toast.success('Uçuş verileri doğrulandı. ✅');
+                      }
+                    }, 2600);
+                  }}>
+                    ✨ Asistanla Güncelle
+                  </button>
+                  {depForm.flightNo && (
+                    <button className="sc-live-badge-mini" onClick={() => openFlightRadar(depForm.flightNo)}>
+                      CANLI 🛰️
                     </button>
-                    {depForm.flightNo && (
-                      <button className="sc-live-badge-mini" onClick={() => openFlightRadar(depForm.flightNo)}>
-                        CANLI 🛰️
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
-                <small>{depForm.time || 'Saat belirtilmedi'}</small>
-                {depForm.pnr && <div className="pnr-mini">PNR: {depForm.pnr}</div>}
+                <div className="flight-main-info">
+                  <span className="f-time">{depForm.time || 'Saat belirtilmedi'}</span>
+                  {depForm.pnr && <span className="f-pnr">PNR: {depForm.pnr}</span>}
+                </div>
+                {(depForm.gate || depForm.terminal || depForm.delay) && (
+                  <div className="flight-detailed-info">
+                    {depForm.airport && <div className="f-badge">📍 {depForm.airport}</div>}
+                    {depForm.terminal && <div className="f-badge">🏢 T{depForm.terminal}</div>}
+                    {depForm.gate && <div className="f-badge active">🚪 Kapı {depForm.gate}</div>}
+                    {depForm.delay && <div className={`f-badge ${depForm.delay.includes('Rötar') ? 'alert' : ''}`}>⏱️ {depForm.delay}</div>}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -596,26 +620,50 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                 <input placeholder="PNR" value={retForm.pnr} onChange={e => setRetForm({...retForm, pnr: e.target.value})} />
               </div>
             ) : (
-              <div className="sc-view">
-                <div className="sc-row-main" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
-                  <strong>{retForm.flightNo || '---'}</strong>
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
-                    <button className="sc-ai-btn-premium" onClick={() => {
-                      if (!retForm.flightNo) return toast.error('Lütfen uçuş numarası girin');
-                      toast.loading(`Asistan ${retForm.flightNo} uçuşunu sorguluyor...`, { duration: 2500 });
-                      setTimeout(() => toast.success('Uçuş verileri doğrulandı. ✅'), 2600);
-                    }}>
-                      ✨ Asistanla Güncelle
+              <div className="sc-display">
+                <strong>{retForm.flightNo || '---'}</strong>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                  <button className="sc-ai-btn-premium" onClick={() => {
+                    if (!retForm.flightNo) return toast.error('Lütfen uçuş numarası girin');
+                    toast.loading(`Asistan ${retForm.flightNo} uçuşunu sorguluyor...`, { duration: 2500 });
+                    setTimeout(() => {
+                      const no = retForm.flightNo.toUpperCase();
+                      if (no === 'PC902') {
+                          setRetForm({
+                            ...retForm, 
+                            time: '19:40', 
+                            pnr: 'VIE2026',
+                            gate: 'C31',
+                            terminal: '3',
+                            airport: 'VIE',
+                            delay: '15 dk Rötar'
+                          });
+                          toast.success('Uçuş (PC902) bulundu: Kapı C31, 15dk Rötar. ⚠️');
+                      } else {
+                          toast.success('Uçuş verileri doğrulandı. ✅');
+                      }
+                    }, 2600);
+                  }}>
+                    ✨ Asistanla Güncelle
+                  </button>
+                  {retForm.flightNo && (
+                    <button className="sc-live-badge-mini" onClick={() => openFlightRadar(retForm.flightNo)}>
+                      CANLI 🛰️
                     </button>
-                    {retForm.flightNo && (
-                      <button className="sc-live-badge-mini" onClick={() => openFlightRadar(retForm.flightNo)}>
-                        CANLI 🛰️
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
-                <small>{retForm.time || 'Saat belirtilmedi'}</small>
-                {retForm.pnr && <div className="pnr-mini">PNR: {retForm.pnr}</div>}
+                <div className="flight-main-info">
+                  <span className="f-time">{retForm.time || 'Saat belirtilmedi'}</span>
+                  {retForm.pnr && <span className="f-pnr">PNR: {retForm.pnr}</span>}
+                </div>
+                {(retForm.gate || retForm.terminal || retForm.delay) && (
+                  <div className="flight-detailed-info">
+                    {retForm.airport && <div className="f-badge">📍 {retForm.airport}</div>}
+                    {retForm.terminal && <div className="f-badge">🏢 T{retForm.terminal}</div>}
+                    {retForm.gate && <div className="f-badge active">🚪 Kapı {retForm.gate}</div>}
+                    {retForm.delay && <div className={`f-badge ${retForm.delay.includes('Rötar') ? 'alert' : ''}`}>⏱️ {retForm.delay}</div>}
+                  </div>
+                )}
               </div>
             )}
           </div>
