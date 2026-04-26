@@ -777,6 +777,14 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      deleteTrip: (tripId) => {
+        const state = get();
+        const updatedTrips = state.tatil.trips.filter(t => t.id !== tripId);
+        set({ tatil: { ...state.tatil, trips: updatedTrips } });
+        get().addLog('Tatil Silindi', 'Bir tatil planı silindi. 🗑️');
+        get().saveToSupabase();
+      },
+
       updateTrip: (tripId, updates) => {
         const state = get();
         const updatedTrips = state.tatil.trips.map(t => 

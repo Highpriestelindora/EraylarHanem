@@ -108,6 +108,7 @@ export default function Tatil() {
               setMapTarget({ name, address });
               setShowMap(true);
             }}
+            onClose={() => setSelectedTrip(null)}
           />
         )}
       </ActionSheet>
@@ -338,8 +339,8 @@ function PlanningWizardContent({ onAdd }) {
   );
 }
 
-function TripDetailContent({ trip, onOpenTracker, onOpenMap }) {
-  const { addExpense, tatil, setModuleData } = useStore();
+function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
+  const { addExpense, tatil, setModuleData, deleteTrip } = useStore();
   const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('valiz'); // valiz, dokuman, butce
@@ -374,6 +375,19 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap }) {
           <div className="w-temp">24°C</div>
           <div className="w-city">Güneşli</div>
         </div>
+        <button 
+          className="trip-delete-btn" 
+          onClick={() => {
+            if(window.confirm('Bu tatili silmek istediğinizden emin misiniz?')) {
+              deleteTrip(trip.id);
+              onClose();
+              toast.success('Tatil silindi.');
+            }
+          }}
+          style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}
+        >
+          <Trash2 size={16} />
+        </button>
       </div>
 
       {/* Lifecycle Actions */}
@@ -384,9 +398,14 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap }) {
           </button>
         )}
         {trip.status === 'kesin' && (
-          <button className="btn-action-premium arsiv-btn" onClick={() => setStatus('tamamlandi')} style={{ background: '#64748b', color: 'white', flex: 1 }}>
-            <CheckSquare size={18} /> Tatili Tamamla
-          </button>
+          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+            <button className="btn-action-premium arsiv-btn" onClick={() => setStatus('tamamlandi')} style={{ background: '#64748b', color: 'white', flex: 2 }}>
+              <CheckSquare size={18} /> Tatili Tamamla
+            </button>
+            <button className="btn-action-premium revert-btn" onClick={() => setStatus('planlandi')} style={{ background: '#f1f5f9', color: '#64748b', flex: 1, border: '1px solid #e2e8f0' }}>
+              <ArrowLeft size={16} /> Geri Al
+            </button>
+          </div>
         )}
         {trip.status === 'tamamlandi' && (
            <div className="archive-badge-full">Bu tatil başarıyla tamamlandı. ❤️</div>
