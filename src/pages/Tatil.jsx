@@ -776,7 +776,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
                 
                 <div className="assistant-row-cute mt-15">
                   <CurrencyConverter targetCurrency={trip.locationType === 'yurtdisi' ? 'EUR' : 'TRY'} />
-                  <WeatherWidget city={trip.city} country={trip.country} />
+                  <WeatherWidget city={trip.city} country={trip.country} startDate={trip.startDate} />
                 </div>
 
                 <div className="premium-notes-container mt-15 animate-fadeIn">
@@ -1563,7 +1563,7 @@ function CurrencyConverter({ targetCurrency }) {
   );
 }
 
-function WeatherWidget({ city, country }) {
+function WeatherWidget({ city, country, startDate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -1592,29 +1592,35 @@ function WeatherWidget({ city, country }) {
         
         if (geoData.results?.length) {
           const { latitude, longitude } = geoData.results[0];
-          const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+          const today = new Date();
+          const start = new Date(startDate || today);
+          const daysDiff = (start - today) / 864e5;
+          const isHistorical = daysDiff > 14;
+          
+          let weatherUrl;
+          if (isHistorical) {
+            const lastYear = new Date(start);
+            lastYear.setFullYear(lastYear.getFullYear() - 1);
+            const startArchive = lastYear.toISOString().split('T')[0];
+            const endArchive = new Date(lastYear.setDate(lastYear.getDate() + 7)).toISOString().split('T')[0];
+            weatherUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=weathercode,temperature_2m_max&timezone=auto`;
+          } else {
+            weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=auto`;
+          }
+
+          const weatherRes = await fetch(weatherUrl);
           const weatherData = await weatherRes.json();
           
-          if (weatherData.current_weather) {
+          if (isHistorical && weatherData.daily) {
+             const avg = Math.round(weatherData.daily.temperature_2m_max.reduce((a, b) => a + b, 0) / weatherData.daily.temperature_2m_max.length);
+             const month = start.toLocaleString('tr-TR', { month: 'long' });
+             setData({ temp: avg, isSun: true, label: `${month} Ort.` });
+          } else if (weatherData.current_weather) {
             setData({ 
               temp: Math.round(weatherData.current_weather.temperature),
-              isSun: weatherData.current_weather.weathercode < 3
+              isSun: weatherData.current_weather.weathercode < 3,
+              label: 'Tahmin'
             });
-          }
-        } else {
-          // If searchName failed, try just the translated city without country
-          const geoRes2 = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(translatedCity)}&count=1&language=en&format=json`);
-          const geoData2 = await geoRes2.json();
-          if (geoData2.results?.length) {
-             const { latitude, longitude } = geoData2.results[0];
-             const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-             const weatherData = await weatherRes.json();
-             if (weatherData.current_weather) {
-               setData({ 
-                 temp: Math.round(weatherData.current_weather.temperature),
-                 isSun: weatherData.current_weather.weathercode < 3
-               });
-             }
           }
         }
       } catch (err) {
@@ -1624,7 +1630,7 @@ function WeatherWidget({ city, country }) {
       }
     };
     fetchWeather();
-  }, [city, country]);
+  }, [city, country, startDate]);
 
   return (
     <div className="assistant-widget glass">
@@ -1633,7 +1639,10 @@ function WeatherWidget({ city, country }) {
         <span>Hava Durumu</span>
       </div>
       <div className="aw-body weather-flex">
-        <div className="aw-temp">{loading ? '...' : (data ? `${data.temp}°` : '--')}</div>
+        <div className="aw-temp-box">
+          <div className="aw-temp">{loading ? '...' : (data ? `${data.temp}°` : '--')}</div>
+          {data?.label && <div className="aw-temp-label">{data.label}</div>}
+        </div>
         <div className="aw-city">{city}</div>
       </div>
     </div>
