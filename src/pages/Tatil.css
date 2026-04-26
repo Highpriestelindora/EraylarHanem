@@ -1360,3 +1360,23 @@
   50% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
+
+/* Hotel Map UI */
+.map-loader, .map-error {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #64748b;
+  text-align: center;
+  padding: 20px;
+}
+
+.map-error {
+  color: #dc2626;
+  background: #fef2f2;
+}

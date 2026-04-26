@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import ActionSheet from '../components/ActionSheet';
@@ -22,6 +22,8 @@ export default function Tatil() {
   const [editingPassport, setEditingPassport] = useState(null); // 'gorkem' or 'esra'
   const [showTracker, setShowTracker] = useState(false);
   const [trackerFlight, setTrackerFlight] = useState('');
+  const [showMap, setShowMap] = useState(false);
+  const [mapTarget, setMapTarget] = useState({ name: '', address: '' });
 
   const updateTab = (tab) => {
     setActiveTab(tab);
@@ -102,6 +104,10 @@ export default function Tatil() {
               setTrackerFlight(no);
               setShowTracker(true);
             }}
+            onOpenMap={(name, address) => {
+              setMapTarget({ name, address });
+              setShowMap(true);
+            }}
           />
         )}
       </ActionSheet>
@@ -139,6 +145,13 @@ export default function Tatil() {
             </button>
           </div>
         </div>
+      </ActionSheet>
+      <ActionSheet
+        isOpen={showMap}
+        onClose={() => setShowMap(false)}
+        title={`📍 Konum: ${mapTarget.name}`}
+      >
+        <HotelMap name={mapTarget.name} address={mapTarget.address} />
       </ActionSheet>
     </AnimatedPage>
   );
@@ -325,7 +338,7 @@ function PlanningWizardContent({ onAdd }) {
   );
 }
 
-function TripDetailContent({ trip, onOpenTracker }) {
+function TripDetailContent({ trip, onOpenTracker, onOpenMap }) {
   const { addExpense, tatil, setModuleData } = useStore();
   const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -398,6 +411,7 @@ function TripDetailContent({ trip, onOpenTracker }) {
               trip={trip} 
               onUpdate={handleUpdateTrip} 
               onOpenTracker={onOpenTracker}
+              onOpenMap={onOpenMap}
             />
 
             <div className="doc-card glass mt-15">
@@ -441,7 +455,7 @@ function TripDetailContent({ trip, onOpenTracker }) {
   );
 }
 
-function TripSmartDetails({ trip, onUpdate, onOpenTracker }) {
+function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
   const [editingSection, setEditingSection] = useState(null); // 'dep', 'ret', 'acc'
   
   // Local state for forms
@@ -471,9 +485,9 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker }) {
     onOpenTracker(no);
   };
 
-  const openMaps = (query) => {
-    if (!query) return toast.error('Otel adı veya adresi gerekli');
-    window.open(`https://www.google.com/maps/search/${encodeURIComponent(query)}`, '_blank');
+  const openMaps = () => {
+    if (!accForm.hotel && !accForm.address) return toast.error('Otel adı veya adresi gerekli');
+    onOpenMap(accForm.hotel, accForm.address);
   };
 
   const openBooking = () => {
@@ -586,8 +600,8 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker }) {
           </div>
           {editingSection !== 'acc' && (
             <div className="sc-mini-row">
-              <button className="sc-mini-action" onClick={() => openMaps(accForm.hotel || accForm.address)}>
-                <MapPin size={10} /> Konum
+              <button className="sc-mini-action" onClick={openMaps}>
+                <MapPin size={10} /> Haritada Gör
               </button>
               <button className="sc-mini-action" onClick={openBooking}>
                 <ExternalLink size={10} /> Booking
@@ -598,6 +612,62 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker }) {
       </div>
     </div>
   );
+}
+
+function HotelMap({ name, address }) {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    // Inject Leaflet CSS
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    // Load Leaflet JS and Geocode
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.async = true;
+    script.onload = async () => {
+      try {
+        const query = encodeURIComponent(`${name} ${address}`);
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          const L = window.L;
+          const map = L.map(mapRef.current).setView([lat, lon], 15);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+          }).addTo(map);
+          L.marker([lat, lon]).addTo(map).bindPopup(name).openPopup();
+          setLoading(false);
+        } else {
+          setError('Konum bulunamadı. Lütfen otel adını kontrol edin.');
+          setLoading(false);
+        }
+      } catch (err) {
+        setError('Harita yüklenirken hata oluştu.');
+        setLoading(false);
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.body.contains(script)) document.body.removeChild(script);
+    };
+  }, [name, address]);
+
+  if (loading) return <div className="map-loader">🛰️ Konum aranıyor...</div>;
+  if (error) return <div className="map-error">❌ {error}</div>;
+
+  return <div ref={mapRef} style={{ width: '100%', height: '400px', borderRadius: '16px', zIndex: 1 }} />;
 }
 
 function ValizSection({ trip }) {
