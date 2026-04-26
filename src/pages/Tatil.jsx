@@ -432,16 +432,17 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
               onOpenMap={onOpenMap}
             />
 
-            <div className="doc-card glass mt-15">
-              <div className="dc-header"><MapPin size={18} /> <strong>Genel Notlar</strong></div>
-              <div className="dc-body">
-                <textarea 
-                  value={trip.notes || ''} 
-                  placeholder="Gidilecek yerler, yemek listesi vb."
-                  onChange={e => handleUpdateTrip({ notes: e.target.value })} 
-                  style={{ minHeight: '100px' }}
-                />
+            <div className="premium-notes-container mt-15 animate-fadeIn">
+              <div className="notes-header">
+                <Edit3 size={18} />
+                <h3>Genel Notlar</h3>
               </div>
+              <textarea 
+                className="notes-textarea-premium" 
+                value={trip.notes || ''} 
+                placeholder="Gidilecek yerler, yemek listesi vb..."
+                onChange={e => handleUpdateTrip({ notes: e.target.value })} 
+              />
             </div>
           </div>
         )}
@@ -650,9 +651,38 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
               <button className="sc-mini-action" onClick={openMaps}>
                 <MapPin size={10} /> Haritada Gör
               </button>
-              <button className="sc-mini-action" onClick={openBooking}>
-                <ExternalLink size={10} /> Booking
-              </button>
+              <div className="pdf-upload-wrapper">
+                <input 
+                  type="file" 
+                  id={`pdf-upload-${trip.id}`} 
+                  accept="application/pdf"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        onUpdate({ accommodation: { ...trip.accommodation, pdf: event.target.result } });
+                        toast.success('Rezervasyon yüklendi! 📄');
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                <button 
+                  className={`sc-mini-action ${trip.accommodation?.pdf ? 'success' : ''}`} 
+                  onClick={() => {
+                    if (trip.accommodation?.pdf) {
+                      const win = window.open();
+                      win.document.write(`<iframe src="${trip.accommodation.pdf}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                    } else {
+                      document.getElementById(`pdf-upload-${trip.id}`).click();
+                    }
+                  }}
+                >
+                  <ExternalLink size={10} /> {trip.accommodation?.pdf ? 'Rezervasyonu Aç' : 'Booking PDF Yükle'}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -695,15 +725,25 @@ function HotelMap({ name, address }) {
 
       try {
         const trySearch = async (queryText) => {
-          if (!queryText.trim()) return null;
-          const query = encodeURIComponent(queryText);
-          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
-          const data = await response.json();
-          return data && data.length > 0 ? data[0] : null;
+          if (!queryText || queryText.trim().length < 3) return null;
+          // Clean query for better Nominatim results
+          const cleanQuery = queryText.replace(/[!@#$%^&*()_+={}\[\]:;"'<>,.?\/]/g, '').trim();
+          const query = encodeURIComponent(cleanQuery);
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
+            const data = await response.json();
+            return data && data.length > 0 ? data[0] : null;
+          } catch (e) { return null; }
         };
 
-        let result = await trySearch(`${name} ${address}`);
-        if (!result) result = await trySearch(name);
+        // Aggressive fallback logic
+        let result = await trySearch(`${name} ${address}`); 
+        if (!result) result = await trySearch(name); 
+        if (!result && address) {
+            // Try simplifying address (take first two parts)
+            const parts = address.split(',');
+            if (parts.length > 1) result = await trySearch(parts[0] + ' ' + parts[1]);
+        }
         if (!result) result = await trySearch(address);
 
         if (result && mapRef.current) {
