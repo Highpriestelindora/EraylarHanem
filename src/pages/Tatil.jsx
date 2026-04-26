@@ -654,21 +654,30 @@ function HotelMap({ name, address }) {
     script.async = true;
     script.onload = async () => {
       try {
-        const query = encodeURIComponent(`${name} ${address}`);
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
-        const data = await response.json();
+        const trySearch = async (queryText) => {
+          if (!queryText.trim()) return null;
+          const query = encodeURIComponent(queryText);
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+          const data = await response.json();
+          return data && data.length > 0 ? data[0] : null;
+        };
 
-        if (data && data.length > 0) {
-          const { lat, lon } = data[0];
+        // Kademeli Arama Mantığı
+        let result = await trySearch(`${name} ${address}`); // 1. Otel + Adres
+        if (!result) result = await trySearch(name);        // 2. Sadece Otel
+        if (!result) result = await trySearch(address);     // 3. Sadece Adres
+
+        if (result) {
+          const { lat, lon } = result;
           const L = window.L;
           const map = L.map(mapRef.current).setView([lat, lon], 15);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
           }).addTo(map);
-          L.marker([lat, lon]).addTo(map).bindPopup(name).openPopup();
+          L.marker([lat, lon]).addTo(map).bindPopup(name || address).openPopup();
           setLoading(false);
         } else {
-          setError('Konum bulunamadı. Lütfen otel adını kontrol edin.');
+          setError('Konum bulunamadı. Lütfen bilgileri kontrol edin.');
           setLoading(false);
         }
       } catch (err) {
