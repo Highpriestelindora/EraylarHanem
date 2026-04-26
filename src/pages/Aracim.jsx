@@ -405,3 +405,191 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
     </div>
   );
 }
+
+function GarageModal({ garaj, selectedId, onSelect, onAdd, onClose }) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2">
+          <Warehouse size={24} color="var(--aracim)" />
+          <h3>Eraylar Garaj</h3>
+        </div>
+        <div className="garage-list mt-12">
+          {garaj.map(v => (
+            <div 
+              key={v.id} 
+              className={`garage-item glass ${v.id === selectedId ? 'active' : ''}`} 
+              onClick={() => { onSelect(v.id); onClose(); }}
+            >
+              <div className="gi-icon">{v.type === 'boat' ? '⛵' : '🚗'}</div>
+              <div className="gi-info">
+                <strong>{v.model}</strong>
+                <small>{v.plaka}</small>
+              </div>
+              {v.id === selectedId && <Check size={16} className="text-green-500" />}
+            </div>
+          ))}
+          <button className="add-vehicle-btn-premium mt-12" onClick={() => { onAdd(); onClose(); }}>
+            <Plus size={18} /> Yeni Araç veya Tekne Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VehicleFormModal({ vehicle, onSave, onDelete, onClose }) {
+  const [form, setForm] = useState(vehicle || { type: 'car', brand: '', model: '', plaka: '' });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2">
+          <Settings size={24} />
+          <h3>{vehicle ? 'Aracı Düzenle' : 'Yeni Araç'}</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="form-group-v2">
+            <label>Tür</label>
+            <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="premium-select">
+              <option value="car">Otomobil</option>
+              <option value="boat">Tekne / Deniz Aracı</option>
+            </select>
+          </div>
+          <div className="form-group-v2 mt-12">
+            <label>Marka / Model</label>
+            <input value={form.model} onChange={e => setForm({...form, model: e.target.value})} className="premium-input" placeholder="Örn: Tiguan R-Line" />
+          </div>
+          <div className="form-group-v2 mt-12">
+            <label>Plaka / Bağlama Kütüğü</label>
+            <input value={form.plaka} onChange={e => setForm({...form, plaka: e.target.value})} className="premium-input" placeholder="34 HH 1144" />
+          </div>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+            <button className="submit-btn-premium" style={{ flex: 2 }} onClick={() => { onSave(form); onClose(); }}>Kaydet</button>
+            {vehicle && <button className="submit-btn-premium" style={{ flex: 1, background: '#ef4444' }} onClick={() => { if(window.confirm('Silmek istediğinize emin misiniz?')) { onDelete(vehicle.id); onClose(); } }}><Trash2 size={18} /></button>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WashModal({ onSave, onClose }) {
+  const [form, setForm] = useState({ price: '', date: new Date().toISOString().split('T')[0] });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2">
+          <Droplets size={24} color="#3b82f6" />
+          <h3>Araç Yıkama</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="form-group-v2">
+            <label>Fiyat (TL)</label>
+            <input type="number" value={form.price} onChange={e => setForm({...form, price: Number(e.target.value)})} className="premium-input" placeholder="200" />
+          </div>
+          <div className="form-group-v2 mt-12">
+            <label>Tarih</label>
+            <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="premium-input" />
+          </div>
+          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); }}>Kaydet & Finansa İşle</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
+  const [form, setForm] = useState({ note: '', isAVM: false, spot: '', floor: '' });
+  const [loadingLoc, setLoadingLoc] = useState(false);
+
+  const handleStart = () => {
+    setLoadingLoc(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onStart({ lat: pos.coords.latitude, lng: pos.coords.longitude, ...form });
+        setLoadingLoc(false);
+        onClose();
+        toast.success('Konum kaydedildi! 📍');
+      },
+      () => {
+        onStart({ lat: null, lng: null, ...form });
+        setLoadingLoc(false);
+        onClose();
+        toast.success('Not kaydedildi (Konum alınamadı).');
+      }
+    );
+  };
+
+  if (parkLocation?.active) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2">
+            <MapPin size={24} color="#ef4444" />
+            <h3>Park Bilgisi</h3>
+          </div>
+          <div className="modal-body-v2">
+            <div className="park-display-premium glass">
+              {parkLocation.lat && (
+                <div className="park-map-mini">
+                  <a href={`https://www.google.com/maps?q=${parkLocation.lat},${parkLocation.lng}`} target="_blank" rel="noreferrer">
+                    📍 Haritada Gör (Google Maps)
+                  </a>
+                </div>
+              )}
+              <div className="park-info-grid">
+                {parkLocation.note && <div><strong>AVM:</strong> {parkLocation.note}</div>}
+                {parkLocation.floor && <div><strong>Kat:</strong> {parkLocation.floor}</div>}
+                {parkLocation.spot && <div><strong>No:</strong> {parkLocation.spot}</div>}
+              </div>
+            </div>
+            <button className="submit-btn-premium mt-20" onClick={() => {
+              const cost = prompt('Park ücreti ödediniz mi? (Ödemediyseniz boş bırakın veya 0 yazın)');
+              onFinish(Number(cost) || 0);
+              onClose();
+              toast.success('Park kaydı kapatıldı.');
+            }}>Parktan Çık (Tamamlandı)</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2">
+          <MapPin size={24} color="#10b981" />
+          <h3>Konumu Kaydet</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="form-group-v2">
+            <label className="flex items-center gap-8">
+              <input type="checkbox" checked={form.isAVM} onChange={e => setForm({...form, isAVM: e.target.checked})} />
+              AVM / Kapalı Otopark mı?
+            </label>
+          </div>
+          {form.isAVM && (
+            <div className="form-grid-v2 mt-12 animate-fadeIn">
+              <div className="form-group-v2">
+                <label>AVM Adı</label>
+                <input value={form.note} onChange={e => setForm({...form, note: e.target.value})} className="premium-input" placeholder="TerraCity" />
+              </div>
+              <div className="form-group-v2">
+                <label>Kat / Sıra</label>
+                <input value={form.floor} onChange={e => setForm({...form, floor: e.target.value})} className="premium-input" placeholder="P2 - Mavi" />
+              </div>
+              <div className="form-group-v2">
+                <label>Park No</label>
+                <input value={form.spot} onChange={e => setForm({...form, spot: e.target.value})} className="premium-input" placeholder="A-42" />
+              </div>
+            </div>
+          )}
+          <button className="submit-btn-premium mt-20" disabled={loadingLoc} onClick={handleStart}>
+            {loadingLoc ? '📍 Konum Alınıyor...' : 'Şu Anki Konumu Kaydet'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
