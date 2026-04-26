@@ -37,6 +37,7 @@ export default function Aracim() {
   const [showAddFuel, setShowAddFuel] = useState(false);
   const [showUpdateKM, setShowUpdateKM] = useState(false);
   const [showGarageModal, setShowGarageModal] = useState(false);
+  const [showVehicleForm, setShowVehicleForm] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [showWashModal, setShowWashModal] = useState(false);
   const [showParkModal, setShowParkModal] = useState(false);

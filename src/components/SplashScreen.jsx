@@ -156,7 +156,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v2.13.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>MANAGEMENT UPDATE</span>
+            v2.13.1 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>STABLE FIX</span>
           </span>
         </div>
         <span style={{
