@@ -1529,38 +1529,44 @@
 /* --- CUTE & ORDERLY DESIGN SYSTEM --- */
 .trip-hero-premium {
   background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
-  padding: 30px 24px;
+  padding: 16px 20px;
   border-radius: 24px;
   color: white;
   margin: 0 0 15px 0;
-  box-shadow: 0 12px 30px rgba(14, 165, 233, 0.25);
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.2);
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 12px;
 }
 
 .hero-flag-badge {
   position: absolute;
-  top: -10px;
+  top: -8px;
   left: 20px;
   background: white;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 22px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  border: 3px solid #38bdf8;
+  border: 2px solid #38bdf8;
   z-index: 10;
 }
 
-.hero-content {
+.hero-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hero-left {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 12px;
 }
 
 .hero-plane-icon {
@@ -1569,57 +1575,88 @@
 }
 
 .hero-text h2 {
-  font-size: 28px !important;
+  font-size: 20px !important;
   font-weight: 900;
   margin: 0;
+  letter-spacing: -0.5px;
 }
 
-.hero-text p {
-  font-size: 14px !important;
-  opacity: 0.9;
-  margin: 0;
-}
-
-.hero-stats-row-cute {
+.hero-meta-labels {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-  padding-right: 35px; /* Space for delete btn */
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
 }
 
-.stat-pill-cute {
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
-  padding: 8px 14px;
-  border-radius: 14px;
+.badge-tatil {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.location-label {
+  font-size: 11px;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.hero-weather-box {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  min-width: 50px;
+}
+
+.hwb-temp {
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.hwb-icon {
+  font-size: 14px;
+}
+
+.hero-weather-box small {
+  font-size: 7px;
+  text-transform: uppercase;
+  opacity: 0.8;
+  font-weight: 800;
+}
+
+.hero-stats-row {
+  display: flex;
+  gap: 8px;
+}
+
+.h-stat {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  font-weight: 800;
-  border: 1px solid rgba(255,255,255,0.05);
-  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
 }
 
-.weather-pill {
-  background: rgba(255,255,255,0.25) !important;
-}
-
-.trip-delete-btn-cute {
+.hero-delete-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(255,255,255,0.15);
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: white;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 4px;
+  border-radius: 6px;
   cursor: pointer;
+  z-index: 5;
 }
 
 /* Cute Buttons */
@@ -2664,11 +2701,11 @@
 
 .premium-action-btn {
   width: 100%;
-  padding: 16px;
-  border-radius: 18px;
+  padding: 16px !important;
+  border-radius: 18px !important;
   border: none;
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 15px !important;
+  font-weight: 900 !important;
   letter-spacing: 0.5px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.08);
   transition: all 0.2s;
@@ -2678,8 +2715,28 @@
   display: flex !important;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px !important;
-  gap: 10px;
+  padding: 14px 16px !important; /* Slightly more breathable */
+  gap: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.vc-check {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  color: transparent;
+  transition: all 0.2s;
+}
+
+.vc-item.done .vc-check {
+  background: var(--tatil);
+  border-color: var(--tatil);
+  color: white;
 }
 
 .vci-main {
@@ -3554,7 +3611,7 @@
 .wf-day strong { font-size: 14px; color: #1E293B; font-weight: 800; }
 
 /* Mini Buttons for Details */
-.premium-action-btn, .vc-add-btn, .asistan-btn, .canli-btn, .harita-btn, .mdf-save-btn {
+.vc-add-btn, .asistan-btn, .canli-btn, .harita-btn, .mdf-save-btn {
   font-size: 11px !important;
   padding: 8px 12px !important;
   border-radius: 12px !important;
@@ -3695,3 +3752,22 @@
   letter-spacing: 0.5px;
 }
 
+@charset " UTF-8\;
+
+.valiz-weather-oracle { background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px; border: 1px solid rgba(255, 255, 255, 0.1); }
+.oracle-header { display: flex; gap: 12px; margin-bottom: 12px; }
+.oracle-emoji { font-size: 24px; }
+.oracle-header strong { display: block; color: var(--tatil); font-size: 14px; }
+.oracle-header p { font-size: 11px; opacity: 0.6; margin: 0; }
+.oracle-alerts { display: flex; flex-direction: column; gap: 8px; }
+.oracle-alert { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; font-size: 12px; background: rgba(255, 255, 255, 0.03); transition: all 0.2s; cursor: pointer; }
+.oracle-alert:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.08); }
+.oracle-alert.high { border-left: 3px solid #ff4444; }
+.oracle-alert.med { border-left: 3px solid #ffbb33; }
+.a-icon { font-size: 16px; }
+.a-text { flex: 1; line-height: 1.3; }
+.oracle-forecast-row { display: flex; gap: 10px; margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); overflow-x: auto; padding-bottom: 5px; }
+.forecast-mini-item { display: flex; flex-direction: column; align-items: center; min-width: 45px; gap: 4px; }
+.fm-day { font-size: 10px; opacity: 0.5; text-transform: uppercase; }
+.fm-icon { font-size: 16px; }
+.fm-temp { font-size: 12px; font-weight: 600; }

@@ -625,8 +625,6 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
     if (code <= 67) return <CloudRain size={14} className="text-blue-500" />;
     if (code <= 77) return <CloudSnow size={14} className="text-white" />;
     return <CloudLightning size={14} className="text-purple-500" />;
-  };
-
   const handleUpdateTrip = (updates) => {
      const trips = tatil.trips.map(t => t.id === trip.id ? { ...t, ...updates } : t);
      setModuleData('tatil', { ...tatil, trips });
@@ -641,28 +639,34 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
 
   return (
     <div className="trip-detail-premium animate-fadeIn">
-      <div className="trip-hero-premium animate-fadeIn" style={{ position: 'relative' }}>
-        <div className="hero-flag-badge">{getCountryFlag(trip.title, trip.city)}</div>
-        <div className="hero-content">
-          <Plane className="hero-plane-icon" size={28} />
-          <div className="hero-text">
-            <div className="hero-title-row">
+      <div className="trip-hero-premium animate-fadeIn">
+        <div className="hero-flag-badge">{getCountryFlag(trip.title, trip.city, trip.country)}</div>
+        <div className="hero-main-row">
+          <div className="hero-left">
+            <Plane className="hero-plane-icon" size={24} />
+            <div className="hero-text">
               <h2>{trip.title || trip.city}</h2>
-              <div className="sleek-confirmed-tag" style={{background: trip.tripType === 'is' ? 'var(--garaj)' : 'var(--tatil)'}}>
-                <span>{trip.tripType === 'is' ? 'İŞ GEZİSİ' : 'TATİL'}</span>
+              <div className="hero-meta-labels">
+                <span className="badge-tatil">{trip.status === 'kesin' ? 'KESİN' : 'TATİL'}</span>
+                <span className="location-label">{trip.city}, {trip.country}</span>
               </div>
             </div>
-            <p>{trip.city}, {trip.country}</p>
           </div>
+          
+          {weatherForecast && (
+            <div className="hero-weather-box glass">
+              <span className="hwb-temp">{weatherForecast.temp}°</span>
+              <span className="hwb-icon">{weatherForecast.isSun ? '☀️' : '☁️'}</span>
+              <small>{weatherForecast.label}</small>
+            </div>
+          )}
         </div>
-        
-        <div className="hero-stats-row-cute">
-          <div className="stat-pill-cute">
-            <Calendar size={12} />
+
+        <div className="hero-stats-row">
+          <div className="h-stat">
+            <Calendar size={14} />
             <span>{trip.startDate}</span>
           </div>
-          <div className="stat-pill-cute">
-            <Moon size={12} />
             <span>{Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0} Gece</span>
           </div>
         </div>
@@ -1210,7 +1214,12 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
     if (hasRain) alerts.push({ icon: '☂️', text: 'Yağmur riski! Şemsiye veya yağmurluk ekle.', priority: 'high' });
     if (avgTemp > 25) alerts.push({ icon: '👕', text: 'Sıcak hava! Şort, tişört ve güneş kremi al.', priority: 'med' });
 
-    return { isHistorical, avgTemp: Math.round(avgTemp), alerts };
+    return { 
+      isHistorical, 
+      avgTemp: Math.round(avgTemp), 
+      alerts,
+      daily: weatherForecast.daily // Pass daily data for the mini chart
+    };
   }, [weatherForecast]);
 
   const tripDuration = useMemo(() => {
@@ -1294,6 +1303,25 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
               </div>
             ))}
           </div>
+
+          {!weatherAdvice.isHistorical && weatherAdvice.daily && (
+            <div className="oracle-forecast-row">
+              {weatherAdvice.daily.time.slice(0, 7).map((time, i) => {
+                const code = weatherAdvice.daily.weathercode[i];
+                const temp = Math.round(weatherAdvice.daily.temperature_2m_max[i]);
+                const dayName = new Date(time).toLocaleDateString('tr-TR', { weekday: 'short' });
+                return (
+                  <div key={time} className="forecast-mini-item">
+                    <span className="fm-day">{dayName}</span>
+                    <span className="fm-icon">
+                      {code <= 3 ? '☀️' : code <= 67 ? '🌧️' : '❄️'}
+                    </span>
+                    <span className="fm-temp">{temp}°</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
