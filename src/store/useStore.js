@@ -184,6 +184,8 @@ const DEFAULT_STATE = {
     bakimlar: [
       { id: 'kombi', name: 'Kombi Bakımı', lastDate: '2025-11-01', intervalDays: 365, icon: '🔥' },
       { id: 'klima', name: 'Klima Temizliği', lastDate: '2025-06-15', intervalDays: 180, icon: '❄️' },
+      { id: 'klima-filtre', name: 'Klima Filtresi', lastDate: new Date().toISOString().split('T')[0], intervalDays: 30, icon: '💨' },
+      { id: 'hava-temizleme', name: 'Hava Temizleme', lastDate: new Date().toISOString().split('T')[0], intervalDays: 90, icon: '🍃' },
       { id: 'aritma', name: 'Su Arıtma Filtre', lastDate: '2026-01-10', intervalDays: 180, icon: '💧' }
     ],
     demirbaslar: [
@@ -1801,6 +1803,31 @@ const useStore = create(
         set({ ev: { ...state.ev, guvenlik: { ...state.ev.guvenlik, ...updates } } });
         get().saveToSupabase();
       },
+
+      addPeriodicBakim: (item) => {
+        const state = get();
+        const newItem = { id: Date.now().toString(), lastDate: new Date().toISOString().split('T')[0], ...item };
+        set({ ev: { ...state.ev, bakimlar: [...state.ev.bakimlar, newItem] } });
+        get().saveToSupabase();
+      },
+
+      resetPeriodicBakim: (id) => {
+        const state = get();
+        const updated = state.ev.bakimlar.map(b => 
+          b.id === id ? { ...b, lastDate: new Date().toISOString().split('T')[0] } : b
+        );
+        set({ ev: { ...state.ev, bakimlar: updated } });
+        get().saveToSupabase();
+        toast.success('Bakım zamanlayıcısı sıfırlandı! 🕒');
+      },
+
+      deletePeriodicBakim: (id) => {
+        const state = get();
+        const updated = state.ev.bakimlar.filter(b => b.id !== id);
+        set({ ev: { ...state.ev, bakimlar: updated } });
+        get().saveToSupabase();
+      },
+
       updateKM: (newKM) => {
         const state = get();
         set({ aracim: { ...state.aracim, km: newKM } });

@@ -27,7 +27,8 @@ export default function Ev() {
   const { 
     ev, kasa, addFatura, addRepairItem, addBakimItem, 
     toggleHomeTask, deleteHomeTask, updateHomeSecurity, 
-    updateTasinmaz, addTasinmaz, deleteTasinmaz
+    updateTasinmaz, addTasinmaz, deleteTasinmaz,
+    addPeriodicBakim, resetPeriodicBakim, deletePeriodicBakim
   } = useStore();
 
   const { 
@@ -185,7 +186,21 @@ export default function Ev() {
                 const diff = Math.round((new Date() - new Date(b.lastDate)) / 864e5);
                 const perc = Math.min(100, (diff / b.intervalDays) * 100);
                 return (
-                  <div key={b.id} className="mini-m-card glass">
+                  <div 
+                    key={b.id} 
+                    className="mini-m-card glass" 
+                    onClick={() => {
+                      if(window.confirm(`${b.name} bakımını bugün yaptınız mı? Sayaç sıfırlanacak.`)) {
+                        resetPeriodicBakim(b.id);
+                      }
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      if(window.confirm('Bu periyodik bakımı silmek istiyor musunuz?')) {
+                        deletePeriodicBakim(b.id);
+                      }
+                    }}
+                  >
                     <div className="mm-icon" style={{ borderColor: perc > 80 ? '#ef4444' : '#22c55e' }}>{b.icon}</div>
                     <div className="mm-info">
                       <strong>{b.name}</strong>
@@ -194,6 +209,15 @@ export default function Ev() {
                   </div>
                 );
               })}
+              <button className="add-bakim-card glass" onClick={() => {
+                const name = prompt('Bakım Adı:');
+                if(!name) return;
+                const interval = prompt('Kaç günde bir? (Örn: 30):');
+                const emoji = prompt('Emoji:');
+                addPeriodicBakim({ name, intervalDays: Number(interval), icon: emoji || '🔧' });
+              }}>
+                <Plus size={20} />
+              </button>
             </div>
 
             {/* Fatura Girişi */}
