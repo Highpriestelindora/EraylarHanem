@@ -3,7 +3,7 @@ import {
   Car, Fuel, Wrench, History, Plus, Gauge, ArrowUpRight, 
   Shield, Landmark, AlertCircle, Sparkles, Home, Camera,
   MapPin, Phone, FileText, Settings, ArrowLeft, MoreVertical,
-  ChevronRight, Droplets, Trash2, Check
+  ChevronRight, Droplets, Trash2, Check, Warehouse
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -67,10 +67,12 @@ export default function Aracim() {
       <header className="module-header glass" style={{ background: 'var(--aracim)' }}>
         <div className="header-top">
           <div className="header-title" onClick={() => setShowGarageModal(true)} style={{ cursor: 'pointer' }}>
-            <span className="header-emoji animate-float">{vehicle.type === 'boat' ? '⛵' : '🚗'}</span>
+            <span className="header-emoji animate-float">
+              <Warehouse size={28} color="white" />
+            </span>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="plaka-badge" style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(255,255,255,0.2)', borderRadius: '6px', width: 'fit-content', marginBottom: '2px' }}>
-                {vehicle.plaka}
+                Eraylar Garajım
               </div>
               <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {vehicle.model}
