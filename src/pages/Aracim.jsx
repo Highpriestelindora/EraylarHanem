@@ -3,7 +3,7 @@ import {
   Car, Fuel, Wrench, History, Plus, Gauge, ArrowUpRight, 
   Shield, Landmark, AlertCircle, Sparkles, Home, Camera,
   MapPin, Phone, FileText, Settings, ArrowLeft, MoreVertical,
-  ChevronRight, Droplets, Trash2, Check, Warehouse
+  ChevronRight, Droplets, Trash2, Check, Warehouse, Edit3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -11,6 +11,7 @@ import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
+import ActionSheet from '../components/ActionSheet';
 import './Aracim.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
@@ -26,8 +27,8 @@ export default function Aracim() {
     updateKM, addFuelLog, addServiceRecord,
     addVehicle, updateVehicle, deleteVehicle,
     addWashRecord, startParking, finishParking,
-    deleteServiceRecord, deleteDocument, addDocument,
-    updatePartMaintenance, deleteFuelLog
+    deleteServiceRecord, deleteDocument, addDocument, updateDocument,
+    updatePartMaintenance, deleteFuelLog, updateSupportContacts
   } = useStore();
   
   const vehicle = useMemo(() => 
@@ -45,8 +46,10 @@ export default function Aracim() {
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [showDocForm, setShowDocForm] = useState(false);
   const [editingDoc, setEditingDoc] = useState(null);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [showPartModal, setShowPartForm] = useState(false);
   const [selectedPart, setSelectedPart] = useState(null);
+  const [activeDocAction, setActiveDocAction] = useState(null); // The doc for ActionSheet
 
   const { 
     km, parts, fuelLogs, services, documents, 
@@ -181,16 +184,25 @@ export default function Aracim() {
 
             {/* Emergency Support */}
             <div className="emergency-support mt-24" style={{ padding: '12px' }}>
-              <div className="es-header" style={{ marginBottom: '8px' }}>
-                <AlertCircle size={16} color="#b91c1c" />
-                <span style={{ fontSize: '10px' }}>ACİL DESTEK HATTI</span>
+              <div className="es-header" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <AlertCircle size={16} color="#b91c1c" />
+                  <span style={{ fontSize: '10px', fontWeight: '900' }}>ACİL DESTEK HATTI</span>
+                </div>
+                <button 
+                  className="icon-btn-small" 
+                  onClick={() => setShowSupportModal(true)}
+                  style={{ padding: '4px', background: 'transparent', border: 'none' }}
+                >
+                  <Edit3 size={12} color="var(--txt-light)" />
+                </button>
               </div>
               <div className="es-buttons" style={{ gap: '8px' }}>
-                <a href="tel:08503999999" className="es-btn" style={{ padding: '8px', fontSize: '11px' }}>
-                  <Phone size={14} /> Yol Yardım
+                <a href={`tel:${vehicle.supportContacts?.yolYardim?.phone || '08503999999'}`} className="es-btn" style={{ padding: '8px', fontSize: '11px' }}>
+                  <Phone size={14} /> {vehicle.supportContacts?.yolYardim?.name || 'Yol Yardım'}
                 </a>
-                <a href="tel:02123346262" className="es-btn" style={{ padding: '8px', fontSize: '11px' }}>
-                  <Shield size={14} /> Sigorta
+                <a href={`tel:${vehicle.supportContacts?.sigorta?.phone || '02123346262'}`} className="es-btn" style={{ padding: '8px', fontSize: '11px' }}>
+                  <Shield size={14} /> {vehicle.supportContacts?.sigorta?.name || 'Sigorta'}
                 </a>
               </div>
             </div>
@@ -236,19 +248,25 @@ export default function Aracim() {
               {documents.map(doc => {
                 const diff = Math.round((new Date(doc.dueDate) - new Date()) / 864e5);
                 return (
-                  <div key={doc.id} className="doc-card-premium glass">
+                  <div 
+                    key={doc.id} 
+                    className="doc-card-premium glass"
+                    onClick={() => setActiveDocAction(doc)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div className="dcp-left">
                       <div className="dcp-icon">{doc.icon}</div>
                       <div className="dcp-info">
                         <strong>{doc.name}</strong>
-                        <small>Bitiş: {new Date(doc.dueDate).toLocaleDateString('tr-TR')}</small>
+                        {doc.brand && <small style={{ color: 'var(--aracim)', fontWeight: '800' }}>{doc.brand}</small>}
+                        <small style={{ display: 'block' }}>Bitiş: {new Date(doc.dueDate).toLocaleDateString('tr-TR')}</small>
                       </div>
                     </div>
                     <div className="dcp-right-actions">
-                      <div className={`dcp-status ${diff < 15 ? 'warn' : 'ok'}`}>
+                      <div className={`dcp-status ${diff < 7 ? 'critical' : diff < 30 ? 'warn' : 'ok'}`}>
                         {diff} Gün
                       </div>
-                      <button className="delete-btn-mini" onClick={() => { if(window.confirm('Bu belgeyi silmek istediğinize emin misiniz?')) useStore.getState().deleteDocument(vehicle.id, doc.id); }}><Trash2 size={12} /></button>
+                      <ChevronRight size={18} opacity={0.3} />
                     </div>
                   </div>
                 );
@@ -368,10 +386,40 @@ export default function Aracim() {
       {showDocForm && (
         <DocFormModal 
           doc={editingDoc}
-          onSave={(data) => addDocument(vehicle.id, data)}
+          onSave={(data) => editingDoc ? updateDocument(vehicle.id, editingDoc.id, data) : addDocument(vehicle.id, data)}
           onClose={() => setShowDocForm(false)}
         />
       )}
+
+      <ActionSheet
+        isOpen={!!activeDocAction}
+        onClose={() => setActiveDocAction(null)}
+        title="Belge İşlemleri"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <button 
+            className="submit-btn-premium"
+            onClick={() => {
+              setEditingDoc(activeDocAction);
+              setShowDocForm(true);
+              setActiveDocAction(null);
+            }}
+          >
+            <Edit3 size={18} /> Düzenle
+          </button>
+          <button 
+            className="submit-btn-premium red"
+            onClick={() => {
+              if (window.confirm('Bu belgeyi silmek istediğinize emin misiniz?')) {
+                deleteDocument(vehicle.id, activeDocAction.id);
+                setActiveDocAction(null);
+              }
+            }}
+          >
+            <Trash2 size={18} /> Sil
+          </button>
+        </div>
+      </ActionSheet>
 
       {showPartModal && (
         <PartMaintenanceModal 
@@ -381,7 +429,76 @@ export default function Aracim() {
         />
       )}
 
+      {showSupportModal && (
+        <SupportFormModal 
+          contacts={vehicle.supportContacts}
+          onSave={(data) => updateSupportContacts(vehicle.id, data)}
+          onClose={() => setShowSupportModal(false)}
+        />
+      )}
     </AnimatedPage>
+  );
+}
+
+function SupportFormModal({ contacts, onSave, onClose }) {
+  const [form, setForm] = useState(contacts || {
+    yolYardim: { name: 'Toyota Asistanım', phone: '0212 708 00 55' },
+    sigorta: { name: 'Neova Sigorta (Nisa Hanım)', phone: '0533 303 42 35' }
+  });
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2">
+          <Phone size={24} color="#b91c1c" />
+          <h3>Destek Hattı Düzenle</h3>
+        </div>
+        <div className="modal-body-v2">
+          <div className="section-divider mt-12">YOL YARDIM</div>
+          <div className="form-group-v2 mt-8">
+            <label>İsim / Başlık</label>
+            <input 
+              value={form.yolYardim.name} 
+              onChange={e => setForm({...form, yolYardim: {...form.yolYardim, name: e.target.value}})} 
+              className="premium-input" 
+            />
+          </div>
+          <div className="form-group-v2 mt-8">
+            <label>Numara</label>
+            <input 
+              value={form.yolYardim.phone} 
+              onChange={e => setForm({...form, yolYardim: {...form.yolYardim, phone: e.target.value}})} 
+              className="premium-input" 
+            />
+          </div>
+
+          <div className="section-divider mt-20">SİGORTA</div>
+          <div className="form-group-v2 mt-8">
+            <label>İsim / Başlık</label>
+            <input 
+              value={form.sigorta.name} 
+              onChange={e => setForm({...form, sigorta: {...form.sigorta, name: e.target.value}})} 
+              className="premium-input" 
+            />
+          </div>
+          <div className="form-group-v2 mt-8">
+            <label>Numara</label>
+            <input 
+              value={form.sigorta.phone} 
+              onChange={e => setForm({...form, sigorta: {...form.sigorta, phone: e.target.value}})} 
+              className="premium-input" 
+            />
+          </div>
+
+          <button 
+            className="submit-btn-premium mt-24" 
+            onClick={() => { onSave(form); onClose(); toast.success('Destek hatları güncellendi ✨'); }}
+          >
+            Değişiklikleri Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -441,7 +558,7 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
           <div className="form-group-v2 mt-20">
             <label>İstasyon</label>
             <select value={form.station} onChange={e => setForm({...form, station: e.target.value})} className="premium-select">
-              <option value="Shell">⛽ Shell</option>
+              <option value="Shell">🟠 Shell</option>
               <option value="Opet">🔵 Opet</option>
               <option value="BP">🟢 BP</option>
               <option value="Petrol Ofisi">🔴 Petrol Ofisi</option>
@@ -674,33 +791,49 @@ function ServiceFormModal({ onSave, onClose }) {
 }
 
 function DocFormModal({ doc, onSave, onClose }) {
-  const [form, setForm] = useState(doc || { name: '', dueDate: '', icon: '📄' });
+  const [form, setForm] = useState(doc || { name: '', brand: '', startDate: new Date().toISOString().split('T')[0], dueDate: '', icon: '📄', cost: '' });
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <FileText size={24} color="#3b82f6" />
-          <h3>Belge Ekle</h3>
+          <h3>{doc ? 'Belgeyi Düzenle' : 'Yeni Belge'}</h3>
         </div>
         <div className="modal-body-v2">
           <div className="form-group-v2">
-            <label>Belge Adı</label>
+            <label>Belge Adı / Türü</label>
             <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="premium-input" placeholder="Kasko Sigortası" />
           </div>
           <div className="form-group-v2 mt-12">
-            <label>Bitiş Tarihi</label>
-            <input type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} className="premium-input" />
+            <label>Sigorta Şirketi / Marka</label>
+            <input value={form.brand} onChange={e => setForm({...form, brand: e.target.value})} className="premium-input" placeholder="Anadolu Sigorta" />
           </div>
-          <div className="form-group-v2 mt-12">
-            <label>İkon</label>
-            <select value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} className="premium-select">
-              <option value="📄">📄 Belge</option>
-              <option value="🛡️">🛡️ Sigorta</option>
-              <option value="📋">📋 Liste</option>
-              <option value="🔍">🔍 Muayene</option>
-            </select>
+          <div className="form-grid-v2 mt-12">
+            <div className="form-group-v2">
+              <label>Başlangıç Tarihi</label>
+              <input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} className="premium-input" />
+            </div>
+            <div className="form-group-v2">
+              <label>Bitiş Tarihi</label>
+              <input type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} className="premium-input" />
+            </div>
           </div>
-          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); toast.success('Belge torpidoya eklendi 📂'); }}>Kaydet</button>
+          <div className="form-grid-v2 mt-12">
+            <div className="form-group-v2">
+              <label>Ödenen Tutar (TL)</label>
+              <input type="number" value={form.cost} onChange={e => setForm({...form, cost: Number(e.target.value)})} className="premium-input" placeholder="0" />
+            </div>
+            <div className="form-group-v2">
+              <label>İkon</label>
+              <select value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} className="premium-select">
+                <option value="📄">📄 Belge</option>
+                <option value="🛡️">🛡️ Sigorta</option>
+                <option value="📋">📋 Liste</option>
+                <option value="🔍">🔍 Muayene</option>
+              </select>
+            </div>
+          </div>
+          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); toast.success('Belge kaydedildi! 📂'); }}>Kaydet</button>
         </div>
       </div>
     </div>

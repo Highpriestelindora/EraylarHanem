@@ -376,3 +376,41 @@
   text-align: right;
 }
 
+
+/* Premium Save Button Styles */
+.submit-btn-premium {
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: 18px;
+  border: none;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.submit-btn-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 30px rgba(79, 70, 229, 0.35);
+  filter: brightness(1.1);
+}
+
+.submit-btn-premium:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.submit-btn-premium.red {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.25);
+}
+
+.submit-btn-premium.red:hover {
+  box-shadow: 0 15px 30px rgba(239, 68, 68, 0.35);
+}

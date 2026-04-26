@@ -50,26 +50,111 @@ const Home = () => {
     }
   }, [currentUser, saglik?.moods]);
 
+  const getSmartInsights = () => {
+    const store = useStore.getState();
+    const insights = [];
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+    // 1. Mutfak Check
+    const lowStock = [
+      ...(store.mutfak.buzdolabi || []),
+      ...(store.mutfak.kiler || []),
+      ...(store.mutfak.dondurucu || [])
+    ].filter(i => i.cr <= i.mn && i.cr > 0);
+    if (lowStock.length > 0) insights.push(`Mutfakta ${lowStock[0].n} azalmış, listeye ekleyelim mi? 🛒`);
+
+    // 2. Sağlık Check
+    const todayApp = (store.saglik.randevular || []).find(r => r.tarih === today);
+    if (todayApp) insights.push(`Bugün ${todayApp.kisi} için ${todayApp.doktor} randevusu var! 🏥`);
+    const tomorrowApp = (store.saglik.randevular || []).find(r => r.tarih === tomorrow);
+    if (tomorrowApp) insights.push(`Yarın ${tomorrowApp.kisi} için ${tomorrowApp.doktor} randevusu var, unutmayın. ✨`);
+
+    // 3. Garaj Check
+    const vehicle = store.garaj?.find(v => v.id === store.selectedVehicleId) || store.garaj?.[0];
+    if (vehicle) {
+      const docs = vehicle.documents || [];
+      const criticalDoc = docs.find(d => {
+        const diff = (new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24);
+        return diff >= 0 && diff <= 7;
+      });
+      if (criticalDoc) {
+        insights.push(`🚨 DİKKAT! ${vehicle.model} aracının ${criticalDoc.name} süresi için SON 1 HAFTA! Hemen ilgilenelim mi?`);
+      } else {
+        const expiringDoc = docs.find(d => {
+          const diff = (new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24);
+          return diff >= 0 && diff <= 30;
+        });
+        if (expiringDoc) insights.push(`${vehicle.model} aracının ${expiringDoc.name} süresi dolmak üzere! 🚗`);
+      }
+    }
+
+    // 4. Finans Check
+    const unpaid = (store.finans.rekurans || []).find(r => r.date === today && !r.paid);
+    if (unpaid) insights.push(`Bugün ${unpaid.title} ödemesi görünüyor. 💰`);
+
+    // 5. Tatil Check
+    const upcomingTrip = (store.tatil?.trips || []).find(t => {
+      const diff = (new Date(t.startDate) - new Date()) / (1000 * 60 * 60 * 24);
+      return diff >= 0 && diff <= 7;
+    });
+    if (upcomingTrip) insights.push(`${upcomingTrip.city} seyahati yaklaşıyor! Valizler hazır mı? ✈️`);
+
+    // 6. Sosyal Check
+    const todaySocial = (store.sosyal.aktiviteler || []).find(a => a.tarih === today && !a.tamamlandi);
+    if (todaySocial) insights.push(`Bugün için "${todaySocial.baslik}" planınız var. İyi eğlenceler! 👫`);
+
+    // 7. Random Social Suggestion (Fikirler)
+    const fullPool = [...(store.sosyal.poolItems || []), ...(store.sosyal.havuz || [])];
+    if (fullPool.length > 0) {
+      const randomIdea = fullPool[Math.floor(Math.random() * fullPool.length)];
+      insights.push(`Fikir: Bugün "${randomIdea.title || randomIdea.baslik}" yapmaya ne dersiniz? ${randomIdea.icon || '💡'}`);
+      insights.push(`Harika bir önerim var: "${randomIdea.title || randomIdea.baslik}"! ${randomIdea.icon || '✨'}`);
+    }
+
+    // 8. Random Routine Check
+    const allRoutines = [...(store.sosyal.rutinler || []), ...(store.sosyal.routinePackages || [])];
+    if (allRoutines.length > 0) {
+      const randomRoutine = allRoutines[Math.floor(Math.random() * allRoutines.length)];
+      const rTitle = randomRoutine.aktivite || randomRoutine.title;
+      insights.push(`Rutin Hatırlatıcı: "${rTitle}" vaktini unutmayın! 🔁`);
+    }
+
+    // Fallback/General
+    const funFallbacks = [
+      "Bugün her şey yolunda, keyfine bak! 💖",
+      "Esra bugün 'bunu nereye koysak' demiyor, tadını çıkar! 😂",
+      "Waffle'ın maması azalıyor olabilir mi? 🐶",
+      "Mayıs'ın kumunu kontrol ettin mi? 🐈",
+      "Bugün Eraylar için muhteşem bir gün olsun! 🌟",
+      "Enerjinizi yüksek tutun, bugün her şey mümkün! 💪",
+      "Birlikte geçirdiğiniz her an çok değerli... ✨"
+    ];
+    
+    return [...insights, ...funFallbacks];
+  };
+
   const refreshAiMessage = () => {
     setIsRefreshing(true);
-    // Simulate AI "analysis" of store data
     setTimeout(() => {
-      const insights = [
-        "Bugün her şey yolunda, keyfine bak! 💖",
-        "Waffle'ın maması azalıyor olabilir mi? 🐶",
-        "Harika gidiyorsunuz, bu hafta tasarruf modundasınız! 💰",
-        "Mutfakta yeni bir tarif denemeye ne dersin? 🍳",
-        "Esra bugün 'bunu nereye koysak' demiyor, tadını çıkar! 😂",
-        "Hava bugün dışarıda vakit geçirmek için çok güzel! ☀️",
-        "Mayıs'ın kumunu kontrol ettin mi? 🐈",
-        "Akşama lezzetli bir yemek planlayalım mı? 🍝"
-      ];
+      const insights = getSmartInsights();
       const random = insights[Math.floor(Math.random() * insights.length)];
       setAiMessage(random);
       setIsRefreshing(false);
-      toast.success('Asistan güncellendi ✨', { style: { borderRadius: '12px', background: '#2E1065', color: '#fff' } });
-    }, 800);
+      toast.success('Asistan verileri analiz etti ✨', { 
+        style: { borderRadius: '12px', background: '#2E1065', color: '#fff' },
+        icon: '🧠'
+      });
+    }, 1200);
   };
+
+  useEffect(() => {
+    // Initial Smart Analysis
+    const insights = getSmartInsights();
+    if (insights.length > 0) {
+      setAiMessage(insights[0]);
+    }
+  }, []);
 
   const handlePetClick = (pet) => {
     const quotes = PET_QUOTES[pet];

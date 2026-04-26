@@ -194,7 +194,11 @@ const DEFAULT_STATE = {
       ],
       tireStatus: { type: 'Yazlık', changeDate: '2026-04-01', condition: 'İyi' },
       lastCleaned: '2026-04-23',
-      parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false }
+      parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false },
+      supportContacts: {
+        yolYardim: { name: 'Toyota Asistanım', phone: '0212 708 00 55' },
+        sigorta: { name: 'Neova Sigorta (Nisa Hanım)', phone: '0533 303 42 35' }
+      }
     }
   ],
   ev: {
@@ -251,13 +255,35 @@ const DEFAULT_STATE = {
   tatil: {
     trips: INITIAL_TRIPS,       
     wishlist: [
-      { id: 1, place: 'Tokyo, Japonya', notes: 'Kiraz çiçekleri zamanı gitmeli 🌸' },
-      { id: 2, place: 'İzlanda', notes: 'Kuzey ışıkları ve road trip 🇮🇸' }
+      { id: 1, place: 'Tokyo, Japonya', notes: 'Kiraz çiçekleri zamanı gitmeli 🌸', user: 'Görkem', date: '2026-04-26T10:00:00Z' },
+      { id: 2, place: 'İzlanda', notes: 'Kuzey ışıkları ve road trip 🇮🇸', user: 'Esra', date: '2026-04-26T11:00:00Z' }
     ],
     passport: { 
-      gorkem: { name: 'Görkem Eray', no: 'U28345678', exp: '2030-10-15' }, 
-      esra: { name: 'Esra Eray', no: 'U29456789', exp: '2031-03-22' } 
+      gorkem: { 
+        name: 'Görkem', 
+        surname: 'ERAY', 
+        no: 'U28345678', 
+        nationality: 'TC', 
+        birthDate: '31.10.1988', 
+        issueDate: '15.10.2020', 
+        exp: '2030-10-15',
+        birthPlace: 'Eskişehir'
+      }, 
+      esra: { 
+        name: 'Esra', 
+        surname: 'ERAY', 
+        no: 'U29456789', 
+        nationality: 'TC', 
+        birthDate: '05.01.1989', 
+        issueDate: '22.03.2021', 
+        exp: '2031-03-22',
+        birthPlace: 'Antalya'
+      } 
     },
+    visas: [
+      { id: 1, type: 'Schengen', owner: 'gorkem', start: '2025-05-01', end: '2026-05-01', entries: 'Multi', country: 'Almanya' },
+      { id: 2, type: 'Schengen', owner: 'esra', start: '2025-05-01', end: '2026-05-01', entries: 'Multi', country: 'Almanya' }
+    ],
     ttab: 'trips'
   },
   achievements: ACHIEVEMENTS,    
@@ -356,7 +382,15 @@ const useStore = create(
 
       setModuleData: (moduleName, data) => {
         const state = get();
-        set({ [moduleName]: { ...state[moduleName], ...data } });
+        // Bug Fix: If data is not an object, just replace it. 
+        // If it is an object, merge it.
+        const isObject = data !== null && typeof data === 'object' && !Array.isArray(data);
+        
+        if (isObject) {
+          set({ [moduleName]: { ...state[moduleName], ...data } });
+        } else {
+          set({ [moduleName]: data });
+        }
         get().saveToSupabase();
       },
 
@@ -763,6 +797,10 @@ const useStore = create(
         const newTrip = {
           id: Date.now(),
           status: 'planlandi',
+          tripType: trip.tripType || 'tatil', // 'tatil' | 'is'
+          travelers: trip.travelers || 'ikimiz', // 'gorkem' | 'esra' | 'ikimiz'
+          locationType: trip.locationType || 'yurtdisi', // 'yurtici' | 'yurtdisi'
+          transportType: trip.transportType || 'ucak', // 'araba' | 'ucak' | 'gemi' | 'tren'
           valiz: { 
             gorkem: [
               { id: 1, text: 'Pasaport', done: false },
@@ -775,14 +813,16 @@ const useStore = create(
               { id: 3, text: 'Kıyafetler', done: false }
             ]
           },
-          budget: { est: trip.budget || 0, real: 0 },
+          budget: { est: Number(trip.budget) || 0, real: 0 },
           transportation: { flightNo: '', airline: '', pnr: '', time: '', link: '' },
-          accommodation: { hotelName: '', address: '', bookingId: '', link: '', checkIn: '', checkOut: '' },
+          accommodation: { hotel: '', address: '', bookingId: '', link: '', checkIn: '', checkOut: '' },
+          evaluations: { gorkem: null, esra: null }, // { star, note }
+          photos: [],
           ...trip
         };
         const updatedTrips = [...state.tatil.trips, newTrip];
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
-        get().addLog('Yeni Tatil Planı', `${trip.title || trip.city} seyahati planlandı! ✈️`);
+        get().addLog('Yeni Seyahat Planı', `${trip.title || trip.city} (${newTrip.travelers}) planlandı! ✈️`);
         get().saveToSupabase();
       },
 
@@ -821,11 +861,80 @@ const useStore = create(
       addTripExpense: (tripId, expense) => {
         const state = get();
         get().addExpense({
-          title: `Tatil: ${expense.title}`,
+          title: `Seyahat: ${expense.title}`,
           amount: expense.amount,
           category: 'tatil',
           source: 'Tatil Modülü'
         });
+        get().saveToSupabase();
+      },
+
+      completeTripEvaluation: (tripId, person, evalData) => {
+      const state = get();
+      const updatedTrips = state.tatil.trips.map(t => {
+        if (t.id === tripId) {
+          const newEvals = { ...t.evaluations, [person]: evalData };
+          // Logic for auto-completion
+          let newStatus = t.status;
+          if (t.travelers === 'ikimiz') {
+            if (newEvals.gorkem && newEvals.esra) newStatus = 'tamamlandi';
+          } else {
+            // Solo trip completes with one evaluation
+            newStatus = 'tamamlandi';
+          }
+          return { ...t, evaluations: newEvals, status: newStatus };
+        }
+        return t;
+      });
+      set({ tatil: { ...state.tatil, trips: updatedTrips } });
+    },
+
+    syncValizToDepo: (itemText, category) => {
+      const state = get();
+      const alreadyInDepo = state.ev.depo.some(i => i.nm.toLowerCase() === itemText.toLowerCase());
+      if (!alreadyInDepo) {
+        const newItem = {
+          id: Date.now(),
+          nm: itemText,
+          qt: 1,
+          dt: new Date().toISOString().split('T')[0],
+          category: category || 'Seyahat',
+          icon: '🧳'
+        };
+        set({ ev: { ...state.ev, depo: [...state.ev.depo, newItem] } });
+      }
+    },
+
+      addDream: (dream) => {
+        const state = get();
+        const newDream = {
+          id: Date.now(),
+          date: new Date().toISOString(),
+          user: state.currentUser?.name || 'Sistem',
+          ...dream
+        };
+        const updatedWishlist = [newDream, ...(state.tatil.wishlist || [])];
+        set({ tatil: { ...state.tatil, wishlist: updatedWishlist } });
+        get().addLog('Yeni Hayal', `${dream.place} hayal listesine eklendi! 🌟`);
+        get().saveToSupabase();
+      },
+
+      completeTripEvaluation: (tripId, person, evaluation) => {
+        const state = get();
+        const updatedTrips = state.tatil.trips.map(t => {
+          if (t.id === tripId) {
+            const newEvals = { ...t.evaluations, [person]: evaluation };
+            let newStatus = t.status;
+            // Both must evaluate to complete
+            if (newEvals.gorkem && newEvals.esra) {
+              newStatus = 'tamamlandi';
+            }
+            return { ...t, evaluations: newEvals, status: newStatus };
+          }
+          return t;
+        });
+        set({ tatil: { ...state.tatil, trips: updatedTrips } });
+        get().addLog('Seyahat Değerlendirmesi', `${person} seyahati değerlendirdi.`);
         get().saveToSupabase();
       },
 
@@ -1657,24 +1766,32 @@ const useStore = create(
 
       addSocialPoolItem: (item) => {
         const state = get();
-        const newItem = { id: Date.now(), ...item };
-        const currentPool = Array.isArray(state.sosyal.poolItems) ? state.sosyal.poolItems : [];
-        set({ sosyal: { ...state.sosyal, poolItems: [newItem, ...currentPool] } });
+        const newItem = { 
+          id: Date.now(), 
+          title: item.baslik || item.title,
+          icon: item.emoji || item.icon || '💡',
+          category: item.tur === 'disari' ? 'Dışarı' : item.tur === 'evde' ? 'Evde' : (item.category || 'Genel'),
+          cost: item.harcama ? `${item.harcama} TL` : (item.cost || '0 TL'),
+          duration: '1 saat',
+          ...item 
+        };
+        const currentHavuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
+        set({ sosyal: { ...state.sosyal, havuz: [newItem, ...currentHavuz] } });
         get().saveToSupabase();
       },
 
       updateSocialPoolItem: (id, updates) => {
         const state = get();
-        const pool = Array.isArray(state.sosyal.poolItems) ? state.sosyal.poolItems : [];
-        const newPool = pool.map(item => item.id === id ? { ...item, ...updates } : item);
-        set({ sosyal: { ...state.sosyal, poolItems: newPool } });
+        const havuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
+        const newHavuz = havuz.map(item => item.id === id ? { ...item, ...updates } : item);
+        set({ sosyal: { ...state.sosyal, havuz: newHavuz } });
         get().saveToSupabase();
       },
 
       deleteSocialPoolItem: (id) => {
         const state = get();
-        const currentPool = Array.isArray(state.sosyal.poolItems) ? state.sosyal.poolItems : [];
-        set({ sosyal: { ...state.sosyal, poolItems: currentPool.filter(i => i.id !== id) } });
+        const currentHavuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
+        set({ sosyal: { ...state.sosyal, havuz: currentHavuz.filter(i => i.id !== id) } });
         get().saveToSupabase();
       },
 
@@ -1739,12 +1856,6 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      addSocialPoolItem: (item) => {
-        const state = get();
-        const newItem = { id: Date.now(), count: 0, ...item };
-        set({ sosyal: { ...state.sosyal, havuz: [newItem, ...state.sosyal.havuz] } });
-        get().saveToSupabase();
-      },
 
       // ── Ev Actions ─────────────────────────────────────
       addFatura: (fatura) => {
@@ -1884,19 +1995,23 @@ const useStore = create(
       // ── Eraylar Garaj Actions ──────────────────────────
       updateKM: (newKM) => {
         const state = get();
-        const targetId = state.selectedVehicleId || (state.garaj[0]?.id);
+        const currentGaraj = Array.isArray(state.garaj) ? state.garaj : [];
+        const targetId = state.selectedVehicleId || (currentGaraj[0]?.id);
         
         if (!targetId) {
-          console.error("Güncellenecek araç bulunamadı.");
+          toast.error("Güncellenecek araç bulunamadı.");
           return;
         }
 
-        const updatedGaraj = state.garaj.map(v => 
-          String(v.id) === String(targetId) ? { ...v, km: Number(newKM) } : v
+        const kmVal = Number(newKM);
+        if (isNaN(kmVal)) return;
+
+        const updatedGaraj = currentGaraj.map(v => 
+          String(v.id) === String(targetId) ? { ...v, km: kmVal } : v
         );
         
         set({ garaj: updatedGaraj });
-        get().addLog('KM Güncelleme', `Araç kilometresi ${newKM} olarak güncellendi.`);
+        get().addLog('KM Güncelleme', `${targetId} ID'li araç kilometresi ${kmVal} olarak güncellendi.`);
         get().saveToSupabase();
       },
 
@@ -2066,9 +2181,43 @@ const useStore = create(
 
       addDocument: (vehicleId, doc) => {
         const state = get();
+        const vehicle = state.garaj.find(v => v.id === vehicleId);
         const newDoc = { id: Date.now().toString(), ...doc };
         const updatedGaraj = state.garaj.map(v => 
           v.id === vehicleId ? { ...v, documents: [...v.documents, newDoc] } : v
+        );
+        set({ garaj: updatedGaraj });
+        
+        if (doc.cost > 0) {
+          get().addExpense({
+            title: `${doc.name}: ${vehicle?.model || 'Araç'}`,
+            amount: doc.cost,
+            category: 'arac',
+            source: 'Garaj',
+            date: doc.startDate || new Date().toISOString().split('T')[0]
+          });
+        }
+
+        get().saveToSupabase();
+      },
+
+      updateDocument: (vehicleId, docId, updates) => {
+        const state = get();
+        const updatedGaraj = state.garaj.map(v => {
+          if (v.id === vehicleId) {
+            const updatedDocs = v.documents.map(d => d.id === docId ? { ...d, ...updates } : d);
+            return { ...v, documents: updatedDocs };
+          }
+          return v;
+        });
+        set({ garaj: updatedGaraj });
+        get().saveToSupabase();
+      },
+
+      updateSupportContacts: (vehicleId, contacts) => {
+        const state = get();
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === vehicleId ? { ...v, supportContacts: contacts } : v
         );
         set({ garaj: updatedGaraj });
         get().saveToSupabase();

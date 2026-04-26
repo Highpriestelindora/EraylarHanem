@@ -156,7 +156,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v2.14.4 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>FINAL KM FIX</span>
+            v2.26.4 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>PREMIUM UNIVERSE</span>
           </span>
         </div>
         <span style={{
@@ -166,7 +166,7 @@ const SplashScreen = ({ finishLoading }) => {
           letterSpacing: '0.8px',
           marginTop: '6px'
         }}>
-          SİSTEM STABİLİZE EDİLDİ · GÖRKEM & ESRA © 2025
+          SİSTEM STABİLİZE EDİLDİ · GÖRKEM & ESRA © 2026
         </span>
       </div>
 

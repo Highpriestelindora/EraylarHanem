@@ -2,8 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { 
   ShoppingBag, Plus, Trash2, CheckCircle2, Link as LinkIcon, 
   ExternalLink, Clock, X, Edit, Search, TrendingUp, Star,
-  Store, ShoppingCart, Heart, History, Info, ArrowLeft
+  Store, ShoppingCart, Heart, History, Info, ArrowLeft, RotateCcw, ChevronRight,
+  Sparkles, Zap, Package, Laptop, Dumbbell, Watch, Shirt, Scissors,
+  Smile, Palette, Heart as HeartIcon, Gem, Briefcase, Camera, Edit3
 } from 'lucide-react';
+import ActionSheet from '../components/ActionSheet';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
@@ -31,6 +34,65 @@ const QUICK_ITEMS = [
   { nm: 'Yüzey Temizleyici', ic: '✨', loc: 'depo' },
 ];
 
+const HOME_FIXES = [
+  {
+    cat: 'Yatak Odası', ic: '🛏️', items: [
+      'Yatak', 'Yatak bazası', 'Başlık', 'Yorgan', 'Yorgan kılıfı', 'Nevresim takımı', 
+      'Yastık', 'Yastık kılıfı', 'Battaniye', 'Pike', 'Çarşaf (lastikli)', 'Çarşaf (düz)', 
+      'Gardırop', 'Elbise askısı', 'Komodin', 'Şifonyer', 'Ayna', 'Çamaşır sepeti', 
+      'Kirli sepeti', 'Hurç'
+    ]
+  },
+  {
+    cat: 'Salon / Oturma Odası', ic: '🛋️', items: [
+      'Koltuk takımı', 'Berjer', 'Sehpa (orta)', 'Sehpa (yan)', 'TV ünitesi', 'Televizyon', 
+      'Halı', 'Perde', 'Tül perde', 'Fon perde', 'Kitaplık', 'Lambader', 'Avize', 
+      'Dekoratif yastık', 'Battaniye (salon)', 'Duvar saati', 'Tablo', 'Mum', 'Mumluk', 'Vazo'
+    ]
+  },
+  {
+    cat: 'Mutfak', ic: '🍽️', items: [
+      'Buzdolabı', 'Fırın', 'Ocak', 'Mikrodalga', 'Su ısıtıcısı', 'Kahve makinesi', 
+      'Tost makinesi', 'Tencere seti', 'Tava', 'Çaydanlık', 'Tabak seti', 'Bardak seti', 
+      'Çatal', 'Kaşık', 'Bıçak', 'Kesme tahtası', 'Kepçe', 'Spatula', 'Saklama kabı', 'Baharatlık'
+    ]
+  },
+  {
+    cat: 'Banyo', ic: '🚿', items: [
+      'Havlu', 'El havlusu', 'Banyo havlusu', 'Paspas', 'Duş perdesi', 'Sabunluk', 
+      'Diş fırçalık', 'Çöp kovası', 'Tuvalet fırçası', 'Tuvalet kağıtlığı', 'Şampuan', 
+      'Duş jeli', 'Sabun', 'Lif', 'Tırnak makası', 'Tarak', 'Saç kurutma makinesi', 
+      'Ayna (banyo)', 'Raf', 'Organizer'
+    ]
+  },
+  {
+    cat: 'Temizlik & Genel', ic: '🧹', items: [
+      'Süpürge', 'Mop', 'Kova', 'Temizlik bezleri', 'Sünger', 'Deterjan', 'Çamaşır deterjanı', 
+      'Yumuşatıcı', 'Çamaşır makinesi', 'Kurutma makinesi', 'Ütü', 'Ütü masası', 
+      'Çamaşırlık', 'Mandal', 'Çöp torbası', 'Eldiven', 'Fırça', 'Sprey şişe', 
+      'Oda kokusu', 'Hava temizleyici'
+    ]
+  }
+];
+
+const GORKEM_CATS = [
+  { nm: 'Bakım', ic: '🧴', label: 'Kişisel Bakım' },
+  { nm: 'Giyim', ic: '👕', label: 'Giyim' },
+  { nm: 'Teknoloji', ic: '🎧', label: 'Elektronik' },
+  { nm: 'Spor', ic: '🏋️', label: 'Spor & Outdoor' },
+  { nm: 'Parfüm', ic: '💨', label: 'Parfüm' },
+  { nm: 'Saat', ic: '⌚', label: 'Aksesuar' }
+];
+
+const ESRA_CATS = [
+  { nm: 'Bakım', ic: '🧖‍♀️', label: 'Cilt Bakımı' },
+  { nm: 'Makyaj', ic: '💄', label: 'Kozmetik' },
+  { nm: 'Moda', ic: '👗', label: 'Moda & Giyim' },
+  { nm: 'Hobi', ic: '🎨', label: 'Hobi & Sanat' },
+  { nm: 'Takı', ic: '💍', label: 'Takı & Mücevher' },
+  { nm: 'Çanta', ic: '👜', label: 'Aksesuar' }
+];
+
 const formatMoney = (val) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
 
@@ -40,6 +102,14 @@ export default function Alisveris() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [confirmingItem, setConfirmingItem] = useState(null);
+  const [activeQuickCat, setActiveQuickCat] = useState(null);
+  const [quickProductName, setQuickProductName] = useState('');
+  
+  // Shuffled Categories State
+  const [displayGorkem, setDisplayGorkem] = useState(GORKEM_CATS);
+  const [displayEsra, setDisplayEsra] = useState(ESRA_CATS);
+  const [displayHome, setDisplayHome] = useState(HOME_FIXES);
+
   const navigate = useNavigate();
   
   const { mutfak, alisveris, confirmShoppingItem, deleteShoppingItem, addShoppingItem, setModuleData, addExpense } = useStore();
@@ -67,6 +137,22 @@ export default function Alisveris() {
     { id: 'ev', label: 'Ev', emoji: '🏡' },
     { id: 'market', label: 'Market', emoji: '🛒' }
   ];
+
+  const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
+
+  const refreshCategories = () => {
+    setDisplayGorkem(shuffleArray(GORKEM_CATS));
+    setDisplayEsra(shuffleArray(ESRA_CATS));
+    setDisplayHome(shuffleArray(HOME_FIXES));
+    toast.success('Kategoriler yenilendi ✨');
+  };
+
+  React.useEffect(() => {
+    // Initial shuffle
+    setDisplayGorkem(shuffleArray(GORKEM_CATS));
+    setDisplayEsra(shuffleArray(ESRA_CATS));
+    setDisplayHome(shuffleArray(HOME_FIXES));
+  }, []);
 
   const handleQuickAdd = (item, target) => {
     addShoppingItem(target || 'ev', { nm: item.nm, loc: item.loc || 'ev', pr: 0 });
@@ -146,31 +232,52 @@ export default function Alisveris() {
         </nav>
       </header>
 
-      <div className="shopping-content-premium">
+        <div className="shopping-content-premium">
         {activeTab !== 'market' && (
           <>
             {(activeTab === 'ev') && (
-              <div className="quick-add-bar">
-                {QUICK_ITEMS.map(item => (
-                  <button key={item.nm} className="quick-item-btn glass" onClick={() => handleQuickAdd(item, 'ev')}>
-                    <span>{item.ic}</span>
-                    <span>{item.nm}</span>
-                  </button>
-                ))}
+              <div className="quick-add-section">
+                <div className="qas-header">
+                  <Package size={14} /> <span>Ev Demirbaşları</span>
+                  <button className="refresh-mini" onClick={refreshCategories}><RotateCcw size={12} /></button>
+                </div>
+                <div className="quick-add-bar-compact">
+                  {displayHome.map(cat => (
+                    <button 
+                      key={cat.cat} 
+                      className="quick-item-btn-compact glass" 
+                      onClick={() => {
+                        setActiveQuickCat(cat);
+                        setQuickProductName('');
+                      }}
+                    >
+                      <span>{cat.ic}</span> <span>{cat.cat.split(' / ')[0]}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             
             {(activeTab === 'gorkem' || activeTab === 'esra') && (
-              <div className="quick-add-bar">
-                <button className="quick-item-btn glass" onClick={() => handleQuickAdd({ nm: 'Kişisel Bakım', ic: '🧴' }, activeTab)}>
-                  <span>🧴</span> <span>Bakım</span>
-                </button>
-                <button className="quick-item-btn glass" onClick={() => handleQuickAdd({ nm: 'Giyim', ic: '👕' }, activeTab)}>
-                  <span>👕</span> <span>Giyim</span>
-                </button>
-                <button className="quick-item-btn glass" onClick={() => handleQuickAdd({ nm: 'Elektronik', ic: '🎧' }, activeTab)}>
-                  <span>🎧</span> <span>Elektronik</span>
-                </button>
+              <div className="quick-add-section">
+                <div className="qas-header">
+                  <Sparkles size={14} /> <span>{activeTab === 'gorkem' ? 'Görkem için Öneriler' : 'Esra için Öneriler'}</span>
+                  <button className="refresh-mini" onClick={refreshCategories}><RotateCcw size={12} /></button>
+                </div>
+                <div className="quick-add-bar-compact">
+                  {(activeTab === 'gorkem' ? displayGorkem : displayEsra).map(cat => (
+                    <button 
+                      key={cat.nm} 
+                      className="quick-item-btn-compact glass" 
+                      onClick={() => {
+                        setActiveQuickCat(cat);
+                        setQuickProductName('');
+                      }}
+                    >
+                      <span>{cat.ic}</span> <span>{cat.nm}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -254,7 +361,7 @@ export default function Alisveris() {
         <button 
           className="fab-add-shopping animate-pop" 
           onClick={() => setShowAddModal(true)}
-          style={{ background: `var(--${activeTab === 'ev' ? 'alisveris' : (activeTab === 'gorkem' ? 'sosyal' : 'mutfak')})` }}
+          style={{ background: activeTab === 'gorkem' ? 'linear-gradient(135deg, #4f46e5, #7c3aed)' : `var(--${activeTab === 'ev' ? 'alisveris' : 'mutfak'})` }}
         >
           <Plus size={28} />
         </button>
@@ -302,6 +409,57 @@ export default function Alisveris() {
           onConfirm={(data) => handlePersonalConfirm(confirmingItem.owner, confirmingItem, data)}
         />
       )}
+
+      <ActionSheet
+        isOpen={!!activeQuickCat}
+        onClose={() => setActiveQuickCat(null)}
+        title={`${activeQuickCat?.ic} ${activeQuickCat?.label || activeQuickCat?.cat} Ekle`}
+      >
+        <div className="quick-add-sheet-form">
+          <p style={{ fontSize: '13px', color: 'var(--txt-light)', marginBottom: '15px' }}>
+            {activeTab === 'ev' ? 'Ev' : (activeTab === 'gorkem' ? 'Görkem' : 'Esra')} için hangi ürünü ekleyelim?
+          </p>
+          <div className="form-group-v2">
+            <input 
+              type="text" 
+              className="premium-input" 
+              placeholder="Ürün adı girin..." 
+              value={quickProductName}
+              onChange={e => setQuickProductName(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          {activeQuickCat?.items && (
+            <div className="autofill-suggestions mt-12">
+              <small style={{ display: 'block', marginBottom: '8px', opacity: 0.6, fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }}>Önerilenler</small>
+              <div className="suggestion-tags">
+                {activeQuickCat.items.slice(0, 15).map(item => (
+                  <button 
+                    key={item} 
+                    className="suggestion-tag"
+                    onClick={() => setQuickProductName(item)}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <button 
+            className="submit-btn-premium mt-24"
+            disabled={!quickProductName.trim()}
+            onClick={() => {
+              handleQuickAdd({ nm: quickProductName, ic: activeQuickCat.ic }, activeTab);
+              setActiveQuickCat(null);
+              setQuickProductName('');
+            }}
+          >
+            Listeye Ekle ✨
+          </button>
+        </div>
+      </ActionSheet>
     </AnimatedPage>
   );
 }

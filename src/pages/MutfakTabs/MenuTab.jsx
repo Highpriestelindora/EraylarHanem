@@ -429,7 +429,7 @@ export default function MenuTab() {
         .menu-tab { padding: 10px; }
         .week-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 15px; border-radius: 16px; margin-bottom: 8px; position: relative; }
         .nav-arrow { background: none; border: 1px solid var(--brd); color: var(--txt); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .today-btn-small { background: white; border: 1px solid var(--mutfak); color: var(--mutfak); font-size: 7px; font-weight: 900; padding: 2px 5px; border-radius: 4px; cursor: pointer; text-transform: uppercase; line-height: 1; }
+        .today-btn-small { background: white; border: 1px solid var(--mutfak); color: var(--mutfak); font-size: 6px; font-weight: 900; padding: 1px 4px; border-radius: 4px; cursor: pointer; text-transform: uppercase; line-height: 1; }
         .week-info { text-align: center; line-height: 1.1; }
         .week-info strong { display: block; font-size: 12px; }
         .week-info small { color: var(--mutfak); font-weight: bold; font-size: 9px; }
@@ -545,14 +545,14 @@ export default function MenuTab() {
         .ri-text { display: flex; flex-direction: column; gap: 2px; }
         .ri-missing { font-size: 11px; font-weight: 700; color: #ef4444; }
 
-        .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 4px; border-radius: 20px; background: rgba(248, 250, 252, 0.5); border: 1px solid rgba(0,0,0,0.03); color: #64748b; font-size: 9px; font-weight: 800; }
+        .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 2px; border-radius: 16px; background: rgba(248, 250, 252, 0.5); border: 1px solid rgba(0,0,0,0.03); color: #64748b; font-size: 8px; font-weight: 800; }
         .smart-pill.complete { background: #f0fdf4; border-color: #10b981; color: #10b981; }
 
-        .smart-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 4px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.05); background: white; color: var(--txt); font-size: 9px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .smart-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 2px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); background: white; color: var(--txt); font-size: 8px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
         .smart-btn:active { transform: scale(0.95); }
         .smart-btn.lucky { border-color: rgba(139, 92, 246, 0.2); color: #8b5cf6; background: #f5f3ff; }
         .smart-btn.shop { border-color: rgba(236, 72, 153, 0.2); color: #ec4899; background: #fdf2f8; }
-        .smart-btn span[style*="font-size: 24px"] { font-size: 16px !important; }
+        .smart-btn span[style*="font-size: 24px"] { font-size: 14px !important; }
 
         .period-btn { width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--brd); background: white; font-size: 13px; font-weight: 800; color: var(--txt); cursor: pointer; transition: all 0.2s; text-align: left; }
         .period-btn:hover { background: var(--bg); border-color: var(--mutfak); color: var(--mutfak); }

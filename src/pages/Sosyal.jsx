@@ -7,7 +7,7 @@ import {
   CheckCircle2, Plus, Trash2, Star, 
   MapPin, Home as HomeIcon, Clock, ArrowRight,
   Layers, CreditCard, Smile, ArrowLeft, X, Sparkles,
-  RotateCcw
+  RotateCcw, Edit3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { INITIAL_SOCIAL_POOL, SOCIAL_ROUTINES } from '../constants/data';
@@ -1423,13 +1423,13 @@ function RutinTab({ sosyal, onAdd }) {
 
 
 function HavuzTab({ sosyal, onAdd }) {
-  const pool = sosyal.poolItems || [];
+  const pool = [...(sosyal.poolItems || []), ...(sosyal.havuz || [])];
   const { deleteSocialPoolItem, addSocialPoolItem, updateSocialPoolItem } = useStore();
   const [planningIdea, setPlanningIdea] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Hepsi');
   const [managingItem, setManagingItem] = useState(null); // { mode: 'add' | 'edit', item: null | object }
 
-  const categories = ['Hepsi', ...new Set(pool.map(p => p.category))];
+  const categories = ['Hepsi', ...new Set(pool.map(p => p.category).filter(Boolean))];
 
   const filteredPool = selectedCategory === 'Hepsi' 
     ? pool 
@@ -1480,9 +1480,10 @@ function HavuzTab({ sosyal, onAdd }) {
         <p style={{ fontSize: '12px', opacity: 0.6, margin: 0 }}>Fikir havuzundan seçim yap veya yeni ekle.</p>
         <button 
           onClick={() => setManagingItem({ mode: 'add', item: null })}
-          style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '5px' }}
+          className="cute-mini-btn"
+          style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(197, 28, 108, 0.2)' }}
         >
-          <Plus size={14} /> YENİ EKLE
+          <Sparkles size={10} /> <Plus size={10} /> YENİ
         </button>
       </div>
 
@@ -1493,52 +1494,62 @@ function HavuzTab({ sosyal, onAdd }) {
             className={`filter-chip ${selectedCategory === cat ? 'active' : ''}`}
             onClick={() => setSelectedCategory(cat)}
             style={{ 
-              padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--brd)',
+              padding: '6px 12px', borderRadius: '14px', border: '1px solid var(--brd)',
               background: selectedCategory === cat ? 'var(--social)' : 'white',
               color: selectedCategory === cat ? 'white' : 'var(--txt)',
-              fontSize: '12px', fontWeight: '800'
+              fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px'
             }}
           >
+            {cat === 'Hepsi' && <Layers size={10} />}
             {cat}
           </button>
         ))}
       </div>
 
-      <div className="pool-grid" style={{ padding: '0 20px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', paddingBottom: '100px' }}>
+      <div className="pool-list" style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '10px', paddingBottom: '100px' }}>
         {filteredPool.map(item => (
-          <div key={item.id} className="pool-card glass" style={{ padding: '15px', borderRadius: '20px', display: 'flex', flexDirection: 'column', gap: '10px', position: 'relative' }}>
-            <div className="pc-top" style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '24px' }}>{item.icon}</span>
-              <div style={{ display: 'flex', gap: '5px' }}>
-                <button 
-                  onClick={() => setManagingItem({ mode: 'edit', item })}
-                  style={{ background: 'var(--bg)', color: 'var(--txt-light)', border: 'none', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <Activity size={12} />
-                </button>
-                <button 
-                  onClick={(e) => handleDeleteItem(e, item.id)}
-                  style={{ background: '#fff5f5', color: '#f87171', border: 'none', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <Trash2 size={12} />
-                </button>
-                <button 
-                  onClick={() => startPlanning(item)}
-                  style={{ background: 'var(--social)', color: 'white', border: 'none', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <Plus size={14} />
-                </button>
+          <div key={item.id} className="pool-card-list glass" style={{ padding: '12px 15px', borderRadius: '18px', display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <div className="pcl-icon" style={{ fontSize: '24px', width: '44px', height: '44px', background: 'var(--bg)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {item.icon}
+            </div>
+            
+            <div className="pcl-info" style={{ flex: 1 }}>
+              <strong style={{ fontSize: '13px', color: 'var(--txt)', display: 'block' }}>{item.title}</strong>
+              <div style={{ fontSize: '10px', opacity: 0.6, display: 'flex', gap: '10px', marginTop: '2px' }}>
+                <span>⏱️ {item.duration || '1 saat'}</span>
+                <span>💰 {item.cost || '0 TL'}</span>
+                <span style={{ color: 'var(--social)', fontWeight: 'bold' }}>#{item.category}</span>
               </div>
             </div>
-            <div className="pc-info">
-              <strong style={{ fontSize: '13px', display: 'block', marginBottom: '4px', lineHeight: '1.2' }}>{item.title}</strong>
-              <div style={{ fontSize: '10px', opacity: 0.6, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span>⏱️ {item.duration}</span>
-                <span>💰 {item.cost}</span>
-              </div>
+
+            <div className="pcl-actions" style={{ display: 'flex', gap: '6px' }}>
+              <button 
+                onClick={() => setManagingItem({ mode: 'edit', item })}
+                style={{ background: '#F1F5F9', color: '#64748B', border: 'none', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Edit3 size={14} />
+              </button>
+              <button 
+                onClick={(e) => handleDeleteItem(e, item.id)}
+                style={{ background: '#FFF1F2', color: '#F43F5E', border: 'none', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Trash2 size={14} />
+              </button>
+              <button 
+                onClick={() => startPlanning(item)}
+                style={{ background: 'var(--social)', color: 'white', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(197, 28, 108, 0.2)' }}
+              >
+                <Plus size={18} />
+              </button>
             </div>
           </div>
         ))}
+        {filteredPool.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px', opacity: 0.5 }}>
+             <Lightbulb size={40} style={{ marginBottom: '10px' }} />
+             <p>Bu kategoride henüz bir fikir yok.</p>
+          </div>
+        )}
       </div>
 
       <ActionSheet

@@ -867,15 +867,15 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 60px;
+  width: 50px;
 }
 
 .shopping-action-btn {
   background: white;
   color: var(--kasa);
   border: 1px solid var(--brd);
-  padding: 6px 0;
-  border-radius: 12px;
+  padding: 4px 0;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -931,13 +931,13 @@
   color: white;
   border: none;
   width: 100%;
-  padding: 6px 0;
-  border-radius: 10px;
-  font-size: 9px;
+  padding: 4px 0;
+  border-radius: 8px;
+  font-size: 8px;
   font-weight: 900;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);
+  box-shadow: 0 2px 8px rgba(231, 76, 60, 0.15);
 }
 
 .finish-action-btn:hover:not(.disabled) {

@@ -294,3 +294,145 @@
   font-weight: 700;
   color: var(--txt-light);
 }
+
+/* Quick Add V2 */
+.quick-add-section {
+  margin: 15px 20px 20px;
+}
+
+.qas-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: var(--txt-light);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.refresh-mini {
+  background: none;
+  border: none;
+  color: var(--txt-light);
+  opacity: 0.5;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 4px;
+}
+
+.quick-add-bar-compact {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.quick-item-btn-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid var(--brd);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--txt);
+  transition: all 0.2s;
+}
+
+.quick-item-btn-compact span:first-child {
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.quick-item-btn-compact:active {
+  transform: scale(0.95);
+  background: var(--bg);
+}
+
+.quick-add-sheet-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Autofill Suggestions */
+.autofill-suggestions {
+  margin-top: 20px;
+}
+
+.suggestion-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestion-tag {
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  border: 1px solid var(--brd);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--txt-light);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.suggestion-tag:active {
+  background: var(--alisveris);
+  color: white;
+  border-color: var(--alisveris);
+}
+
+/* Home Fixes Styles */
+.home-fixes-scroll {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  scrollbar-width: none;
+}
+.home-fixes-scroll::-webkit-scrollbar { display: none; }
+
+.hf-group {
+  flex-shrink: 0;
+  width: 280px;
+}
+
+.hf-group-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--alisveris);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.hf-items-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.hf-item-btn {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--brd);
+  background: white;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--txt);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s;
+}
+
+.hf-item-btn:active {
+  transform: scale(0.95);
+  background: var(--bg);
+}
