@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '../lib/supabaseClient';
 import { 
   INITIAL_RECIPES, 
@@ -334,8 +334,8 @@ async function pushToSupabase(appData) {
   }
 }
 
-function extractAppData(state) {
-  return {
+function extractAppData(state, forPersist = false) {
+  const data = {
     finans:    state.finans,
     users:     state.users,
     kasa:      state.kasa,
@@ -352,6 +352,22 @@ function extractAppData(state) {
     achievements: state.achievements,
     logs:      state.logs,
   };
+
+  // If for localStorage (5MB limit), strip heavy photos
+  if (forPersist && data.tatil?.trips) {
+    data.tatil = {
+      ...data.tatil,
+      trips: data.tatil.trips.map(t => ({
+        ...t,
+        photos: [], // Omit photos from local storage
+        evaluations: t.evaluations ? Object.fromEntries(
+          Object.entries(t.evaluations).map(([user, ev]) => [user, { ...ev, photos: [] }])
+        ) : t.evaluations
+      }))
+    };
+  }
+
+  return data;
 }
 
 const DEFAULT_SETTINGS = {
@@ -2546,6 +2562,30 @@ const useStore = create(
         set({ currentUser: user });
       },
 
+      updateExchangeRates: async () => {
+        try {
+          const res = await fetch('https://api.exchangerate-api.com/v4/latest/TRY');
+          const data = await res.json();
+          if (data && data.rates) {
+            const eurRate = 1 / data.rates.EUR;
+            const usdRate = 1 / data.rates.USD;
+            
+            set(state => ({ 
+              kasa: { 
+                ...state.kasa, 
+                rates: { 
+                  EUR: Number(eurRate.toFixed(2)), 
+                  USD: Number(usdRate.toFixed(2)) 
+                } 
+              } 
+            }));
+            console.log('📈 Currency rates updated:', { EUR: eurRate.toFixed(2), USD: usdRate.toFixed(2) });
+          }
+        } catch (err) {
+          console.error('Exchange rate fetch error:', err);
+        }
+      },
+
       resetMutfak: () => {
         set({ mutfak: DEFAULT_STATE.mutfak });
         get().saveToSupabase();
@@ -2564,7 +2604,20 @@ const useStore = create(
     }),
     {
       name: 'eraylar-state-v5',
-      partialize: (state) => extractAppData(state),
+      storage: createJSONStorage(() => ({
+        getItem: (name) => localStorage.getItem(name),
+        setItem: (name, value) => {
+          try {
+            localStorage.setItem(name, value);
+          } catch (e) {
+            if (e.name === 'QuotaExceededError') {
+              console.warn('LocalStorage Full! Data saved to memory/cloud only.', e);
+            }
+          }
+        },
+        removeItem: (name) => localStorage.getItem(name)
+      })),
+      partialize: (state) => extractAppData(state, true),
       merge: (persistedState, initialState) => {
         const merged = { ...initialState, ...persistedState };
         // Deeply ensure critical modules have their arrays

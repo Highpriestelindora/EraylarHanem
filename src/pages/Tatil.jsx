@@ -39,13 +39,19 @@ const getCountryFlag = (title = '', city = '', country = '') => {
 
 export default function Tatil() {
   const navigate = useNavigate();
-  const { tatil, setModuleData, addTrip } = useStore();
+  const { tatil, setModuleData, addTrip, updateExchangeRates } = useStore();
   const [activeTab, setActiveTab] = useState(tatil.ttab || 'trips');
   const [selectedTrip, setSelectedTrip] = useState(null);
+
+  useEffect(() => {
+    updateExchangeRates();
+  }, []);
+
   const [showWizard, setShowWizard] = useState(false);
   const [editingPassport, setEditingPassport] = useState(null);
   const [showTracker, setShowTracker] = useState(false);
   const [trackerFlight, setTrackerFlight] = useState('');
+  const [viewPdf, setViewPdf] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const [mapTarget, setMapTarget] = useState({ name: '', address: '' });
 
@@ -244,6 +250,21 @@ export default function Tatil() {
           city={mapTarget?.city} 
           country={mapTarget?.country} 
         />
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={!!viewPdf}
+        onClose={() => setViewPdf(null)}
+        title="📄 Belge Görüntüleyici"
+        maxHeight="100vh"
+      >
+        <div style={{ width: '100%', height: 'calc(100vh - 80px)', background: '#f8fafc', borderRadius: '12px', overflow: 'hidden' }}>
+          <iframe 
+            src={viewPdf} 
+            style={{ width: '100%', height: '100%', border: 'none' }} 
+            title="PDF Viewer"
+          />
+        </div>
       </ActionSheet>
     </AnimatedPage>
   );
@@ -530,13 +551,27 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
         if (!geoData.results?.length) return;
         
         const { latitude, longitude } = geoData.results[0];
-        const start = trip.startDate || new Date().toISOString().split('T')[0];
-        // Calculate end date for forecast (max 7 days from start)
-        const endDateObj = new Date(start);
-        endDateObj.setDate(endDateObj.getDate() + 6);
-        const end = endDateObj.toISOString().split('T')[0];
         
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&start_date=${start}&end_date=${end}&daily=weathercode,temperature_2m_max&timezone=auto`);
+        const today = new Date().toISOString().split('T')[0];
+        const tripStart = trip.startDate || today;
+        
+        // Open-Meteo forecast is only valid for -2 to +16 days
+        // We check if trip start is too far or in the past
+        const daysDiff = (new Date(tripStart) - new Date(today)) / 864e5;
+        const isFetchable = daysDiff >= -2 && daysDiff <= 14;
+
+        let weatherUrl;
+        if (isFetchable) {
+          const endDateObj = new Date(tripStart);
+          endDateObj.setDate(endDateObj.getDate() + 6);
+          const end = endDateObj.toISOString().split('T')[0];
+          weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&start_date=${tripStart}&end_date=${end}&daily=weathercode,temperature_2m_max&timezone=auto`;
+        } else {
+          // Fallback: Show current 7-day forecast for the city
+          weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weathercode,temperature_2m_max&timezone=auto`;
+        }
+
+        const weatherRes = await fetch(weatherUrl);
         const weatherData = await weatherRes.json();
         
         if (weatherData.daily?.time) {
@@ -722,7 +757,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
                 
                 <div className="assistant-row-cute mt-15">
                   <CurrencyConverter targetCurrency={trip.locationType === 'yurtdisi' ? 'EUR' : 'TRY'} />
-                  <WeatherWidget city={trip.city} />
+                  <WeatherWidget city={trip.city} country={trip.country} />
                 </div>
 
                 <div className="premium-notes-container mt-15 animate-fadeIn">
@@ -1005,8 +1040,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                   style={{ width: '100%' }}
                   onClick={() => {
                     if (trip.accommodation?.pdf) {
-                      const win = window.open();
-                      win.document.write(`<iframe src="${trip.accommodation.pdf}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+                      setViewPdf(trip.accommodation.pdf);
                     } else {
                       document.getElementById(`pdf-upload-${trip.id}`).click();
                     }
@@ -1347,7 +1381,32 @@ function TripReviewPanel({ trip, onComplete }) {
   }, [activeUser]);
 
   const handleSubmit = () => {
+    toast.success('Değerlendirme başarıyla kaydedildi! ✨');
     onComplete(activeUser, evalData);
+  };
+
+  const compressImage = (base64Str) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        let width = img.width;
+        let height = img.height;
+        if (width > MAX_WIDTH) {
+          height = (height * MAX_WIDTH) / width;
+          width = MAX_WIDTH;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.6));
+      };
+      img.onerror = (e) => reject(e);
+    });
   };
 
   const handlePhotoClick = (index) => {
@@ -1358,10 +1417,16 @@ function TripReviewPanel({ trip, onComplete }) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (event) => {
-          const newPhotos = [...evalData.photos];
-          newPhotos[index] = event.target.result;
-          setEvalData({ ...evalData, photos: newPhotos });
+        reader.onload = async (event) => {
+          try {
+            const compressed = await compressImage(event.target.result);
+            const newPhotos = [...evalData.photos];
+            newPhotos[index] = compressed;
+            setEvalData({ ...evalData, photos: newPhotos });
+          } catch (err) {
+            console.error('Compression error:', err);
+            toast.error('Fotoğraf işlenirken hata oluştu.');
+          }
         };
         reader.readAsDataURL(file);
       }
@@ -1387,34 +1452,30 @@ function TripReviewPanel({ trip, onComplete }) {
           </div>
         </div>
         
-        {isJoint && (
-          <>
-            <div className="rfb-section mt-20">
-              <h4>📝 Notun</h4>
-              <textarea 
-                placeholder="Bu seyahatte en çok neyi sevdin?" 
-                value={evalData.note} 
-                onChange={e => setEvalData({...evalData, note: e.target.value})}
-                className="review-textarea"
-              />
-            </div>
+        <div className="rfb-section mt-20">
+          <h4>📝 Notun</h4>
+          <textarea 
+            placeholder="Bu seyahatte en çok neyi sevdin?" 
+            value={evalData.note} 
+            onChange={e => setEvalData({...evalData, note: e.target.value})}
+            className="review-textarea"
+          />
+        </div>
 
-            <div className="rfb-section mt-20">
-              <h4>📸 Favori 3 Karen</h4>
-              <div className="review-photo-grid">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="rp-slot glass" onClick={() => handlePhotoClick(i)}>
-                    {evalData.photos[i] ? (
-                      <img src={evalData.photos[i]} alt="Upload" />
-                    ) : (
-                      <PlusCircle size={20} opacity={0.5} />
-                    )}
-                  </div>
-                ))}
+        <div className="rfb-section mt-20">
+          <h4>📸 Favori 3 Karen</h4>
+          <div className="review-photo-grid">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="rp-slot glass" onClick={() => handlePhotoClick(i)}>
+                {evalData.photos[i] ? (
+                  <img src={evalData.photos[i]} alt="Upload" />
+                ) : (
+                  <PlusCircle size={20} opacity={0.5} />
+                )}
               </div>
-            </div>
-          </>
-        )}
+            ))}
+          </div>
+        </div>
         
         <button className="submit-btn-premium tatil mt-20" onClick={handleSubmit}>
           Değerlendirmeyi Kaydet {isJoint ? '✨' : '✅'}
@@ -1425,8 +1486,10 @@ function TripReviewPanel({ trip, onComplete }) {
 }
 
 function CurrencyConverter({ targetCurrency }) {
+  const { kasa } = useStore();
   const [val, setVal] = useState('');
-  const rate = targetCurrency === 'EUR' ? 35 : 1; // Simulated
+  const rate = (kasa.rates && kasa.rates[targetCurrency]) || (targetCurrency === 'EUR' ? 35 : 1);
+  
   return (
     <div className="assistant-widget glass">
       <div className="aw-header"><Wallet size={14} /> <span>Kur Çevirici</span></div>
@@ -1440,38 +1503,51 @@ function CurrencyConverter({ targetCurrency }) {
   );
 }
 
-function WeatherWidget({ city }) {
+function WeatherWidget({ city, country }) {
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchWeather = async () => {
+      if (!city) return;
+      setLoading(true);
       try {
-        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${city}&count=1&language=en&format=json`);
+        const normalize = (text) => text?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase();
+        const cleanCity = normalize(city);
+        const searchName = country ? `${cleanCity}, ${normalize(country)}` : cleanCity;
+
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchName)}&count=1&language=en&format=json`);
         const geoData = await geoRes.json();
-        if (!geoData.results?.length) return;
         
-        const { latitude, longitude } = geoData.results[0];
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
-        const weatherData = await weatherRes.json();
-        
-        if (weatherData.current_weather) {
-          setData({ 
-            temp: Math.round(weatherData.current_weather.temperature),
-            isSun: weatherData.current_weather.weathercode < 3
-          });
+        if (geoData.results?.length) {
+          const { latitude, longitude } = geoData.results[0];
+          const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+          const weatherData = await weatherRes.json();
+          
+          if (weatherData.current_weather) {
+            setData({ 
+              temp: Math.round(weatherData.current_weather.temperature),
+              isSun: weatherData.current_weather.weathercode < 3
+            });
+          }
         }
       } catch (err) {
         console.error('Helper weather fetch error:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchWeather();
-  }, [city]);
+  }, [city, country]);
 
   return (
     <div className="assistant-widget glass">
-      <div className="aw-header">{data?.isSun ? <Sun size={14} /> : <Cloud size={14} />} <span>Hava Durumu</span></div>
+      <div className="aw-header">
+        {loading ? <div className="spinner-mini" /> : (data?.isSun ? <Sun size={14} /> : <Cloud size={14} />)}
+        <span>Hava Durumu</span>
+      </div>
       <div className="aw-body weather-flex">
-        <div className="aw-temp">{data ? `${data.temp}°` : '--'}</div>
+        <div className="aw-temp">{loading ? '...' : (data ? `${data.temp}°` : '--')}</div>
         <div className="aw-city">{city}</div>
       </div>
     </div>
