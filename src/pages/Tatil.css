@@ -1007,3 +1007,145 @@
 .btn-premium-action.tatil:active {
   transform: scale(0.95);
 }
+
+/* Smart Details Assistant - PRIME UPGRADE */
+.smart-details-container {
+  margin-bottom: 24px;
+}
+
+.section-header-compact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 0 5px;
+}
+
+.section-header-compact h3 {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--txt);
+  margin: 0;
+}
+
+.edit-toggle-btn {
+  background: var(--tatil-light);
+  color: var(--tatil);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.edit-toggle-btn:active { transform: scale(0.95); opacity: 0.8; }
+
+.smart-cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.smart-card {
+  padding: 20px;
+  border-radius: 28px;
+  border: 1px solid var(--brd);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.sc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--txt-light);
+}
+
+.sc-icon {
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border-radius: 12px;
+}
+.sc-icon.blue { background: #e0f2fe; color: #0284c7; }
+.sc-icon.orange { background: #fff7ed; color: #ea580c; }
+
+.sc-body {
+  flex: 1;
+}
+
+.sc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sc-form input {
+  width: 100%;
+  padding: 12px 15px;
+  border-radius: 12px;
+  border: 1px solid var(--brd);
+  font-size: 14px;
+  background: #f8fafc;
+  font-weight: 600;
+}
+
+.sc-display strong {
+  display: block;
+  font-size: 17px;
+  color: var(--txt);
+  margin-bottom: 4px;
+  font-weight: 900;
+}
+
+.sc-display small {
+  font-size: 12px;
+  color: var(--txt-light);
+  font-weight: 700;
+}
+
+.pnr-badge {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 12px;
+  background: #f1f5f9;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #475569;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.sc-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
+.sc-action-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--brd);
+  background: #f8fafc;
+  color: var(--txt);
+  font-size: 12px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sc-action-btn:active {
+  background: var(--tatil-light);
+  transform: scale(0.97);
+}

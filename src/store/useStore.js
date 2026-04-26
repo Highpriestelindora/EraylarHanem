@@ -751,6 +751,8 @@ const useStore = create(
             ]
           },
           budget: { est: trip.budget || 0, real: 0 },
+          transportation: { flightNo: '', airline: '', pnr: '', time: '', link: '' },
+          accommodation: { hotelName: '', address: '', bookingId: '', link: '', checkIn: '', checkOut: '' },
           ...trip
         };
         const updatedTrips = [...state.tatil.trips, newTrip];
@@ -764,6 +766,21 @@ const useStore = create(
         const updatedTrips = state.tatil.trips.map(t => 
           t.id === tripId ? { ...t, ...updates } : t
         );
+        set({ tatil: { ...state.tatil, trips: updatedTrips } });
+        get().saveToSupabase();
+      },
+
+      updateTripValiz: (tripId, person, itemId) => {
+        const state = get();
+        const updatedTrips = state.tatil.trips.map(t => {
+          if (t.id === tripId) {
+            const newList = t.valiz[person].map(item => 
+              item.id === itemId ? { ...item, done: !item.done } : item
+            );
+            return { ...t, valiz: { ...t.valiz, [person]: newList } };
+          }
+          return t;
+        });
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().saveToSupabase();
       },

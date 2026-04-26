@@ -7,7 +7,7 @@ import {
   Plus, Trash2, Calendar, MapPin, 
   Hotel, Wallet, CheckSquare, Cloud, 
   ArrowRight, AlertCircle, Info, Timer, X, ArrowLeft,
-  PlusCircle
+  PlusCircle, ExternalLink, Ticket, Navigation
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -363,30 +363,7 @@ function TripDetailContent({ trip }) {
 
         {activeSubTab === 'dokuman' && (
           <div className="docs-view animate-fadeIn">
-            {/* Kesin Bilgiler Section */}
-            {(trip.status === 'kesin' || trip.status === 'tamamlandi') && (
-              <div className="doc-card glass highlight-card">
-                <div className="dc-header"><Star size={18} color="#f59e0b" /> <strong>Kesinleşen Bilgiler</strong></div>
-                <div className="dc-body">
-                   <div className="form-group-mini">
-                    <label>✈️ Uçuş / Ulaşım Bilgisi</label>
-                    <textarea 
-                      value={trip.ucusBilgi || ''} 
-                      placeholder="Uçuş no, kalkış saati, koltuk vb."
-                      onChange={e => handleUpdateTrip({ ucusBilgi: e.target.value })} 
-                    />
-                  </div>
-                  <div className="form-group-mini mt-10">
-                    <label>🏨 Konaklama Detayı</label>
-                    <textarea 
-                      value={trip.otelBilgi || ''} 
-                      placeholder="Otel adı, rezervasyon no, giriş saati..."
-                      onChange={e => handleUpdateTrip({ otelBilgi: e.target.value })} 
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
+            <TripSmartDetails trip={trip} onUpdate={handleUpdateTrip} />
 
             <div className="doc-card glass mt-15">
               <div className="dc-header"><MapPin size={18} /> <strong>Genel Notlar</strong></div>
@@ -425,6 +402,139 @@ function TripDetailContent({ trip }) {
           toast.success('Harcama kaydedildi! 💸'); 
         }} />
       </ActionSheet>
+    </div>
+  );
+}
+
+function TripSmartDetails({ trip, onUpdate }) {
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState({
+    transportation: trip.transportation || { flightNo: '', airline: '', pnr: '', time: '' },
+    accommodation: trip.accommodation || { hotelName: '', address: '', bookingId: '', link: '' }
+  });
+
+  const handleSave = () => {
+    onUpdate(formData);
+    setEditMode(false);
+    toast.success('Seyahat bilgileri güncellendi! ✨');
+  };
+
+  const trackFlight = () => {
+    const flight = formData.transportation.flightNo;
+    if (!flight) return toast.error('Uçuş numarası girin!');
+    window.open(`https://www.flightradar24.com/data/flights/${flight}`, '_blank');
+  };
+
+  const openMap = () => {
+    const hotel = formData.accommodation.hotelName;
+    const address = formData.accommodation.address;
+    if (!hotel && !address) return toast.error('Otel adı veya adresi girin!');
+    window.open(`https://www.google.com/maps/search/${encodeURIComponent(hotel + ' ' + address)}`, '_blank');
+  };
+
+  const openBooking = () => {
+    const link = formData.accommodation.link;
+    if (link) {
+      window.open(link, '_blank');
+    } else {
+      window.open(`https://www.booking.com/searchresults.tr.html?ss=${encodeURIComponent(formData.accommodation.hotelName)}`, '_blank');
+    }
+  };
+
+  return (
+    <div className="smart-details-container">
+      <div className="section-header-compact">
+        <h3>{editMode ? 'Bilgileri Düzenle' : 'Seyahat Asistanı'}</h3>
+        <button className="edit-toggle-btn" onClick={() => editMode ? handleSave() : setEditMode(true)}>
+          {editMode ? 'Kaydet' : 'Düzenle'}
+        </button>
+      </div>
+
+      <div className="smart-cards-grid">
+        {/* Transportation Card */}
+        <div className="smart-card glass">
+          <div className="sc-header">
+            <Plane size={18} className="sc-icon blue" />
+            <span>Ulaşım</span>
+          </div>
+          <div className="sc-body">
+            {editMode ? (
+              <div className="sc-form">
+                <input 
+                  placeholder="Uçuş No (Örn: TK1821)" 
+                  value={formData.transportation.flightNo}
+                  onChange={e => setFormData({ ...formData, transportation: { ...formData.transportation, flightNo: e.target.value }})}
+                />
+                <input 
+                  placeholder="Havayolu" 
+                  value={formData.transportation.airline}
+                  onChange={e => setFormData({ ...formData, transportation: { ...formData.transportation, airline: e.target.value }})}
+                />
+                <input 
+                  placeholder="PNR Kodu" 
+                  value={formData.transportation.pnr}
+                  onChange={e => setFormData({ ...formData, transportation: { ...formData.transportation, pnr: e.target.value }})}
+                />
+              </div>
+            ) : (
+              <div className="sc-display">
+                <strong>{formData.transportation.flightNo || 'Uçuş bilgisi girilmedi'}</strong>
+                <small>{formData.transportation.airline}</small>
+                {formData.transportation.pnr && <div className="pnr-badge">PNR: {formData.transportation.pnr}</div>}
+              </div>
+            )}
+          </div>
+          {!editMode && formData.transportation.flightNo && (
+            <button className="sc-action-btn" onClick={trackFlight}>
+              <ExternalLink size={14} /> Uçuşu Takip Et
+            </button>
+          )}
+        </div>
+
+        {/* Accommodation Card */}
+        <div className="smart-card glass">
+          <div className="sc-header">
+            <Hotel size={18} className="sc-icon orange" />
+            <span>Konaklama</span>
+          </div>
+          <div className="sc-body">
+            {editMode ? (
+              <div className="sc-form">
+                <input 
+                  placeholder="Otel Adı" 
+                  value={formData.accommodation.hotelName}
+                  onChange={e => setFormData({ ...formData, accommodation: { ...formData.accommodation, hotelName: e.target.value }})}
+                />
+                <input 
+                  placeholder="Adres" 
+                  value={formData.accommodation.address}
+                  onChange={e => setFormData({ ...formData, accommodation: { ...formData.accommodation, address: e.target.value }})}
+                />
+                <input 
+                  placeholder="Booking Linki / Rez No" 
+                  value={formData.accommodation.link}
+                  onChange={e => setFormData({ ...formData, accommodation: { ...formData.accommodation, link: e.target.value }})}
+                />
+              </div>
+            ) : (
+              <div className="sc-display">
+                <strong>{formData.accommodation.hotelName || 'Otel bilgisi girilmedi'}</strong>
+                <small>{formData.accommodation.address}</small>
+              </div>
+            )}
+          </div>
+          {!editMode && formData.accommodation.hotelName && (
+            <div className="sc-actions-row">
+              <button className="sc-action-btn" onClick={openMap}>
+                <Navigation size={14} /> Haritada Aç
+              </button>
+              <button className="sc-action-btn" onClick={openBooking}>
+                <ExternalLink size={14} /> Booking
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
