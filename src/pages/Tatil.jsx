@@ -1610,11 +1610,15 @@ function WeatherWidget({ city, country, startDate }) {
 
           const weatherRes = await fetch(weatherUrl);
           const weatherData = await weatherRes.json();
+          console.log('🌍 Weather Data Received:', { isHistorical, weatherData });
           
-          if (isHistorical && weatherData.daily) {
-             const avg = Math.round(weatherData.daily.temperature_2m_max.reduce((a, b) => a + b, 0) / weatherData.daily.temperature_2m_max.length);
-             const month = start.toLocaleString('tr-TR', { month: 'long' });
-             setData({ temp: avg, isSun: true, label: `${month} Ort.` });
+          if (isHistorical && weatherData.daily?.temperature_2m_max) {
+             const temps = weatherData.daily.temperature_2m_max.filter(t => t !== null && t !== undefined);
+             if (temps.length > 0) {
+               const avg = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
+               const month = start.toLocaleString('tr-TR', { month: 'long' });
+               setData({ temp: avg, isSun: true, label: `${month} Ort.` });
+             }
           } else if (weatherData.current_weather) {
             setData({ 
               temp: Math.round(weatherData.current_weather.temperature),
