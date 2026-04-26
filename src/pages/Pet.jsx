@@ -59,35 +59,35 @@ export default function Pet() {
       [pId]: { ...(pet.supplies?.[pId] || { mama: 'var', kum: 'var' }), [type]: val } 
     };
     setModuleData('pet', { ...pet, supplies: updatedSupplies });
-    toast.success(`${type === 'mama' ? 'Mama' : 'Kum'} durumu güncellendi!`);
+    
+    if (val === 'azaldi') {
+      const { mutfak } = useStore.getState();
+      const itemName = `${currentPet.name} ${type === 'mama' ? 'Maması' : 'Kumu'}`;
+      const existing = (mutfak.alisveris || []).find(i => i.nm === itemName);
+      if (!existing) {
+        const newItem = { id: Date.now(), nm: itemName, mk: 'Pet Shop', qt: '1 paket', loc: 'depo', pr: 0 };
+        useStore.getState().setModuleData('mutfak', { ...mutfak, alisveris: [newItem, ...(mutfak.alisveris || [])] });
+        toast.success(`${itemName} alışveriş listesine eklendi! 🛒`);
+      } else {
+        toast.success(`${itemName} zaten listede var. ⚠️`);
+      }
+    } else {
+      toast.success(`${type === 'mama' ? 'Mama' : 'Kum'} durumu güncellendi!`);
+    }
   };
 
-  const addPetPhoto = (pId, url) => {
-    const updatedGallery = { 
-      ...pet.gallery, 
-      [pId]: [url, ...(pet.gallery?.[pId] || [])].slice(0, 10) 
-    };
-    setModuleData('pet', { ...pet, gallery: updatedGallery });
-    toast.success('Fotoğraf eklendi! 📸');
-  };
 
   if (!currentPet) return <div className="p-20">Pet datası yüklenemedi...</div>;
 
   return (
     <AnimatedPage className="pet-container">
-      <header className="module-header glass pet-honey-grad">
+      <header className="module-header glass" style={{ background: 'var(--pet)' }}>
         <div className="header-top">
           <div className="header-title">
-            <span 
-              className="header-emoji animate-float" 
-              onClick={() => handlePetClick(activePet)}
-              style={{ cursor: 'pointer' }}
-            >
-              {currentPet.emoji}
-            </span>
-            <div className="header-text-box">
-              <h1>{currentPet.name} Assistant</h1>
-              <p>Pati & Sağlık Takip</p>
+            <img src={actionIcon} alt="Logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1>Eraylar Pet</h1>
+              <p>Waffle & Mayıs Pati Takibi 🐾</p>
             </div>
           </div>
           <div className="header-actions">
@@ -110,6 +110,12 @@ export default function Pet() {
       </header>
 
       <div className="pet-scroll-content animate-fadeIn">
+        {/* Quick Actions */}
+        <div className="pet-quick-actions">
+          <button className="ps-btn finance" onClick={() => setShowAddExpense(true)}><Heart size={14} /> Harcama</button>
+          <button className="ps-btn" onClick={() => setShowAddLog(true)}><Plus size={14} /> Not</button>
+        </div>
+
         {/* Quick Status Bar */}
         <div className="quick-supply-bar">
           <div className="supply-item glass">
@@ -146,30 +152,50 @@ export default function Pet() {
           )}
         </div>
 
-        {/* Pati Albümü */}
-        <section className="pet-section">
-          <div className="ps-header">
-            <h3>📸 Pati Albümü</h3>
-            <button className="add-btn-mini" onClick={() => addPetPhoto(activePet, 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=400')}><Plus size={14} /></button>
+        {/* Kimlik Kartı */}
+        <div className="pet-identity-card glass animate-fadeIn">
+          <div className="pic-row">
+            <div className="pic-item"><span>Cins</span> <strong>{currentPet.breed}</strong></div>
+            <div className="pic-item"><span>Doğum</span> <strong>{currentPet.birth}</strong></div>
+            <div className="pic-item"><span>Cinsiyet</span> <strong>{currentPet.gender}</strong></div>
           </div>
-          <div className="photo-gallery-horizontal">
-            {pet.gallery?.[activePet]?.length > 0 ? (
-              pet.gallery[activePet].map((url, i) => (
-                <div key={i} className="gallery-item glass animate-pop">
-                  <img src={url} alt="Pet" />
-                </div>
-              ))
-            ) : (
-              <div className="gallery-empty glass">
-                <span>📷</span>
-                <p>Henüz fotoğraf eklenmedi.</p>
-              </div>
-            )}
+          <div className="pic-divider" />
+          <div className="pic-row">
+            <div className="pic-item"><span>Renk</span> <strong>{currentPet.color}</strong></div>
+            <div className="pic-item"><span>Çip No</span> <strong>{currentPet.chip?.slice(-6)}...</strong></div>
+            <div className="pic-item"><span>Pasaport</span> <strong>{currentPet.passport}</strong></div>
+          </div>
+        </div>
+
+        {/* Health Stats Grid */}
+        {/* Kilo Takibi Section */}
+        <section className="pet-section mt-20">
+          <div className="pet-card-v2 glass">
+            <div className="pc-header-v2">
+              <div className="pch-left"><Scale size={18} /> <strong>Kilo Takibi</strong></div>
+              <button className="add-btn-mini" onClick={() => setShowAddWeight(true)}><Plus size={14} /></button>
+            </div>
+            <div className="pc-body-v2 weight-box">
+               <div className="w-main-val">
+                  <strong>{petWeights[0]?.w || '--'}</strong>
+                  <small>KG</small>
+               </div>
+               {petWeights.length > 0 && (
+                 <div className="w-sub-info">
+                   <span className="w-date">{petWeights[0].dt}</span>
+                   {petWeights[1] && (
+                     <div className={`w-diff ${petWeights[0].w >= petWeights[1].w ? 'up' : 'down'}`}>
+                       {petWeights[0].w >= petWeights[1].w ? '▲' : '▼'} {(petWeights[0].w - petWeights[1].w).toFixed(1)}
+                     </div>
+                   )}
+                 </div>
+               )}
+            </div>
           </div>
         </section>
 
-        {/* Health Stats Grid */}
-        <div className="health-stats-grid mt-20">
+        {/* Aşı Takvimi Section */}
+        <section className="pet-section mt-20">
           <div className="pet-card-v2 glass">
             <div className="pc-header-v2">
               <div className="pch-left"><Activity size={18} /> <strong>Aşı Takvimi</strong></div>
@@ -192,29 +218,12 @@ export default function Pet() {
               })}
             </div>
           </div>
-
-          <div className="pet-card-v2 glass">
-            <div className="pc-header-v2">
-              <div className="pch-left"><Scale size={18} /> <strong>Kilo Takibi</strong></div>
-              <button className="add-btn-mini" onClick={() => setShowAddWeight(true)}><Plus size={14} /></button>
-            </div>
-            <div className="pc-body-v2 weight-box">
-               <div className="w-main-val">
-                  <strong>{petWeights[0]?.w || '--'}</strong>
-                  <small>KG</small>
-               </div>
-            </div>
-          </div>
-        </div>
+        </section>
 
         {/* Günlük & Geçmiş */}
         <section className="pet-section mt-24">
           <div className="ps-header">
             <h3>⌛ Sağlık & Bakım Günlüğü</h3>
-            <div className="ps-actions">
-              <button className="ps-btn finance" onClick={() => setShowAddExpense(true)}><Heart size={14} /> Harcama</button>
-              <button className="ps-btn" onClick={() => setShowAddLog(true)}><Plus size={14} /> Not</button>
-            </div>
           </div>
           <div className="history-timeline-premium">
             {(history || []).filter(h => h.pet === activePet).map((h) => (

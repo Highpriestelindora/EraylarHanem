@@ -12,6 +12,7 @@
   padding: 10px;
   overflow-y: auto;
   padding-bottom: 100px;
+  background: #FFF7ED; /* Soft orange background */
 }
 
 .critical-container {

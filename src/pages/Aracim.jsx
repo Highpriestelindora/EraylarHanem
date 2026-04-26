@@ -48,30 +48,32 @@ export default function Aracim() {
 
   return (
     <AnimatedPage className="aracim-container">
-      <header className="module-header glass aracim-premium-grad">
+      <header className="module-header glass" style={{ background: 'var(--aracim)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">🚗</span>
-            <div className="header-text-box">
-              <div className="plaka-badge">34 HH 1144</div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <div className="plaka-badge" style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(255,255,255,0.2)', borderRadius: '6px', width: 'fit-content', marginBottom: '2px' }}>34 HH 1144</div>
               <h1>Tiguan R-Line</h1>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn-v2"><Settings size={20} /></button>
-            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+              <ArrowLeft size={20} />
+            </button>
           </div>
         </div>
 
-        <nav className="aracim-tab-nav">
+        <nav className="tab-nav">
           {tabs.map(tab => (
             <button
               key={tab.id}
-              className={`a-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <span className="a-tab-emoji">{tab.emoji}</span>
-              <span className="a-tab-label">{tab.label}</span>
+              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
+              <span>{tab.label}</span>
+              {activeTab === tab.id && <div className="tab-dot" />}
             </button>
           ))}
         </nav>

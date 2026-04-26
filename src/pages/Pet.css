@@ -8,32 +8,33 @@
 .pet-honey-grad {
   background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
   color: white;
-  padding: 30px 20px;
+  padding: calc(env(safe-area-inset-top) + 12px) 20px 8px;
 }
 
 .pet-scroll-content {
   flex: 1;
   padding: 0 20px 100px;
   overflow-y: auto;
+  background: #FFFBEB; /* Soft honey background */
 }
 
 /* Quick Status Bar */
 .quick-supply-bar {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: -20px;
-  margin-bottom: 24px;
+  gap: 8px;
+  margin-top: -10px;
+  margin-bottom: 16px;
 }
 
 .supply-item {
-  padding: 16px;
-  border-radius: 24px;
+  padding: 10px;
+  border-radius: 18px;
   background: white;
   border: 1px solid var(--brd);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.03);
 }
 
@@ -43,16 +44,16 @@
   gap: 10px;
 }
 
-.si-icon { font-size: 24px; }
-.si-text strong { display: block; font-size: 14px; color: var(--txt); }
-.si-text small { font-size: 10px; font-weight: 800; color: var(--txt-light); }
+.si-icon { font-size: 20px; }
+.si-text strong { display: block; font-size: 12px; color: var(--txt); }
+.si-text small { font-size: 9px; font-weight: 800; color: var(--txt-light); }
 
 .si-toggle {
   width: 100%;
-  padding: 10px;
-  border-radius: 12px;
+  padding: 6px;
+  border-radius: 10px;
   border: none;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
   cursor: pointer;
   transition: all 0.2s;
@@ -100,8 +101,8 @@
 }
 
 .pet-card-v2 {
-  padding: 16px;
-  border-radius: 24px;
+  padding: 12px;
+  border-radius: 20px;
   background: white;
   border: 1px solid var(--brd);
   box-shadow: 0 4px 12px rgba(0,0,0,0.02);
@@ -114,8 +115,8 @@
   margin-bottom: 12px;
 }
 
-.pch-left { display: flex; align-items: center; gap: 8px; color: #d97706; }
-.pch-left strong { font-size: 13px; font-weight: 900; }
+.pch-left { display: flex; align-items: center; gap: 6px; color: #d97706; }
+.pch-left strong { font-size: 11px; font-weight: 900; }
 
 .v-row-premium {
   display: flex;
@@ -161,27 +162,27 @@
 .history-card-v2 {
   display: flex;
   align-items: center;
-  gap: 15px;
-  padding: 16px;
-  border-radius: 20px;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 18px;
   background: white;
   border: 1px solid var(--brd);
   position: relative;
 }
 
 .hc-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg);
-  font-size: 20px;
+  font-size: 16px;
 }
 
 .hc-info { flex: 1; }
-.hc-info p { font-size: 13px; font-weight: 800; margin: 0; color: var(--txt); }
+.hc-info p { font-size: 12px; font-weight: 800; margin: 0; color: var(--txt); }
 .hc-time { font-size: 10px; opacity: 0.5; font-weight: 800; }
 
 .hc-del {
@@ -206,7 +207,7 @@
   border-radius: 12px;
   border: 1.5px solid var(--brd);
   background: white;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 900;
   display: flex;
   align-items: center;
@@ -217,11 +218,11 @@
 
 .pet-tab-nav {
   display: flex;
-  gap: 8px;
-  padding: 4px;
+  gap: 6px;
+  padding: 3px;
   background: rgba(255,255,255,0.1);
-  border-radius: 16px;
-  margin-top: 20px;
+  border-radius: 14px;
+  margin-top: 12px;
 }
 
 .p-tab-btn {
@@ -244,8 +245,8 @@
   color: #f59e0b;
 }
 
-.p-emoji { font-size: 18px; }
-.p-name { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.p-emoji { font-size: 14px; }
+.p-name { font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
 
 .icon-btn-v2 {
   width: 44px;
@@ -258,3 +259,87 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Identity Card Styles */
+.pet-identity-card {
+  padding: 12px;
+  border-radius: 20px;
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pic-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pic-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pic-item span {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--txt-light);
+  text-transform: uppercase;
+}
+
+.pic-item strong {
+  font-size: 11px;
+  color: var(--txt);
+  font-weight: 900;
+}
+
+.pic-divider {
+  height: 1px;
+  background: var(--brd);
+  opacity: 0.5;
+}
+
+
+/* Quick Actions & Weight Stats */
+.pet-quick-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pet-quick-actions .ps-btn {
+  flex: 1;
+  justify-content: center;
+  padding: 8px;
+  font-size: 10px;
+  border-radius: 12px;
+}
+
+.w-sub-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.w-date {
+  font-size: 8px;
+  color: var(--txt-light);
+  font-weight: 800;
+}
+
+.w-diff {
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.w-diff.up { color: #ef4444; }
+.w-diff.down { color: #10b981; }
+

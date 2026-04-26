@@ -17,6 +17,8 @@ const Home = () => {
   const { 
     system = { version: '2.6.11', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
     currentUser, 
+    saglik,
+    addMood,
     logs = [], 
     calculateGlobalScore 
   } = useStore();
@@ -27,6 +29,19 @@ const Home = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [aiMessage, setAiMessage] = useState('Bugün her şey yolunda, keyfine bak! 💖');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showMoodCheck, setShowMoodCheck] = useState(false);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const today = new Date().toISOString().split('T')[0];
+    const userKey = currentUser.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+    const hasLoggedToday = saglik?.moods?.some(m => m.user === userKey && m.date.startsWith(today));
+    
+    if (!hasLoggedToday) {
+      const timer = setTimeout(() => setShowMoodCheck(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser, saglik?.moods]);
 
   const refreshAiMessage = () => {
     setIsRefreshing(true);
@@ -78,7 +93,7 @@ const Home = () => {
     { id: 'aracim', name: 'Eraylar Aracım', sub: 'Tiguan R-Line', icon: '🏎️', color: 'linear-gradient(180deg, #334155 0%, #0F172A 100%)', path: '/aracim' },
     { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '💎', color: 'linear-gradient(180deg, #7C3AED 0%, #6D28D9 100%)', path: '/kasa' },
     { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(180deg, #1E1B4B 0%, #312E81 100%)', path: '/finans' },
-    { id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏆', color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)', path: '/hedefler' }
+    { id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏆', color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)', path: '/hedefler', fullWidth: true }
   ];
 
   return (
@@ -94,9 +109,7 @@ const Home = () => {
             <div className="phb-text">
               <div className="phb-brand">
                 <img src={logo} alt="Logo" className="phb-logo-img" />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <h2>Eraylar Hanem</h2>
-                </div>
+                <h2>Eraylar Hanem</h2>
               </div>
               <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 
                 <span className="pet-link" onClick={() => handlePetClick('waffle')}>🐶</span> 
@@ -153,6 +166,88 @@ const Home = () => {
         
         <div style={{ height: '60px' }} />
       </div>
+
+      <AnimatePresence>
+        {showMoodCheck && (
+          <Portal>
+            <div className="modal-overlay" style={{ background: 'rgba(46, 16, 101, 0.6)', backdropFilter: 'blur(8px)' }}>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="mood-check-card-premium"
+                style={{
+                  background: 'white',
+                  padding: '30px',
+                  borderRadius: '35px',
+                  width: '90%',
+                  maxWidth: '400px',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.2)',
+                  textAlign: 'center',
+                  position: 'relative'
+                }}
+              >
+                <button 
+                  onClick={() => setShowMoodCheck(false)}
+                  style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: '#94a3b8' }}
+                >
+                  <X size={20} />
+                </button>
+
+                <div className="mood-welcome-header" style={{ marginBottom: '25px' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '15px' }}>✨</div>
+                  <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#2E1065', marginBottom: '8px' }}>
+                    Hoş geldin {currentUser?.name?.split(' ')[0]}!
+                  </h2>
+                  <p style={{ color: '#64748b', fontSize: '15px', lineHeight: '1.5' }}>
+                    Güne nasıl başladın? Ruh halini kaydetmek, uzun vadeli wellness takibin için çok değerli. ✨
+                  </p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                  {[
+                    { id: 'happy', emoji: '😊', label: 'Mutlu', color: '#fef3c7' },
+                    { id: 'calm', emoji: '😌', label: 'Huzurlu', color: '#ecfdf5' },
+                    { id: 'energetic', emoji: '🤩', label: 'Enerjik', color: '#fff7ed' },
+                    { id: 'tired', emoji: '😫', label: 'Yorgun', color: '#f8fafc' },
+                    { id: 'sad', emoji: '😔', label: 'Üzgün', color: '#eff6ff' },
+                    { id: 'sick', emoji: '🤒', label: 'Hasta', color: '#fef2f2' }
+                  ].map(m => (
+                    <button 
+                      key={m.id}
+                      onClick={() => {
+                        const userKey = currentUser.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+                        addMood(userKey, m, '', 'Genel');
+                        setShowMoodCheck(false);
+                        toast.success('Günün güzel geçsin! 🌟', { icon: m.emoji });
+                      }}
+                      style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px',
+                        padding: '16px 8px', borderRadius: '20px', border: '1px solid #f1f5f9',
+                        background: m.color, transition: 'transform 0.2s'
+                      }}
+                      className="mood-btn-hover"
+                    >
+                      <span style={{ fontSize: '24px' }}>{m.emoji}</span>
+                      <span style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b' }}>{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+                
+                <button 
+                  onClick={() => setShowMoodCheck(false)}
+                  style={{ 
+                    marginTop: '25px', width: '100%', padding: '15px', borderRadius: '18px', 
+                    background: '#f8fafc', border: 'none', color: '#64748b', fontWeight: '700', fontSize: '14px'
+                  }}
+                >
+                  Sonra Hatırlat
+                </button>
+              </motion.div>
+            </div>
+          </Portal>
+        )}
+      </AnimatePresence>
 
       {/* System Logs Portal */}
       {showLogs && (

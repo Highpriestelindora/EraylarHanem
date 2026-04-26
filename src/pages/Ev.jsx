@@ -27,8 +27,8 @@ export default function Ev() {
 
   const { 
     faturalar, bakimlar, demirbaslar, tamirListesi, 
-    ustaRehberi, abonelikler, bitkiler, guvenlik, yillikPlan 
-  } = ev || { faturalar: [], bakimlar: [], tamirListesi: [], ustaRehberi: [], bitkiler: [] };
+    ustaRehberi, abonelikler, bitkiler, guvenlik, yillikPlan, depo
+  } = ev || { faturalar: [], bakimlar: [], tamirListesi: [], ustaRehberi: [], bitkiler: [], depo: [] };
 
   const [showSafeCode, setShowSafeCode] = useState(false);
 
@@ -42,35 +42,39 @@ export default function Ev() {
   const tabs = [
     { id: 'faturalar', label: 'Faturalar', emoji: '🧾' },
     { id: 'bakim', label: 'Bakım', emoji: '🔧' },
+    { id: 'depo', label: 'Depo', emoji: '📦' },
     { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
     { id: 'guvenlik', label: 'Güvenlik', emoji: '🛡️' }
   ];
 
   return (
     <AnimatedPage className="ev-container">
-      <header className="module-header glass ev-premium-grad">
+      <header className="module-header glass" style={{ background: 'var(--ev)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">🏡</span>
-            <div className="header-text-box">
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h1>Eraylar Malikanesi</h1>
               <p>Ev Hub & Operasyon Merkezi</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+              <ArrowLeft size={20} />
+            </button>
           </div>
         </div>
 
-        <nav className="ev-tab-nav">
+        <nav className="tab-nav">
           {tabs.map(tab => (
             <button
               key={tab.id}
-              className={`e-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <span className="e-tab-emoji">{tab.emoji}</span>
-              <span className="e-tab-label">{tab.label}</span>
+              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
+              <span>{tab.label}</span>
+              {activeTab === tab.id && <div className="tab-dot" />}
             </button>
           ))}
         </nav>
@@ -193,6 +197,40 @@ export default function Ev() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'depo' && (
+          <div className="depo-view animate-fadeIn">
+            <div className="section-header-v2">
+              <h3>📦 Ev Deposu (Envanter)</h3>
+              <small style={{ opacity: 0.5 }}>{depo?.length || 0} Ürün</small>
+            </div>
+            <div className="depo-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
+              {(!depo || depo.length === 0) ? (
+                <div className="empty-substate glass" style={{ padding: '40px', textAlign: 'center', borderRadius: '24px' }}>
+                  <p style={{ opacity: 0.5 }}>Deponuz henüz boş. Alışveriş modülünden alınan kişisel ve ev ürünleri buraya eklenir. ✨</p>
+                </div>
+              ) : (
+                depo.map(item => (
+                  <div key={item.id} className="depo-card glass">
+                    <div className="dc-left">
+                      <div className="dc-icon">
+                        {item.cat === 'Görkem' ? '👨' : (item.cat === 'Esra' ? '👩' : '📦')}
+                      </div>
+                      <div className="dc-info">
+                        <strong>{item.nm}</strong>
+                        <small>{item.qt} · {new Date(item.dt).toLocaleDateString('tr-TR')}</small>
+                      </div>
+                    </div>
+                    <div className="dc-right">
+                      <div className="dc-price">{formatMoney(item.pr)}</div>
+                      <div className="dc-tag">{item.cat}</div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}

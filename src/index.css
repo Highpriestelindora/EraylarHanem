@@ -27,6 +27,7 @@
   --txt: #2E1065; /* Rich purple-black */
   --txt-light: #7E61AF;
   --brd: #F3E8FF;
+  --danger: #ef4444;
 
   /* Spacing & Radii */
   --r: 28px;
@@ -257,11 +258,12 @@ body:has(.modal-overlay) .app-content {
 
 /* --- Premium Module Header (Mutfak Style) --- */
 .module-header {
-  padding: 10px 12px 0;
-  border-radius: 0 0 20px 20px;
+  padding: calc(env(safe-area-inset-top) + 12px) 20px 8px;
+  border-radius: 0 0 24px 24px;
   color: white;
   flex-shrink: 0;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
 }
 
 .header-top {
@@ -278,17 +280,17 @@ body:has(.modal-overlay) .app-content {
 }
 
 .header-title h1 {
-  font-size: 20px;
+  font-size: 18px;
   color: white;
   margin: 0;
   line-height: 1;
 }
 
 .header-title p {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.9);
   margin: 2px 0 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .header-emoji {
@@ -313,7 +315,7 @@ body:has(.modal-overlay) .app-content {
 .tab-btn {
   background: transparent;
   border: none;
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-radius: 10px;
   color: var(--txt-light);
   display: flex;
@@ -322,7 +324,7 @@ body:has(.modal-overlay) .app-content {
   gap: 2px;
   font-family: 'Outfit', sans-serif;
   font-weight: 700;
-  font-size: 10px;
+  font-size: 9px;
   white-space: nowrap;
   position: relative;
   transition: all 0.3s;
@@ -419,13 +421,14 @@ body:has(.modal-overlay) .app-content {
 
 .form-group input, 
 .form-group select, 
-.form-group textarea {
+.form-group textarea,
+.premium-input {
   width: 100%;
-  min-width: 0; /* Prevents input from breaking flex/grid layouts */
+  min-width: 0;
   padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid var(--brd);
-  background: var(--primary);
+  background: #FFFFFF;
   color: var(--txt);
   font-family: 'Outfit', sans-serif;
   font-size: 15px;
@@ -529,3 +532,9 @@ input[type="time"] {
   max-width: 100% !important;
   overflow: hidden !important;
 }
+
+/* Fix ActionSheet and Modal backgrounds */
+.action-sheet-content, .ActionSheet, .modal-content {
+  background: white !important;
+}
+

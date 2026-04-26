@@ -52,29 +52,32 @@ export default function Hedefler() {
 
   return (
     <AnimatedPage className="hedefler-container">
-      <header className="module-header glass hedefler-premium-grad">
+      <header className="module-header glass" style={{ background: 'var(--hedefler)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">🎯</span>
-            <div className="header-text-box">
-              <h1>Vizyon Panosu</h1>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1>Eraylar Hedefler</h1>
               <p>{moodboard?.quote || "Gelecek, ona hazırlananlarındır."}</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+              <ArrowLeft size={20} />
+            </button>
           </div>
         </div>
 
-        <nav className="hedefler-tab-nav">
+        <nav className="tab-nav">
           {tabs.map(tab => (
             <button
               key={tab.id}
-              className={`h-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <span className="h-tab-emoji">{tab.emoji}</span>
-              <span className="h-tab-label">{tab.label}</span>
+              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
+              <span>{tab.label}</span>
+              {activeTab === tab.id && <div className="tab-dot" />}
             </button>
           ))}
         </nav>

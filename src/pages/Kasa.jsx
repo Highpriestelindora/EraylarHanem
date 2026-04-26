@@ -58,50 +58,53 @@ export default function Kasa() {
 
   return (
     <AnimatedPage className="kasa-container">
-      <header className="module-header glass kasa-premium-grad">
+      <header className="module-header glass" style={{ background: 'var(--kasa)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">🏛️</span>
-            <div className="header-text-box">
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h1>Varlık Kalesi</h1>
               <p>Aile Servet Yönetimi</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn-v2" onClick={togglePrivacyMode}>
-              {privacy ? <EyeOff size={20} /> : <Eye size={20} />}
+            <button className="icon-btn" onClick={togglePrivacyMode}>
+              {privacy ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
-            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+              <ArrowLeft size={20} />
+            </button>
           </div>
         </div>
 
-        <div className="wealth-summary-card glass">
+        <div className="wealth-summary-card glass" style={{ margin: '10px 0', padding: '12px' }}>
            <div className="ws-item main">
-             <small>TOPLAM NET VARLIK</small>
-             <h2>{formatMoney(netWorth, privacy)}</h2>
+             <small style={{ fontSize: '9px', fontWeight: '800', opacity: 0.8 }}>TOPLAM NET VARLIK</small>
+             <h2 style={{ fontSize: '20px', fontWeight: '900' }}>{formatMoney(netWorth, privacy)}</h2>
            </div>
-           <div className="ws-divider" />
-           <div className="ws-grid">
+           <div className="ws-divider" style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '8px 0' }} />
+           <div className="ws-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
              <div className="ws-sub">
-               <small>BİRİKİM</small>
-               <strong>{formatMoney(totalCash + totalVarlik, privacy)}</strong>
+               <small style={{ fontSize: '9px', fontWeight: '800', opacity: 0.8 }}>BİRİKİM</small>
+               <strong style={{ display: 'block', fontSize: '13px' }}>{formatMoney(totalCash + totalVarlik, privacy)}</strong>
              </div>
              <div className="ws-sub">
-               <small>BORÇLAR</small>
-               <strong className="neg">-{formatMoney(totalDebt, privacy)}</strong>
+               <small style={{ fontSize: '9px', fontWeight: '800', opacity: 0.8 }}>BORÇLAR</small>
+               <strong className="neg" style={{ display: 'block', fontSize: '13px', color: '#fca5a5' }}>-{formatMoney(totalDebt, privacy)}</strong>
              </div>
            </div>
         </div>
 
-        <nav className="kasa-tab-nav">
+        <nav className="tab-nav">
           {tabs.map(tab => (
             <button
               key={tab.id}
-              className={`k-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
             >
-              <span className="k-tab-emoji">{tab.emoji}</span>
-              <span className="k-tab-label">{tab.label}</span>
+              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
+              <span>{tab.label}</span>
+              {activeTab === tab.id && <div className="tab-dot" />}
             </button>
           ))}
         </nav>

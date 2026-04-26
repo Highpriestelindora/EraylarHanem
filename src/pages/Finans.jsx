@@ -53,30 +53,40 @@ export default function Finans() {
 
   return (
     <AnimatedPage className="finans-container">
-      <header className="module-header glass finans-premium-grad">
+      <header className="module-header glass" style={{ background: 'var(--finans)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">💰</span>
-            <div className="header-text-box">
-              <h1>Wealth Hub</h1>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1>Eraylar Finans</h1>
               <p>Net Varlık: {formatMoney(netWorth, privacy)}</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn-v2" onClick={togglePrivacyMode}>{privacy ? <EyeOff size={20} /> : <Eye size={20} />}</button>
-            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
+            <button className="icon-btn" onClick={togglePrivacyMode}>
+              {privacy ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+              <ArrowLeft size={20} />
+            </button>
           </div>
         </div>
 
-        <nav className="finans-tab-nav">
-          <button className={`f-tab-btn ${activeTab === 'havuz' ? 'active' : ''}`} onClick={() => setActiveTab('havuz')}>
-            <Clock size={16} /> <span>Havuz</span> {pool.length > 0 && <span className="pool-count">{pool.length}</span>}
+        <nav className="tab-nav">
+          <button className={`tab-btn ${activeTab === 'havuz' ? 'active' : ''}`} onClick={() => setActiveTab('havuz')}>
+            <span style={{ fontSize: '16px', marginBottom: '2px' }}>⌛</span>
+            <span>Havuz {pool.length > 0 && `(${pool.length})`}</span>
+            {activeTab === 'havuz' && <div className="tab-dot" />}
           </button>
-          <button className={`f-tab-btn ${activeTab === 'borclar' ? 'active' : ''}`} onClick={() => setActiveTab('borclar')}>
-            <CreditCard size={16} /> <span>Borçlar</span>
+          <button className={`tab-btn ${activeTab === 'borclar' ? 'active' : ''}`} onClick={() => setActiveTab('borclar')}>
+            <span style={{ fontSize: '16px', marginBottom: '2px' }}>💳</span>
+            <span>Borçlar</span>
+            {activeTab === 'borclar' && <div className="tab-dot" />}
           </button>
-          <button className={`f-tab-btn ${activeTab === 'analiz' ? 'active' : ''}`} onClick={() => setActiveTab('analiz')}>
-            <PieChart size={16} /> <span>Analiz</span>
+          <button className={`tab-btn ${activeTab === 'analiz' ? 'active' : ''}`} onClick={() => setActiveTab('analiz')}>
+            <span style={{ fontSize: '16px', marginBottom: '2px' }}>📊</span>
+            <span>Analiz</span>
+            {activeTab === 'analiz' && <div className="tab-dot" />}
           </button>
         </nav>
       </header>

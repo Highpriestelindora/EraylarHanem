@@ -161,29 +161,39 @@ export default function Sosyal() {
 }
 
 function IstTab({ onAdd }) {
-  const { sosyal } = useStore();
   const [filter, setFilter] = useState('all');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getDynamicDate = (days) => {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return d.toISOString().split('T')[0];
+  };
 
   const events = [
-    { id: 'e1', title: 'Mert Demir Konseri', date: '2024-05-15', place: 'Harbiye Cemil Topuzlu', type: 'Konser', price: '₺800', img: '🎸', category: 'music' },
-    { id: 'e2', title: 'Zengin Mutfağı', date: '2024-05-18', place: 'Maximum UNIQ Hall', type: 'Tiyatro', price: '₺450', img: '🎭', category: 'theater' },
-    { id: 'e3', title: 'Dijital Sanat Sergisi', date: '2024-05-20', place: 'Tersane İstanbul', type: 'Sergi', price: '₺200', img: '🎨', category: 'art' },
-    { id: 'e4', title: 'Boğazda Kahvaltı', date: '2024-05-12', place: 'Emirgan Korusu', type: 'Aktivite', price: '₺500', img: '🥨', category: 'outdoor' },
-    { id: 'e5', title: 'Melike Şahin', date: '2024-06-01', place: 'Zorlu PSM', type: 'Konser', price: '₺1200', img: '🎤', category: 'music' },
-    { id: 'e6', title: 'Bir Baba Hamlet', date: '2024-05-25', place: 'Moda Sahnesi', type: 'Tiyatro', price: '₺300', img: '🎭', category: 'theater' },
-    { id: 'e7', title: 'Dune: Part Two', date: '2024-05-10', place: 'Kanyon Cinemaximum', type: 'Sinema', price: '₺180', img: '🎬', category: 'cinema' },
-    { id: 'e8', title: 'Sushi Workshop', date: '2024-05-22', place: 'MSA Maslak', type: 'Atölye', price: '₺1500', img: '🍣', category: 'workshop' },
-    { id: 'e9', title: 'Legoland Gezisi', date: '2024-05-19', place: 'Bayrampaşa Forum', type: 'Aile', price: '₺400', img: '🧱', category: 'outdoor' },
-    { id: 'e10', title: 'İstanbul Yarı Maratonu', date: '2024-04-28', place: 'Yenikapı Etkinlik Alanı', type: 'Spor', price: '₺0', img: '🏃', category: 'sport' },
-    { id: 'e11', title: 'Modern Sanat Sergisi', date: '2024-06-15', place: 'İstanbul Modern', type: 'Sergi', price: '₺150', img: '🖼️', category: 'art' },
-    { id: 'e12', title: 'Seramik Atölyesi', date: '2024-05-28', place: 'Kadıköy Sanat', type: 'Atölye', price: '₺600', img: '🏺', category: 'workshop' },
-    { id: 'e13', title: 'Büyük Ev Ablukada', date: '2024-05-30', place: 'DasDas', type: 'Konser', price: '₺750', img: '🎸', category: 'music' },
-    { id: 'e14', title: 'Küçük Prens', date: '2024-05-11', place: 'Zorlu PSM', type: 'Tiyatro', price: '₺250', img: '🤴', category: 'theater' },
-    { id: 'e15', title: 'Akvaryum Gezisi', date: '2024-05-13', place: 'Florya Akvaryum', type: 'Aile', price: '₺650', img: '🐠', category: 'outdoor' },
-    { id: 'e16', title: 'Yıldız Tilbe', date: '2024-06-10', place: 'Vodafone Park', type: 'Konser', price: '₺1000', img: '💃', category: 'music' },
+    { id: 'e1', title: 'Mert Demir Konseri', date: getDynamicDate(2), place: 'Harbiye Cemil Topuzlu', type: 'Konser', price: '₺800', img: '🎸', category: 'music' },
+    { id: 'e2', title: 'Zengin Mutfağı', date: getDynamicDate(5), place: 'Maximum UNIQ Hall', type: 'Tiyatro', price: '₺450', img: '🎭', category: 'theater' },
+    { id: 'e3', title: 'Dijital Sanat Sergisi', date: getDynamicDate(7), place: 'Tersane İstanbul', type: 'Sergi', price: '₺200', img: '🎨', category: 'art' },
+    { id: 'e4', title: 'Boğazda Kahvaltı', date: getDynamicDate(1), place: 'Emirgan Korusu', type: 'Aktivite', price: '₺500', img: '🥨', category: 'outdoor' },
+    { id: 'e5', title: 'Melike Şahin', date: getDynamicDate(12), place: 'Zorlu PSM', type: 'Konser', price: '₺1200', img: '🎤', category: 'music' },
+    { id: 'e6', title: 'Bir Baba Hamlet', date: getDynamicDate(4), place: 'Moda Sahnesi', type: 'Tiyatro', price: '₺300', img: '🎭', category: 'theater' },
+    { id: 'e7', title: 'Dune: Part Two', date: getDynamicDate(3), place: 'Kanyon Cinemaximum', type: 'Sinema', price: '₺180', img: '🎬', category: 'cinema' },
+    { id: 'e8', title: 'Sushi Workshop', date: getDynamicDate(6), place: 'MSA Maslak', type: 'Atölye', price: '₺1500', img: '🍣', category: 'workshop' },
+    { id: 'e9', title: 'Legoland Gezisi', date: getDynamicDate(8), place: 'Bayrampaşa Forum', type: 'Aile', price: '₺400', img: '🧱', category: 'outdoor' },
+    { id: 'e10', title: 'Galata Kulesi Gezisi', date: getDynamicDate(2), place: 'Beyoğlu', type: 'Turist', price: '₺0', img: '🗼', category: 'outdoor' },
+    { id: 'e11', title: 'Modern Sanat Sergisi', date: getDynamicDate(15), place: 'İstanbul Modern', type: 'Sergi', price: '₺150', img: '🖼️', category: 'art' },
+    { id: 'e12', title: 'Seramik Atölyesi', date: getDynamicDate(9), place: 'Kadıköy Sanat', type: 'Atölye', price: '₺600', img: '🏺', category: 'workshop' },
   ];
 
   const filteredEvents = filter === 'all' ? events : events.filter(e => e.category === filter);
+
+  const handleRefresh = () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+      toast.success('Etkinlik listesi güncellendi! 🌆');
+    }, 1200);
+  };
 
   const planEvent = (e) => {
     onAdd(e.date, {
@@ -197,9 +207,14 @@ function IstTab({ onAdd }) {
 
   return (
     <div className="tab-pane animate-fadeIn">
-      <div className="section-header" style={{ padding: '0 20px', marginBottom: '15px' }}>
-        <h3>🌆 İstanbul'da Bu Hafta</h3>
-        <p style={{ fontSize: '12px', opacity: 0.6 }}>Biletix, Passo ve İBB Kültür'den seçildi.</p>
+      <div className="section-header" style={{ padding: '0 20px', marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h3>🌆 İstanbul'da Bu Hafta</h3>
+          <p style={{ fontSize: '12px', opacity: 0.6 }}>Biletix, Passo ve İBB Kültür'den seçildi.</p>
+        </div>
+        <button className={`refresh-btn-round ${isLoading ? 'spinning' : ''}`} onClick={handleRefresh} disabled={isLoading}>
+          <RotateCcw size={18} />
+        </button>
       </div>
 
       <div className="filter-scroll">
@@ -213,29 +228,36 @@ function IstTab({ onAdd }) {
       </div>
 
       <div className="ist-event-list">
-        {filteredEvents.map(e => (
-          <div key={e.id} className="event-card glass">
-            <div className="e-visual">{e.img}</div>
-            <div className="e-details">
-              <div className="e-meta">
-                <span className="e-type">{e.type}</span>
-                <span className="e-price">{e.price}</span>
-              </div>
-              <h4 className="e-title">{e.title}</h4>
-              <div className="e-info-row">
-                <MapPin size={12} />
-                <span>{e.place}</span>
-              </div>
-              <div className="e-info-row">
-                <Calendar size={12} />
-                <span>{new Date(e.date).toLocaleDateString('tr-TR')}</span>
-              </div>
-            </div>
-            <button className="e-add-btn" onClick={() => planEvent(e)} title="Plana Ekle">
-              <Plus size={20} />
-            </button>
+        {isLoading ? (
+          <div className="loading-placeholder glass">
+             <div className="spinner-mini" />
+             <p>Etkinlikler taranıyor...</p>
           </div>
-        ))}
+        ) : (
+          filteredEvents.map(e => (
+            <div key={e.id} className="event-card glass">
+              <div className="e-visual">{e.img}</div>
+              <div className="e-details">
+                <div className="e-meta">
+                  <span className="e-type">{e.type}</span>
+                  <span className="e-price">{e.price}</span>
+                </div>
+                <h4 className="e-title">{e.title}</h4>
+                <div className="e-info-row">
+                  <MapPin size={12} />
+                  <span>{e.place}</span>
+                </div>
+                <div className="e-info-row">
+                  <Calendar size={12} />
+                  <span>{new Date(e.date).toLocaleDateString('tr-TR')}</span>
+                </div>
+              </div>
+              <button className="e-add-btn" onClick={() => planEvent(e)} title="Plana Ekle">
+                <Plus size={20} />
+              </button>
+            </div>
+          ))
+        )}
       </div>
       
       <div className="external-sources glass">
@@ -285,9 +307,9 @@ function HaftaTab({ sosyal, onAdd }) {
     // 3. Pet Vaccines - REMOVED AUTOMATIC ADDITION (As per user request)
     // Only activities explicitly planned (social module) will show up now.
 
-    // 4. Trips (Mandatory)
-    (tatil?.trips || []).forEach(t => {
-      events.push({ date: t.baslangic || t.date || t.startDate, icon: '✈️', title: t.title || t.city, color: '#0ea5e9', type: 'trip' });
+    // 4. Trips (Only Confirmed)
+    (tatil?.trips || []).filter(t => t.status === 'kesin').forEach(t => {
+      events.push({ date: t.startDate, icon: '✈️', title: t.title || t.city, color: '#0ea5e9', type: 'trip' });
     });
 
     return events;

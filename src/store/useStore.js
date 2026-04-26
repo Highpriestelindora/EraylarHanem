@@ -161,6 +161,7 @@ const DEFAULT_STATE = {
     parkLocation: { floor: '', spot: '', photo: null }
   },
   ev: {
+    depo: [], // { id, nm, qt, dt, pr, cardId, payer }
     faturalar: [
       { id: 1, name: 'Elektrik', provider: 'EnerjiSa', amount: 850, dueDate: '2026-04-20', status: 'Ödendi', autoPay: true, icon: '⚡' },
       { id: 2, name: 'İnternet', provider: 'TurkNet', amount: 399, dueDate: '2026-04-25', status: 'Bekliyor', autoPay: true, icon: '🌐' },

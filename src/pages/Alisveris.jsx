@@ -1,13 +1,15 @@
 import React, { useState, useMemo } from 'react';
 import { 
   ShoppingBag, Plus, Trash2, CheckCircle2, Link as LinkIcon, 
-  ExternalLink, Clock, X, Save, Search, TrendingUp, Star,
-  Store, ShoppingCart, Heart, History, Info
+  ExternalLink, Clock, X, Edit, Search, TrendingUp, Star,
+  Store, ShoppingCart, Heart, History, Info, ArrowLeft
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import AlisverisTab from './MutfakTabs/AlisverisTab';
 import './Alisveris.css';
 
 const MARKETS = [
@@ -21,112 +23,176 @@ const MARKETS = [
 ];
 
 const QUICK_ITEMS = [
-  { nm: 'Ekmek', ic: '🥖', loc: 'kil' },
-  { nm: 'Süt', ic: '🥛', loc: 'buz' },
-  { nm: 'Yumurta', ic: '🥚', loc: 'buz' },
-  { nm: 'Damacana Su', ic: '💧', loc: 'kil' },
-  { nm: 'Muz', ic: '🍌', loc: 'buz' },
-  { nm: 'Tavuk', ic: '🍗', loc: 'buz' },
+  { nm: 'Halı Kaydırmaz', ic: '🧼', loc: 'depo' },
+  { nm: 'Yorgan Kılıfı', ic: '🛏️', loc: 'depo' },
+  { nm: 'Pil (AA/AAA)', ic: '🔋', loc: 'depo' },
+  { nm: 'Ampul', ic: '💡', loc: 'depo' },
+  { nm: 'Sıvı Sabun', ic: '🧴', loc: 'depo' },
+  { nm: 'Yüzey Temizleyici', ic: '✨', loc: 'depo' },
 ];
 
 const formatMoney = (val) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
 
 export default function Alisveris() {
-  const [activeTab, setActiveTab] = useState('list'); // 'list', 'wish', 'prices'
+  const [activeTab, setActiveTab] = useState('market'); // 'gorkem', 'esra', 'ev', 'market'
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [confirmingItem, setConfirmingItem] = useState(null);
+  const navigate = useNavigate();
   
-  const { mutfak, alisveris, confirmShoppingItem, deleteShoppingItem, addShoppingItem } = useStore();
+  const { mutfak, alisveris, confirmShoppingItem, deleteShoppingItem, addShoppingItem, setModuleData, addExpense } = useStore();
 
-  // Unified Active List
-  const unifiedList = useMemo(() => {
-    const list = [];
-    // Mutfak items
-    (mutfak.alisveris || []).forEach(i => list.push({ ...i, origin: 'mutfak', cat: 'Ev' }));
-    // Personal items
-    (alisveris.gorkem || []).forEach(i => list.push({ ...i, origin: 'gorkem', cat: 'Görkem' }));
-    (alisveris.esra || []).forEach(i => list.push({ ...i, origin: 'esra', cat: 'Esra' }));
-    (alisveris.ev || []).forEach(i => list.push({ ...i, origin: 'ev', cat: 'Ev' }));
+  // Filtered List based on Active Tab
+  const filteredList = useMemo(() => {
+    let list = [];
+    if (activeTab === 'gorkem') {
+      list = (alisveris?.gorkem || []).map(i => ({ ...i, origin: 'gorkem', cat: 'Görkem' }));
+    } else if (activeTab === 'esra') {
+      list = (alisveris?.esra || []).map(i => ({ ...i, origin: 'esra', cat: 'Esra' }));
+    } else if (activeTab === 'ev') {
+      list = (alisveris?.ev || []).map(i => ({ ...i, origin: 'ev', cat: 'Ev' }));
+    } else if (activeTab === 'market') {
+      // Market tab specifically shows mutfak shopping list
+      list = (mutfak?.alisveris || []).map(i => ({ ...i, origin: 'mutfak', cat: 'Mutfak' }));
+    }
     
-    return list.filter(i => !i.dn && i.nm.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [mutfak.alisveris, alisveris, searchQuery]);
+    return list.filter(i => i && i.nm && !i.dn && i.nm.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [mutfak?.alisveris, alisveris, searchQuery, activeTab]);
 
-  const handleQuickAdd = (item) => {
-    addShoppingItem('ev', { nm: item.nm, loc: item.loc, pr: 0 });
+  const tabs = [
+    { id: 'gorkem', label: 'Görkem', emoji: '👨' },
+    { id: 'esra', label: 'Esra', emoji: '👩' },
+    { id: 'ev', label: 'Ev', emoji: '🏡' },
+    { id: 'market', label: 'Market', emoji: '🛒' }
+  ];
+
+  const handleQuickAdd = (item, target) => {
+    addShoppingItem(target || 'ev', { nm: item.nm, loc: item.loc || 'ev', pr: 0 });
     toast.success(`${item.nm} listeye eklendi! ✨`);
   };
 
-  const handleConfirm = (item) => {
-    // Premium Apple Watch style confirmation
-    confirmShoppingItem(item.id, item.mk || 'Market', item.qt || '1 adet', item.pr || 0, item.loc || 'buz');
-    toast.success(`${item.nm} alındı! ✅`);
+  const handleDelete = (owner, id) => {
+    if (window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
+      deleteShoppingItem(owner, id);
+      toast.success('Ürün silindi.');
+    }
+  };
+
+  const handlePersonalConfirm = (owner, item, purchaseData) => {
+    const { amount, market, cardId } = purchaseData;
+    
+    // 1. Add to Finance
+    addExpense({
+      title: `${item.cat}: ${item.nm}`,
+      amount: Number(amount),
+      category: owner === 'ev' ? 'Ev' : 'Kişisel',
+      payer: owner === 'gorkem' ? 'Görkem' : (owner === 'esra' ? 'Esra' : 'Ortak'),
+      cardId: cardId || null,
+      market: market || 'Diğer'
+    });
+
+    // 2. Add to Ev Depo
+    const { ev } = useStore.getState();
+    const newDepoItem = {
+      id: Date.now(),
+      nm: item.nm,
+      qt: item.qt || '1 adet',
+      dt: new Date().toISOString(),
+      pr: Number(amount),
+      payer: owner,
+      cat: item.cat
+    };
+    useStore.getState().setModuleData('ev', { ...ev, depo: [newDepoItem, ...(ev.depo || [])] });
+
+    // 3. Remove from shopping list
+    deleteShoppingItem(owner, item.id);
+    setConfirmingItem(null);
+    toast.success('Alışveriş kaydedildi, depoya ve finansa eklendi! ✅');
   };
 
   return (
     <AnimatedPage className="shopping-container">
-      <div className="module-header shopping-header-grad">
-        <div className="header-info">
-          <h1>Eraylar Alışveriş</h1>
-          <p>Akıllı Aile Asistanı</p>
+      <header className="module-header glass" style={{ background: 'var(--alisveris)' }}>
+        <div className="header-top">
+          <div className="header-title">
+            <span className="header-emoji animate-float">🛒</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1>Eraylar Alışveriş</h1>
+              <p>Görkem · Esra · Ev · Market</p>
+            </div>
+          </div>
+          <div className="header-actions">
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+              <ArrowLeft size={20} />
+            </button>
+          </div>
         </div>
-        <div className="header-actions">
-          <button className="add-btn-circle white" onClick={() => setShowAddModal(true)}>
-            <Plus size={24} />
-          </button>
-        </div>
-        <div className="header-icon animate-float">🛒</div>
-      </div>
 
-      <div className="shopping-tabs-premium glass">
-        <button className={activeTab === 'list' ? 'active' : ''} onClick={() => setActiveTab('list')}>
-          <ShoppingCart size={18} />
-          <span>Liste</span>
-        </button>
-        <button className={activeTab === 'wish' ? 'active' : ''} onClick={() => setActiveTab('wish')}>
-          <Heart size={18} />
-          <span>İstekler</span>
-        </button>
-        <button className={activeTab === 'prices' ? 'active' : ''} onClick={() => setActiveTab('prices')}>
-          <History size={18} />
-          <span>Fiyatlar</span>
-        </button>
-      </div>
+        <nav className="tab-nav">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+              style={{ flex: 1 }}
+            >
+              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
+              <span style={{ fontSize: '10px' }}>{tab.label}</span>
+              {activeTab === tab.id && <div className="tab-dot" />}
+            </button>
+          ))}
+        </nav>
+      </header>
 
       <div className="shopping-content-premium">
-        {activeTab === 'list' && (
-          <div className="list-view animate-fadeIn">
-            {/* Quick Add Bar */}
-            <div className="quick-add-bar">
-              {QUICK_ITEMS.map(item => (
-                <button key={item.nm} className="quick-item-btn glass" onClick={() => handleQuickAdd(item)}>
-                  <span>{item.ic}</span>
-                  <span>{item.nm}</span>
+        {activeTab !== 'market' && (
+          <>
+            {(activeTab === 'ev') && (
+              <div className="quick-add-bar">
+                {QUICK_ITEMS.map(item => (
+                  <button key={item.nm} className="quick-item-btn glass" onClick={() => handleQuickAdd(item, 'ev')}>
+                    <span>{item.ic}</span>
+                    <span>{item.nm}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {(activeTab === 'gorkem' || activeTab === 'esra') && (
+              <div className="quick-add-bar">
+                <button className="quick-item-btn glass" onClick={() => handleQuickAdd({ nm: 'Kişisel Bakım', ic: '🧴' }, activeTab)}>
+                  <span>🧴</span> <span>Bakım</span>
                 </button>
-              ))}
-            </div>
+                <button className="quick-item-btn glass" onClick={() => handleQuickAdd({ nm: 'Giyim', ic: '👕' }, activeTab)}>
+                  <span>👕</span> <span>Giyim</span>
+                </button>
+                <button className="quick-item-btn glass" onClick={() => handleQuickAdd({ nm: 'Elektronik', ic: '🎧' }, activeTab)}>
+                  <span>🎧</span> <span>Elektronik</span>
+                </button>
+              </div>
+            )}
 
-            {/* Search Bar */}
             <div className="search-box-premium glass">
               <Search size={18} opacity={0.5} />
               <input 
                 type="text" 
-                placeholder="Listede ara..." 
+                placeholder={`${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} listesinde ara...`} 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
 
-            {/* Items List */}
             <div className="items-list-premium">
-              {unifiedList.length === 0 ? (
+              {filteredList.length === 0 ? (
                 <div className="empty-state-v2">
                   <Store size={60} />
-                  <p>{searchQuery ? 'Eşleşen ürün bulunamadı.' : 'Alışveriş listeniz şu an tertemiz!'}</p>
+                  <p>{searchQuery ? 'Eşleşen ürün bulunamadı.' : 'Bu liste şu an tertemiz! ✨'}</p>
                 </div>
               ) : (
                 <AnimatePresence>
-                  {unifiedList.map((item, idx) => (
+                  {filteredList.map((item, idx) => (
                     <motion.div 
                       key={item.id} 
                       className="shopping-item-v2 glass"
@@ -148,8 +214,13 @@ export default function Alisveris() {
                       </div>
                       
                       <div className="si-right">
-                        {item.pr > 0 && <span className="si-price">{formatMoney(item.pr)}</span>}
-                        <button className="confirm-btn-apple" onClick={() => handleConfirm(item)}>
+                        <button className="icon-btn-small" onClick={() => setEditingItem({ ...item, owner: activeTab })}>
+                          <Edit size={16} color="var(--txt-light)" />
+                        </button>
+                        <button className="icon-btn-small" onClick={() => handleDelete(activeTab, item.id)}>
+                          <Trash2 size={16} color="#ef4444" />
+                        </button>
+                        <button className="confirm-btn-apple" onClick={() => setConfirmingItem({ ...item, owner: activeTab })}>
                           <CheckCircle2 size={28} />
                         </button>
                       </div>
@@ -158,108 +229,160 @@ export default function Alisveris() {
                 </AnimatePresence>
               )}
             </div>
+          </>
+        )}
+
+        {activeTab === 'market' && (
+          <div className="market-tab-container animate-fadeIn" style={{ padding: '0 20px' }}>
+            <AlisverisTab />
           </div>
         )}
 
-        {activeTab === 'wish' && (
-          <div className="wishlist-view animate-fadeIn">
-            <div className="items-list-premium">
-              {alisveris.wishlist?.length === 0 ? (
-                <div className="empty-state-v2">
-                  <Star size={60} style={{ color: '#eab308' }} />
-                  <p>İstek listeniz boş. Gelecekte almayı düşündüğünüz şeyleri buraya ekleyin!</p>
-                </div>
-              ) : (
-                alisveris.wishlist.map((item, idx) => (
-                  <div key={item.id} className="shopping-item-v2 glass">
-                    <div className="si-left">
-                      <div className="si-main-info">
-                        <strong>{item.nm}</strong>
-                        {item.pr > 0 && <span className="si-price" style={{ fontSize: '12px', opacity: 0.7 }}>Tahmini: {formatMoney(item.pr)}</span>}
-                      </div>
-                    </div>
-                    <div className="si-right">
-                      <button className="confirm-btn-apple" onClick={() => {
-                        addShoppingItem('ev', item);
-                        const newWish = alisveris.wishlist.filter(w => w.id !== item.id);
-                        useStore.getState().setModuleData('alisveris', { ...alisveris, wishlist: newWish });
-                        toast.success('Listeye taşındı! 🛒');
-                      }} title="Listeye Taşı">
-                        <Plus size={24} />
-                      </button>
-                      <button className="del-btn" style={{ background: 'transparent' }} onClick={() => {
-                        const newWish = alisveris.wishlist.filter(w => w.id !== item.id);
-                        useStore.getState().setModuleData('alisveris', { ...alisveris, wishlist: newWish });
-                      }}>
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'prices' && (
-          <div className="prices-view animate-fadeIn">
-             <div className="section-header" style={{ padding: '0 10px', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)' }}>📊 Fiyat Geçmişi</h3>
-             </div>
-             
-             {Object.keys(mutfak.priceHistory || {}).length === 0 ? (
-               <div className="empty-state-v2">
-                 <TrendingUp size={60} />
-                 <p>Henüz fiyat verisi toplanmadı. Alışveriş yaptıkça burası dolacak.</p>
-               </div>
-             ) : (
-               <div className="price-history-list">
-                 {Object.entries(mutfak.priceHistory).map(([name, history]) => (
-                   <div key={name} className="price-history-card glass">
-                      <div className="phc-header">
-                        <strong>{name}</strong>
-                        <span className="phc-last">{formatMoney(history[0].pr)}</span>
-                      </div>
-                      <div className="phc-graph-mini">
-                        {history.map((h, i) => (
-                          <div key={i} className="phc-dot-wrap">
-                            <div className="phc-dot" style={{ height: `${(h.pr / history[0].pr) * 30}px` }} />
-                            <span className="phc-date">{new Date(h.dt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}</span>
-                          </div>
-                        ))}
-                      </div>
-                   </div>
-                 ))}
-               </div>
-             )}
+        {/* Wishlist and Extras only for personal tabs? 
+            Or keep them at the bottom of Market but above/below AlisverisTab? 
+            User said "Market tabı mutfaktaki alışveriş listesinin birebir aynısı olacak". 
+            So I'll hide extras for now to keep it clean, or show them below.
+        */}
+        {(activeTab === 'market' && false) && (
+          <div className="market-extras animate-fadeIn mt-24">
+            {/* ... */}
           </div>
         )}
       </div>
 
+      {activeTab !== 'market' && (
+        <button 
+          className="fab-add-shopping animate-pop" 
+          onClick={() => setShowAddModal(true)}
+          style={{ background: `var(--${activeTab === 'ev' ? 'alisveris' : (activeTab === 'gorkem' ? 'sosyal' : 'mutfak')})` }}
+        >
+          <Plus size={28} />
+        </button>
+      )}
+
       {showAddModal && (
         <AddItemModal 
           onClose={() => setShowAddModal(false)} 
-          onAdd={(item) => addShoppingItem('ev', item)}
+          initialOwner={activeTab}
+          onAdd={(owner, item) => {
+            if (owner === 'market') {
+              const updatedMutfak = { 
+                ...mutfak, 
+                alisveris: [{ id: Date.now(), ...item }, ...(mutfak.alisveris || [])] 
+              };
+              useStore.getState().setModuleData('mutfak', updatedMutfak);
+            } else {
+              addShoppingItem(owner, item);
+            }
+          }}
+        />
+      )}
+
+      {editingItem && (
+        <AddItemModal 
+          onClose={() => setEditingItem(null)}
+          initialData={editingItem}
+          initialOwner={editingItem.owner}
+          onAdd={(owner, item) => {
+            const list = [...(alisveris[owner] || [])];
+            const idx = list.findIndex(i => i.id === editingItem.id);
+            if (idx !== -1) {
+              list[idx] = { ...list[idx], ...item };
+              setModuleData('alisveris', { ...alisveris, [owner]: list });
+              toast.success('Ürün güncellendi. ✨');
+            }
+          }}
+        />
+      )}
+
+      {confirmingItem && (
+        <ConfirmPurchaseModal 
+          item={confirmingItem}
+          onClose={() => setConfirmingItem(null)}
+          onConfirm={(data) => handlePersonalConfirm(confirmingItem.owner, confirmingItem, data)}
         />
       )}
     </AnimatedPage>
   );
 }
 
-function AddItemModal({ onClose, onAdd }) {
-  const [form, setForm] = useState({ nm: '', mk: 'Market', loc: 'buz', pr: '', qt: '1 adet', isWish: false });
+function ConfirmPurchaseModal({ item, onClose, onConfirm }) {
+  const [amount, setAmount] = useState(item.pr || '');
+  const [market, setMarket] = useState('Diğer');
+  const [cardId, setCardId] = useState('');
+  const { finans } = useStore();
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3>💰 Satın Alım Onayı</h3>
+          <button onClick={onClose}><X /></button>
+        </div>
+        <div className="purchase-info" style={{ marginBottom: '20px', textAlign: 'center' }}>
+          <strong style={{ fontSize: '18px' }}>{item.nm}</strong>
+          <p style={{ opacity: 0.6 }}>Bu ürün için ne kadar ödediniz?</p>
+        </div>
+        <div className="modal-form">
+          <div className="form-group">
+            <label>Tutar (₺)</label>
+            <input 
+              type="number" 
+              placeholder="0.00" 
+              value={amount} 
+              onChange={e => setAmount(e.target.value)} 
+              autoFocus 
+              required
+            />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Market</label>
+              <select value={market} onChange={e => setMarket(e.target.value)}>
+                <option>Diğer</option><option>Migros</option><option>BİM</option><option>A101</option><option>ŞOK</option><option>Trendyol</option><option>Hepsiburada</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Kart</label>
+              <select value={cardId} onChange={e => setCardId(e.target.value)}>
+                <option value="">Nakit</option>
+                {(finans?.kartlar || []).map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+              </select>
+            </div>
+          </div>
+          <button className="submit-btn" onClick={() => onConfirm({ amount, market, cardId })} style={{ background: '#10b981' }}>
+            <CheckCircle2 size={18} /> Satın Alımı Onayla
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddItemModal({ onClose, onAdd, initialOwner, initialData }) {
+  const [form, setForm] = useState(initialData ? { ...initialData, owner: initialOwner } : { nm: '', mk: 'Market', loc: initialOwner === 'market' ? 'buz' : 'depo', pr: '', qt: '1 adet', isWish: false, owner: initialOwner || 'ev' });
   const { alisveris, setModuleData } = useStore();
+
+  React.useEffect(() => {
+    if (form.owner === 'market') {
+      if (form.loc === 'depo') setForm(prev => ({ ...prev, loc: 'buz' }));
+    } else {
+      if (form.loc !== 'depo') setForm(prev => ({ ...prev, loc: 'depo' }));
+    }
+  }, [form.owner, form.loc]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.nm) return;
     
+    const targetOwner = form.owner === 'market' ? 'market' : form.owner;
+    
     if (form.isWish) {
-      const newWish = [{ ...form, id: Date.now() }, ...(alisveris.wishlist || [])];
+      const newWish = [{ ...form, id: Date.now() }, ...(alisveris?.wishlist || [])];
       setModuleData('alisveris', { ...alisveris, wishlist: newWish });
       toast.success('İstek listesine eklendi! ✨');
     } else {
-      onAdd(form);
+      onAdd(targetOwner, { nm: form.nm, mk: form.mk, qt: form.qt, loc: form.loc, pr: Number(form.pr) || 0 });
       toast.success('Listeye eklendi! ✨');
     }
     onClose();
@@ -283,6 +406,16 @@ function AddItemModal({ onClose, onAdd }) {
               required 
               autoFocus 
             />
+          </div>
+
+          <div className="form-group">
+            <label>Liste Seçimi</label>
+            <select value={form.owner} onChange={e => setForm({...form, owner: e.target.value})}>
+              <option value="gorkem">👨 Görkem</option>
+              <option value="esra">👩 Esra</option>
+              <option value="ev">🏡 Ev</option>
+              <option value="market">🛒 Market (Mutfak)</option>
+            </select>
           </div>
 
           <div className="form-group">
@@ -313,9 +446,15 @@ function AddItemModal({ onClose, onAdd }) {
                 <div className="form-group">
                   <label>Konum</label>
                   <select value={form.loc} onChange={e => setForm({...form, loc: e.target.value})}>
-                    <option value="buz">❄️ Buzdolabı</option>
-                    <option value="kil">🫙 Kiler</option>
-                    <option value="don">🧊 Dondurucu</option>
+                    {form.owner === 'market' ? (
+                      <>
+                        <option value="buz">❄️ Buzdolabı</option>
+                        <option value="kil">🫙 Kiler</option>
+                        <option value="don">🧊 Dondurucu</option>
+                      </>
+                    ) : (
+                      <option value="depo">📦 Depo (Envanter)</option>
+                    )}
                   </select>
                 </div>
                 <div className="form-group">
@@ -334,7 +473,7 @@ function AddItemModal({ onClose, onAdd }) {
           )}
 
           <button type="submit" className="submit-btn shopping-header-grad">
-            <Save size={18} /> {form.isWish ? 'İsteklere Ekle' : 'Listeye Ekle'}
+            <Plus size={18} /> {form.isWish ? 'İsteklere Ekle' : 'Listeye Ekle'}
           </button>
         </form>
       </div>
