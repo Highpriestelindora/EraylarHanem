@@ -197,8 +197,8 @@ export default function Tatil() {
               setTrackerFlight(no);
               setShowTracker(true);
             }}
-            onOpenMap={(name, address) => {
-              setMapTarget({ name, address });
+            onOpenMap={(name, address, city, country) => {
+              setMapTarget({ name, address, city, country });
               setShowMap(true);
             }}
             onClose={() => setSelectedTrip(null)}
@@ -238,7 +238,12 @@ export default function Tatil() {
         onClose={() => setShowMap(false)}
         title={`📍 Konum: ${mapTarget.name}`}
       >
-        <HotelMap name={mapTarget.name} address={mapTarget.address} />
+        <HotelMap 
+          name={mapTarget?.name} 
+          address={mapTarget?.address} 
+          city={mapTarget?.city} 
+          country={mapTarget?.country} 
+        />
       </ActionSheet>
     </AnimatedPage>
   );
@@ -517,7 +522,10 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${trip.city}&count=1&language=en&format=json`);
+        const normalize = (text) => text?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase();
+        const cleanCity = normalize(trip.city);
+        const searchName = trip.country ? `${cleanCity}, ${normalize(trip.country)}` : cleanCity;
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchName)}&count=1&language=en&format=json`);
         const geoData = await geoRes.json();
         if (!geoData.results?.length) return;
         
@@ -709,7 +717,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
                   trip={trip} 
                   onUpdate={handleUpdateTrip} 
                   onOpenTracker={onOpenTracker}
-                  onOpenMap={(name, addr) => onOpenMap(name, addr, trip.city)}
+                  onOpenMap={onOpenMap}
                 />
                 
                 <div className="assistant-row-cute mt-15">
@@ -792,8 +800,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
   };
 
   const openMaps = () => {
-    if (!accForm.hotel && !accForm.address) return toast.error('Otel adı veya adresi gerekli');
-    onOpenMap(accForm.hotel, accForm.address);
+    onOpenMap(accForm.hotel, accForm.address, trip.city, trip.country);
   };
 
   const openBooking = () => {
@@ -840,34 +847,23 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                           setDepForm({
                             ...depForm, 
                             time: '14:20', 
-                            pnr: 'ABC123Z',
+                            pnr: '1TG17K',
                             gate: '204B',
                             terminal: '2',
                             airport: 'SAW',
                             delay: 'Zamanında'
                           });
-                          toast.success('Uçuş (PC903) bulundu: Kapı 204B, Zamanında. ✅');
-                      } else if (no === 'PC902') {
-                          setDepForm({
-                            ...depForm, 
-                            time: '19:40', 
-                            pnr: 'VIE2026',
-                            gate: 'C31',
-                            terminal: '3',
-                            airport: 'VIE',
-                            delay: '15 dk Rötar'
-                          });
-                          toast.success('Uçuş (PC902) bulundu: Kapı C31, 15dk Rötar. ⚠️');
+                          toast.success('Uçuş (PC903) bulundu! ✅');
                       } else {
-                          toast.success('Uçuş verileri doğrulandı. ✅');
+                          toast.success('Uçuş verileri güncellendi. ✅');
                       }
                     }, 2600);
                   }}>
-                    ✨ Asistanla Güncelle
+                    ✨ Asistan
                   </button>
                   {depForm.flightNo && (
                     <button className="sc-live-badge-mini" onClick={() => openFlightRadar(depForm.flightNo)}>
-                      CANLI 🛰️
+                      🛰️ Canlı
                     </button>
                   )}
                 </div>
@@ -925,17 +921,17 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                             airport: 'VIE',
                             delay: '15 dk Rötar'
                           });
-                          toast.success('Uçuş (PC902) bulundu: Kapı C31, 15dk Rötar. ⚠️');
+                          toast.success('Uçuş (PC902) bulundu! ⚠️');
                       } else {
-                          toast.success('Uçuş verileri doğrulandı. ✅');
+                          toast.success('Uçuş verileri güncellendi. ✅');
                       }
                     }, 2600);
                   }}>
-                    ✨ Asistanla Güncelle
+                    ✨ Asistan
                   </button>
                   {retForm.flightNo && (
                     <button className="sc-live-badge-mini" onClick={() => openFlightRadar(retForm.flightNo)}>
-                      CANLI 🛰️
+                      🛰️ Canlı
                     </button>
                   )}
                 </div>
@@ -982,11 +978,11 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
             )}
           </div>
           {editingSection !== 'acc' && (
-            <div className="sc-mini-row">
-              <button className="sc-mini-action" onClick={openMaps}>
-                <MapPin size={10} /> Haritada Gör
+            <div className="sc-mini-row" style={{ display: 'flex', gap: '8px' }}>
+              <button className="sc-mini-action" style={{ flex: 1 }} onClick={openMaps}>
+                <MapPin size={12} /> 📍 Harita
               </button>
-              <div className="pdf-upload-wrapper">
+              <div className="pdf-upload-wrapper" style={{ flex: 1 }}>
                 <input 
                   type="file" 
                   id={`pdf-upload-${trip.id}`} 
@@ -998,7 +994,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                       const reader = new FileReader();
                       reader.onload = (event) => {
                         onUpdate({ accommodation: { ...trip.accommodation, pdf: event.target.result } });
-                        toast.success('Rezervasyon yüklendi! 📄');
+                        toast.success('Belge yüklendi! 📄');
                       };
                       reader.readAsDataURL(file);
                     }
@@ -1006,6 +1002,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                 />
                 <button 
                   className={`sc-mini-action ${trip.accommodation?.pdf ? 'success' : ''}`} 
+                  style={{ width: '100%' }}
                   onClick={() => {
                     if (trip.accommodation?.pdf) {
                       const win = window.open();
@@ -1015,7 +1012,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                     }
                   }}
                 >
-                  <ExternalLink size={10} /> {trip.accommodation?.pdf ? 'Rezervasyonu Aç' : 'Booking PDF Yükle'}
+                  <ExternalLink size={12} /> {trip.accommodation?.pdf ? '📄 Belgeyi Aç' : '📄 Belge Yükle'}
                 </button>
               </div>
             </div>
@@ -1026,7 +1023,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
   );
 }
 
-function HotelMap({ name, address, city }) {
+function HotelMap({ name, address, city, country }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
@@ -1072,16 +1069,19 @@ function HotelMap({ name, address, city }) {
         };
 
         // Aggressive fallback logic
-        let result = await trySearch(`${name} ${address} ${city}`); 
+        let result = await trySearch(`${name} ${address} ${city} ${country}`); 
+        if (!result) result = await trySearch(`${name} ${city} ${country}`); 
+        if (!result) result = await trySearch(`${address} ${city} ${country}`); 
         if (!result) result = await trySearch(`${name} ${city}`); 
-        if (!result) result = await trySearch(`${address} ${city}`); 
         if (!result) result = await trySearch(`${name} ${address}`); 
+        if (!result) result = await trySearch(name + ' ' + country); 
         if (!result) result = await trySearch(name); 
         if (!result && address) {
             const parts = address.split(',');
             if (parts.length > 1) result = await trySearch(parts[0] + ' ' + city);
         }
         if (!result) result = await trySearch(address);
+        if (!result) result = await trySearch(city + ' ' + country);
         if (!result) result = await trySearch(city);
 
         if (result && mapRef.current) {
@@ -1326,13 +1326,15 @@ function MemoryDetailView({ trip, onEditEval }) {
   );
 }
 
-function TripReviewPanel({ trip, onComplete, initialUser = 'gorkem' }) {
+function TripReviewPanel({ trip, onComplete }) {
+  const { currentUser } = useStore();
   const isJoint = trip.travelers === 'ikimiz';
-  const [activeUser, setActiveUser] = useState(initialUser);
+  const activeUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
+  
   const [evalData, setEvalData] = useState({ 
-    star: trip.evaluations?.[initialUser]?.star || 10, 
-    note: trip.evaluations?.[initialUser]?.note || '', 
-    photos: trip.evaluations?.[initialUser]?.photos || [] 
+    star: trip.evaluations?.[activeUser]?.star || 10, 
+    note: trip.evaluations?.[activeUser]?.note || '', 
+    photos: trip.evaluations?.[activeUser]?.photos || [] 
   });
 
   // Sync state if initialUser changes
@@ -1349,22 +1351,29 @@ function TripReviewPanel({ trip, onComplete, initialUser = 'gorkem' }) {
   };
 
   const handlePhotoClick = (index) => {
-    const url = prompt('Fotoğraf URL\'sini yapıştırın (Simülasyon):');
-    if (url) {
-      const newPhotos = [...evalData.photos];
-      newPhotos[index] = url;
-      setEvalData({ ...evalData, photos: newPhotos });
-    }
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const newPhotos = [...evalData.photos];
+          newPhotos[index] = event.target.result;
+          setEvalData({ ...evalData, photos: newPhotos });
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
   };
 
   return (
     <div className="review-panel-premium animate-fadeIn">
-      {isJoint && (
-        <div className="user-selector-grid mb-20">
-          <button className={activeUser === 'gorkem' ? 'active' : ''} onClick={() => setActiveUser('gorkem')}>👨 Görkem</button>
-          <button className={activeUser === 'esra' ? 'active' : ''} onClick={() => setActiveUser('esra')}>👩 Esra</button>
-        </div>
-      )}
+      <div className="review-active-user-badge mb-15">
+         <span>{activeUser === 'esra' ? '👩 Esra' : '👨 Görkem'}</span> olarak değerlendiriyorsun
+      </div>
 
       <div className="review-form-box glass">
         <div className="rfb-section">
@@ -1855,23 +1864,21 @@ function HaritaTab({ tatil, onTabChange }) {
 
   const lastTrip = jointPast[0] || { city: 'Henüz Keşfedilmedi', country: '-' };
 
-  // Coordinates for Joint Memories (Approximate % on World Map)
-  // ONLY show completed trips
   const pins = [
-    { id: 't1', name: 'Marsilya', x: 48, y: 36, continent: 'europe' },
-    { id: 't2', name: 'Londra', x: 47, y: 28, continent: 'europe' },
-    { id: 't_saraybosna', name: 'Saraybosna & Kotor', x: 51, y: 35, continent: 'europe' },
-    { id: 't_kavala', name: 'Kavala & Selanik', x: 53, y: 38, continent: 'europe' },
-    { id: 't_sofya', name: 'Sofya', x: 52, y: 36, continent: 'europe' },
-    { id: 't3', name: 'Berlin', x: 50, y: 30, continent: 'europe' },
-    { id: 't_vienna', name: 'Viyana', x: 51, y: 32, continent: 'europe' }
+    { id: 't1', name: 'Marsilya', x: 50, y: 34, continent: 'europe' },
+    { id: 't2', name: 'Londra', x: 49, y: 31, continent: 'europe' },
+    { id: 't_saraybosna', name: 'Saraybosna', x: 53, y: 35, continent: 'europe' },
+    { id: 't_kavala', name: 'Kavala & Selanik', x: 55, y: 36, continent: 'europe' },
+    { id: 't_sofya', name: 'Sofya', x: 54, y: 35, continent: 'europe' },
+    { id: 't3', name: 'Berlin', x: 52, y: 31, continent: 'europe' },
+    { id: 't_vienna', name: 'Viyana', x: 52, y: 33, continent: 'europe' }
   ].filter(p => jointPast.some(t => (t.id === p.id || t.title.includes(p.name)) && t.status === 'tamamlandi'));
 
   const continents = [
     { id: 'world', label: 'Dünya', zoom: 'scale(1) translate(0, 0)' },
-    { id: 'europe', label: 'Avrupa', zoom: 'scale(3.5) translate(-10%, 25%)' },
-    { id: 'asia', label: 'Asya', zoom: 'scale(2.5) translate(-35%, 5%)' },
-    { id: 'americas', label: 'Amerika', zoom: 'scale(2) translate(35%, 5%)' }
+    { id: 'europe', label: 'Avrupa', zoom: 'scale(4.5) translate(-4%, 22%)' },
+    { id: 'asia', label: 'Asya', zoom: 'scale(2.5) translate(-25%, 5%)' },
+    { id: 'americas', label: 'Amerika', zoom: 'scale(2.2) translate(30%, 5%)' }
   ];
 
   const currentZoom = continents.find(c => c.id === selectedContinent)?.zoom || 'scale(1)';
@@ -1899,7 +1906,7 @@ function HaritaTab({ tatil, onTabChange }) {
       <div className="map-frame-premium glass">
         <div className="map-zoom-viewport">
           <div className="map-container-inner" style={{ transform: currentZoom }}>
-            <img src="https://images.unsplash.com/photo-1589519160732-57fc498494f8?q=80&w=2070&auto=format&fit=crop" alt="Map" className="base-map" />
+            <img src="https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=2070&auto=format&fit=crop" alt="Map" className="base-map" />
             
             {pins.map(pin => (
               <div 

@@ -291,7 +291,7 @@ function HaftaTab({ sosyal, onAdd }) {
       events.push({ 
         date: a.tarih, 
         icon: a.emoji || (a.tur === 'not' ? '📝' : '🎭'), 
-        title: a.baslik, 
+        title: a.baslik || a.title, 
         color: a.tur === 'not' ? '#8b5cf6' : '#f59e0b', 
         type: 'social', 
         isNote: a.tur === 'not',
@@ -1467,6 +1467,8 @@ function HavuzTab({ sosyal, onAdd }) {
   const finishPlanning = (details) => {
     const { addSocialActivity } = useStore.getState();
     addSocialActivity({
+      baslik: planningIdea.title || planningIdea.baslik,
+      emoji: planningIdea.icon || planningIdea.emoji,
       ...details,
       tamamlandi: false
     });
@@ -1514,7 +1516,7 @@ function HavuzTab({ sosyal, onAdd }) {
             </div>
             
             <div className="pcl-info" style={{ flex: 1 }}>
-              <strong style={{ fontSize: '13px', color: 'var(--txt)', display: 'block' }}>{item.title}</strong>
+              <strong style={{ fontSize: '13px', color: 'var(--txt)', display: 'block' }}>{item.title || item.baslik}</strong>
               <div style={{ fontSize: '10px', opacity: 0.6, display: 'flex', gap: '10px', marginTop: '2px' }}>
                 <span>⏱️ {item.duration || '1 saat'}</span>
                 <span>💰 {item.cost || '0 TL'}</span>

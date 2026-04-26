@@ -9,7 +9,7 @@ export default function ActionSheet({
   title, 
   children, 
   footer, 
-  maxHeight = '90vh',
+  maxHeight = 'calc(100vh - env(safe-area-inset-top, 44px) - 12px)',
   fullHeight = false 
 }) {
   // Prevent scrolling on body when open
@@ -62,8 +62,8 @@ export default function ActionSheet({
                 bottom: 0,
                 left: 0,
                 right: 0,
-                maxHeight: fullHeight ? '94vh' : maxHeight,
-                height: fullHeight ? '94vh' : 'auto',
+                maxHeight: maxHeight,
+                height: fullHeight ? maxHeight : 'auto',
                 background: 'var(--card)',
                 borderTopLeftRadius: '32px',
                 borderTopRightRadius: '32px',
