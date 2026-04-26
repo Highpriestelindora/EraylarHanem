@@ -403,6 +403,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
             <ShieldCheck size={14} /> Planı Kesinleştir
           </button>
         )}
+        {trip.status === 'kesin' && (
            <button 
              className="archive-trigger-btn"
              onClick={() => setShowReview(true)}
