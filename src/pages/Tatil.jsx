@@ -8,7 +8,7 @@ import {
   Hotel, Wallet, CheckSquare, Cloud, 
   ArrowRight, AlertCircle, Info, Timer, X, ArrowLeft,
   PlusCircle, ChevronRight, ExternalLink, Moon,
-  Search, Flag, Edit3
+  Search, Flag, Edit3, Check
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
