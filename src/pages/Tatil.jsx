@@ -2014,35 +2014,27 @@ function HaritaTab({ tatil, onTabChange }) {
     return (tatil.trips || [])
       .filter(t => t.status === 'tamamlandi' && t.travelers === 'ikimiz')
       .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-  }, [tatil.trips]);
+  const pastTrips = (tatil.trips || []).filter(t => t.status === 'tamamlandi');
+  const jointPast = pastTrips.filter(t => t.travelers === 'ikimiz');
 
-  const stats = useMemo(() => {
-    const countries = new Set(jointPast.map(t => t.country));
-    const cities = new Set(jointPast.map(t => t.city));
-    let days = 0;
-    jointPast.forEach(t => {
-      const start = new Date(t.startDate);
-      const end = new Date(t.endDate);
-      days += Math.ceil((end - start) / 864e5) + 1;
-    });
-    return { countries: countries.size, cities: cities.size, days };
-  }, [jointPast]);
-
-  const lastTrip = jointPast[0] || { city: 'Henüz Keşfedilmedi', country: '-' };
+  const stats = {
+    countries: new Set(jointPast.map(t => t.country)).size,
+    cities: new Set(jointPast.map(t => t.city)).size,
+    days: jointPast.reduce((acc, t) => acc + (Math.ceil((new Date(t.endDate) - new Date(t.startDate)) / 864e5) + 1), 0)
+  };
 
   const pins = [
-    { id: 't1', name: 'Marsilya', x: 50, y: 34, continent: 'europe' },
-    { id: 't2', name: 'Londra', x: 49, y: 31, continent: 'europe' },
-    { id: 't_saraybosna', name: 'Saraybosna', x: 53, y: 35, continent: 'europe' },
-    { id: 't_kavala', name: 'Kavala & Selanik', x: 55, y: 36, continent: 'europe' },
-    { id: 't_sofya', name: 'Sofya', x: 54, y: 35, continent: 'europe' },
-    { id: 't3', name: 'Berlin', x: 52, y: 31, continent: 'europe' },
-    { id: 't_vienna', name: 'Viyana', x: 52, y: 33, continent: 'europe' }
-  ].filter(p => jointPast.some(t => (t.id === p.id || t.title.includes(p.name)) && t.status === 'tamamlandi'));
+    { id: 't_istanbul', name: 'İstanbul', x: 53.5, y: 35.5, continent: 'europe' },
+    { id: 't_ankara', name: 'Ankara', x: 54.5, y: 36.5, continent: 'europe' },
+    { id: 't_vienna', name: 'Viyana', x: 51.5, y: 31.5, continent: 'europe' },
+    { id: 't_paris', name: 'Paris', x: 48.5, y: 31, continent: 'europe' },
+    { id: 't_london', name: 'Londra', x: 47.5, y: 28, continent: 'europe' },
+    { id: 't_berlin', name: 'Berlin', x: 50.5, y: 29.5, continent: 'europe' }
+  ].filter(p => jointPast.some(t => (t.id === p.id || t.title?.includes(p.name) || t.city?.includes(p.name))));
 
   const continents = [
     { id: 'world', label: 'Dünya', zoom: 'scale(1) translate(0, 0)' },
-    { id: 'europe', label: 'Avrupa', zoom: 'scale(4.5) translate(-4%, 22%)' },
+    { id: 'europe', label: 'Avrupa', zoom: 'scale(5) translate(-3%, 22%)' },
     { id: 'asia', label: 'Asya', zoom: 'scale(2.5) translate(-25%, 5%)' },
     { id: 'americas', label: 'Amerika', zoom: 'scale(2.2) translate(30%, 5%)' }
   ];
@@ -2072,7 +2064,7 @@ function HaritaTab({ tatil, onTabChange }) {
       <div className="map-frame-premium glass">
         <div className="map-zoom-viewport">
           <div className="map-container-inner" style={{ transform: currentZoom }}>
-            <img src="https://images.unsplash.com/photo-1521295121783-8a321d551ad2?q=80&w=2070&auto=format&fit=crop" alt="Map" className="base-map" />
+            <img src="https://images.unsplash.com/photo-1589519160732-57fc498494f8?q=80&w=2070&auto=format&fit=crop" alt="Map" className="base-map" />
             
             {pins.map(pin => (
               <div 
@@ -2089,7 +2081,7 @@ function HaritaTab({ tatil, onTabChange }) {
         
         <div className="map-overlay-info glass">
           <MapPin size={16} color="var(--tatil)" />
-          <span>{selectedContinent === 'world' ? 'Tüm Ortak Gezilerimiz' : `${selectedContinent.toUpperCase()} Keşifleri`}</span>
+          <span>{selectedContinent === 'world' ? 'Tüm Ortak Gezilerimiz' : `${selectedContinent.charAt(0).toUpperCase() + selectedContinent.slice(1)} Keşifleri`}</span>
         </div>
       </div>
 
