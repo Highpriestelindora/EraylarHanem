@@ -166,7 +166,7 @@ export default function Aracim() {
               </button>
               <button className="aq-card glass" onClick={() => setShowParkModal(true)}>
                 <div className="aq-icon park">
-                  <MapPin size={24} className={parkLocation?.active ? 'animate-bounce text-red-500' : ''} />
+                  <MapPin size={24} className={parkLocation?.active ? 'animate-park-pulse' : ''} />
                 </div>
                 <span>{parkLocation?.active ? 'Park Yeri (Aktif)' : 'Park Yeri'}</span>
               </button>
