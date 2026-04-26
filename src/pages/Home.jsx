@@ -15,7 +15,7 @@ import './Home.css';
 
 const Home = () => {
   const { 
-    system = { version: '2.6.11', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
+    system = { version: '2.7.0', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
     currentUser, 
     saglik,
     addMood,
