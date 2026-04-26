@@ -11,7 +11,8 @@
   --primary-light: #F5F3FF;
   
   /* Module Colors (Matching Dashboard Gradients) */
-  --mutfak: linear-gradient(135deg, #e1523d 0%, #f06a5a 100%);
+  --mutfak: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+
   --social: linear-gradient(135deg, #c51c6c 0%, #de3b8a 100%);
   --alisveris: linear-gradient(135deg, #f18f2d 0%, #f7ab5a 100%);
   --tatil: linear-gradient(135deg, #1b86c2 0%, #3da1de 100%);

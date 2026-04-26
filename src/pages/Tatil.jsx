@@ -2014,8 +2014,8 @@ function HaritaTab({ tatil, onTabChange }) {
     return (tatil.trips || [])
       .filter(t => t.status === 'tamamlandi' && t.travelers === 'ikimiz')
       .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-  const pastTrips = (tatil.trips || []).filter(t => t.status === 'tamamlandi');
-  const jointPast = pastTrips.filter(t => t.travelers === 'ikimiz');
+  }, [tatil.trips]);
+
 
   const stats = {
     countries: new Set(jointPast.map(t => t.country)).size,
@@ -2341,7 +2341,7 @@ function HayalTab({ tatil }) {
     </div>
   );
 }
-}
+
 
 function AddDreamContent({ onAdd }) {
   const [form, setForm] = useState({ place: '', notes: '' });
