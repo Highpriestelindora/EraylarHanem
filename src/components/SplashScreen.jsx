@@ -156,7 +156,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v2.27.2 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>PREMIUM UNIVERSE</span>
+            v2.28.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>PREMIUM UNIVERSE</span>
           </span>
         </div>
         <span style={{

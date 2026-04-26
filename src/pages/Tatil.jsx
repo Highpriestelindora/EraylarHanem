@@ -15,6 +15,75 @@ import { useNavigate } from 'react-router-dom';
 import { PACKING_POOL, BUCKET_LIST, INITIAL_TRIPS, INITIAL_VISAS } from '../constants/data';
 import './Tatil.css';
 
+// --- CONSTANTS & WEATHER ENGINE ---
+const CITY_TRANSLATIONS = {
+  'viyana': 'vienna', 'roma': 'rome', 'londra': 'london', 'paris': 'paris',
+  'marsilya': 'marseille', 'munih': 'munich', 'atina': 'athens',
+  'venedik': 'venice', 'floransa': 'florence', 'milano': 'milan',
+  'barselona': 'barcelona', 'bruksel': 'brussels', 'prag': 'prague',
+  'budapeste': 'budapest', 'varsova': 'warsaw', 'bukres': 'bucharest',
+  'amsterdam': 'amsterdam', 'madrid': 'madrid', 'lizbon': 'lisbon',
+  'kopenhag': 'copenhagen', 'stokholm': 'stockholm', 'oslo': 'oslo',
+  'helsinki': 'helsinki', 'dublin': 'dublin', 'berlin': 'berlin'
+};
+
+const normalizeText = (text) => text?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase();
+
+async function fetchWeatherForTrip(city, country, startDate) {
+  if (!city) return null;
+  try {
+    const cleanCity = normalizeText(city);
+    const translatedCity = CITY_TRANSLATIONS[cleanCity] || cleanCity;
+    const searchName = country ? `${translatedCity}, ${normalizeText(country)}` : translatedCity;
+
+    let geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchName)}&count=1&language=en&format=json`);
+    let geoData = await geoRes.json();
+    
+    if (!geoData.results?.length && country) {
+      geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(translatedCity)}&count=1&language=en&format=json`);
+      geoData = await geoRes.json();
+    }
+
+    if (geoData.results?.length) {
+      const { latitude, longitude } = geoData.results[0];
+      const today = new Date();
+      const start = new Date(startDate || today);
+      const daysDiff = (start - today) / 864e5;
+      const isHistorical = daysDiff > 14;
+
+      if (isHistorical) {
+        try {
+          const lastYear = new Date(start);
+          lastYear.setFullYear(lastYear.getFullYear() - 1);
+          const startArchive = lastYear.toISOString().split('T')[0];
+          const endArchive = new Date(lastYear.getTime() + 7 * 864e5).toISOString().split('T')[0];
+          const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=temperature_2m_max&timezone=auto`);
+          const data = await res.json();
+          if (data.daily?.temperature_2m_max) {
+            const temps = data.daily.temperature_2m_max.filter(t => t != null);
+            if (temps.length > 0) {
+              const avg = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
+              return { temp: avg, isSun: true, label: `${start.toLocaleString('tr-TR', { month: 'long' })} Ort.`, isHistorical: true };
+            }
+          }
+        } catch (e) {}
+      }
+
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=auto`);
+      const data = await res.json();
+      if (data.current_weather) {
+        return { 
+          temp: Math.round(data.current_weather.temperature),
+          isSun: data.current_weather.weathercode < 3,
+          label: isHistorical ? 'Güncel' : 'Tahmin',
+          daily: data.daily
+        };
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 // --- HELPERS ---
 const getCountryFlag = (title = '', city = '', country = '') => {
   const text = (title + ' ' + city + ' ' + country).toLowerCase();
@@ -541,68 +610,14 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
   const [activeSubTab, setActiveSubTab] = useState(isCompleted ? 'details' : 'valiz');
 
   useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const normalize = (text) => text?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase();
-        const cleanCity = normalize(trip.city);
-        const searchName = trip.country ? `${cleanCity}, ${normalize(trip.country)}` : cleanCity;
-        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchName)}&count=1&language=en&format=json`);
-        const geoData = await geoRes.json();
-        if (!geoData.results?.length) return;
-        
-        const { latitude, longitude } = geoData.results[0];
-        
-        const today = new Date().toISOString().split('T')[0];
-        const tripStart = trip.startDate || today;
-        
-        const daysDiff = (new Date(tripStart) - new Date(today)) / 864e5;
-        const isForecastable = daysDiff >= -2 && daysDiff <= 14;
-
-        let forecast = [];
-        if (isForecastable) {
-          const endDateObj = new Date(tripStart);
-          endDateObj.setDate(endDateObj.getDate() + 6);
-          const end = endDateObj.toISOString().split('T')[0];
-          const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&start_date=${tripStart}&end_date=${end}&daily=weathercode,temperature_2m_max&timezone=auto`;
-          const weatherRes = await fetch(weatherUrl);
-          const weatherData = await weatherRes.json();
-          
-          if (weatherData.daily?.time) {
-            forecast = weatherData.daily.time.map((t, i) => ({
-              date: t,
-              code: weatherData.daily.weathercode[i],
-              temp: Math.round(weatherData.daily.temperature_2m_max[i]),
-              isHistorical: false
-            }));
-          }
-        } else {
-          // Historical Archive Logic: Fetch same period from last year
-          const lastYear = new Date(tripStart);
-          lastYear.setFullYear(lastYear.getFullYear() - 1);
-          const startArchive = lastYear.toISOString().split('T')[0];
-          lastYear.setDate(lastYear.getDate() + 14); // 2 weeks window
-          const endArchive = lastYear.toISOString().split('T')[0];
-          
-          const archiveUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=weathercode,temperature_2m_max&timezone=auto`;
-          const archRes = await fetch(archiveUrl);
-          const archData = await archRes.json();
-          
-          if (archData.daily?.time) {
-            forecast = archData.daily.time.map((t, i) => ({
-              date: t,
-              code: archData.daily.weathercode[i],
-              temp: Math.round(archData.daily.temperature_2m_max[i]),
-              isHistorical: true
-            }));
-          }
-        }
-        setWeatherForecast(forecast);
-      } catch (err) {
-        console.error('Weather fetch error:', err);
-      }
+    const load = async () => {
+      const data = await fetchWeatherForTrip(trip.city, trip.country, trip.startDate);
+      // We convert the data back to an array format if needed for other UI parts, 
+      // but for now, we pass the object down.
+      setWeatherForecast(data);
     };
-    fetchWeather();
-  }, [trip.city, trip.startDate]);
+    load();
+  }, [trip.city, trip.country, trip.startDate]);
 
   const getWeatherIcon = (code) => {
     if (code <= 1) return <Sun size={14} className="text-yellow-500" />;
@@ -1178,14 +1193,17 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
   const [showAssistant, setShowAssistant] = useState(false);
   
   const weatherAdvice = useMemo(() => {
-    if (!weatherForecast || weatherForecast.length === 0) return null;
-    
-    const isHistorical = weatherForecast[0].isHistorical;
-    const avgTemp = weatherForecast.reduce((acc, curr) => acc + curr.temp, 0) / weatherForecast.length;
-    const hasRain = weatherForecast.some(f => f.code >= 51 && f.code <= 67);
-    const hasSnow = weatherForecast.some(f => f.code >= 71 && f.code <= 77);
+    if (!weatherForecast) return null;
     
     let alerts = [];
+    const avgTemp = weatherForecast.temp;
+    const isHistorical = weatherForecast.isHistorical;
+    
+    // Check daily codes if available (forecast mode)
+    const codes = weatherForecast.daily?.weathercode || (weatherForecast.isSun ? [0] : [3]);
+    const hasRain = codes.some(c => c >= 51 && c <= 67);
+    const hasSnow = codes.some(c => c >= 71 && c <= 77);
+
     if (hasSnow || avgTemp < 8) alerts.push({ icon: '🧥', text: 'Hava dondurucu! Kalın mont, bot ve eldiven şart.', priority: 'high' });
     else if (avgTemp < 16) alerts.push({ icon: '🧥', text: 'Serin bir hava bekleniyor, mont/ceket almayı unutma.', priority: 'med' });
     
@@ -1568,76 +1586,13 @@ function WeatherWidget({ city, country, startDate }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchWeather = async () => {
-      if (!city) return;
+    const load = async () => {
       setLoading(true);
-      try {
-        const normalize = (text) => text?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase();
-        const trToEn = {
-          'viyana': 'vienna', 'roma': 'rome', 'londra': 'london', 'paris': 'paris',
-          'marsilya': 'marseille', 'munih': 'munich', 'atina': 'athens',
-          'venedik': 'venice', 'floransa': 'florence', 'milano': 'milan',
-          'barselona': 'barcelona', 'bruksel': 'brussels', 'prag': 'prague',
-          'budapeste': 'budapest', 'varsova': 'warsaw', 'bukres': 'bucharest'
-        };
-
-        const cleanCity = normalize(city);
-        const translatedCity = trToEn[cleanCity] || cleanCity;
-        const searchName = country ? `${translatedCity}, ${normalize(country)}` : translatedCity;
-
-        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchName)}&count=1&language=en&format=json`);
-        const geoData = await geoRes.json();
-        
-        if (geoData.results?.length) {
-          const { latitude, longitude } = geoData.results[0];
-          const today = new Date();
-          const start = new Date(startDate || today);
-          const daysDiff = (start - today) / 864e5;
-          const isHistorical = daysDiff > 14;
-          
-          let success = false;
-
-          if (isHistorical) {
-            try {
-              const lastYear = new Date(start);
-              lastYear.setFullYear(lastYear.getFullYear() - 1);
-              const startArchive = lastYear.toISOString().split('T')[0];
-              const endArchive = new Date(lastYear.getTime() + 7 * 864e5).toISOString().split('T')[0];
-              
-              const archiveRes = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=temperature_2m_max&timezone=auto`);
-              const archData = await archiveRes.json();
-              
-              if (archData.daily?.temperature_2m_max) {
-                const temps = archData.daily.temperature_2m_max.filter(t => t != null);
-                if (temps.length > 0) {
-                  const avg = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
-                  const monthName = start.toLocaleString('tr-TR', { month: 'long' });
-                  setData({ temp: avg, isSun: true, label: `${monthName} Ort.` });
-                  success = true;
-                }
-              }
-            } catch (e) { console.warn('Archive fetch failed, falling back...'); }
-          }
-
-          if (!success) {
-            const forecastRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&timezone=auto`);
-            const forecastData = await forecastRes.json();
-            if (forecastData.current_weather) {
-              setData({ 
-                temp: Math.round(forecastData.current_weather.temperature),
-                isSun: forecastData.current_weather.weathercode < 3,
-                label: 'Güncel'
-              });
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Weather widget error:', err);
-      } finally {
-        setLoading(false);
-      }
+      const res = await fetchWeatherForTrip(city, country, startDate);
+      setData(res);
+      setLoading(false);
     };
-    fetchWeather();
+    load();
   }, [city, country, startDate]);
 
   return (
