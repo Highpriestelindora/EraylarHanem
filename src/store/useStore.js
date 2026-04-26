@@ -171,25 +171,32 @@ const DEFAULT_STATE = {
     routinePackages: SOCIAL_ROUTINES || [], // The 10 routines
     tab: 'hafta'
   },
-  aracim: {
-    km: 45200,
-    parts: [
-      { id: 'oil', name: 'Motor Yağı', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🛢️' },
-      { id: 'filter', name: 'Hava Filtresi', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🌪️' },
-      { id: 'brakes', name: 'Fren Balataları', lastKM: 35000, intervalKM: 30000, lastDate: '2025-05-10', intervalDays: 730, icon: '🛑' }
-    ],
-    fuelLogs: INITIAL_VEHICLE.yakitlar,
-    services: INITIAL_VEHICLE.hs,
-    documents: [
-      { id: 'muayene', name: 'TÜVTÜRK Muayene', dueDate: '2027-06-15', icon: '🔍' },
-      { id: 'kasko', name: 'Kasko Sigortası', dueDate: '2026-11-20', icon: '🛡️' },
-      { id: 'trafik', name: 'Trafik Sigortası', dueDate: '2026-11-20', icon: '📋' }
-    ],
-    trips: [],
-    tireStatus: { type: 'Yazlık', changeDate: '2026-04-01', condition: 'İyi' },
-    lastCleaned: '2026-04-23',
-    parkLocation: { floor: 'P2', spot: 'A-15', photo: null }
-  },
+  selectedVehicleId: 'v1',
+  garaj: [
+    {
+      id: 'v1',
+      type: 'car',
+      brand: 'Volkswagen',
+      model: 'Tiguan R-Line',
+      plaka: '34 HH 1144',
+      km: 45200,
+      parts: [
+        { id: 'oil', name: 'Motor Yağı', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🛢️' },
+        { id: 'filter', name: 'Hava Filtresi', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🌪️' },
+        { id: 'brakes', name: 'Fren Balataları', lastKM: 35000, intervalKM: 30000, lastDate: '2025-05-10', intervalDays: 730, icon: '🛑' }
+      ],
+      fuelLogs: INITIAL_VEHICLE.yakitlar,
+      services: INITIAL_VEHICLE.hs,
+      documents: [
+        { id: 'muayene', name: 'TÜVTÜRK Muayene', dueDate: '2027-06-15', icon: '🔍' },
+        { id: 'kasko', name: 'Kasko Sigortası', dueDate: '2026-11-20', icon: '🛡️' },
+        { id: 'trafik', name: 'Trafik Sigortası', dueDate: '2026-11-20', icon: '📋' }
+      ],
+      tireStatus: { type: 'Yazlık', changeDate: '2026-04-01', condition: 'İyi' },
+      lastCleaned: '2026-04-23',
+      parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false }
+    }
+  ],
   ev: {
     depo: [], // { id, nm, qt, dt, pr, cardId, payer }
     faturalar: [
@@ -313,7 +320,8 @@ function extractAppData(state) {
     sosyal:    state.sosyal,
     ev:        state.ev,
     pet:       state.pet,
-    aracim:    state.aracim,
+    garaj:     state.garaj,
+    selectedVehicleId: state.selectedVehicleId,
     tatil:     state.tatil,
     achievements: state.achievements,
     logs:      state.logs,
@@ -457,7 +465,8 @@ const useStore = create(
             sosyal:    { ...DEFAULT_STATE.sosyal, ...remote.sosyal },
             ev:        { ...DEFAULT_STATE.ev, ...remote.ev },
             pet:       { ...DEFAULT_STATE.pet, ...remote.pet },
-            aracim:    { ...DEFAULT_STATE.aracim, ...remote.aracim },
+            garaj:     remote.garaj || (remote.aracim ? [{ ...DEFAULT_STATE.garaj[0], ...remote.aracim, id: 'v1' }] : DEFAULT_STATE.garaj),
+            selectedVehicleId: remote.selectedVehicleId || 'v1',
             tatil:     { ...DEFAULT_STATE.tatil, ...remote.tatil },
             achievements: remote.achievements || DEFAULT_STATE.achievements,
             logs:      remote.logs || DEFAULT_STATE.logs,
@@ -1872,16 +1881,23 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      // ── Eraylar Garaj Actions ──────────────────────────
       updateKM: (newKM) => {
         const state = get();
-        set({ aracim: { ...state.aracim, km: newKM } });
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === state.selectedVehicleId ? { ...v, km: newKM } : v
+        );
+        set({ garaj: updatedGaraj });
         get().addLog('KM Güncelleme', `Araç kilometresi ${newKM} olarak güncellendi.`);
         get().saveToSupabase();
       },
 
       addFuelLog: (log) => {
         const state = get();
-        const lastLog = state.aracim.fuelLogs[0];
+        const vehicle = state.garaj.find(v => v.id === state.selectedVehicleId);
+        if (!vehicle) return;
+
+        const lastLog = vehicle.fuelLogs[0];
         let consumption = 0;
         if (lastLog) {
           const kmDiff = log.km - lastLog.km;
@@ -1894,14 +1910,17 @@ const useStore = create(
           ...log 
         };
 
-        set({ aracim: { ...state.aracim, fuelLogs: [newLog, ...state.aracim.fuelLogs].slice(0, 50) } });
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === state.selectedVehicleId ? { ...v, fuelLogs: [newLog, ...v.fuelLogs].slice(0, 50) } : v
+        );
+
+        set({ garaj: updatedGaraj });
         
-        // Also add to Finans approval pool
         get().addExpense({
-          title: `Yakıt: ${log.station}`,
+          title: `Yakıt: ${log.station} (${vehicle.model})`,
           amount: log.amount * log.price,
           category: 'arac',
-          source: 'Aracım'
+          source: 'Garaj'
         });
 
         get().saveToSupabase();
@@ -1909,17 +1928,113 @@ const useStore = create(
 
       addServiceRecord: (record) => {
         const state = get();
+        const vehicle = state.garaj.find(v => v.id === state.selectedVehicleId);
+        if (!vehicle) return;
+
         const newRecord = { id: Date.now(), ...record };
-        set({ aracim: { ...state.aracim, services: [newRecord, ...state.aracim.services] } });
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === state.selectedVehicleId ? { ...v, services: [newRecord, ...v.services] } : v
+        );
+
+        set({ garaj: updatedGaraj });
         
-        // Add to Finans approval pool
         get().addExpense({
-          title: `Servis: ${record.title}`,
+          title: `Servis: ${record.title} (${vehicle.model})`,
           amount: record.cost,
           category: 'arac',
-          source: 'Aracım'
+          source: 'Garaj'
         });
 
+        get().saveToSupabase();
+      },
+
+      addVehicle: (vehicle) => {
+        const state = get();
+        const newVehicle = {
+          id: Date.now().toString(),
+          km: 0,
+          parts: [
+            { id: 'oil', name: 'Motor Yağı', lastKM: 0, intervalKM: 15000, lastDate: '', intervalDays: 365, icon: '🛢️' },
+            { id: 'filter', name: 'Hava Filtresi', lastKM: 0, intervalKM: 15000, lastDate: '', intervalDays: 365, icon: '🌪️' }
+          ],
+          fuelLogs: [],
+          services: [],
+          documents: [],
+          parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false },
+          ...vehicle
+        };
+        set({ garaj: [...state.garaj, newVehicle], selectedVehicleId: newVehicle.id });
+        get().addLog('Garaj', `Yeni araç eklendi: ${vehicle.model}`);
+        get().saveToSupabase();
+      },
+
+      updateVehicle: (id, updates) => {
+        const state = get();
+        const updatedGaraj = state.garaj.map(v => v.id === id ? { ...v, ...updates } : v);
+        set({ garaj: updatedGaraj });
+        get().saveToSupabase();
+      },
+
+      deleteVehicle: (id) => {
+        const state = get();
+        const updatedGaraj = state.garaj.filter(v => v.id !== id);
+        const nextId = updatedGaraj.length > 0 ? updatedGaraj[0].id : null;
+        set({ garaj: updatedGaraj, selectedVehicleId: nextId });
+        get().saveToSupabase();
+      },
+
+      addWashRecord: (vehicleId, { price, date }) => {
+        const state = get();
+        const vehicle = state.garaj.find(v => v.id === vehicleId);
+        if (!vehicle) return;
+
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === vehicleId ? { ...v, lastCleaned: date } : v
+        );
+
+        set({ garaj: updatedGaraj });
+        
+        if (price > 0) {
+          get().addExpense({
+            title: `Yıkama: ${vehicle.model}`,
+            amount: price,
+            category: 'arac',
+            date: date,
+            source: 'Garaj'
+          });
+        }
+
+        get().saveToSupabase();
+      },
+
+      startParking: (vehicleId, parkData) => {
+        const state = get();
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === vehicleId ? { ...v, parkLocation: { ...parkData, active: true } } : v
+        );
+        set({ garaj: updatedGaraj });
+        get().saveToSupabase();
+      },
+
+      finishParking: (vehicleId, cost) => {
+        const state = get();
+        const vehicle = state.garaj.find(v => v.id === vehicleId);
+        if (!vehicle) return;
+
+        if (cost > 0) {
+          get().addExpense({
+            title: `Otopark: ${vehicle.model}`,
+            amount: cost,
+            category: 'arac',
+            source: 'Garaj'
+          });
+        }
+
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === vehicleId ? { ...v, parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false } } : v
+        );
+
+        set({ garaj: updatedGaraj });
         get().saveToSupabase();
       },
 

@@ -235,3 +235,79 @@
 .fip-right { text-align: right; }
 .fip-cons { font-size: 15px; font-weight: 900; color: #f87171; }
 .fip-cost { font-size: 12px; font-weight: 800; color: var(--txt-light); }
+
+/* Garage & New Modals */
+.garage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.garage-item {
+  padding: 16px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--brd);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.garage-item:active { transform: scale(0.98); }
+.garage-item.active { border-color: var(--aracim); background: rgba(var(--aracim-rgb), 0.05); }
+
+.gi-icon { font-size: 24px; }
+.gi-info { flex: 1; }
+.gi-info strong { display: block; font-size: 15px; color: var(--txt); }
+.gi-info small { font-size: 11px; color: var(--txt-light); font-weight: 800; }
+
+.add-vehicle-btn-premium {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px dashed var(--brd);
+  background: #f8fafc;
+  color: var(--txt-light);
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.park-display-premium {
+  padding: 20px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  border: 1px solid var(--brd);
+}
+
+.park-map-mini {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: white;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 13px;
+  color: #3b82f6;
+}
+
+.park-info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--txt);
+}
+
+.park-info-grid strong { color: var(--txt-light); font-size: 11px; text-transform: uppercase; margin-right: 6px; }
+
+.form-grid-v2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+

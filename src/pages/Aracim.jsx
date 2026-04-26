@@ -3,7 +3,7 @@ import {
   Car, Fuel, Wrench, History, Plus, Gauge, ArrowUpRight, 
   Shield, Landmark, AlertCircle, Sparkles, Home, Camera,
   MapPin, Phone, FileText, Settings, ArrowLeft, MoreVertical,
-  ChevronRight, Droplets, Trash2
+  ChevronRight, Droplets, Trash2, Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -11,7 +11,6 @@ import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
-import { INITIAL_VEHICLE } from '../constants/data';
 import './Aracim.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
@@ -22,16 +21,32 @@ const formatMoney = (val) =>
 export default function Aracim() {
   const [activeTab, setActiveTab] = useState('panel');
   const navigate = useNavigate();
-  const { aracim, updateKM, addFuelLog, addServiceRecord } = useStore();
+  const { 
+    garaj, selectedVehicleId, setModuleData, 
+    updateKM, addFuelLog, addServiceRecord,
+    addVehicle, updateVehicle, deleteVehicle,
+    addWashRecord, startParking, finishParking
+  } = useStore();
   
+  const vehicle = useMemo(() => 
+    garaj.find(v => v.id === selectedVehicleId) || garaj[0], 
+    [garaj, selectedVehicleId]
+  );
+
   const [showAddFuel, setShowAddFuel] = useState(false);
   const [showUpdateKM, setShowUpdateKM] = useState(false);
-  const [tempKM, setTempKM] = useState(aracim?.km || 0);
+  const [showGarageModal, setShowGarageModal] = useState(false);
+  const [showVehicleForm, setShowVehicleForm] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(null);
+  const [showWashModal, setShowWashModal] = useState(false);
+  const [showParkModal, setShowParkModal] = useState(false);
+
+  const [tempKM, setTempKM] = useState(vehicle?.km || 0);
 
   const { 
     km, parts, fuelLogs, services, documents, 
     lastCleaned, parkLocation, tireStatus 
-  } = aracim || { km: 0, parts: [], fuelLogs: [], services: [], documents: [] };
+  } = vehicle || { km: 0, parts: [], fuelLogs: [], services: [], documents: [] };
 
   // AI Insights
   const aiNote = useMemo(() => {
@@ -51,16 +66,26 @@ export default function Aracim() {
     <AnimatedPage className="aracim-container">
       <header className="module-header glass" style={{ background: 'var(--aracim)' }}>
         <div className="header-top">
-          <div className="header-title">
-            <span className="header-emoji animate-float">🚗</span>
+          <div className="header-title" onClick={() => setShowGarageModal(true)} style={{ cursor: 'pointer' }}>
+            <span className="header-emoji animate-float">{vehicle.type === 'boat' ? '⛵' : '🚗'}</span>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="plaka-badge" style={{ fontSize: '9px', padding: '2px 6px', background: 'rgba(255,255,255,0.2)', borderRadius: '6px', width: 'fit-content', marginBottom: '2px' }}>
-                {INITIAL_VEHICLE.plaka}
+                {vehicle.plaka}
               </div>
-              <h1>{INITIAL_VEHICLE.model.replace('Volkswagen ', '')}</h1>
+              <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {vehicle.model}
+                <Settings size={14} className="opacity-50" onClick={(e) => {
+                  e.stopPropagation();
+                  setEditingVehicle(vehicle);
+                  setShowVehicleForm(true);
+                }} />
+              </h1>
             </div>
           </div>
           <div className="header-actions">
+            <button className="icon-btn" onClick={() => setShowGarageModal(true)} title="Garaj">
+              <History size={20} />
+            </button>
             <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
               <ArrowLeft size={20} />
             </button>
@@ -135,13 +160,15 @@ export default function Aracim() {
                 <div className="aq-icon fuel"><Fuel size={24} /></div>
                 <span>Yakıt Al</span>
               </button>
-              <button className="aq-card glass">
+              <button className="aq-card glass" onClick={() => setShowWashModal(true)}>
                 <div className="aq-icon clean"><Droplets size={24} /></div>
                 <span>Yıkama</span>
               </button>
-              <button className="aq-card glass">
-                <div className="aq-icon park"><MapPin size={24} /></div>
-                <span>Park Yeri</span>
+              <button className="aq-card glass" onClick={() => setShowParkModal(true)}>
+                <div className="aq-icon park">
+                  <MapPin size={24} className={parkLocation?.active ? 'animate-bounce text-red-500' : ''} />
+                </div>
+                <span>{parkLocation?.active ? 'Park Yeri (Aktif)' : 'Park Yeri'}</span>
               </button>
             </div>
 
@@ -272,6 +299,41 @@ export default function Aracim() {
           onClose={() => setShowAddFuel(false)} 
           onSave={addFuelLog} 
           currentKM={km}
+        />
+      )}
+
+      {showGarageModal && (
+        <GarageModal 
+          garaj={garaj} 
+          selectedId={selectedVehicleId} 
+          onSelect={(id) => setModuleData('selectedVehicleId', id)}
+          onAdd={() => { setEditingVehicle(null); setShowVehicleForm(true); }}
+          onClose={() => setShowGarageModal(false)} 
+        />
+      )}
+
+      {showVehicleForm && (
+        <VehicleFormModal 
+          vehicle={editingVehicle}
+          onSave={(data) => editingVehicle ? updateVehicle(editingVehicle.id, data) : addVehicle(data)}
+          onDelete={deleteVehicle}
+          onClose={() => setShowVehicleForm(false)}
+        />
+      )}
+
+      {showWashModal && (
+        <WashModal 
+          onSave={(data) => addWashRecord(vehicle.id, data)}
+          onClose={() => setShowWashModal(false)}
+        />
+      )}
+
+      {showParkModal && (
+        <ParkModal 
+          parkLocation={parkLocation}
+          onStart={(data) => startParking(vehicle.id, data)}
+          onFinish={(cost) => finishParking(vehicle.id, cost)}
+          onClose={() => setShowParkModal(false)}
         />
       )}
 
