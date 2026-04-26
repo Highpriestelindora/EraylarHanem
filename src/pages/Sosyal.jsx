@@ -307,9 +307,27 @@ function HaftaTab({ sosyal, onAdd }) {
     // 3. Pet Vaccines - REMOVED AUTOMATIC ADDITION (As per user request)
     // Only activities explicitly planned (social module) will show up now.
 
-    // 4. Trips (Only Confirmed)
+    // 4. Trips (Only Confirmed) - Show all days
     (tatil?.trips || []).filter(t => t.status === 'kesin').forEach(t => {
-      events.push({ date: t.startDate, icon: '✈️', title: t.title || t.city, color: '#0ea5e9', type: 'trip' });
+      if (t.startDate && t.endDate) {
+        const start = new Date(t.startDate);
+        const end = new Date(t.endDate);
+        const curr = new Date(start);
+        
+        while (curr <= end) {
+          const dStr = curr.toISOString().split('T')[0];
+          events.push({ 
+            date: dStr, 
+            icon: '✈️', 
+            title: t.title || t.city, 
+            color: '#0ea5e9', 
+            type: 'trip' 
+          });
+          curr.setDate(curr.getDate() + 1);
+        }
+      } else if (t.startDate) {
+        events.push({ date: t.startDate, icon: '✈️', title: t.title || t.city, color: '#0ea5e9', type: 'trip' });
+      }
     });
 
     return events;
