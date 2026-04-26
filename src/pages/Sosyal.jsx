@@ -919,34 +919,56 @@ function CompleteActivityModal({ activity, onClose }) {
 }
 
 function AddActivityModal({ onClose, initialDate, prefilledData }) {
-  const { addSocialActivity, sosyal: rawSosyalModal } = useStore();
+  const { sosyal, addSocialActivity } = useStore();
+  const pool = sosyal.poolItems || [];
+  
   const [baslik, setBaslik] = useState(prefilledData?.baslik || '');
-  const [date, setDate] = useState(initialDate || '');
+  const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [saat, setSaat] = useState(prefilledData?.saat || '20:00');
-  const [emoji, setEmoji] = useState(prefilledData?.emoji || '🎭');
+  const [emoji, setEmoji] = useState(prefilledData?.emoji || '✨');
   const [mekan, setMekan] = useState(prefilledData?.mekan || '');
   const [harcama, setHarcama] = useState(prefilledData?.harcama || '');
-  const [tur, setTur] = useState(prefilledData?.tur || 'disari');
   const [category, setCategory] = useState(prefilledData?.masterCategory || 'Genel');
-  const [kisiSayisi, setKisiSayisi] = useState('2');
+  const [tur, setTur] = useState(prefilledData?.tur || 'disari');
+  const [kisiSayisi, setKisiSayisi] = useState(2);
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const routineItems = useMemo(() => {
+    const pkgs = sosyal.routinePackages || [];
+    const allItems = pkgs.flatMap(p => p.items);
+    return [...new Set(allItems)];
+  }, [sosyal.routinePackages]);
+
+  const suggestions = useMemo(() => {
+    if (!searchTerm) return [];
+    const term = searchTerm.toLowerCase();
+    
+    // Pool items
+    const poolSugg = pool.filter(p => p.title.toLowerCase().includes(term));
+    
+    // Routine items (that are not in pool)
+    const routineSugg = routineItems
+      .filter(item => item.toLowerCase().includes(term))
+      .filter(item => !poolSugg.some(p => p.title === item))
+      .map(item => ({ title: item, icon: '🔁', category: 'Rutin Ögesi', id: 'routine-' + item }));
+
+    return [...poolSugg, ...routineSugg].slice(0, 5);
+  }, [searchTerm, pool, routineItems]);
+
+  const selectSuggestion = (p) => {
+    setBaslik(p.title);
+    setEmoji(p.icon);
+    setCategory(p.category);
+    setHarcama(p.cost?.replace(/[^0-9]/g, '') || '');
+    setSearchTerm('');
+    setShowSuggestions(false);
+  };
 
   const handleSave = () => {
     if (!baslik) {
       toast.error('Lütfen bir başlık girin!');
-      return;
-    }
-
-    // --- CONFLICT CHECK ---
-    const existingActivities = Array.isArray(rawSosyalModal?.aktiviteler) ? rawSosyalModal.aktiviteler : [];
-    const hasConflict = existingActivities.some(a => 
-      !a.tamamlandi && 
-      a.tarih === date && 
-      a.saat === saat
-    );
-
-    if (hasConflict) {
-      const conflictAct = existingActivities.find(a => !a.tamamlandi && a.tarih === date && a.saat === saat);
-      toast.error(`Bu saatte zaten "${conflictAct.baslik}" planlanmış!`);
       return;
     }
 
@@ -969,10 +991,44 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
 
   return (
     <div className="modal-form">
-      <div className="form-group">
-        <label>Aktivite Başlığı</label>
-        <input type="text" value={baslik} onChange={e => setBaslik(e.target.value)} placeholder="Örn: Sinema Gecesi" />
+      <div className="form-group" style={{ position: 'relative' }}>
+        <label>Aktivite Seç veya Yaz</label>
+        <div style={{ position: 'relative' }}>
+          <input 
+            type="text" 
+            value={baslik} 
+            onChange={e => {
+              setBaslik(e.target.value);
+              setSearchTerm(e.target.value);
+              setShowSuggestions(true);
+            }} 
+            placeholder="Fikir havuzunda ara veya yeni yaz..." 
+            onFocus={() => setShowSuggestions(true)}
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="glass suggestions-dropdown" style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+              background: 'white', borderRadius: '12px', border: '1px solid var(--brd)',
+              marginTop: '5px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', overflow: 'hidden'
+            }}>
+              {suggestions.map(s => (
+                <div 
+                  key={s.id} 
+                  onClick={() => selectSuggestion(s)}
+                  style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', borderBottom: '1px solid var(--brd-light)' }}
+                >
+                  <span>{s.icon}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '700' }}>{s.title}</span>
+                    <span style={{ fontSize: '10px', opacity: 0.6 }}>{s.category}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
       <div className="form-group">
         <label>Tarih</label>
         <input type="date" value={date} onChange={e => setDate(e.target.value)} lang="tr-TR" />
