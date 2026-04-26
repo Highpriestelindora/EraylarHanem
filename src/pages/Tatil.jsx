@@ -403,12 +403,11 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
             <ShieldCheck size={14} /> Planı Kesinleştir
           </button>
         )}
-        {trip.status === 'kesin' && (
            <button 
-             className="archive-trigger-btn animate-bounce-slow"
+             className="archive-trigger-btn"
              onClick={() => setShowReview(true)}
            >
-             🏁 Tatili Başarıyla Tamamla & Değerlendir ❤️
+             🏁 Tamamla & Değerlendir ❤️
            </button>
         )}
       </div>
@@ -470,7 +469,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
               trip={trip} 
               onUpdate={handleUpdateTrip} 
               onOpenTracker={onOpenTracker}
-              onOpenMap={onOpenMap}
+              onOpenMap={(name, addr) => onOpenMap(name, addr, trip.city)}
             />
 
             <div className="premium-notes-container mt-15 animate-fadeIn">
@@ -849,7 +848,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
   );
 }
 
-function HotelMap({ name, address }) {
+function HotelMap({ name, address, city }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const mapRef = useRef(null);
@@ -895,14 +894,17 @@ function HotelMap({ name, address }) {
         };
 
         // Aggressive fallback logic
-        let result = await trySearch(`${name} ${address}`); 
+        let result = await trySearch(`${name} ${address} ${city}`); 
+        if (!result) result = await trySearch(`${name} ${city}`); 
+        if (!result) result = await trySearch(`${address} ${city}`); 
+        if (!result) result = await trySearch(`${name} ${address}`); 
         if (!result) result = await trySearch(name); 
         if (!result && address) {
-            // Try simplifying address (take first two parts)
             const parts = address.split(',');
-            if (parts.length > 1) result = await trySearch(parts[0] + ' ' + parts[1]);
+            if (parts.length > 1) result = await trySearch(parts[0] + ' ' + city);
         }
         if (!result) result = await trySearch(address);
+        if (!result) result = await trySearch(city);
 
         if (result && mapRef.current) {
           const { lat, lon } = result;
