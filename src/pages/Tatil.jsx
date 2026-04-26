@@ -7,11 +7,27 @@ import {
   Plus, Trash2, Calendar, MapPin, 
   Hotel, Wallet, CheckSquare, Cloud, 
   ArrowRight, AlertCircle, Info, Timer, X, ArrowLeft,
-  PlusCircle, ExternalLink, Ticket, Navigation, Check, Edit3
+  PlusCircle, ChevronRight, ExternalLink, Moon,
+  Search, Flag
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import './Tatil.css';
+
+// --- HELPERS ---
+const getCountryFlag = (title = '', city = '') => {
+  const text = (title + ' ' + city).toLowerCase();
+  if (text.includes('avusturya') || text.includes('viyana') || text.includes('vienna')) return '🇦🇹';
+  if (text.includes('kıbrıs') || text.includes('kktc') || text.includes('cyprus')) return '🇹🇷';
+  if (text.includes('italya') || text.includes('italy') || text.includes('roma')) return '🇮🇹';
+  if (text.includes('almanya') || text.includes('germany') || text.includes('berlin')) return '🇩🇪';
+  if (text.includes('fransa') || text.includes('france') || text.includes('paris')) return '🇫🇷';
+  if (text.includes('ingiltere') || text.includes('london') || text.includes('uk')) return '🇬🇧';
+  if (text.includes('yunanistan') || text.includes('greece') || text.includes('athens')) return '🇬🇷';
+  if (text.includes('ispanya') || text.includes('spain') || text.includes('madrid')) return '🇪🇸';
+  if (text.includes('hollanda') || text.includes('netherlands') || text.includes('amsterdam')) return '🇳🇱';
+  return '🌍';
+};
 
 export default function Tatil() {
   const navigate = useNavigate();
@@ -19,7 +35,7 @@ export default function Tatil() {
   const [activeTab, setActiveTab] = useState(tatil.ttab || 'trips');
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
-  const [editingPassport, setEditingPassport] = useState(null); // 'gorkem' or 'esra'
+  const [editingPassport, setEditingPassport] = useState(null);
   const [showTracker, setShowTracker] = useState(false);
   const [trackerFlight, setTrackerFlight] = useState('');
   const [showMap, setShowMap] = useState(false);
@@ -118,11 +134,7 @@ export default function Tatil() {
         onClose={() => setShowWizard(false)}
         title="🌍 Tatil Sihirbazı"
       >
-        <PlanningWizardContent onAdd={(trip) => {
-          addTrip(trip);
-          setShowWizard(false);
-          toast.success('Tatil planı oluşturuldu! ✨');
-        }} />
+        <AddTripWizard onClose={() => { setShowWizard(false); }} />
       </ActionSheet>
 
       <ActionSheet
@@ -162,36 +174,27 @@ function TripsTab({ tatil, onSelectTrip, onShowWizard }) {
 
   return (
     <div className="tab-pane animate-fadeIn">
-      <div className="trip-sections">
-        {/* Kesinleşen Tatiller */}
-        <div className="trip-group">
-          <div className="section-header">
-            <h3>📍 Kesinleşen Tatiller</h3>
+      <div className="trip-sections-cute">
+        <div className="trip-group-cute">
+          <div className="section-header-cute">
+            <h3>📍 Kesinleşenler</h3>
           </div>
           {kesin.length > 0 ? (
-            kesin.map(t => <TripCard key={t.id} trip={t} isUpcoming onClick={() => onSelectTrip(t)} />)
+            kesin.map(t => <TripCard key={t.id} trip={t} onClick={() => onSelectTrip(t)} />)
           ) : (
-            <div className="empty-substate glass">
-              <p>Henüz kesinleşmiş bir tatil yok. Planladığın bir tatili kesinleştirebilirsin! ✈️</p>
-            </div>
+            <div className="empty-state-cute glass">Henüz kesinleşmiş plan yok. ✨</div>
           )}
         </div>
 
-        {/* Planlanan Tatiller */}
-        <div className="trip-group mt-20">
-          <div className="section-header">
-            <h3>📝 Planlanan Tatiller</h3>
-            <button className="btn-premium-action tatil" onClick={onShowWizard}>
-              <PlusCircle size={18} />
-              <span>Yeni Plan Ekle</span>
-            </button>
+        <div className="trip-group-cute">
+          <div className="section-header-cute">
+            <h3>📝 Planlananlar</h3>
+            <button className="add-mini-btn" onClick={onShowWizard}><Plus size={14} /></button>
           </div>
           {planlanan.length > 0 ? (
-            planlanan.map(t => <TripCard key={t.id} trip={t} isUpcoming onClick={() => onSelectTrip(t)} />)
+            planlanan.map(t => <TripCard key={t.id} trip={t} onClick={() => onSelectTrip(t)} />)
           ) : (
-            <div className="empty-substate glass" onClick={onShowWizard} style={{ cursor: 'pointer' }}>
-              <p>Henüz planlanmış bir tatil yok. Yeni bir macera planlamaya ne dersin? ✨</p>
-            </div>
+            <div className="empty-state-cute glass" onClick={onShowWizard}>Yeni bir macera planla! ✈️</div>
           )}
         </div>
       </div>
@@ -200,137 +203,149 @@ function TripsTab({ tatil, onSelectTrip, onShowWizard }) {
 }
 
 function ArsivTab({ tatil, onSelectTrip }) {
-  const trips = tatil.trips || [];
-  const past = trips.filter(t => t.status === 'tamamlandi')
-    .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-
+  const past = (tatil.trips || []).filter(t => t.status === 'tamamlandi');
   return (
     <div className="tab-pane animate-fadeIn">
-      <div className="trip-group">
-        <div className="section-header">
-          <h3>✅ Geçmiş Tatiller</h3>
-        </div>
-        {past.length > 0 ? (
-          past.map(t => <TripCard key={t.id} trip={t} onClick={() => onSelectTrip(t)} />)
-        ) : (
-          <div className="empty-substate glass">
-            <p>Henüz arşivlenmiş bir tatil bulunmuyor.</p>
-          </div>
-        )}
+      <div className="trip-group-cute">
+        <div className="section-header-cute"><h3>✅ Geçmiş Seyahatler</h3></div>
+        {past.map(t => <TripCard key={t.id} trip={t} onClick={() => onSelectTrip(t)} />)}
       </div>
     </div>
   );
 }
 
-function TripCard({ trip, isUpcoming, onClick }) {
-  const daysLeft = trip.startDate ? Math.ceil((new Date(trip.startDate) - new Date()) / 864e5) : null;
+function TripCard({ trip, onClick }) {
   return (
-    <div className={`trip-card glass type-${trip.type} ${isUpcoming ? 'upcoming' : ''}`} onClick={onClick}>
-      <div className="trip-main">
-        <div className="trip-meta-top">
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <span className="t-type">{trip.type === 'yurtdisi' ? '✈️ Yurtdışı' : '🚗 Yurtiçi'}</span>
-            {trip.status === 'kesin' && <span className="t-status-badge kesin">📍 Kesinleşti</span>}
-            {trip.status === 'planlandi' && <span className="t-status-badge plan">📝 Planlandı</span>}
-          </div>
-          {isUpcoming && daysLeft !== null && daysLeft > 0 && <span className="t-countdown">⏳ {daysLeft} gün kaldı</span>}
-        </div>
-        <div className="trip-info">
-          <strong>{trip.title || trip.city}</strong>
-          <span>{trip.country} {trip.city && `· ${trip.city}`}</span>
-        </div>
-        <div className="trip-date">
-          <Calendar size={12} />
-          <span>{trip.startDate} - {trip.endDate}</span>
-        </div>
+    <div className="trip-card-cute glass" onClick={onClick}>
+      <div className="tc-flag">{getCountryFlag(trip.city)}</div>
+      <div className="tc-info">
+        <strong>{trip.title || trip.city}</strong>
+        <span>{trip.startDate} · {trip.status === 'kesin' ? 'Kesinleşti' : 'Planlanıyor'}</span>
       </div>
-      <div className="trip-actions"><ArrowRight size={18} /></div>
+      <ChevronRight size={16} className="tc-arrow" />
     </div>
   );
 }
 
-function PlanningWizardContent({ onAdd }) {
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState({ 
-    title: '', country: 'Türkiye', city: '', type: 'yurtdisi', 
-    startDate: '', endDate: '', budget: { est: '', real: 0 },
-    status: 'planlandi',
-    valiz: { gorkem: [], esra: [] },
-    hotels: [],
-    flights: []
-  });
+function HaritaTab({ tatil }) {
+  return <div className="tab-pane p-20 animate-fadeIn"><h3>🗺️ Seyahat Haritanız</h3><p className="helper-text">Çok yakında: Tüm gezdiğiniz yerler tek bir haritada!</p></div>;
+}
 
+function PasaportTab({ tatil, onEdit }) {
   return (
-    <div className="wizard-body-standard">
-      <div className="step-dots-row" style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '20px' }}>
-        {[1,2,3].map(i => (
-          <div key={i} style={{ 
-            width: '10px', height: '10px', borderRadius: '50%', 
-            background: step >= i ? 'var(--tatil)' : 'var(--brd)',
-            transition: 'background 0.3s'
-          }} />
+    <div className="tab-pane p-20 animate-fadeIn">
+      <div className="passport-grid">
+        {['gorkem', 'esra'].map(p => (
+          <div key={p} className="passport-card-cute glass" onClick={() => onEdit(p)}>
+            <Flag size={20} />
+            <strong>{p.charAt(0).toUpperCase() + p.slice(1)}</strong>
+            <span>Detayları Gör</span>
+          </div>
         ))}
       </div>
+    </div>
+  );
+}
 
-      <div className="wizard-step-content">
+function HayalTab({ tatil }) {
+  return <div className="tab-pane p-20 animate-fadeIn"><h3>⭐ Hayallerdeki Duraklar</h3><p className="helper-text">Gelecek maceralarınızı buraya not edin.</p></div>;
+}
+
+function AddTripWizard({ onClose }) {
+  const { addTrip } = useStore();
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    title: '',
+    city: '',
+    startDate: '',
+    endDate: '',
+    budget: '',
+    depFlight: '',
+    hotel: ''
+  });
+
+  const handleNext = () => {
+    if (step === 1 && (!formData.title || !formData.startDate)) return toast.error('Başlık ve tarih zorunludur');
+    if (step < 3) setStep(step + 1);
+    else handleFinish();
+  };
+
+  const handleFinish = () => {
+    const newTrip = {
+      id: Date.now().toString(),
+      title: formData.title,
+      city: formData.city,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      status: 'planlandi',
+      type: 'yurtdisi',
+      budget: { est: Number(formData.budget), real: 0 },
+      transportation: {
+        departure: { flightNo: formData.depFlight.toUpperCase(), time: '', pnr: '', status: 'Planlandı' },
+        return: { flightNo: '', time: '', pnr: '', status: 'Planlandı' }
+      },
+      accommodation: {
+        hotel: formData.hotel,
+        address: '',
+        link: ''
+      }
+    };
+    addTrip(newTrip);
+    toast.success('Yeni macera başladı! 🚀');
+    onClose();
+  };
+
+  return (
+    <div className="wizard-container-cute">
+      <div className="wizard-steps-indicator">
+        {[1, 2, 3].map(s => <div key={s} className={`step-dot ${step >= s ? 'active' : ''}`} />)}
+      </div>
+
+      <div className="wizard-step-content animate-fadeIn">
         {step === 1 && (
-          <div className="wizard-step animate-fadeIn">
-            <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Nereye Gidiyoruz? 🌍</h4>
-            <div className="form-group">
-              <label>Tatil Başlığı</label>
-              <input type="text" placeholder="Örn: Roma Kaçamağı" value={form.title} onChange={e => setForm({...form, title: e.target.value})} />
-            </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Ülke</label>
-                <input type="text" value={form.country} onChange={e => setForm({...form, country: e.target.value})} />
+          <div className="w-step">
+            <h4>🗺️ Nereye Gidiyoruz?</h4>
+            <input placeholder="Tatil Adı (Örn: Viyana Kaçamağı)" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+            <input placeholder="Ülke/Şehir (Örn: Avusturya)" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+            <div className="w-date-row">
+              <div className="w-input-group">
+                <label>Başlangıç</label>
+                <input type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
               </div>
-              <div className="form-group">
-                <label>Şehir</label>
-                <input type="text" value={form.city} onChange={e => setForm({...form, city: e.target.value})} />
+              <div className="w-input-group">
+                <label>Bitiş</label>
+                <input type="date" value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} />
               </div>
-            </div>
-            <div className="form-row type-selector" style={{ marginTop: '12px' }}>
-               <button 
-                className={form.type === 'yurtdisi' ? 'active' : ''} 
-                onClick={() => setForm({...form, type: 'yurtdisi'})}
-                style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', background: form.type === 'yurtdisi' ? 'var(--tatil-light)' : 'white', color: form.type === 'yurtdisi' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', cursor: 'pointer' }}
-               >✈️ Yurtdışı</button>
-               <button 
-                className={form.type === 'yurtici' ? 'active' : ''} 
-                onClick={() => setForm({...form, type: 'yurtici'})}
-                style={{ padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', background: form.type === 'yurtici' ? 'var(--tatil-light)' : 'white', color: form.type === 'yurtici' ? 'var(--tatil)' : 'var(--txt)', fontWeight: '800', cursor: 'pointer' }}
-               >🚗 Yurtiçi</button>
             </div>
           </div>
         )}
+
         {step === 2 && (
-          <div className="wizard-step animate-fadeIn">
-            <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Ne Zaman? 📅</h4>
-            <div className="form-row">
-              <div className="form-group"><label>Başlangıç</label><input type="date" value={form.startDate} onChange={e => setForm({...form, startDate: e.target.value})} /></div>
-              <div className="form-group"><label>Bitiş</label><input type="date" value={form.endDate} onChange={e => setForm({...form, endDate: e.target.value})} /></div>
-            </div>
+          <div className="w-step">
+            <h4>✈️ Uçuş ve Otel</h4>
+            <input placeholder="Gidiş Uçuş No (Örn: PC903)" value={formData.depFlight} onChange={e => setFormData({...formData, depFlight: e.target.value})} />
+            <input placeholder="Otel Adı" value={formData.hotel} onChange={e => setFormData({...formData, hotel: e.target.value})} />
+            <p className="w-helper">Asistan uçuş ve otel bilgilerini otomatik takip edecektir.</p>
           </div>
         )}
+
         {step === 3 && (
-          <div className="wizard-step animate-fadeIn">
-            <h4 style={{ margin: '0 0 15px', fontSize: '15px', fontWeight: '900' }}>Detaylar 💰</h4>
-            <div className="form-group">
-              <label>Tahmini Bütçe (₺)</label>
-              <input type="number" placeholder="0" value={form.budget.est} onChange={e => setForm({...form, budget: { ...form.budget, est: e.target.value }})} />
+          <div className="w-step">
+            <h4>💰 Bütçe Planı</h4>
+            <input type="number" placeholder="Tahmini Bütçe (₺)" value={formData.budget} onChange={e => setFormData({...formData, budget: e.target.value})} />
+            <div className="w-summary glass">
+              <span>{getCountryFlag(formData.city)} {formData.title}</span>
+              <small>{formData.startDate} - {formData.endDate}</small>
             </div>
           </div>
         )}
       </div>
 
-      <div className="wizard-footer-standard" style={{ display: 'flex', gap: '10px', marginTop: '30px', paddingBottom: '20px' }}>
-        {step > 1 && <button className="submit-btn" onClick={() => setStep(s => s - 1)} style={{ flex: 1, background: 'white', border: '1px solid var(--brd)', color: 'var(--txt)' }}>Geri</button>}
-        {step < 3 ? (
-          <button className="submit-btn tatil" onClick={() => setStep(s => s + 1)} style={{ flex: 2, background: 'var(--tatil)' }}>Devam Et</button>
-        ) : (
-          <button className="submit-btn tatil" onClick={() => onAdd(form)} style={{ flex: 2, background: 'var(--tatil)' }}>Planı Oluştur ✨</button>
-        )}
+      <div className="wizard-footer-cute">
+        {step > 1 && <button className="w-back-btn" onClick={() => setStep(step - 1)}>Geri</button>}
+        <button className="w-next-btn" onClick={handleNext}>
+          {step === 3 ? 'Macerayı Başlat ✨' : 'Devam Et'}
+        </button>
       </div>
     </div>
   );
@@ -340,7 +355,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
   const { addExpense, tatil, setModuleData, deleteTrip } = useStore();
   const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [activeSubTab, setActiveSubTab] = useState('valiz'); // valiz, dokuman, butce
+  const [activeSubTab, setActiveSubTab] = useState('valiz');
 
   const handleUpdateTrip = (updates) => {
      const trips = tatil.trips.map(t => t.id === trip.id ? { ...t, ...updates } : t);
@@ -356,26 +371,38 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
 
   return (
     <div className="trip-detail-premium animate-fadeIn">
-      {/* Hero Card */}
-      <div className="trip-hero glass" style={{ background: trip.status === 'tamamlandi' ? 'linear-gradient(135deg, #475569, #64748b)' : 'linear-gradient(135deg, #0284c7, #38bdf8)' }}>
+      <div className="trip-hero-premium animate-fadeIn" style={{ position: 'relative' }}>
+        <div className="hero-flag-badge">{getCountryFlag(trip.title, trip.city)}</div>
         <div className="hero-content">
-          <div className="hero-emoji animate-float">{trip.type === 'yurtdisi' ? '✈️' : '🚗'}</div>
+          <Plane className="hero-plane-icon" size={28} />
           <div className="hero-text">
-            <h2>{trip.title || trip.city}, {trip.country}</h2>
-            <div className="hero-meta-row">
-              <span className="h-meta-pill">📅 {trip.startDate}</span>
-              <span className="h-meta-pill">🌙 {duration} Gece</span>
-              {trip.status === 'kesin' && <span className="h-meta-pill" style={{ background: '#10b981' }}>✅ Kesinleşti</span>}
-            </div>
+            <h2>{trip.title || trip.city}</h2>
+            <p>{trip.city || 'Belirtilmedi'}</p>
           </div>
         </div>
-        <div className="weather-widget-mini glass">
-          <Cloud size={24} color="white" />
-          <div className="w-temp">24°C</div>
-          <div className="w-city">Güneşli</div>
+        
+        <div className="hero-stats-row-cute">
+          <div className="stat-pill-cute">
+            <Calendar size={12} />
+            <span>{trip.startDate}</span>
+          </div>
+          <div className="stat-pill-cute">
+            <Moon size={12} />
+            <span>{duration} Gece</span>
+          </div>
+          <div className="stat-pill-cute success">
+            <ShieldCheck size={12} />
+            <span>{trip.status === 'kesin' ? 'Kesinleşti' : 'Planlanıyor'}</span>
+          </div>
         </div>
+
+        <div className="weather-widget-cute glass">
+          <Cloud size={18} color="white" />
+          <div className="w-temp">24°</div>
+        </div>
+
         <button 
-          className="trip-delete-btn" 
+          className="trip-delete-btn-cute" 
           onClick={() => {
             if(window.confirm('Bu tatili silmek istediğinizden emin misiniz?')) {
               deleteTrip(trip.id);
@@ -383,30 +410,18 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
               toast.success('Tatil silindi.');
             }
           }}
-          style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}
         >
-          <Trash2 size={16} />
+          <Trash2 size={12} />
         </button>
       </div>
 
-      {/* Lifecycle Actions */}
-      <div className="lifecycle-actions" style={{ padding: '0 20px', display: 'flex', gap: '10px', marginBottom: '20px' }}>
+      <div className="lifecycle-actions-cute" style={{ padding: '0 20px', display: 'flex', gap: '8px', marginBottom: '15px' }}>
         {trip.status === 'planlandi' && (
-          <button className="btn-action-premium kesin-btn" onClick={() => setStatus('kesin')} style={{ background: '#10b981', color: 'white', flex: 1 }}>
-            <ShieldCheck size={18} /> Planı Kesinleştir
+          <button className="btn-cute primary" onClick={() => setStatus('kesin')}>
+            <ShieldCheck size={14} /> Planı Kesinleştir
           </button>
         )}
         {trip.status === 'kesin' && (
-          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-            <button className="btn-action-premium arsiv-btn" onClick={() => setStatus('tamamlandi')} style={{ background: '#64748b', color: 'white', flex: 2 }}>
-              <CheckSquare size={18} /> Tatili Tamamla
-            </button>
-            <button className="btn-action-premium revert-btn" onClick={() => setStatus('planlandi')} style={{ background: '#f1f5f9', color: '#64748b', flex: 1, border: '1px solid #e2e8f0' }}>
-              <ArrowLeft size={16} /> Geri Al
-            </button>
-          </div>
-        )}
-        {trip.status === 'tamamlandi' && (
            <div className="archive-badge-full">Bu tatil başarıyla tamamlandı. ❤️</div>
         )}
       </div>
