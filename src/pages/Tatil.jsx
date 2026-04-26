@@ -7,7 +7,7 @@ import {
   Plus, Trash2, Calendar, MapPin, 
   Hotel, Wallet, CheckSquare, Cloud, 
   ArrowRight, AlertCircle, Info, Timer, X, ArrowLeft,
-  PlusCircle, ExternalLink, Ticket, Navigation
+  PlusCircle, ExternalLink, Ticket, Navigation, Check, Edit3
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -407,31 +407,28 @@ function TripDetailContent({ trip }) {
 }
 
 function TripSmartDetails({ trip, onUpdate }) {
-  const [editMode, setEditMode] = useState(false);
+  const [editingSection, setEditingSection] = useState(null); // 'dep', 'ret', 'acc'
   
-  // Local state for form
-  const [formData, setFormData] = useState({
-    transportation: trip.transportation || { 
-      departure: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' },
-      return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
-    },
-    accommodation: trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' }
-  });
+  // Local state for forms
+  const [depForm, setDepForm] = useState(trip.transportation?.departure || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' });
+  const [retForm, setRetForm] = useState(trip.transportation?.return || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' });
+  const [accForm, setAccForm] = useState(trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' });
 
   useEffect(() => {
-    setFormData({
-      transportation: trip.transportation || { 
-        departure: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' },
-        return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
-      },
-      accommodation: trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' }
-    });
+    setDepForm(trip.transportation?.departure || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' });
+    setRetForm(trip.transportation?.return || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' });
+    setAccForm(trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' });
   }, [trip]);
 
-  const handleSave = () => {
-    onUpdate(formData);
-    setEditMode(false);
-    toast.success('Seyahat bilgileri güncellendi! ✨');
+  const handleSave = (section) => {
+    const updates = { ...trip };
+    if (section === 'dep') updates.transportation.departure = depForm;
+    if (section === 'ret') updates.transportation.return = retForm;
+    if (section === 'acc') updates.accommodation = accForm;
+    
+    onUpdate(updates);
+    setEditingSection(null);
+    toast.success('Bilgiler güncellendi! ✨');
   };
 
   const openFlightRadar = (no) => {
@@ -445,7 +442,7 @@ function TripSmartDetails({ trip, onUpdate }) {
   };
 
   const openBooking = () => {
-    const link = formData.accommodation.link || `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(formData.accommodation.hotel || '')}`;
+    const link = accForm.link || `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(accForm.hotel || '')}`;
     window.open(link, '_blank');
   };
 
@@ -453,98 +450,108 @@ function TripSmartDetails({ trip, onUpdate }) {
     <div className="smart-details-container animate-fadeIn">
       <div className="section-header-compact">
         <h3>✨ Seyahat Asistanı</h3>
-        <button className="edit-toggle-btn" onClick={() => editMode ? handleSave() : setEditMode(true)}>
-          {editMode ? 'Kaydet' : 'Düzenle'}
-        </button>
+        <p className="helper-text">Uçuş numarasını girip düzenle derseniz asistan bilgileri sizin için güncelleyecektir.</p>
       </div>
 
-      <div className="smart-cards-grid">
+      <div className="smart-cards-grid compact">
         {/* Departure Flight */}
-        <div className="smart-card">
-          <div className="sc-header">
-            <div className="sc-icon blue"><Plane size={18} /></div>
-            <span>Gidiş Uçuşu</span>
+        <div className={`smart-card mini ${editingSection === 'dep' ? 'editing' : ''}`}>
+          <div className="sc-header-row">
+            <div className="sc-label">
+              <Plane size={14} className="sc-icon blue" />
+              <span>Gidiş</span>
+            </div>
+            <button className="sc-edit-btn" onClick={() => editingSection === 'dep' ? handleSave('dep') : setEditingSection('dep')}>
+              {editingSection === 'dep' ? <Check size={14} /> : <Edit3 size={14} />}
+            </button>
           </div>
-          <div className="sc-body">
-            {editMode ? (
-              <div className="sc-form">
-                <input placeholder="Uçuş No" value={formData.transportation.departure?.flightNo} onChange={e => setFormData({...formData, transportation: {...formData.transportation, departure: {...formData.transportation.departure, flightNo: e.target.value.toUpperCase()}}})} />
-                <input placeholder="Havayolu" value={formData.transportation.departure?.airline} onChange={e => setFormData({...formData, transportation: {...formData.transportation, departure: {...formData.transportation.departure, airline: e.target.value}}})} />
-                <input placeholder="Saat / Durum" value={formData.transportation.departure?.time} onChange={e => setFormData({...formData, transportation: {...formData.transportation, departure: {...formData.transportation.departure, time: e.target.value}}})} />
-                <input placeholder="PNR" value={formData.transportation.departure?.pnr} onChange={e => setFormData({...formData, transportation: {...formData.transportation, departure: {...formData.transportation.departure, pnr: e.target.value}}})} />
+          <div className="sc-content">
+            {editingSection === 'dep' ? (
+              <div className="sc-inputs">
+                <input placeholder="Uçuş No" value={depForm.flightNo} onChange={e => setDepForm({...depForm, flightNo: e.target.value.toUpperCase()})} />
+                <input placeholder="Saat / Bilgi" value={depForm.time} onChange={e => setDepForm({...depForm, time: e.target.value})} />
+                <input placeholder="PNR" value={depForm.pnr} onChange={e => setDepForm({...depForm, pnr: e.target.value})} />
               </div>
             ) : (
-              <div className="sc-display">
-                <strong>{formData.transportation.departure?.flightNo || 'Uçuş Girilmedi'}</strong>
-                <small>{formData.transportation.departure?.airline} · {formData.transportation.departure?.time || 'Saat belirtilmedi'}</small>
-                {formData.transportation.departure?.pnr && <div className="pnr-badge">PNR: {formData.transportation.departure.pnr}</div>}
+              <div className="sc-view">
+                <strong>{depForm.flightNo || '---'}</strong>
+                <small>{depForm.time || 'Saat belirtilmedi'}</small>
+                {depForm.pnr && <div className="pnr-mini">PNR: {depForm.pnr}</div>}
               </div>
             )}
           </div>
-          {!editMode && (
-            <button className="sc-action-btn" onClick={() => openFlightRadar(formData.transportation.departure?.flightNo)}>
-              <ExternalLink size={12} /> Uçuşu Takip Et
+          {editingSection !== 'dep' && depForm.flightNo && (
+            <button className="sc-mini-action" onClick={() => openFlightRadar(depForm.flightNo)}>
+              <ExternalLink size={10} /> Takip
             </button>
           )}
         </div>
 
         {/* Return Flight */}
-        <div className="smart-card">
-          <div className="sc-header">
-            <div className="sc-icon blue"><Plane size={18} style={{ transform: 'rotate(180deg)' }} /></div>
-            <span>Dönüş Uçuşu</span>
+        <div className={`smart-card mini ${editingSection === 'ret' ? 'editing' : ''}`}>
+          <div className="sc-header-row">
+            <div className="sc-label">
+              <Plane size={14} className="sc-icon blue" style={{ transform: 'rotate(180deg)' }} />
+              <span>Dönüş</span>
+            </div>
+            <button className="sc-edit-btn" onClick={() => editingSection === 'ret' ? handleSave('ret') : setEditingSection('ret')}>
+              {editingSection === 'ret' ? <Check size={14} /> : <Edit3 size={14} />}
+            </button>
           </div>
-          <div className="sc-body">
-            {editMode ? (
-              <div className="sc-form">
-                <input placeholder="Uçuş No" value={formData.transportation.return?.flightNo} onChange={e => setFormData({...formData, transportation: {...formData.transportation, return: {...formData.transportation.return, flightNo: e.target.value.toUpperCase()}}})} />
-                <input placeholder="Havayolu" value={formData.transportation.return?.airline} onChange={e => setFormData({...formData, transportation: {...formData.transportation, return: {...formData.transportation.return, airline: e.target.value}}})} />
-                <input placeholder="Saat / Durum" value={formData.transportation.return?.time} onChange={e => setFormData({...formData, transportation: {...formData.transportation, return: {...formData.transportation.return, time: e.target.value}}})} />
-                <input placeholder="PNR" value={formData.transportation.return?.pnr} onChange={e => setFormData({...formData, transportation: {...formData.transportation, return: {...formData.transportation.return, pnr: e.target.value}}})} />
+          <div className="sc-content">
+            {editingSection === 'ret' ? (
+              <div className="sc-inputs">
+                <input placeholder="Uçuş No" value={retForm.flightNo} onChange={e => setRetForm({...retForm, flightNo: e.target.value.toUpperCase()})} />
+                <input placeholder="Saat / Bilgi" value={retForm.time} onChange={e => setRetForm({...retForm, time: e.target.value})} />
+                <input placeholder="PNR" value={retForm.pnr} onChange={e => setRetForm({...retForm, pnr: e.target.value})} />
               </div>
             ) : (
-              <div className="sc-display">
-                <strong>{formData.transportation.return?.flightNo || 'Uçuş Girilmedi'}</strong>
-                <small>{formData.transportation.return?.airline} · {formData.transportation.return?.time || 'Saat belirtilmedi'}</small>
-                {formData.transportation.return?.pnr && <div className="pnr-badge">PNR: {formData.transportation.return.pnr}</div>}
+              <div className="sc-view">
+                <strong>{retForm.flightNo || '---'}</strong>
+                <small>{retForm.time || 'Saat belirtilmedi'}</small>
+                {retForm.pnr && <div className="pnr-mini">PNR: {retForm.pnr}</div>}
               </div>
             )}
           </div>
-          {!editMode && (
-            <button className="sc-action-btn" onClick={() => openFlightRadar(formData.transportation.return?.flightNo)}>
-              <ExternalLink size={12} /> Uçuşu Takip Et
+          {editingSection !== 'ret' && retForm.flightNo && (
+            <button className="sc-mini-action" onClick={() => openFlightRadar(retForm.flightNo)}>
+              <ExternalLink size={10} /> Takip
             </button>
           )}
         </div>
 
         {/* Accommodation */}
-        <div className="smart-card">
-          <div className="sc-header">
-            <div className="sc-icon orange"><Hotel size={18} /></div>
-            <span>Konaklama</span>
+        <div className={`smart-card mini ${editingSection === 'acc' ? 'editing' : ''}`}>
+          <div className="sc-header-row">
+            <div className="sc-label">
+              <Hotel size={14} className="sc-icon orange" />
+              <span>Otel</span>
+            </div>
+            <button className="sc-edit-btn" onClick={() => editingSection === 'acc' ? handleSave('acc') : setEditingSection('acc')}>
+              {editingSection === 'acc' ? <Check size={14} /> : <Edit3 size={14} />}
+            </button>
           </div>
-          <div className="sc-body">
-            {editMode ? (
-              <div className="sc-form">
-                <input placeholder="Otel Adı" value={formData.accommodation.hotel} onChange={e => setFormData({...formData, accommodation: {...formData.accommodation, hotel: e.target.value}})} />
-                <input placeholder="Adres" value={formData.accommodation.address} onChange={e => setFormData({...formData, accommodation: {...formData.accommodation, address: e.target.value}})} />
-                <input placeholder="Booking Rez. No" value={formData.accommodation.bookingId} onChange={e => setFormData({...formData, accommodation: {...formData.accommodation, bookingId: e.target.value}})} />
-                <input placeholder="Direkt Link" value={formData.accommodation.link} onChange={e => setFormData({...formData, accommodation: {...formData.accommodation, link: e.target.value}})} />
+          <div className="sc-content">
+            {editingSection === 'acc' ? (
+              <div className="sc-inputs">
+                <input placeholder="Otel Adı" value={accForm.hotel} onChange={e => setAccForm({...accForm, hotel: e.target.value})} />
+                <input placeholder="Adres" value={accForm.address} onChange={e => setAccForm({...accForm, address: e.target.value})} />
+                <input placeholder="Booking Link" value={accForm.link} onChange={e => setAccForm({...accForm, link: e.target.value})} />
               </div>
             ) : (
-              <div className="sc-display">
-                <strong>{formData.accommodation.hotel || 'Otel Girilmedi'}</strong>
-                <small>{formData.accommodation.address || 'Adres belirtilmedi'}</small>
+              <div className="sc-view">
+                <strong>{accForm.hotel || 'Otel Girilmedi'}</strong>
+                <small className="truncate">{accForm.address || 'Adres belirtilmedi'}</small>
               </div>
             )}
           </div>
-          {!editMode && (
-            <div className="sc-actions-row">
-              <button className="sc-action-btn" onClick={() => openMaps(formData.accommodation.hotel || formData.accommodation.address)}>
-                <MapPin size={12} /> Haritada Aç
+          {editingSection !== 'acc' && (
+            <div className="sc-mini-row">
+              <button className="sc-mini-action" onClick={() => openMaps(accForm.hotel || accForm.address)}>
+                <MapPin size={10} /> Konum
               </button>
-              <button className="sc-action-btn" onClick={openBooking}>
-                <ExternalLink size={12} /> Booking
+              <button className="sc-mini-action" onClick={openBooking}>
+                <ExternalLink size={10} /> Booking
               </button>
             </div>
           )}
