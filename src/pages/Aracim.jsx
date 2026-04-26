@@ -405,7 +405,13 @@ function KMUpdateModal({ currentKM, onClose, onSave }) {
               className="premium-input"
             />
           </div>
-          <button className="submit-btn-premium" onClick={() => { onSave(val); onClose(); toast.success('Kilometre güncellendi 🏎️'); }}>Kaydet</button>
+          <button className="submit-btn-premium" onClick={() => { 
+            const finalVal = Number(val);
+            if(isNaN(finalVal)) return toast.error('Lütfen geçerli bir sayı girin');
+            onSave(finalVal); 
+            onClose(); 
+            toast.success('Kilometre güncellendi 🏎️'); 
+          }}>Kaydet</button>
         </div>
       </div>
     </div>
@@ -432,13 +438,14 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
                <input type="number" value={form.amount} onChange={e => setForm({...form, amount: Number(e.target.value)})} className="premium-input" />
              </div>
           </div>
-          <div className="form-group-v2 mt-12">
+          <div className="form-group-v2 mt-20">
             <label>İstasyon</label>
             <select value={form.station} onChange={e => setForm({...form, station: e.target.value})} className="premium-select">
-              <option value="Shell">Shell</option>
-              <option value="Opet">Opet</option>
-              <option value="BP">BP</option>
-              <option value="Petrol Ofisi">Petrol Ofisi</option>
+              <option value="Shell">⛽ Shell</option>
+              <option value="Opet">🔵 Opet</option>
+              <option value="BP">🟢 BP</option>
+              <option value="Petrol Ofisi">🔴 Petrol Ofisi</option>
+              <option value="Diğer">⚪ Diğer</option>
             </select>
           </div>
           <button className="submit-btn-premium red mt-20" onClick={() => { onSave(form); onClose(); toast.success('Yakıt kaydı ve masraf eklendi ⛽'); }}>Kaydet</button>

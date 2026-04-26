@@ -1885,7 +1885,7 @@ const useStore = create(
       updateKM: (newKM) => {
         const state = get();
         const updatedGaraj = state.garaj.map(v => 
-          v.id === state.selectedVehicleId ? { ...v, km: newKM } : v
+          String(v.id) === String(state.selectedVehicleId) ? { ...v, km: newKM } : v
         );
         set({ garaj: updatedGaraj });
         get().addLog('KM Güncelleme', `Araç kilometresi ${newKM} olarak güncellendi.`);
