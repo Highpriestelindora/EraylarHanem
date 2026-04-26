@@ -156,7 +156,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v2.14.3 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>STABLE KM FIX</span>
+            v2.14.4 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>FINAL KM FIX</span>
           </span>
         </div>
         <span style={{

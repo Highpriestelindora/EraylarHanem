@@ -1884,9 +1884,17 @@ const useStore = create(
       // ── Eraylar Garaj Actions ──────────────────────────
       updateKM: (newKM) => {
         const state = get();
+        const targetId = state.selectedVehicleId || (state.garaj[0]?.id);
+        
+        if (!targetId) {
+          console.error("Güncellenecek araç bulunamadı.");
+          return;
+        }
+
         const updatedGaraj = state.garaj.map(v => 
-          String(v.id) === String(state.selectedVehicleId) ? { ...v, km: newKM } : v
+          String(v.id) === String(targetId) ? { ...v, km: Number(newKM) } : v
         );
+        
         set({ garaj: updatedGaraj });
         get().addLog('KM Güncelleme', `Araç kilometresi ${newKM} olarak güncellendi.`);
         get().saveToSupabase();
