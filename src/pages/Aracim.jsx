@@ -25,7 +25,8 @@ export default function Aracim() {
     garaj, selectedVehicleId, setModuleData, 
     updateKM, addFuelLog, addServiceRecord,
     addVehicle, updateVehicle, deleteVehicle,
-    addWashRecord, startParking, finishParking
+    addWashRecord, startParking, finishParking,
+    deleteServiceRecord, deleteDocument, addDocument
   } = useStore();
   
   const vehicle = useMemo(() => 
@@ -36,12 +37,12 @@ export default function Aracim() {
   const [showAddFuel, setShowAddFuel] = useState(false);
   const [showUpdateKM, setShowUpdateKM] = useState(false);
   const [showGarageModal, setShowGarageModal] = useState(false);
-  const [showVehicleForm, setShowVehicleForm] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [showWashModal, setShowWashModal] = useState(false);
   const [showParkModal, setShowParkModal] = useState(false);
-
-  const [tempKM, setTempKM] = useState(vehicle?.km || 0);
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [showDocForm, setShowDocForm] = useState(false);
+  const [editingDoc, setEditingDoc] = useState(null);
 
   const { 
     km, parts, fuelLogs, services, documents, 
@@ -192,7 +193,7 @@ export default function Aracim() {
           <div className="servis-view animate-fadeIn">
             <div className="section-header-v2">
               <h3>🛠️ Servis Defteri</h3>
-              <button className="add-btn-mini"><Plus size={14} /></button>
+              <button className="add-btn-mini" onClick={() => setShowServiceForm(true)}><Plus size={14} /></button>
             </div>
             <div className="service-timeline-premium">
               {services.map(s => (
@@ -206,7 +207,10 @@ export default function Aracim() {
                       <strong>{s.title}</strong>
                       <small>{s.km.toLocaleString()} KM · {s.shop}</small>
                     </div>
-                    <div className="sti-cost">{formatMoney(s.cost)}</div>
+                    <div className="sti-actions">
+                      <div className="sti-cost">{formatMoney(s.cost)}</div>
+                      <button className="delete-btn-mini" onClick={() => { if(window.confirm('Bu servis kaydını silmek istediğinize emin misiniz?')) useStore.getState().deleteServiceRecord(vehicle.id, s.id); }}><Trash2 size={12} /></button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -218,6 +222,7 @@ export default function Aracim() {
           <div className="glovebox-view animate-fadeIn">
             <div className="section-header-v2">
               <h3>📂 Dijital Torpido</h3>
+              <button className="add-btn-mini" onClick={() => { setEditingDoc(null); setShowDocForm(true); }}><Plus size={14} /></button>
             </div>
             <div className="docs-list">
               {documents.map(doc => {
@@ -231,8 +236,11 @@ export default function Aracim() {
                         <small>Bitiş: {new Date(doc.dueDate).toLocaleDateString('tr-TR')}</small>
                       </div>
                     </div>
-                    <div className={`dcp-status ${diff < 15 ? 'warn' : 'ok'}`}>
-                      {diff} Gün
+                    <div className="dcp-right-actions">
+                      <div className={`dcp-status ${diff < 15 ? 'warn' : 'ok'}`}>
+                        {diff} Gün
+                      </div>
+                      <button className="delete-btn-mini" onClick={() => { if(window.confirm('Bu belgeyi silmek istediğinize emin misiniz?')) useStore.getState().deleteDocument(vehicle.id, doc.id); }}><Trash2 size={12} /></button>
                     </div>
                   </div>
                 );
@@ -336,6 +344,21 @@ export default function Aracim() {
           onStart={(data) => startParking(vehicle.id, data)}
           onFinish={(cost) => finishParking(vehicle.id, cost)}
           onClose={() => setShowParkModal(false)}
+        />
+      )}
+
+      {showServiceForm && (
+        <ServiceFormModal 
+          onSave={(data) => addServiceRecord(data)}
+          onClose={() => setShowServiceForm(false)}
+        />
+      )}
+
+      {showDocForm && (
+        <DocFormModal 
+          doc={editingDoc}
+          onSave={(data) => addDocument(vehicle.id, data)}
+          onClose={() => setShowDocForm(false)}
         />
       )}
 
@@ -538,7 +561,6 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
                 </div>
               )}
               <div className="park-info-grid">
-                {parkLocation.note && <div><strong>AVM:</strong> {parkLocation.note}</div>}
                 {parkLocation.floor && <div><strong>Kat:</strong> {parkLocation.floor}</div>}
                 {parkLocation.spot && <div><strong>No:</strong> {parkLocation.spot}</div>}
               </div>
@@ -571,10 +593,6 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
           </div>
           {form.isAVM && (
             <div className="form-grid-v2 mt-12 animate-fadeIn">
-              <div className="form-group-v2">
-                <label>AVM Adı</label>
-                <input value={form.note} onChange={e => setForm({...form, note: e.target.value})} className="premium-input" placeholder="TerraCity" />
-              </div>
               <div className="form-group-v2">
                 <label>Kat / Sıra</label>
                 <input value={form.floor} onChange={e => setForm({...form, floor: e.target.value})} className="premium-input" placeholder="P2 - Mavi" />

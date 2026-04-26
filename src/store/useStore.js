@@ -2038,6 +2038,34 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      deleteServiceRecord: (vehicleId, serviceId) => {
+        const state = get();
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === vehicleId ? { ...v, services: v.services.filter(s => s.id !== serviceId) } : v
+        );
+        set({ garaj: updatedGaraj });
+        get().saveToSupabase();
+      },
+
+      deleteDocument: (vehicleId, docId) => {
+        const state = get();
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === vehicleId ? { ...v, documents: v.documents.filter(d => d.id !== docId) } : v
+        );
+        set({ garaj: updatedGaraj });
+        get().saveToSupabase();
+      },
+
+      addDocument: (vehicleId, doc) => {
+        const state = get();
+        const newDoc = { id: Date.now().toString(), ...doc };
+        const updatedGaraj = state.garaj.map(v => 
+          v.id === vehicleId ? { ...v, documents: [...v.documents, newDoc] } : v
+        );
+        set({ garaj: updatedGaraj });
+        get().saveToSupabase();
+      },
+
       // ── Pet Actions ────────────────────────────────────
       addPetVaccine: (petId, vaccine) => {
         const state = get();

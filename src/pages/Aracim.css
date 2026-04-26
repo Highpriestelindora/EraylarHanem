@@ -324,3 +324,39 @@
   gap: 12px;
 }
 
+
+.sti-actions, .dcp-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.delete-btn-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: none;
+  background: #fee2e2;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-btn-mini:hover { background: #fecaca; transform: scale(1.1); }
+
+.add-btn-mini {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: none;
+  background: var(--aracim);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
