@@ -1472,3 +1472,51 @@
   color: #64748b;
   line-height: 1.4;
 }
+
+/* Enhanced Flight Buttons */
+.sc-ai-btn-premium {
+  background: linear-gradient(135deg, #7e22ce 0%, #9333ea 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(126, 34, 206, 0.3);
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  flex: 1;
+  justify-content: center;
+}
+
+.sc-ai-btn-premium:active {
+  transform: scale(0.96);
+  filter: brightness(1.1);
+}
+
+.sc-live-badge-mini {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sc-live-badge-mini:active {
+  background: #e2e8f0;
+  transform: scale(0.95);
+}
+

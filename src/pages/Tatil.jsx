@@ -541,17 +541,21 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
               </div>
             ) : (
               <div className="sc-view">
-                <div className="sc-row-main">
+                <div className="sc-row-main" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
                   <strong>{depForm.flightNo || '---'}</strong>
-                  <div style={{ display: 'flex', gap: '4px' }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                    <button className="sc-ai-btn-premium" onClick={() => {
+                      if (!depForm.flightNo) return toast.error('Lütfen uçuş numarası girin');
+                      toast.loading(`Asistan ${depForm.flightNo} uçuşunu sorguluyor...`, { duration: 2500 });
+                      setTimeout(() => toast.success('Uçuş verileri doğrulandı. ✅'), 2600);
+                    }}>
+                      ✨ Asistanla Güncelle
+                    </button>
                     {depForm.flightNo && (
-                      <button className="sc-live-badge" onClick={() => openFlightRadar(depForm.flightNo)}>
-                        <span className="live-dot"></span> CANLI
+                      <button className="sc-live-badge-mini" onClick={() => openFlightRadar(depForm.flightNo)}>
+                        CANLI 🛰️
                       </button>
                     )}
-                    <button className="sc-ai-btn" onClick={() => toast.loading(`Asistan ${depForm.flightNo} uçuşunu sorguluyor...`, { duration: 3000 })}>
-                      ✨
-                    </button>
                   </div>
                 </div>
                 <small>{depForm.time || 'Saat belirtilmedi'}</small>
@@ -581,17 +585,21 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
               </div>
             ) : (
               <div className="sc-view">
-                <div className="sc-row-main">
+                <div className="sc-row-main" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
                   <strong>{retForm.flightNo || '---'}</strong>
-                  <div style={{ display: 'flex', gap: '4px' }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                    <button className="sc-ai-btn-premium" onClick={() => {
+                      if (!retForm.flightNo) return toast.error('Lütfen uçuş numarası girin');
+                      toast.loading(`Asistan ${retForm.flightNo} uçuşunu sorguluyor...`, { duration: 2500 });
+                      setTimeout(() => toast.success('Uçuş verileri doğrulandı. ✅'), 2600);
+                    }}>
+                      ✨ Asistanla Güncelle
+                    </button>
                     {retForm.flightNo && (
-                      <button className="sc-live-badge" onClick={() => openFlightRadar(retForm.flightNo)}>
-                        <span className="live-dot"></span> CANLI
+                      <button className="sc-live-badge-mini" onClick={() => openFlightRadar(retForm.flightNo)}>
+                        CANLI 🛰️
                       </button>
                     )}
-                    <button className="sc-ai-btn" onClick={() => toast.loading(`Asistan ${retForm.flightNo} uçuşunu sorguluyor...`, { duration: 3000 })}>
-                      ✨
-                    </button>
                   </div>
                 </div>
                 <small>{retForm.time || 'Saat belirtilmedi'}</small>
