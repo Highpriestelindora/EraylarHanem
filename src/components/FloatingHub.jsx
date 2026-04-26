@@ -122,13 +122,20 @@ export default function FloatingHub() {
                       dragConstraints={constraintsRef}
                       dragMomentum={false}
                       dragElastic={0}
+                      layout
+                      initial={false}
+                      animate={{
+                        left: isFocused ? '50%' : (note.x || (10 + (idx % 3) * 30)) + '%',
+                        top: isFocused ? '50%' : (note.y || (15 + (idx % 4) * 20)) + '%',
+                        scale: isFocused ? 1.4 : 1,
+                        rotate: isFocused ? 0 : (idx % 10 - 5) * 2,
+                        x: isFocused ? '-50%' : 0,
+                        y: isFocused ? '-50%' : 0
+                      }}
                       className={`immersive-note-wrap ${isFocused ? 'focused' : ''}`}
                       onClick={() => setFocusedNote(isFocused ? null : note.id)}
                       style={{ 
                         backgroundColor: posColor,
-                        left: isFocused ? '50%' : (note.x || (15 + (idx % 3) * 25)) + '%',
-                        top: isFocused ? '50%' : (note.y || (20 + (idx % 4) * 18)) + '%',
-                        transform: isFocused ? 'translate(-50%, -50%) scale(1.4) rotate(0deg)' : `rotate(${(idx % 10 - 5) * 2}deg)`,
                         zIndex: isFocused ? 2000 : 10 + idx,
                         position: isFocused ? 'fixed' : 'absolute',
                         cursor: isFocused ? 'zoom-out' : 'grab',
@@ -140,7 +147,7 @@ export default function FloatingHub() {
                         const board = constraintsRef.current.getBoundingClientRect();
                         const newX = ((info.point.x - board.left) / board.width) * 100;
                         const newY = ((info.point.y - board.top) / board.height) * 100;
-                        updateNotePosition(note.id, Math.max(5, Math.min(85, newX)), Math.max(5, Math.min(90, newY)));
+                        updateNotePosition(note.id, Math.max(5, Math.min(85, newX)), Math.max(5, Math.min(85, newY)));
                       }}
                     >
                       <div className="immersive-magnet-cap" />
