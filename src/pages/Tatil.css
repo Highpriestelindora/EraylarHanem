@@ -1380,3 +1380,95 @@
   color: #dc2626;
   background: #fef2f2;
 }
+
+/* Compact & Premium UI Overrides */
+.smart-card.mini {
+  padding: 8px 10px !important;
+}
+
+.sc-icon {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.sc-label span {
+  font-size: 10px !important;
+  font-weight: 800;
+}
+
+.sc-row-main strong {
+  font-size: 13px !important;
+}
+
+.sc-view small {
+  font-size: 10px !important;
+  opacity: 0.7;
+}
+
+.pnr-mini {
+  font-size: 9px !important;
+  padding: 2px 6px !important;
+  margin-top: 4px;
+}
+
+/* AI Assistant Button */
+.sc-ai-btn {
+  background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(126, 34, 206, 0.2);
+  transition: all 0.2s;
+}
+
+.sc-ai-btn:active {
+  transform: scale(0.9);
+}
+
+/* Native Tracker View */
+.live-tracker-native {
+  padding: 20px;
+  text-align: center;
+}
+
+.tracker-hero {
+  margin-bottom: 25px;
+}
+
+.plane-anim {
+  font-size: 40px;
+  margin-bottom: 15px;
+  display: inline-block;
+  animation: plane-fly 2s infinite ease-in-out;
+}
+
+@keyframes plane-fly {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-10px) rotate(-5deg); }
+}
+
+.primary-tracker-btn {
+  background: #0ea5e9;
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+  margin-bottom: 15px;
+}
+
+.helper-text {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.4;
+}

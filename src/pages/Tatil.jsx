@@ -128,22 +128,19 @@ export default function Tatil() {
       <ActionSheet
         isOpen={showTracker}
         onClose={() => setShowTracker(false)}
-        title={`Canlı Takip: ${trackerFlight}`}
+        title={`✈️ Uçuş Takibi: ${trackerFlight}`}
       >
-        <div className="live-tracker-container">
-          <iframe
-            src={`https://www.flightradar24.com/simple_flight_tracker/${trackerFlight.replace(/\s+/g, '')}`}
-            width="100%"
-            height="500px"
-            frameBorder="0"
-            title="Flight Tracker"
-            className="tracker-iframe"
-          />
-          <div className="tracker-footer">
-            <p>ℹ️ Veriler FlightRadar24 üzerinden canlı sağlanmaktadır.</p>
-            <button className="tracker-external-btn" onClick={() => window.open(`https://www.flightradar24.com/data/flights/${trackerFlight.replace(/\s+/g, '')}`, '_blank')}>
-              <ExternalLink size={14} /> Detaylı Sitede Aç
+        <div className="live-tracker-native">
+          <div className="tracker-hero">
+            <div className="plane-anim">✈️</div>
+            <h4>{trackerFlight}</h4>
+            <p>Canlı uçuş verileri ve radar takibi için FlightRadar24'ün mobil optimize edilmiş sistemine yönlendiriliyorsunuz.</p>
+          </div>
+          <div className="tracker-actions-v2">
+            <button className="primary-tracker-btn" onClick={() => window.open(`https://www.flightradar24.com/data/flights/${trackerFlight.replace(/\s+/g, '')}`, '_blank')}>
+               Canlı Radarı Aç 🛰️
             </button>
+            <p className="helper-text">Beyaz ekran sorunu yaşanmaması için en güvenli ve hızlı yöntem budur.</p>
           </div>
         </div>
       </ActionSheet>
@@ -352,7 +349,9 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose }) {
 
   const setStatus = (status) => {
     handleUpdateTrip({ status });
-    toast.success(status === 'kesin' ? 'Tatil kesinleşti! ✈️' : 'Tatil arşive eklendi! ✅');
+    if (status === 'kesin') toast.success('Tatil kesinleşti! ✈️');
+    else if (status === 'planlandi') toast.success('Tatil planlama aşamasına geri alındı. 🔄');
+    else if (status === 'tamamlandi') toast.success('Tatil arşive eklendi! ✅');
   };
 
   return (
@@ -544,11 +543,16 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
               <div className="sc-view">
                 <div className="sc-row-main">
                   <strong>{depForm.flightNo || '---'}</strong>
-                  {depForm.flightNo && (
-                    <button className="sc-live-badge" onClick={() => openFlightRadar(depForm.flightNo)}>
-                      <span className="live-dot"></span> CANLI
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {depForm.flightNo && (
+                      <button className="sc-live-badge" onClick={() => openFlightRadar(depForm.flightNo)}>
+                        <span className="live-dot"></span> CANLI
+                      </button>
+                    )}
+                    <button className="sc-ai-btn" onClick={() => toast.loading(`Asistan ${depForm.flightNo} uçuşunu sorguluyor...`, { duration: 3000 })}>
+                      ✨
                     </button>
-                  )}
+                  </div>
                 </div>
                 <small>{depForm.time || 'Saat belirtilmedi'}</small>
                 {depForm.pnr && <div className="pnr-mini">PNR: {depForm.pnr}</div>}
@@ -579,11 +583,16 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
               <div className="sc-view">
                 <div className="sc-row-main">
                   <strong>{retForm.flightNo || '---'}</strong>
-                  {retForm.flightNo && (
-                    <button className="sc-live-badge" onClick={() => openFlightRadar(retForm.flightNo)}>
-                      <span className="live-dot"></span> CANLI
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {retForm.flightNo && (
+                      <button className="sc-live-badge" onClick={() => openFlightRadar(retForm.flightNo)}>
+                        <span className="live-dot"></span> CANLI
+                      </button>
+                    )}
+                    <button className="sc-ai-btn" onClick={() => toast.loading(`Asistan ${retForm.flightNo} uçuşunu sorguluyor...`, { duration: 3000 })}>
+                      ✨
                     </button>
-                  )}
+                  </div>
                 </div>
                 <small>{retForm.time || 'Saat belirtilmedi'}</small>
                 {retForm.pnr && <div className="pnr-mini">PNR: {retForm.pnr}</div>}
