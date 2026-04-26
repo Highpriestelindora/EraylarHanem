@@ -3752,22 +3752,46 @@
   letter-spacing: 0.5px;
 }
 
-@charset " UTF-8\;
 
-.valiz-weather-oracle { background: rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 15px; border: 1px solid rgba(255, 255, 255, 0.1); }
+/* Valiz Weather Oracle styles */
+.valiz-weather-oracle { 
+  background: rgba(255, 255, 255, 0.05); 
+  border-radius: 16px; 
+  padding: 15px; 
+  border: 1px solid rgba(255, 255, 255, 0.1); 
+}
 .oracle-header { display: flex; gap: 12px; margin-bottom: 12px; }
 .oracle-emoji { font-size: 24px; }
 .oracle-header strong { display: block; color: var(--tatil); font-size: 14px; }
 .oracle-header p { font-size: 11px; opacity: 0.6; margin: 0; }
 .oracle-alerts { display: flex; flex-direction: column; gap: 8px; }
-.oracle-alert { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; font-size: 12px; background: rgba(255, 255, 255, 0.03); transition: all 0.2s; cursor: pointer; }
+.oracle-alert { 
+  display: flex; 
+  align-items: center; 
+  gap: 10px; 
+  padding: 10px; 
+  border-radius: 10px; 
+  font-size: 12px; 
+  background: rgba(255, 255, 255, 0.03); 
+  transition: all 0.2s; 
+  cursor: pointer; 
+}
 .oracle-alert:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.08); }
 .oracle-alert.high { border-left: 3px solid #ff4444; }
 .oracle-alert.med { border-left: 3px solid #ffbb33; }
 .a-icon { font-size: 16px; }
 .a-text { flex: 1; line-height: 1.3; }
-.oracle-forecast-row { display: flex; gap: 10px; margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); overflow-x: auto; padding-bottom: 5px; }
+.oracle-forecast-row { 
+  display: flex; 
+  gap: 10px; 
+  margin-top: 15px; 
+  padding-top: 12px; 
+  border-top: 1px solid rgba(255, 255, 255, 0.05); 
+  overflow-x: auto; 
+  padding-bottom: 5px; 
+}
 .forecast-mini-item { display: flex; flex-direction: column; align-items: center; min-width: 45px; gap: 4px; }
 .fm-day { font-size: 10px; opacity: 0.5; text-transform: uppercase; }
 .fm-icon { font-size: 16px; }
 .fm-temp { font-size: 12px; font-weight: 600; }
+
