@@ -1272,3 +1272,91 @@
   display: flex;
   gap: 8px;
 }
+
+/* Live Tracker UI */
+.live-tracker-container {
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 20px;
+}
+
+.tracker-iframe {
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  background: white;
+}
+
+.tracker-footer {
+  margin-top: 15px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.tracker-footer p {
+  font-size: 11px;
+  color: #64748b;
+  font-style: italic;
+  margin: 0;
+}
+
+.tracker-external-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tracker-external-btn:hover {
+  background: #f1f5f9;
+}
+
+/* Live Badge in Cards */
+.sc-row-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.sc-live-badge {
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  color: #dc2626;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  animation: pulse-soft 2s infinite;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: #dc2626;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 4px #dc2626;
+}
+
+@keyframes pulse-soft {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}

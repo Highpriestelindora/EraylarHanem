@@ -20,6 +20,8 @@ export default function Tatil() {
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
   const [editingPassport, setEditingPassport] = useState(null); // 'gorkem' or 'esra'
+  const [showTracker, setShowTracker] = useState(false);
+  const [trackerFlight, setTrackerFlight] = useState('');
 
   const updateTab = (tab) => {
     setActiveTab(tab);
@@ -94,7 +96,13 @@ export default function Tatil() {
         fullHeight
       >
         {selectedTrip && (
-          <TripDetailContent trip={selectedTrip} />
+          <TripDetailContent 
+            trip={selectedTrip} 
+            onOpenTracker={(no) => {
+              setTrackerFlight(no);
+              setShowTracker(true);
+            }}
+          />
         )}
       </ActionSheet>
 
@@ -108,6 +116,29 @@ export default function Tatil() {
           setShowWizard(false);
           toast.success('Tatil planı oluşturuldu! ✨');
         }} />
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={showTracker}
+        onClose={() => setShowTracker(false)}
+        title={`Canlı Takip: ${trackerFlight}`}
+      >
+        <div className="live-tracker-container">
+          <iframe
+            src={`https://www.flightradar24.com/simple_flight_tracker/${trackerFlight.replace(/\s+/g, '')}`}
+            width="100%"
+            height="500px"
+            frameBorder="0"
+            title="Flight Tracker"
+            className="tracker-iframe"
+          />
+          <div className="tracker-footer">
+            <p>ℹ️ Veriler FlightRadar24 üzerinden canlı sağlanmaktadır.</p>
+            <button className="tracker-external-btn" onClick={() => window.open(`https://www.flightradar24.com/data/flights/${trackerFlight.replace(/\s+/g, '')}`, '_blank')}>
+              <ExternalLink size={14} /> Detaylı Sitede Aç
+            </button>
+          </div>
+        </div>
       </ActionSheet>
     </AnimatedPage>
   );
@@ -294,7 +325,7 @@ function PlanningWizardContent({ onAdd }) {
   );
 }
 
-function TripDetailContent({ trip }) {
+function TripDetailContent({ trip, onOpenTracker }) {
   const { addExpense, tatil, setModuleData } = useStore();
   const duration = Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) || 0;
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -363,7 +394,11 @@ function TripDetailContent({ trip }) {
 
         {activeSubTab === 'dokuman' && (
           <div className="docs-view animate-fadeIn">
-            <TripSmartDetails trip={trip} onUpdate={handleUpdateTrip} />
+            <TripSmartDetails 
+              trip={trip} 
+              onUpdate={handleUpdateTrip} 
+              onOpenTracker={onOpenTracker}
+            />
 
             <div className="doc-card glass mt-15">
               <div className="dc-header"><MapPin size={18} /> <strong>Genel Notlar</strong></div>
@@ -406,7 +441,7 @@ function TripDetailContent({ trip }) {
   );
 }
 
-function TripSmartDetails({ trip, onUpdate }) {
+function TripSmartDetails({ trip, onUpdate, onOpenTracker }) {
   const [editingSection, setEditingSection] = useState(null); // 'dep', 'ret', 'acc'
   
   // Local state for forms
@@ -433,7 +468,7 @@ function TripSmartDetails({ trip, onUpdate }) {
 
   const openFlightRadar = (no) => {
     if (!no) return toast.error('Uçuş numarası gerekli');
-    window.open(`https://www.flightradar24.com/data/flights/${no.replace(/\s+/g, '')}`, '_blank');
+    onOpenTracker(no);
   };
 
   const openMaps = (query) => {
@@ -474,17 +509,19 @@ function TripSmartDetails({ trip, onUpdate }) {
               </div>
             ) : (
               <div className="sc-view">
-                <strong>{depForm.flightNo || '---'}</strong>
+                <div className="sc-row-main">
+                  <strong>{depForm.flightNo || '---'}</strong>
+                  {depForm.flightNo && (
+                    <button className="sc-live-badge" onClick={() => openFlightRadar(depForm.flightNo)}>
+                      <span className="live-dot"></span> CANLI
+                    </button>
+                  )}
+                </div>
                 <small>{depForm.time || 'Saat belirtilmedi'}</small>
                 {depForm.pnr && <div className="pnr-mini">PNR: {depForm.pnr}</div>}
               </div>
             )}
           </div>
-          {editingSection !== 'dep' && depForm.flightNo && (
-            <button className="sc-mini-action" onClick={() => openFlightRadar(depForm.flightNo)}>
-              <ExternalLink size={10} /> Takip
-            </button>
-          )}
         </div>
 
         {/* Return Flight */}
@@ -507,17 +544,19 @@ function TripSmartDetails({ trip, onUpdate }) {
               </div>
             ) : (
               <div className="sc-view">
-                <strong>{retForm.flightNo || '---'}</strong>
+                <div className="sc-row-main">
+                  <strong>{retForm.flightNo || '---'}</strong>
+                  {retForm.flightNo && (
+                    <button className="sc-live-badge" onClick={() => openFlightRadar(retForm.flightNo)}>
+                      <span className="live-dot"></span> CANLI
+                    </button>
+                  )}
+                </div>
                 <small>{retForm.time || 'Saat belirtilmedi'}</small>
                 {retForm.pnr && <div className="pnr-mini">PNR: {retForm.pnr}</div>}
               </div>
             )}
           </div>
-          {editingSection !== 'ret' && retForm.flightNo && (
-            <button className="sc-mini-action" onClick={() => openFlightRadar(retForm.flightNo)}>
-              <ExternalLink size={10} /> Takip
-            </button>
-          )}
         </div>
 
         {/* Accommodation */}
