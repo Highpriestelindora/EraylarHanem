@@ -1,0 +1,82 @@
+.generic-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+.generic-header h2 {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.generic-header p {
+  color: var(--txt-light);
+  font-size: 14px;
+}
+
+.generic-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Hedefler Theme */
+.hedefler-theme .generic-header h2 { color: #8B5CF6; }
+.hedefler-theme .empty-icon { color: #EDE9FE; }
+.hedefler-theme .btn-action {
+  background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+/* Ev Theme */
+.ev-theme .generic-header h2 { color: #F59E0B; }
+.ev-theme .empty-icon { color: #FEF3C7; }
+.ev-theme .btn-action {
+  background: linear-gradient(135deg, #F59E0B, #D97706);
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+/* Pet Theme */
+.pet-theme .generic-header h2 { color: #06B6D4; }
+.pet-theme .empty-icon { color: #CFFAFE; }
+.pet-theme .btn-action {
+  background: linear-gradient(135deg, #06B6D4, #0891B2);
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.3);
+}
+
+/* Aracim Theme */
+.aracim-theme .generic-header h2 { color: #64748B; }
+.aracim-theme .empty-icon { color: #F1F5F9; }
+.aracim-theme .btn-action {
+  background: linear-gradient(135deg, #64748B, #475569);
+  box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+}
+
+/* Tatil Theme */
+.tatil-theme .generic-header h2 { color: #EC4899; }
+.tatil-theme .empty-icon { color: #FCE7F3; }
+.tatil-theme .btn-action {
+  background: linear-gradient(135deg, #EC4899, #DB2777);
+  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+}
+
+.btn-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.btn-action:active {
+  transform: scale(0.97);
+}

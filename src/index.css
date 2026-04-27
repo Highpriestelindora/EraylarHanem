@@ -1,0 +1,541 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  /* Core Purple Palette - Updated to Lighter/Softer Shades */
+  --bg: #FDFBFF; 
+  --card: #ffffff;
+  --primary: #C084FC; /* Brighter, softer purple */
+  --primary-dark: #A855F7;
+  --primary-light: #F5F3FF;
+  
+  /* Module Colors (Matching Dashboard Gradients) */
+  --mutfak: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+
+  --social: linear-gradient(135deg, #c51c6c 0%, #de3b8a 100%);
+  --alisveris: linear-gradient(135deg, #f18f2d 0%, #f7ab5a 100%);
+  --tatil: linear-gradient(135deg, #1b86c2 0%, #3da1de 100%);
+  --pet: linear-gradient(135deg, #e8731b 0%, #f59342 100%);
+  --saglik: linear-gradient(135deg, #1b9e7c 0%, #2ac29c 100%);
+  --ev: linear-gradient(135deg, #7c3da1 0%, #9d5bc7 100%);
+  --aracim: linear-gradient(135deg, #52606d 0%, #6c7b89 100%);
+  --kasa: linear-gradient(135deg, #2d3a4b 0%, #424f60 100%);
+  --finans: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+  --hedefler: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  
+  /* Typography */
+  --txt: #2E1065; /* Rich purple-black */
+  --txt-light: #7E61AF;
+  --brd: #F3E8FF;
+  --danger: #ef4444;
+
+  /* Spacing & Radii */
+  --r: 28px;
+}
+
+[data-theme='dark'] {
+  --bg: #0F172A;
+  --card: #1E293B;
+  --txt: #F8FAFC;
+  --txt-light: #94A3B8;
+  --brd: #334155;
+  --primary: #A78BFA;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100% !important;
+  height: -webkit-fill-available !important;
+  background-color: #2E1065 !important; /* Restore purple bg */
+  color: var(--txt);
+  font-family: 'Outfit', sans-serif;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh !important;
+  display: flex;
+  flex-direction: column;
+  background-color: #2E1065 !important;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Universal Responsive Sanitizer */
+* {
+  box-sizing: border-box !important;
+  max-width: 100vw;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text from expanding containers */
+span, p, h1, h2, h3, h4, h5, h6, label, div {
+  overflow-wrap: break-word !important;
+  word-wrap: break-word !important;
+  min-width: 0;
+}
+
+h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 800; }
+
+/* Premium Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+[data-theme='dark'] .glass {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Utilities */
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+.floating {
+  animation: float 3s ease-in-out infinite;
+}
+
+.cute-card {
+  background: var(--card);
+  border-radius: var(--r);
+  border: 1px solid var(--brd);
+  padding: 16px;
+  box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.1);
+  transition: transform 0.2s;
+}
+
+.cute-card:active {
+  transform: scale(0.98);
+}
+
+/* Global Modal System */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(12px);
+  z-index: 999999 !important; /* Extreme priority */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Fallback for older iOS versions that don't support :has() */
+.modal-overlay ~ .floating-hub-container,
+.modal-overlay ~ .app-header {
+  display: none !important;
+}
+
+/* Primary selector for modern iOS */
+body:has(.modal-overlay) .floating-hub-container,
+body:has(.modal-overlay) .app-header {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -1 !important;
+}
+
+body:has(.modal-overlay) .app-content {
+  z-index: 99999 !important;
+  position: relative;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 450px;
+  background: var(--card);
+  border-radius: 32px;
+  padding: 24px;
+  padding-bottom: 30px; 
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Immersive Overlay System - New! */
+.immersive-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--primary);
+  z-index: 2000000 !important;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.immersive-header {
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 20px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border-bottom: 1px solid var(--brd);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.immersive-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure wizards and detailed modals also stay on top */
+.full-page-detail, .wizard-content {
+  z-index: 5100 !important;
+}
+
+/* Animation utilities */
+.animate-pop {
+  animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Global Header Actions */
+.header-actions {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  z-index: 10;
+}
+
+.add-btn-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.add-btn-circle.white {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.add-btn-circle:active {
+  transform: scale(0.9);
+}
+
+/* --- Premium Module Header (Mutfak Style) --- */
+.module-header {
+  padding: calc(env(safe-area-inset-top) + 6px) 16px 6px;
+  border-radius: 0 0 16px 16px;
+  color: white;
+  flex-shrink: 0;
+  margin-bottom: 2px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-title h1 {
+  font-size: 16px;
+  color: white;
+  margin: 0;
+  line-height: 1;
+}
+
+.header-title p {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 2px 0 0;
+  font-weight: 700;
+}
+
+.header-emoji {
+  font-size: 20px;
+}
+
+.tab-nav {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  padding: 3px;
+  background: white;
+  border-radius: 16px;
+  margin-top: 4px;
+  scrollbar-width: none;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+.tab-nav::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 3px 6px;
+  border-radius: 10px;
+  color: var(--txt-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 9px;
+  white-space: nowrap;
+  position: relative;
+  transition: all 0.3s;
+  cursor: pointer;
+  justify-content: center;
+}
+
+.tab-btn.active {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.tab-btn.active span {
+  animation: sweet-bounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tab-dot {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
+.icon-btn.white {
+  background: white;
+  color: var(--txt);
+}
+
+@keyframes sweet-bounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1.1); }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+/* --- Unified Form System --- */
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.form-group label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--txt-light);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-left: 4px;
+  white-space: normal;
+  line-height: 1.4;
+  display: block;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea,
+.premium-input {
+  width: 100%;
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--brd);
+  background: #FFFFFF;
+  color: var(--txt);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  outline: none;
+  display: block;
+  box-sizing: border-box;
+}
+
+/* Form and Root Utilities Cleaned Up */
+
+/* Safari/iOS Input Fixes */
+input[type="date"], 
+input[type="time"] {
+  min-height: 48px;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.form-group input:focus, 
+.form-group select:focus, 
+.form-group textarea:focus {
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  align-items: start;
+}
+
+.form-row > .form-group {
+  flex: 1;
+  min-width: 140px;
+}
+
+
+
+.submit-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 18px;
+  border: none;
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  box-shadow: 0 10px 20px -10px rgba(0,0,0,0.2);
+}
+
+.submit-btn:active {
+  transform: scale(0.96);
+}
+
+/* PERMANENT RESPONSIVE SOLUTION - DO NOT MOVE */
+@media only screen and (max-width: 768px) {
+  .form-row, .modal-form .form-row {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    width: 100% !important;
+    gap: 16px !important;
+  }
+  
+  .form-row > .form-group, .modal-form .form-row > .form-group {
+    width: 100% !important;
+    flex: none !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  input, select, textarea, button {
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    max-width: 100% !important;
+  }
+}
+
+/* Global Kill-Switch for Horizontal Scrolling */
+/* Horizontal Scroll Kill-Switch */
+
+#root, .app-container, .ActionSheet, [class*="modal"], .modal-form {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+}
+
+/* Long text protection in cards */
+.glass, .card, .setting-item {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+/* Fix ActionSheet and Modal backgrounds */
+.action-sheet-content, .ActionSheet, .modal-content {
+  background: white !important;
+}
+
