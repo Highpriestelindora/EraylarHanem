@@ -1,0 +1,210 @@
+{
+  "main": {
+    "id": "108558bf0433b91f",
+    "type": "split",
+    "children": [
+      {
+        "id": "61ebcc013c52189c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a384c4c01bf5a558",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "entities/tatil.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "tatil"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "099872477574d66d",
+    "type": "split",
+    "children": [
+      {
+        "id": "c6c04376f89a825b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "bef1cec0b6ec14e1",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Dosya Gezgini"
+            }
+          },
+          {
+            "id": "4daa21c990890063",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Ara"
+            }
+          },
+          {
+            "id": "bdab252d49b083d3",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Yer İmleri"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "c8db321185b63297",
+    "type": "split",
+    "children": [
+      {
+        "id": "af845b24654e411f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "faa7c2c97b1a5791",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "entities/tatil.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "tatil için geri bağlantılar"
+            }
+          },
+          {
+            "id": "38d86094a8d92847",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "entities/tatil.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "tatil'dan giden bağlantılar"
+            }
+          },
+          {
+            "id": "fb79648f037d99cd",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiketler"
+            }
+          },
+          {
+            "id": "c24bbc5f5d3d1ad1",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Tüm özellikler"
+            }
+          },
+          {
+            "id": "491f111ce2f0f571",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "entities/tatil.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "tatil ana hatları"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Hızlı geçişi aç": false,
+      "graph:Grafik görünümünü aç": false,
+      "canvas:Yeni tuval oluşturun": false,
+      "daily-notes:Bugünün Notunu Aç": false,
+      "templates:Şablon ekle": false,
+      "command-palette:Komut paletini aç": false,
+      "bases:Yeni taban oluştur": false
+    }
+  },
+  "active": "a384c4c01bf5a558",
+  "lastOpenFiles": [
+    "index.md",
+    "decisions/ios_oncelikli_test.md",
+    "entities/ev_ve_yasam.md",
+    "entities/finans_ve_kasa.md",
+    "entities/pet.md",
+    "sources/codebase.md",
+    "decisions/tek_tablo_jsonb_depolama.md",
+    "raw/legacy/Ev_ve_Yasam.md",
+    "raw/legacy/Index.md",
+    "entities/mutfak_modulu.md",
+    "concepts/merkezi_state_yonetimi.md",
+    "log.md",
+    "concepts/senkronizasyon_stratejisi.md",
+    "entities/tatil.md",
+    "entities/aracim.md",
+    "entities/sosyal_ve_etkinlikler.md",
+    "entities/saglik.md",
+    "raw/legacy/Aracim_ve_Ulasim.md",
+    "decisions/stok_bazli_tarif_gosterimi.md",
+    "sources/legacy_docs.md",
+    "concepts/ios_oncelikli_tasarim.md"
+  ]
+}

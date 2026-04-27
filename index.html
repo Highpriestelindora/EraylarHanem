@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="icon-192.png?v=1" />
+    <link rel="shortcut icon" href="apple-touch-icon.png?v=1" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png?v=1" />
+    <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png?v=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Eraylar" />
+    <meta name="theme-color" content="#FDFBFF" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Eraylar Hanem</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="error-display" style="display:none;position:fixed;inset:0;z-index:99999;background:#1a1a2e;color:#e94560;padding:20px;font-family:monospace;font-size:13px;overflow:auto;white-space:pre-wrap;word-break:break-all;">
+      <h2 style="color:#e94560;margin-bottom:10px;">🚨 HATA YAKALANDI</h2>
+      <div id="error-text"></div>
+    </div>
+    <script>
+      // Debug: Catch ALL errors and show on screen
+      var errBox = document.getElementById('error-display');
+      var errText = document.getElementById('error-text');
+      var errors = [];
+      function showErr(msg) {
+        var time = new Date().toLocaleTimeString();
+        errors.push('[' + time + '] ' + msg);
+        errBox.style.display = 'block';
+        errText.textContent = errors.join('\n\n---\n\n');
+      }
+      window.onerror = function(msg, src, line, col, err) {
+        showErr('ERROR: ' + msg + '\nFile: ' + src + '\nLine: ' + line + ':' + col + '\nStack: ' + (err && err.stack ? err.stack : 'N/A'));
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        showErr('PROMISE ERROR: ' + (e.reason ? (e.reason.message || e.reason) : 'Unknown') + '\nStack: ' + (e.reason && e.reason.stack ? e.reason.stack : 'N/A'));
+      });
+      // Show a loading indicator to confirm JS is running
+      document.getElementById('root').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-size:18px;font-family:sans-serif;color:#888;">⏳ Yükleniyor...</div>';
+    </script>
+    <div id="root-portal"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
