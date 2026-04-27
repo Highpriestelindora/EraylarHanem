@@ -65,6 +65,17 @@
   background: white;
   box-shadow: 0 4px 20px rgba(0,0,0,0.05);
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.km-widget-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  border-color: #e2e8f0;
+}
+
+.km-widget-premium:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .kmw-main { display: flex; align-items: center; gap: 20px; }
@@ -110,29 +121,64 @@
 .arac-quick-actions {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
+  margin-top: 24px;
 }
 
 .aq-card {
-  padding: 16px;
-  border-radius: 20px;
+  padding: 16px 12px;
+  border-radius: 24px;
   border: 1px solid var(--brd);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   background: white;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.aq-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
-.aq-icon.fuel { background: #fef2f2; color: #f87171; }
-.aq-icon.clean { background: #eff6ff; color: #3b82f6; }
-.aq-icon.park { background: #f0fdf4; color: #10b981; }
+.aq-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.1);
+}
 
-.aq-card span { font-size: 12px; font-weight: 800; color: var(--txt); }
+.aq-card:active {
+  transform: translateY(-1px) scale(0.96);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.aq-icon { 
+  width: 52px; 
+  height: 52px; 
+  border-radius: 18px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  transition: all 0.3s ease;
+}
+
+.aq-icon.fuel { background: #fff1f2; color: #f43f5e; box-shadow: 0 4px 10px rgba(244, 63, 94, 0.1); }
+.aq-icon.clean { background: #f0f9ff; color: #0ea5e9; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.1); }
+.aq-icon.park { background: #f0fdf4; color: #10b981; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.1); }
+
+.aq-card:hover .aq-icon {
+  transform: scale(1.1);
+}
+
+.aq-card span { 
+  font-size: 13px; 
+  font-weight: 800; 
+  color: var(--txt);
+  letter-spacing: -0.2px;
+}
 
 /* Emergency Support */
 .emergency-support {
+  margin-top: 48px;
   padding: 16px;
   border-radius: 20px;
   border: 1px solid #fecaca;

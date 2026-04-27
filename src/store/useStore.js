@@ -474,10 +474,60 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      checkSystemNotifications: () => {
+        const state = get();
+        if (!state.currentUser) return;
+
+        const now = new Date();
+        const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+
+        // 1. Araç Belgeleri Kontrolü
+        state.garaj.forEach(v => {
+          v.documents?.forEach(doc => {
+            if (!doc.dueDate) return;
+            const diff = new Date(doc.dueDate) - now;
+            if (diff > 0 && diff < thirtyDays) {
+              const days = Math.round(diff / (24 * 60 * 60 * 1000));
+              notificationService.send(
+                '🚗 Belge Hatırlatıcı',
+                `${v.model} - ${doc.name} bitimine ${days} gün kaldı!`
+              );
+            }
+          });
+        });
+
+        // 2. Pet Aşı Kontrolü
+        if (state.pet?.pets) {
+          state.pet.pets.forEach(p => {
+            const vaccines = state.pet.vaccines?.[p.id] || [];
+            vaccines.forEach(v => {
+              const diff = new Date(v.date) - now;
+              if (diff > 0 && diff < sevenDays) {
+                notificationService.send('🐾 Pet Aşı Uyarısı', `${p.name} için ${v.type} aşısı yaklaşıyor!`);
+              }
+            });
+          });
+        }
+
+        // 3. Ev Bakım Kontrolü
+        if (state.ev?.bakim) {
+          state.ev.bakim.forEach(b => {
+            const diff = new Date(b.nextDate) - now;
+            if (diff > 0 && diff < sevenDays) {
+              notificationService.send('🏠 Ev Bakımı', `${b.title} zamanı yaklaşıyor!`);
+            }
+          });
+        }
+      },
+
       initSync: async () => {
         await get().loadFromSupabase();
         get().subscribeToSupabase();
         
+        // Veri yüklendikten sonra bildirimleri kontrol et
+        setTimeout(() => get().checkSystemNotifications(), 2000);
+
         // Final fallback: if still empty after sync, restore defaults
         const current = get();
         if (!current.mutfak.tarifler || current.mutfak.tarifler.length === 0) {
@@ -2018,14 +2068,17 @@ const useStore = create(
         }
 
         const kmVal = Number(newKM);
-        if (isNaN(kmVal)) return;
+        if (isNaN(kmVal)) {
+          toast.error("Geçersiz kilometre değeri.");
+          return;
+        }
 
         const updatedGaraj = currentGaraj.map(v => 
           String(v.id) === String(targetId) ? { ...v, km: kmVal } : v
         );
         
         set({ garaj: updatedGaraj });
-        get().addLog('KM Güncelleme', `${targetId} ID'li araç kilometresi ${kmVal} olarak güncellendi.`);
+        get().addLog('Garaj', `Kilometre güncellendi: ${kmVal} KM`);
         get().saveToSupabase();
       },
 
@@ -2038,17 +2091,25 @@ const useStore = create(
         let consumption = 0;
         if (lastLog) {
           const kmDiff = log.km - lastLog.km;
-          consumption = (log.amount / kmDiff) * 100;
+          if (kmDiff > 0) {
+            consumption = (log.amount / kmDiff) * 100;
+          }
         }
 
         const newLog = { 
           id: Date.now(), 
-          consumption: consumption.toFixed(1),
+          consumption: consumption > 0 ? consumption.toFixed(1) : "0.0",
           ...log 
         };
 
         const updatedGaraj = state.garaj.map(v => 
-          v.id === state.selectedVehicleId ? { ...v, fuelLogs: [newLog, ...v.fuelLogs].slice(0, 50) } : v
+          v.id === state.selectedVehicleId 
+            ? { 
+                ...v, 
+                km: Math.max(v.km, Number(log.km)), 
+                fuelLogs: [newLog, ...v.fuelLogs].slice(0, 50) 
+              } 
+            : v
         );
 
         set({ garaj: updatedGaraj });
@@ -2070,7 +2131,13 @@ const useStore = create(
 
         const newRecord = { id: Date.now(), ...record };
         const updatedGaraj = state.garaj.map(v => 
-          v.id === state.selectedVehicleId ? { ...v, services: [newRecord, ...v.services] } : v
+          v.id === state.selectedVehicleId 
+            ? { 
+                ...v, 
+                km: Math.max(v.km, Number(record.km)), 
+                services: [newRecord, ...v.services] 
+              } 
+            : v
         );
 
         set({ garaj: updatedGaraj });
@@ -2107,7 +2174,7 @@ const useStore = create(
 
       updateVehicle: (id, updates) => {
         const state = get();
-        const updatedGaraj = state.garaj.map(v => v.id === id ? { ...v, ...updates } : v);
+        const updatedGaraj = state.garaj.map(v => String(v.id) === String(id) ? { ...v, ...updates } : v);
         set({ garaj: updatedGaraj });
         get().saveToSupabase();
       },
@@ -2399,9 +2466,12 @@ const useStore = create(
         // Weighted logic: 30% Finance, 20% Health, 20% Home, 20% Goals, 10% Vehicle
         let score = 70; // Baseline
         
+        const vehicle = state.garaj?.[0];
+        const km = vehicle?.km || 0;
+        if (km > 0) score += 5;
+        
         const goals = state.hedefler?.goals || [];
         const faturalar = state.ev?.faturalar || [];
-        const km = state.aracim?.km || 0;
 
         if (goals.length > 0) score += 5;
         if (faturalar.length > 0 && faturalar.every(f => f.status === 'Ödendi')) score += 10;

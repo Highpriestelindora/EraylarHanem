@@ -56,12 +56,25 @@ export default function Aracim() {
     lastCleaned, parkLocation, tireStatus 
   } = vehicle || { km: 0, parts: [], fuelLogs: [], services: [], documents: [] };
 
-  // AI Insights
+  // AI Insights - Dolmuşçu Manileri Edition
   const aiNote = useMemo(() => {
-    const lastFuel = fuelLogs[0];
-    if (lastFuel?.consumption > 8.5) return `Son yakıt alımında tüketim normalin biraz üzerinde. Şehir içi trafik mi? 🤔`;
-    return `${vehicle.model} formunda! Yakıt verimliliği harika seviyelerde. 🌟`;
-  }, [fuelLogs, vehicle.model]);
+    const maniler = [
+      "Aşıksan vur saza, şoförsen bas gaza! {model} yollara hazır. 🏎️",
+      "Rampaların ustasıyım, {model}'ın hastasıyım! 🌟",
+      "Sollama beni, sollarım seni; {model} affetmez! 🔥",
+      "Kuzu kurdun, yollar {model}'ın! Maşallah. 🧿",
+      "Dualarımızla yaşıyor, mazotuyla koşuyor! ⛽",
+      "Gaz, fren, şanzıman; {model} ile halimiz duman! 💨",
+      "Miras değil, alın teri! {model} tıkır tıkır işliyor. 💪",
+      "Dünya bir pencere, {model} ile her gün başka bir manzara. 🛣️",
+      "Gönlünde yer yoksa güzelim, fark etmez ben ayakta da giderim! 🚌",
+      "Yaklaşma toz olursun, geçme pişman olursun! 🌪️"
+    ];
+    
+    // Basit bir hash fonksiyonu ile araca özel ama sabit olmayan bir mani seçelim
+    const seed = fuelLogs.length + (km % 10);
+    return maniler[seed % maniler.length].replace('{model}', vehicle.model);
+  }, [fuelLogs, vehicle.model, km]);
 
   const tabs = [
     { id: 'panel', label: 'Panel', emoji: '🏎️' },
@@ -183,7 +196,7 @@ export default function Aracim() {
             </div>
 
             {/* Emergency Support */}
-            <div className="emergency-support mt-24" style={{ padding: '12px' }}>
+            <div className="emergency-support">
               <div className="es-header" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <AlertCircle size={16} color="#b91c1c" />
@@ -329,7 +342,7 @@ export default function Aracim() {
         <KMUpdateModal 
           currentKM={km} 
           onClose={() => setShowUpdateKM(false)} 
-          onSave={updateKM} 
+          onSave={(newKM) => updateVehicle(vehicle.id, { km: newKM })} 
         />
       )}
 
