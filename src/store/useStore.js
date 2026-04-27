@@ -140,7 +140,7 @@ const DEFAULT_STATE = {
   },
   // ── Global System ──────────────────────────────────
   system: {
-    version: '2.29.0',
+    version: '2.29.1',
     globalScore: 85,
     onboardingComplete: false,
     notifications: [],

@@ -113,17 +113,38 @@ const getCountryFlag = (title = '', city = '', country = '') => {
 };
 
 // --- WIKIPEDIA API ENGINE ---
-async function fetchWikiData(title) {
-  if (!title) return null;
+async function fetchWikiData(title, originalTitle) {
+  const searchTitle = title || originalTitle;
+  if (!searchTitle) return null;
+
   try {
-    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
-    if (!res.ok) throw new Error('Wiki fetch failed');
-    const data = await res.json();
-    return {
-      extract: data.extract,
-      image: data.thumbnail?.source,
-      url: data.content_urls?.desktop?.page
-    };
+    // 1. Try Turkish Wikipedia First (for Esra)
+    const trRes = await fetch(`https://tr.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTitle)}`);
+    if (trRes.ok) {
+      const trData = await trRes.json();
+      if (trData.extract && trData.extract.length > 50) {
+        return {
+          extract: trData.extract,
+          image: trData.thumbnail?.source,
+          url: trData.content_urls?.desktop?.page,
+          lang: 'tr'
+        };
+      }
+    }
+
+    // 2. Fallback to English Wikipedia
+    const enRes = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTitle)}`);
+    if (enRes.ok) {
+      const enData = await enRes.json();
+      return {
+        extract: enData.extract,
+        image: enData.thumbnail?.source,
+        url: enData.content_urls?.desktop?.page,
+        lang: 'en'
+      };
+    }
+    
+    return null;
   } catch (e) {
     console.error('Wiki Error:', e);
     return null;
@@ -3030,7 +3051,7 @@ function DiscoveryGuideContent({ item }) {
     let active = true;
     const load = async () => {
       setLoading(true);
-      const data = await fetchWikiData(item.wikiTitle);
+      const data = await fetchWikiData(item.wikiTitle, item.title);
       if (active) {
         setWiki(data);
         setLoading(false);
@@ -3084,7 +3105,10 @@ function DiscoveryGuideContent({ item }) {
 
       {/* About Section */}
       <div className="dg-section">
-        <h4 className="dg-section-title">📖 Hakkında</h4>
+        <h4 className="dg-section-title">
+          📖 Hakkında 
+          {wiki?.lang === 'en' && <span className="dg-lang-badge">EN</span>}
+        </h4>
         <div className={`dg-description ${showFullDesc ? 'full' : ''}`}>
           {loading ? (
             <div className="dg-text-skeleton">
@@ -3093,7 +3117,7 @@ function DiscoveryGuideContent({ item }) {
               <div className="sk-line w-2/3" />
             </div>
           ) : (
-            <p>{wiki?.extract || item.fallbackDesc}</p>
+            <p>{wiki?.extract || item.fallbackDesc || 'Bu lokasyon hakkında henüz detaylı bilgi bulunmuyor.'}</p>
           )}
         </div>
         {!loading && (wiki?.extract || item.fallbackDesc) && (wiki?.extract || item.fallbackDesc).length > 150 && (

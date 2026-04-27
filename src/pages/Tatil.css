@@ -4989,3 +4989,15 @@
   opacity: 1;
 }
 
+
+.dg-lang-badge {
+  font-size: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-left: 6px;
+  border: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
