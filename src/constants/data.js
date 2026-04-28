@@ -3491,7 +3491,7 @@ export const INITIAL_TRIPS = [
     id:'t1',title:'Marsilya',country:'Fransa',city:'Marsilya',startDate:'2023-02-03',endDate:'2023-02-07',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:true,status:'tamamlandi',notes:'İlk yurt dışı gezimiz ❤️',
     accommodation: { hotel: 'New Hotel Le Quai - Vieux Port', address: 'Vieux Port, Marsilya, Fransa' },
     evaluations: { gorkem: { star: 10, note: 'Harikaydı!' }, esra: { star: 10, note: 'Unutulmaz...' } },
-    photos: ['https://images.unsplash.com/photo-1565623063073-41a4a4009761', 'https://images.unsplash.com/photo-1549144511-f099e773c147']
+    photos: ['https://images.unsplash.com/photo-1503917988258-f87a78e3c995', 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b']
   },
   {
     id:'t2',title:'Londra',country:'İngiltere',city:'Londra',startDate:'2024-02-02',endDate:'2024-02-08',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:false,status:'tamamlandi',notes:'',
@@ -3899,45 +3899,279 @@ export const BUCKET_LIST = [
     funFacts: ['Japonya\'nın 1000 yıldan fazla bir süre başkentliğini yapmıştır.', '2000\'den fazla tapınak ve türbeye ev sahipliği yapar.'],
     fallbackDesc: 'Geleneksel Japon kültürünün merkezi, büyüleyici tapınakları ve bahçeleriyle ünlü tarihi şehir.'
   },
-  { id: 12, title: 'Serengeti National Park', country: 'Tanzanya', city: '', duration: '8s', flag: '🇹🇿', category: 'Macera', budget: '€2.500–4.000', season: 'Haziran–Ekim' },
-  { id: 13, title: 'Amazon Rainforest', country: 'Brezilya', city: '', duration: '16s', flag: '🇧🇷', category: 'Doğa', budget: '€2.500–4.000', season: 'Temmuz–Kasım' },
-  { id: 14, title: 'Venice', country: 'İtalya', city: '', duration: '2s', flag: '🇮🇹', category: 'Romantik', budget: '€800–1.400', season: 'Nisan–Haziran' },
-  { id: 15, title: 'Mount Fuji', country: 'Japonya', city: '', duration: '11s', flag: '🇯🇵', category: 'Doğa', budget: '€2.000–3.000', season: 'Temmuz–Eylül' },
-  { id: 16, title: 'Cape Town', country: 'Güney Afrika', city: '', duration: '11s', flag: '🇿🇦', category: 'Şehir', budget: '€2.000–3.500', season: 'Kasım–Mart' },
-  { id: 17, title: 'Angkor Wat', country: 'Kamboçya', city: '', duration: '10s', flag: '🇰🇭', category: 'Tarih', budget: '€1.500–2.500', season: 'Kasım–Şubat' },
-  { id: 18, title: 'Dubai', country: 'BAE', city: '', duration: '4.5s', flag: '🇦🇪', category: 'Macera', budget: '€1.000–2.000', season: 'Kasım–Mart' },
-  { id: 19, title: 'Niagara Falls', country: 'Kanada', city: '', duration: '10s', flag: '🇨🇦', category: 'Doğa', budget: '€2.000–3.000', season: 'Mayıs–Eylül' },
-  { id: 20, title: 'Rome', country: 'İtalya', city: '', duration: '2.5s', flag: '🇮🇹', category: 'Tarih', budget: '€900–1.500', season: 'Nisan–Haziran' },
-  { id: 21, title: 'Barcelona', country: 'İspanya', city: '', duration: '3.5s', flag: '🇪🇸', category: 'Kültür', budget: '€900–1.500', season: 'Mayıs–Haziran' },
-  { id: 22, title: 'London', country: 'İngiltere', city: '', duration: '4s', flag: '🇬🇧', category: 'Şehir', budget: '€1.000–1.800', season: 'Mayıs–Eylül' },
-  { id: 23, title: 'Amsterdam', country: 'Hollanda', city: '', duration: '3.5s', flag: '🇳🇱', category: 'Şehir', budget: '€900–1.600', season: 'Nisan–Haziran' },
-  { id: 24, title: 'Prague', country: 'Çekya', city: '', duration: '2.5s', flag: '🇨🇿', category: 'Şehir', budget: '€700–1.200', season: 'Nisan–Haziran' },
-  { id: 25, title: 'Vienna', country: 'Avusturya', city: '', duration: '2.5s', flag: '🇦🇹', category: 'Kültür', budget: '€800–1.400', season: 'Nisan–Haziran' },
-  { id: 26, title: 'Budapest', country: 'Macaristan', city: '', duration: '2s', flag: '🇭🇺', category: 'Keyif', budget: '€600–1.100', season: 'Mart–Mayıs' },
-  { id: 27, title: 'Athens', country: 'Yunanistan', city: '', duration: '1.5s', flag: '🇬🇷', category: 'Tarih', budget: '€600–1.100', season: 'Nisan–Haziran' },
-  { id: 28, title: 'Cairo', country: 'Mısır', city: '', duration: '2s', flag: '🇪🇬', category: 'Tarih', budget: '€700–1.200', season: 'Ekim–Mart' },
-  { id: 29, title: 'Pyramids of Giza', country: 'Mısır', city: '', duration: '2s', flag: '🇪🇬', category: 'Tarih', budget: '€700–1.200', season: 'Ekim–Mart' },
-  { id: 30, title: 'Moscow', country: 'Rusya', city: '', duration: '3s', flag: '🇷🇺', category: 'Şehir', budget: '€900–1.500', season: 'Mayıs–Eylül' },
-  { id: 31, title: 'Bangkok', country: 'Tayland', city: '', duration: '9s', flag: '🇹🇭', category: 'Kültür', budget: '€1.200–2.000', season: 'Kasım–Mart' },
-  { id: 32, title: 'Singapore', country: 'Singapur', city: '', duration: '11s', flag: '🇸🇬', category: 'Şehir', budget: '€1.800–3.000', season: 'Şubat–Nisan' },
-  { id: 33, title: 'Hong Kong', country: 'Hong Kong', city: '', duration: '10s', flag: '🇭🇰', category: 'Şehir', budget: '€1.800–3.000', season: 'Ekim–Aralık' },
-  { id: 34, title: 'Seoul', country: 'Güney Kore', city: '', duration: '10s', flag: '🇰🇷', category: 'Kültür', budget: '€1.800–2.800', season: 'Nisan–Haziran' },
-  { id: 35, title: 'Tokyo', country: 'Japonya', city: '', duration: '11s', flag: '🇯🇵', category: 'Şehir', budget: '€2.000–3.200', season: 'Mart–Nisan' },
-  { id: 36, title: 'Los Angeles', country: 'ABD', city: '', duration: '13s', flag: '🇺🇸', category: 'Şehir', budget: '€2.500–3.500', season: 'Nisan–Haziran' },
-  { id: 37, title: 'San Francisco', country: 'ABD', city: '', duration: '13s', flag: '🇺🇸', category: 'Şehir', budget: '€2.500–3.500', season: 'Eylül–Kasım' },
-  { id: 38, title: 'Las Vegas', country: 'ABD', city: '', duration: '13s', flag: '🇺🇸', category: 'Keyif', budget: '€2.000–3.000', season: 'Mart–Mayıs' },
-  { id: 39, title: 'Miami', country: 'ABD', city: '', duration: '12s', flag: '🇺🇸', category: 'Keyif', budget: '€2.000–3.000', season: 'Kasım–Nisan' },
-  { id: 40, title: 'Chicago', country: 'ABD', city: '', duration: '11s', flag: '🇺🇸', category: 'Şehir', budget: '€2.000–3.000', season: 'Mayıs–Eylül' },
-  { id: 41, title: 'Sydney', country: 'Avustralya', city: '', duration: '20s', flag: '🇦🇺', category: 'Şehir', budget: '€3.500–5.000', season: 'Eylül–Kasım' },
-  { id: 42, title: 'Melbourne', country: 'Avustralya', city: '', duration: '20s', flag: '🇦🇺', category: 'Kültür', budget: '€3.500–5.000', season: 'Mart–Mayıs' },
-  { id: 43, title: 'Auckland', country: 'Yeni Zelanda', city: '', duration: '22s', flag: '🇳🇿', category: 'Doğa', budget: '€4.000–6.000', season: 'Kasım–Mart' },
-  { id: 44, title: 'Rio de Janeiro', country: 'Brezilya', city: '', duration: '15s', flag: '🇧🇷', category: 'Kültür', budget: '€2.500–3.500', season: 'Aralık–Mart' },
-  { id: 45, title: 'Buenos Aires', country: 'Arjantin', city: '', duration: '17s', flag: '🇦🇷', category: 'Kültür', budget: '€2.500–3.500', season: 'Ekim–Aralık' },
-  { id: 46, title: 'Reykjavik', country: 'İzlanda', city: '', duration: '5s', flag: '🇮🇸', category: 'Doğa', budget: '€1.500–2.500', season: 'Haziran–Ağustos' },
-  { id: 47, title: 'Oslo', country: 'Norveç', city: '', duration: '4s', flag: '🇳🇴', category: 'Doğa', budget: '€1.200–2.000', season: 'Mayıs–Ağustos' },
-  { id: 48, title: 'Stockholm', country: 'İsveç', city: '', duration: '4s', flag: '🇸🇪', category: 'Şehir', budget: '€1.200–2.000', season: 'Mayıs–Ağustos' },
-  { id: 49, title: 'Helsinki', country: 'Finlandiya', city: '', duration: '3.5s', flag: '🇫🇮', category: 'Şehir', budget: '€1.200–2.000', season: 'Haziran–Ağustos' },
-  { id: 50, title: 'Zurich', country: 'İsviçre', city: '', duration: '3s', flag: '🇨🇭', category: 'Doğa', budget: '€1.200–2.000', season: 'Haziran–Eylül' }
+  { 
+    id: 12, title: 'Serengeti National Park', country: 'Tanzanya', city: 'Arusha', duration: '8s', flag: '🇹🇿', category: 'Macera', budget: '€2.500–4.000', season: 'Haziran–Ekim',
+    wikiTitle: 'Serengeti_National_Park',
+    highlights: ['Büyük Göçü İzle', 'Sıcak Hava Balonu Safarisi', 'Beş Büyük Av Hayvanını Gör'],
+    funFacts: ['Dünyanın en büyük kara memelisi göçüne ev sahipliği yapar.', '"Serengeti" kelimesi Masay dilinde "sonsuz düzlükler" anlamına gelir.'],
+    fallbackDesc: 'Afrika\'nın en ünlü vahşi yaşam koruma alanı, muazzam düzlükleri ve Büyük Göç ile biliniyor.'
+  },
+  { 
+    id: 13, title: 'Amazon Rainforest', country: 'Brezilya', city: 'Manaus', duration: '16s', flag: '🇧🇷', category: 'Doğa', budget: '€2.500–4.000', season: 'Temmuz–Kasım',
+    wikiTitle: 'Amazon_rainforest',
+    highlights: ['Kano ile Nehir Turu', 'Gece Orman Yürüyüşü', 'Yerli Kabile Ziyareti'],
+    funFacts: ['Dünyadaki oksijenin %20\'sini üretir, "Dünyanın Akciğerleri" olarak bilinir.', 'İçinde hala keşfedilmemiş binlerce tür barındırır.'],
+    fallbackDesc: 'Dünyanın en büyük tropikal yağmur ormanı, biyolojik çeşitliliğin zirve noktası.'
+  },
+  { 
+    id: 14, title: 'Venice', country: 'İtalya', city: 'Venedik', duration: '2s', flag: '🇮🇹', category: 'Romantik', budget: '€800–1.400', season: 'Nisan–Haziran',
+    wikiTitle: 'Venice',
+    highlights: ['Gondol Turu', 'Aziz Mark Meydanı', 'Rialto Köprüsü'],
+    funFacts: ['118 küçük ada üzerine kurulmuştur ve 400\'den fazla köprüsü vardır.', 'Şehirde hiç otomobil bulunmaz, ulaşım tamamen su yoluyladır.'],
+    fallbackDesc: 'Kanallar şehri Venedik, eşsiz mimarisi ve romantik atmosferiyle zamansız bir destinasyon.'
+  },
+  { 
+    id: 15, title: 'Mount Fuji', country: 'Japonya', city: 'Shizuoka', duration: '11s', flag: '🇯🇵', category: 'Doğa', budget: '€2.000–3.000', season: 'Temmuz–Eylül',
+    wikiTitle: 'Mount_Fuji',
+    highlights: ['Zirve Tırmanışı', 'Kawaguchi Gölü Manzarası', 'Arakurayama Sengen Parkı'],
+    funFacts: ['Japonya\'nın en yüksek dağıdır ve hala aktif bir yanardağdır.', 'Sanatçılar ve şairler için yüzyıllardır kutsal bir ilham kaynağıdır.'],
+    fallbackDesc: 'Japonya\'nın simgesi, mükemmel konik yapısıyla ünlü kutsal dağ Fuji.'
+  },
+  { 
+    id: 16, title: 'Cape Town', country: 'Güney Afrika', city: 'Cape Town', duration: '11s', flag: '🇿🇦', category: 'Şehir', budget: '€2.000–3.500', season: 'Kasım–Mart',
+    wikiTitle: 'Cape_Town',
+    highlights: ['Masa Dağı Teleferik', 'Boulders Plajı Penguenleri', 'Ümit Burnu Gezisi'],
+    funFacts: ['Aynı anda iki farklı okyanusu (Atlantik ve Hint) görebileceğiniz nadir yerlerden biridir.', 'Dünyanın en eski botanik bahçelerinden biri olan Kirstenbosch buradadır.'],
+    fallbackDesc: 'Okyanus ile dağların buluştuğu, kültürel çeşitliliği ve doğal güzellikleriyle büyüleyen şehir.'
+  },
+  { 
+    id: 17, title: 'Angkor Wat', country: 'Kamboçya', city: 'Siem Reap', duration: '10s', flag: '🇰🇭', category: 'Tarih', budget: '€1.500–2.500', season: 'Kasım–Şubat',
+    wikiTitle: 'Angkor_Wat',
+    highlights: ['Gündoğumu Tapınak Turu', 'Bayon Tapınağı Yüzleri', 'Ta Prohm Orman Tapınağı'],
+    funFacts: ['Dünyanın en büyük dini anıtıdır.', 'Başlangıçta Hindu tapınağı olarak inşa edilmiş, sonra Budist tapınağına dönüşmüştür.'],
+    fallbackDesc: 'Kmer İmparatorluğu\'nun görkemli mirası, dünyanın en büyük antik tapınak kompleksi.'
+  },
+  { 
+    id: 18, title: 'Dubai', country: 'BAE', city: 'Dubai', duration: '4.5s', flag: '🇦🇪', category: 'Macera', budget: '€1.000–2.000', season: 'Kasım–Mart',
+    wikiTitle: 'Dubai',
+    highlights: ['Burj Khalifa Seyir Terası', 'Çöl Safarisi', 'Dubai Mall & Çeşme Gösterisi'],
+    funFacts: ['Dünyanın en yüksek binası olan Burj Khalifa\'ya ev sahipliği yapar.', 'Şehirde polisler süper arabalar (Lamborghini, Ferrari) kullanır.'],
+    fallbackDesc: 'Modern mimarinin sınırlarını zorlayan, lüks ve maceranın buluştuğu çöl metropolü.'
+  },
+  { 
+    id: 19, title: 'Niagara Falls', country: 'Kanada', city: 'Ontario', duration: '10s', flag: '🇨🇦', category: 'Doğa', budget: '€2.000–3.000', season: 'Mayıs–Eylül',
+    wikiTitle: 'Niagara_Falls',
+    highlights: ['Tekne Turu (Maid of the Mist)', 'Şelale Arkasına Yolculuk', 'Skylon Tower Manzarası'],
+    funFacts: ['Şelalelerden her saniye 3000 tondan fazla su akar.', 'Dünyanın en büyük hidroelektrik güç kaynaklarından biridir.'],
+    fallbackDesc: 'Kuzey Amerika\'nın en güçlü ve görkemli şelaleleri, doğanın ham gücünün kanıtı.'
+  },
+  { 
+    id: 20, title: 'Rome', country: 'İtalya', city: 'Roma', duration: '2.5s', flag: '🇮🇹', category: 'Tarih', budget: '€900–1.500', season: 'Nisan–Haziran',
+    wikiTitle: 'Rome',
+    highlights: ['Kolezyum Turu', 'Vatikan Müzeleri', 'Trevi Çeşmesi (Dilek Tut)'],
+    funFacts: ['Şehrin içinde Vatikan adında bağımsız bir devlet bulunur.', 'Efsaneye göre Roma, kurtlar tarafından büyütülen Romulus ve Remus tarafından kurulmuştur.'],
+    fallbackDesc: 'Ebedi Şehir Roma, her köşesinde binlerce yıllık tarih ve sanat barındıran açık hava müzesi.'
+  },
+  { 
+    id: 21, title: 'Barcelona', country: 'İspanya', city: 'Barselona', duration: '3.5s', flag: '🇪🇸', category: 'Kültür', budget: '€900–1.500', season: 'Mayıs–Haziran',
+    wikiTitle: 'Barcelona',
+    highlights: ['Sagrada Familia Ziyareti', 'Park Güell Gezisi', 'La Rambla Yürüyüşü'],
+    funFacts: ['Gaudi\'nin Sagrada Familia kilisesi 140 yıldır hala inşa halindedir.', 'Şehirde 7 tane yapay plaj bulunmaktadır.'],
+    fallbackDesc: 'Gaudi\'nin mimari şaheserleri, canlı sokakları ve Akdeniz enerjisiyle dolu Katalan başkenti.'
+  },
+  { 
+    id: 22, title: 'London', country: 'İngiltere', city: 'Londra', duration: '4s', flag: '🇬🇧', category: 'Şehir', budget: '€1.000–1.800', season: 'Mayıs–Eylül',
+    wikiTitle: 'London',
+    highlights: ['London Eye Manzarası', 'British Museum Turu', 'Buckingham Sarayı'],
+    funFacts: ['Londra Metrosu (The Tube) dünyanın en eski yer altı ulaşım sistemidir.', 'Şehirde 300\'den fazla dil konuşulmaktadır.'],
+    fallbackDesc: 'Tarihi kökleri modern bir ritimle birleştiren, dünyanın en önemli kültür ve finans merkezlerinden biri.'
+  },
+  { 
+    id: 23, title: 'Amsterdam', country: 'Hollanda', city: 'Amsterdam', duration: '3.5s', flag: '🇳🇱', category: 'Şehir', budget: '€900–1.600', season: 'Nisan–Haziran',
+    wikiTitle: 'Amsterdam',
+    highlights: ['Kanal Tekne Turu', 'Rijksmuseum Gezisi', 'Anne Frank Evi'],
+    funFacts: ['Şehirde insan sayısından daha fazla bisiklet bulunmaktadır.', 'Evlerin çoğu 17. yüzyıldan kalma ahşap kazıklar üzerine inşa edilmiştir.'],
+    fallbackDesc: 'Özgürlükçü ruhu, tarihi kanalları ve bisiklet kültürüyle ünlü ikonik Hollanda şehri.'
+  },
+  { 
+    id: 24, title: 'Prague', country: 'Çekya', city: 'Prag', duration: '2.5s', flag: '🇨🇿', category: 'Şehir', budget: '€700–1.200', season: 'Nisan–Haziran',
+    wikiTitle: 'Prague',
+    highlights: ['Charles Köprüsü', 'Prag Kalesi', 'Astronomik Saat Kulesi'],
+    funFacts: ['Dünyanın en büyük antik kalesine ev sahipliği yapar.', '"Bin Kuleli Şehir" olarak bilinir.'],
+    fallbackDesc: 'Masalsı mimarisi, gotik kuleleri ve tarihi sokaklarıyla Avrupa\'nın en korunmuş Orta Çağ şehirlerinden biri.'
+  },
+  { 
+    id: 25, title: 'Vienna', country: 'Avusturya', city: 'Viyana', duration: '2.5s', flag: '🇦🇹', category: 'Kültür', budget: '€800–1.400', season: 'Nisan–Haziran',
+    wikiTitle: 'Vienna',
+    highlights: ['Schönbrunn Sarayı', 'Devlet Operası\'nda Konser', 'Klasik Viyana Kahvehaneleri'],
+    funFacts: ['Dünyanın en eski hayvanat bahçesi (Tiergarten Schönbrunn) buradadır.', 'Müziğin başkenti olarak bilinir; Mozart, Beethoven ve Strauss burada yaşamıştır.'],
+    fallbackDesc: 'İmparatorluk ihtişamı, klasik müzik mirası ve zarif kahve kültürüyle Avrupa\'nın kültür merkezi.'
+  },
+  { 
+    id: 26, title: 'Budapest', country: 'Macaristan', city: 'Budapeşte', duration: '2s', flag: '🇭🇺', category: 'Keyif', budget: '€600–1.100', season: 'Mart–Mayıs',
+    wikiTitle: 'Budapest',
+    highlights: ['Parlamento Binası', 'Széchenyi Termal Hamamı', 'Balıkçı Tabyası Manzarası'],
+    funFacts: ['Budapeşte, aslında Tuna Nehri ile ayrılan Buda ve Peşte şehirlerinin birleşmesiyle oluşmuştur.', 'Dünyanın en büyük termal su sistemlerinden birine sahiptir.'],
+    fallbackDesc: 'Tuna\'nın İncisi, muazzam köprüleri ve termal banyolarıyla hem tarihi hem de keyifli bir şehir.'
+  },
+  { 
+    id: 27, title: 'Athens', country: 'Yunanistan', city: 'Atina', duration: '1.5s', flag: '🇬🇷', category: 'Tarih', budget: '€600–1.100', season: 'Nisan–Haziran',
+    wikiTitle: 'Athens',
+    highlights: ['Akropolis & Parthenon', 'Plaka Mahallesi', 'Antik Agora Gezisi'],
+    funFacts: ['Dünyanın en eski şehirlerinden biridir ve 3400 yılı aşkın kayıtlı tarihe sahiptir.', 'Demokrasinin ve Batı felsefesinin doğum yeridir.'],
+    fallbackDesc: 'Antik dünyanın kalbi, felsefenin ve sanatın beşiği olan yaşayan bir tarih müzesi.'
+  },
+  { 
+    id: 28, title: 'Cairo', country: 'Mısır', city: 'Kahire', duration: '2s', flag: '🇪🇬', category: 'Tarih', budget: '€700–1.200', season: 'Ekim–Mart',
+    wikiTitle: 'Cairo',
+    highlights: ['Mısır Müzesi', 'Han el-Halili Çarşısı', 'Selahaddin Eyyubi Kalesi'],
+    funFacts: ['Afrika ve Orta Doğu\'nun en büyük şehridir.', '"Bin Minareli Şehir" olarak anılır.'],
+    fallbackDesc: 'Nil Nehri kıyısında, binlerce yıllık medeniyetin ve kaotik ama büyüleyici bir modernizmin merkezi.'
+  },
+  { 
+    id: 29, title: 'Pyramids of Giza', country: 'Mısır', city: 'Gize', duration: '2s', flag: '🇪🇬', category: 'Tarih', budget: '€700–1.200', season: 'Ekim–Mart',
+    wikiTitle: 'Giza_pyramid_complex',
+    highlights: ['Büyük Piramit Ziyareti', 'Sfenks Önünde Fotoğraf', 'Deve Safarisi'],
+    funFacts: ['Antik Dünyanın Yedi Harikası\'ndan günümüze ulaşan tek yapıdır.', 'Piramitler, yıldızların konumuna göre milimetrik bir hassasiyetle inşa edilmiştir.'],
+    fallbackDesc: 'İnsanlık tarihinin en büyük gizemlerinden biri, devasa piramitler ve sırlar dolu Sfenks.'
+  },
+  { 
+    id: 30, title: 'Moscow', country: 'Rusya', city: 'Moskova', duration: '3s', flag: '🇷🇺', category: 'Şehir', budget: '€900–1.500', season: 'Mayıs–Eylül',
+    wikiTitle: 'Moscow',
+    highlights: ['Kızıl Meydan', 'Kremlin Sarayı', 'Aziz Vasil Katedrali'],
+    funFacts: ['Moskova Metrosu, sanat galerisi gibi süslenmiş istasyonlarıyla ünlüdür.', 'Dünyanın en büyük çanına (Çar Kolokol) ev sahipliği yapar.'],
+    fallbackDesc: 'Görkemli meydanları, ikonik soğan kubbeleri ve derin tarihiyle Rus ruhunun kalbi.'
+  },
+  { 
+    id: 31, title: 'Bangkok', country: 'Tayland', city: 'Bangkok', duration: '9s', flag: '🇹🇭', category: 'Kültür', budget: '€1.200–2.000', season: 'Kasım–Mart',
+    wikiTitle: 'Bangkok',
+    highlights: ['Grand Palace Ziyareti', 'Wat Arun Tapınağı', 'Yüzen Çarşı Turu'],
+    funFacts: ['Dünyanın en uzun ismine sahip şehridir (Krung Thep...).', 'Şehirde 400\'den fazla tapınak bulunmaktadır.'],
+    fallbackDesc: 'Göz alıcı tapınakları, sokak lezzetleri ve enerjik gece hayatıyla egzotik bir metropol.'
+  },
+  { 
+    id: 32, title: 'Singapore', country: 'Singapur', city: 'Singapur', duration: '11s', flag: '🇸🇬', category: 'Şehir', budget: '€1.800–3.000', season: 'Şubat–Nisan',
+    wikiTitle: 'Singapore',
+    highlights: ['Gardens by the Bay', 'Marina Bay Sands Havuzu', 'Sentosa Adası'],
+    funFacts: ['Dünyanın en yeşil şehirlerinden biridir.', 'Sakız çiğnemek ve satmak yasaktır.'],
+    fallbackDesc: 'Geleceğin şehri olarak adlandırılan, teknoloji ve doğanın kusursuz uyumu.'
+  },
+  { 
+    id: 33, title: 'Hong Kong', country: 'Hong Kong', city: 'Hong Kong', duration: '10s', flag: '🇭🇰', category: 'Şehir', budget: '€1.800–3.000', season: 'Ekim–Aralık',
+    wikiTitle: 'Hong_Kong',
+    highlights: ['Victoria Peak Manzarası', 'Star Ferry ile Geçiş', 'Lantau Adası & Dev Buddha'],
+    funFacts: ['Dünyada en çok gökdelene sahip olan şehirdir.', 'Şehrin %40\'ı parklardan ve doğa koruma alanlarından oluşur.'],
+    fallbackDesc: 'Doğu ile Batı\'nın buluştuğu, dikey mimarisi ve muazzam limanıyla ünlü ticaret merkezi.'
+  },
+  { 
+    id: 34, title: 'Seoul', country: 'Güney Kore', city: 'Seul', duration: '10s', flag: '🇰🇷', category: 'Kültür', budget: '€1.800–2.800', season: 'Nisan–Haziran',
+    wikiTitle: 'Seoul',
+    highlights: ['Gyeongbokgung Sarayı', 'Bukchon Hanok Köyü', 'Myeongdong Alışveriş Turu'],
+    funFacts: ['Dünyanın en hızlı internet hızlarından birine sahiptir.', 'Dijital ve geleneksel yaşamın en iç içe olduğu metropollerden biridir.'],
+    fallbackDesc: 'K-Pop\'un kalbi, teknoloji devlerinin merkezi ve köklü Kore geleneklerinin korunduğu canlı şehir.'
+  },
+  { 
+    id: 35, title: 'Tokyo', country: 'Japonya', city: 'Tokyo', duration: '11s', flag: '🇯🇵', category: 'Şehir', budget: '€2.000–3.200', season: 'Mart–Nisan',
+    wikiTitle: 'Tokyo',
+    highlights: ['Shibuya Kavşağı', 'Senso-ji Tapınağı', 'Akihabara Elektronik Şehri'],
+    funFacts: ['Dünyanın en kalabalık metropol alanıdır.', 'Şehirde her adımda bir otomat (vending machine) bulabilirsiniz.'],
+    fallbackDesc: 'Sadelik ve kaosun, gelenek ve fütürizmin bir arada yaşadığı benzersiz bir dünya başkenti.'
+  },
+  { 
+    id: 36, title: 'Los Angeles', country: 'ABD', city: 'Los Angeles', duration: '13s', flag: '🇺🇸', category: 'Şehir', budget: '€2.500–3.500', season: 'Nisan–Haziran',
+    wikiTitle: 'Los_Angeles',
+    highlights: ['Hollywood Tabelası', 'Santa Monica İskelesi', 'Universal Studios Hollywood'],
+    funFacts: ['Dünya film endüstrisinin merkezi "Hollywood" buradadır.', 'Şehirde insan sayısından daha fazla kayıtlı otomobil vardır.'],
+    fallbackDesc: 'Melekler Şehri, sinema dünyasının kalbi, geniş plajları ve bitmek bilmeyen güneşiyle ünlü.'
+  },
+  { 
+    id: 37, title: 'San Francisco', country: 'ABD', city: 'San Francisco', duration: '13s', flag: '🇺🇸', category: 'Şehir', budget: '€2.500–3.500', season: 'Eylül–Kasım',
+    wikiTitle: 'San_Francisco',
+    highlights: ['Golden Gate Köprüsü', 'Alcatraz Hapishanesi', 'Pier 39 Deniz Aslanları'],
+    funFacts: ['Şehirdeki meşhur dik yokuşlar ve tramvaylar simgesi haline gelmiştir.', 'Fortune Cookie (Fal Kurabiyesi) aslında burada icat edilmiştir.'],
+    fallbackDesc: 'Sisi, dik yokuşları ve özgürlükçü kültürüyle Amerika\'nın en karakteristik şehirlerinden biri.'
+  },
+  { 
+    id: 38, title: 'Las Vegas', country: 'ABD', city: 'Las Vegas', duration: '13s', flag: '🇺🇸', category: 'Keyif', budget: '€2.000–3.000', season: 'Mart–Mayıs',
+    wikiTitle: 'Las_Vegas',
+    highlights: ['The Strip Yürüyüşü', 'Bellagio Çeşme Gösterisi', 'Grand Canyon Helikopter Turu'],
+    funFacts: ['Dünyanın en çok aydınlatılmış yeridir.', 'Şehirdeki otellerde toplamda 150.000\'den fazla oda bulunur.'],
+    fallbackDesc: 'Eğlence ve ışıklar şehri, çölde kurulan bir vaha ve kumarhaneleriyle ünlü dünya merkezi.'
+  },
+  { 
+    id: 39, title: 'Miami', country: 'ABD', city: 'Miami', duration: '12s', flag: '🇺🇸', category: 'Keyif', budget: '€2.000–3.000', season: 'Kasım–Nisan',
+    wikiTitle: 'Miami',
+    highlights: ['South Beach Plajı', 'Little Havana Turu', 'Everglades Ulusal Parkı'],
+    funFacts: ['ABD\'nin tek tropikal metropolüdür.', 'Dünyanın "Yolcu Gemisi Başkenti" olarak bilinir.'],
+    fallbackDesc: 'Beyaz kumlu plajları, Art Deco mimarisi ve Latin Amerika esintili canlı kültürü.'
+  },
+  { 
+    id: 40, title: 'Chicago', country: 'ABD', city: 'Chicago', duration: '11s', flag: '🇺🇸', category: 'Şehir', budget: '€2.000–3.000', season: 'Mayıs–Eylül',
+    wikiTitle: 'Chicago',
+    highlights: ['The Bean (Cloud Gate)', 'Willis Tower Cam Teras', 'Chicago Nehri Mimari Turu'],
+    funFacts: ['"Rüzgarlı Şehir" olarak bilinir.', 'Dünyanın ilk gökdeleni 1885 yılında burada inşa edilmiştir.'],
+    fallbackDesc: 'Muazzam mimarisi, caz kulüpleri ve Michigan Gölü kıyısındaki modern silüeti.'
+  },
+  { 
+    id: 41, title: 'Sydney', country: 'Avustralya', city: 'Sidney', duration: '20s', flag: '🇦🇺', category: 'Şehir', budget: '€3.500–5.000', season: 'Eylül–Kasım',
+    wikiTitle: 'Sydney',
+    highlights: ['Opera Binası Turu', 'Bondi Plajı Yürüyüşü', 'Harbour Bridge Tırmanışı'],
+    funFacts: ['Dünyanın en büyük doğal limanına sahiptir.', 'Opera Binası\'nın çatısı 1 milyondan fazla seramik karoyla kaplıdır.'],
+    fallbackDesc: 'İkonik limanı, plajları ve modern yaşam tarzıyla Avustralya\'nın en büyük ve ünlü şehri.'
+  },
+  { 
+    id: 42, title: 'Melbourne', country: 'Avustralya', city: 'Melbourne', duration: '20s', flag: '🇦🇺', category: 'Kültür', budget: '€3.500–5.000', season: 'Mart–Mayıs',
+    wikiTitle: 'Melbourne',
+    highlights: ['Hosier Lane Sokak Sanatı', 'Great Ocean Road Gezisi', 'Kraliçe Victoria Çarşısı'],
+    funFacts: ['Dünyanın spor başkenti olarak bilinir.', 'Dört mevsimin bir günde yaşanabildiği değişken havasıyla ünlüdür.'],
+    fallbackDesc: 'Kültür, sanat, kahve ve sporun harmanlandığı, Avustralya\'nın en "Avrupalı" şehri.'
+  },
+  { 
+    id: 43, title: 'Auckland', country: 'Yeni Zelanda', city: 'Auckland', duration: '22s', flag: '🇳🇿', category: 'Doğa', budget: '€4.000–6.000', season: 'Kasım–Mart',
+    wikiTitle: 'Auckland',
+    highlights: ['Sky Tower Manzarası', 'Waiheke Adası Şarap Turu', 'Mount Eden Krateri'],
+    funFacts: ['"Yelkenliler Şehri" olarak bilinir.', 'Şehir, üzerinde 50\'den fazla sönmüş yanardağ bulunan bir volkanik alan üzerine kurulmuştur.'],
+    fallbackDesc: 'İki liman arasında yer alan, volkanik tepeleri ve denizci ruhuyla Yeni Zelanda\'nın kapısı.'
+  },
+  { 
+    id: 44, title: 'Rio de Janeiro', country: 'Brezilya', city: 'Rio de Janeiro', duration: '15s', flag: '🇧🇷', category: 'Kültür', budget: '€2.500–3.500', season: 'Aralık–Mart',
+    wikiTitle: 'Rio_de_Janeiro',
+    highlights: ['Kurtarıcı İsa Heykeli', 'Kesmeşeker Dağı Teleferik', 'Copacabana Plajı'],
+    funFacts: ['Dünyanın en büyük karnavalı olan Rio Karnavalı her yıl burada düzenlenir.', '"Rio de Janeiro" ismi "Ocak Nehri" anlamına gelir.'],
+    fallbackDesc: 'Enerji dolu karnavalları, muazzam manzaraları ve sambanın ritmiyle büyüleyen Marvelous City.'
+  },
+  { 
+    id: 45, title: 'Buenos Aires', country: 'Arjantin', city: 'Buenos Aires', duration: '17s', flag: '🇦🇷', category: 'Kültür', budget: '€2.500–3.500', season: 'Ekim–Aralık',
+    wikiTitle: 'Buenos_Aires',
+    highlights: ['La Boca & Caminito', 'Tango Gösterisi', 'Recoleta Mezarlığı Ziyareti'],
+    funFacts: ['"Güney\'in Paris\'i" olarak bilinir.', 'Dünyada kişi başına en çok kitapçının düşüğü şehirdir.'],
+    fallbackDesc: 'Tangonun doğduğu topraklar, geniş bulvarları ve zengin kültürel mirasıyla bir Latin Amerika klasiği.'
+  },
+  { 
+    id: 46, title: 'Reykjavik', country: 'İzlanda', city: 'Reykjavik', duration: '5s', flag: '🇮🇸', category: 'Doğa', budget: '€1.500–2.500', season: 'Haziran–Ağustos',
+    wikiTitle: 'Reykjavík',
+    highlights: ['Blue Lagoon Termal Havuz', 'Altın Çember Turu', 'Hallgrímskirkja Kilisesi'],
+    funFacts: ['Dünyanın en kuzeydeki başkentidir.', 'Şehrin ismi "Dumanlı Koy" anlamına gelir (jeotermal buharlar nedeniyle).'],
+    fallbackDesc: 'Viking mirası, jeotermal enerjisi ve kuzey ışıklarıyla büyüleyen, dünyanın en huzurlu başkentlerinden biri.'
+  },
+  { 
+    id: 47, title: 'Oslo', country: 'Norveç', city: 'Oslo', duration: '4s', flag: '🇳🇴', category: 'Doğa', budget: '€1.200–2.000', season: 'Mayıs–Ağustos',
+    wikiTitle: 'Oslo',
+    highlights: ['Vigeland Heykel Parkı', 'Viking Gemi Müzesi', 'Oslo Fiyordu Turu'],
+    funFacts: ['Dünyanın en yeşil şehirlerinden biridir.', 'Nobel Barış Ödülü her yıl burada verilir.'],
+    fallbackDesc: 'Fiyort ile orman arasında yer alan, modern mimarisi ve yüksek yaşam kalitesiyle öne çıkan İskandinav başkenti.'
+  },
+  { 
+    id: 48, title: 'Stockholm', country: 'İsveç', city: 'Stokholm', duration: '4s', flag: '🇸🇪', category: 'Şehir', budget: '€1.200–2.000', season: 'Mayıs–Ağustos',
+    wikiTitle: 'Stockholm',
+    highlights: ['Gamla Stan (Eski Şehir)', 'Vasa Müzesi', 'ABBA Müzesi'],
+    funFacts: ['14 ada üzerine kurulmuştur ve 50\'den fazla köprüsü vardır.', 'Şehir merkezinde bile denize girmek ve balık tutmak mümkündür.'],
+    fallbackDesc: 'Su üzerinde yüzen bir şehir, şık tasarımı ve Orta Çağ ile modernizmin buluştuğu eşsiz dokusu.'
+  },
+  { 
+    id: 49, title: 'Helsinki', country: 'Finlandiya', city: 'Helsinki', duration: '3.5s', flag: '🇫🇮', category: 'Şehir', budget: '€1.200–2.000', season: 'Haziran–Ağustos',
+    wikiTitle: 'Helsinki',
+    highlights: ['Suomenlinna Kalesi', 'Temppeliaukio (Kaya Kilisesi)', 'Pazar Meydanı'],
+    funFacts: ['Dünyanın "En Mutlu Ülkesi"nin başkentidir.', 'Şehirde 3 milyondan fazla sauna bulunmaktadır.'],
+    fallbackDesc: 'Kuzeyin Beyaz Şehri, sahil şeridi, Baltık Denizi havası ve sade tasarımıyla huzur dolu bir liman.'
+  },
+  { 
+    id: 50, title: 'Zurich', country: 'İsviçre', city: 'Zürih', duration: '3s', flag: '🇨🇭', category: 'Doğa', budget: '€1.200–2.000', season: 'Haziran–Eylül',
+    wikiTitle: 'Zürich',
+    highlights: ['Zürih Gölü Tekne Turu', 'Bahnhofstrasse Alışveriş', 'Üetliberg Dağı Manzarası'],
+    funFacts: ['Şehirde 1200\'den fazla içilebilir su çeşmesi vardır.', 'Çikolatası ve bankalarıyla dünya çapında ünlüdür.'],
+    fallbackDesc: 'Alplerin eteğinde, göl kıyısında yer alan, lüksün ve doğal güzelliğin mükemmel birleşimi.'
+  },
 ];
 
 export const INITIAL_VISAS = [

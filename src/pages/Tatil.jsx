@@ -89,27 +89,57 @@ async function fetchWeatherForTrip(city, country, startDate) {
 
 // --- HELPERS ---
 const getCountryFlag = (title = '', city = '', country = '') => {
-  const text = (title + ' ' + city + ' ' + country).toLowerCase();
+  const text = normalizeText(title + ' ' + city + ' ' + country);
   
-  if (text.includes('avusturya') || text.includes('viyana') || text.includes('vienna') || text.includes('austria')) return '🇦🇹';
-  if (text.includes('kıbrıs') || text.includes('kktc') || text.includes('cyprus')) return '🇹🇷';
-  if (text.includes('italya') || text.includes('italy') || text.includes('roma') || text.includes('milano') || text.includes('venedik')) return '🇮🇹';
-  if (text.includes('almanya') || text.includes('germany') || text.includes('berlin') || text.includes('münih')) return '🇩🇪';
-  if (text.includes('fransa') || text.includes('france') || text.includes('paris') || text.includes('marsilya') || text.includes('marseille')) return '🇫🇷';
-  // Enhanced UK Match (Handles Turkish İ/i and variations)
-  if (text.includes('ngiltere') || text.includes('london') || text.includes('londra') || text.includes('uk') || text.includes('kingdom') || text.includes('britanya')) return '🇬🇧';
-  if (text.includes('yunanistan') || text.includes('greece') || text.includes('athens') || text.includes('selanik') || text.includes('kavala') || text.includes('atina')) return '🇬🇷';
-  if (text.includes('ispanya') || text.includes('spain') || text.includes('madrid') || text.includes('barcelona')) return '🇪🇸';
-  if (text.includes('hollanda') || text.includes('netherlands') || text.includes('amsterdam')) return '🇳🇱';
-  if (text.includes('bulgaristan') || text.includes('bulgaria') || text.includes('sofya') || text.includes('sofiya')) return '🇧🇬';
-  if (text.includes('bosna') || text.includes('saraybosna') || text.includes('sarajevo') || text.includes('mostar')) return '🇧🇦';
-  if (text.includes('japonya') || text.includes('japan') || text.includes('tokyo')) return '🇯🇵';
-  if (text.includes('izlanda') || text.includes('iceland')) return '🇮🇸';
-  
-  // Domestic Turkey Logic
-  if (text.includes('türkiye') || text.includes('turkey') || text.includes('konya') || text.includes('istanbul') || text.includes('ankara') || text.includes('izmir') || text.includes('antalya')) return '🇹🇷';
+  let code = '';
+  if (text.includes('avusturya') || text.includes('viyana') || text.includes('vienna') || text.includes('austria')) code = 'at';
+  else if (text.includes('kibris') || text.includes('kktc') || text.includes('cyprus')) code = 'tr';
+  else if (text.includes('italya') || text.includes('italy') || text.includes('roma') || text.includes('milano') || text.includes('venedik')) code = 'it';
+  else if (text.includes('almanya') || text.includes('germany') || text.includes('berlin') || text.includes('munih') || text.includes('heidelberg')) code = 'de';
+  else if (text.includes('fransa') || text.includes('france') || text.includes('paris') || text.includes('marsilya') || text.includes('marseille')) code = 'fr';
+  else if (text.includes('ingiltere') || text.includes('london') || text.includes('londra') || text.includes('uk') || text.includes('kingdom') || text.includes('britanya')) code = 'gb';
+  else if (text.includes('yunanistan') || text.includes('greece') || text.includes('athens') || text.includes('selanik') || text.includes('kavala') || text.includes('atina')) code = 'gr';
+  else if (text.includes('ispanya') || text.includes('spain') || text.includes('madrid') || text.includes('barcelona')) code = 'es';
+  else if (text.includes('hollanda') || text.includes('netherlands') || text.includes('amsterdam')) code = 'nl';
+  else if (text.includes('bulgaristan') || text.includes('bulgaria') || text.includes('sofya') || text.includes('sofiya')) code = 'bg';
+  else if (text.includes('bosna') || text.includes('saraybosna') || text.includes('sarajevo') || text.includes('mostar')) code = 'ba';
+  else if (text.includes('japonya') || text.includes('japan') || text.includes('tokyo')) code = 'jp';
+  else if (text.includes('izlanda') || text.includes('iceland')) code = 'is';
+  else if (text.includes('turkiye') || text.includes('turkey') || text.includes('konya') || text.includes('istanbul') || text.includes('ankara') || text.includes('izmir') || text.includes('antalya')) code = 'tr';
+  else if (text.includes('peru')) code = 'pe';
+  else if (text.includes('tanzanya') || text.includes('serengeti')) code = 'tz';
+  else if (text.includes('brezilya') || text.includes('amazon') || text.includes('rio')) code = 'br';
+  else if (text.includes('guney afrika')) code = 'za';
+  else if (text.includes('kambocya')) code = 'kh';
+  else if (text.includes('bae') || text.includes('dubai')) code = 'ae';
+  else if (text.includes('kanada')) code = 'ca';
+  else if (text.includes('cekya') || text.includes('prag')) code = 'cz';
+  else if (text.includes('macaristan') || text.includes('budapeste')) code = 'hu';
+  else if (text.includes('misir') || text.includes('kahire') || text.includes('piramit')) code = 'eg';
+  else if (text.includes('rusya') || text.includes('moskova')) code = 'ru';
+  else if (text.includes('tayland') || text.includes('bangkok')) code = 'th';
+  else if (text.includes('singapur')) code = 'sg';
+  else if (text.includes('hong kong')) code = 'hk';
+  else if (text.includes('guney kore')) code = 'kr';
+  else if (text.includes('abd') || text.includes('amerika') || text.includes('usa')) code = 'us';
+  else if (text.includes('avustralya')) code = 'au';
+  else if (text.includes('yeni zelanda')) code = 'nz';
+  else if (text.includes('arjantin')) code = 'ar';
+  else if (text.includes('norvec')) code = 'no';
+  else if (text.includes('isvec')) code = 'se';
+  else if (text.includes('finlandiya')) code = 'fi';
+  else if (text.includes('isvicre')) code = 'ch';
 
-  return '🌍';
+  if (!code) return '🌍';
+  return (
+    <img 
+      src={`https://flagcdn.com/w40/${code}.png`} 
+      width="20"
+      alt={country}
+      className="emoji-flag-img"
+      style={{ borderRadius: '3px', verticalAlign: 'middle', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
+    />
+  );
 };
 
 // --- WIKIPEDIA API ENGINE ---
@@ -496,14 +526,43 @@ function TripsTab({ tatil, onSelectTrip, onShowWizard, onEditTrip }) {
 }
 
 function AnilarTab({ tatil, onSelectTrip }) {
-  const trips = tatil.trips || [];
+  const [individualFilter, setIndividualFilter] = useState('all'); // 'all', 'gorkem', 'esra'
+  
+  const trips = useMemo(() => {
+    const dbTrips = tatil.trips || [];
+    const merged = [...dbTrips].map(t => {
+      const initialMatch = INITIAL_TRIPS.find(it => it.id === t.id || (it.title === t.title && it.startDate === t.startDate));
+      if (initialMatch) {
+        // Fallback photos and other static data from INITIAL_TRIPS if missing in DB
+        return {
+          ...initialMatch,
+          ...t,
+          photos: (t.photos && t.photos.length > 0) ? t.photos : (initialMatch.photos || []),
+          evaluations: { ...initialMatch.evaluations, ...t.evaluations }
+        };
+      }
+      return t;
+    });
+    
+    INITIAL_TRIPS.forEach(it => {
+      if (!merged.some(t => t.id === it.id || (t.title === it.title && t.startDate === it.startDate))) {
+        merged.push(it);
+      }
+    });
+    return merged;
+  }, [tatil.trips]);
+
   const allPast = trips.filter(t => {
     const status = calculateTripStatus(t.startDate, t.endDate);
     return status === 'completed';
   });
 
   const jointPast = allPast.filter(t => t.travelers === 'ikimiz');
-  const individualPast = allPast.filter(t => t.travelers !== 'ikimiz').sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+  const individualPast = allPast.filter(t => {
+    if (t.travelers === 'ikimiz') return false;
+    if (individualFilter === 'all') return true;
+    return t.travelers === individualFilter;
+  }).sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
   return (
     <div className="tab-pane animate-fadeIn">
@@ -521,11 +580,28 @@ function AnilarTab({ tatil, onSelectTrip }) {
         </div>
 
         {/* INDIVIDUAL ADVENTURES */}
-        {individualPast.length > 0 && (
-          <div className="trip-group-cute mt-30">
-            <div className="section-header-cute"><h3>👤 Bireysel Maceralar</h3></div>
-            <div className="individual-adventures-list">
-              {individualPast.map(t => (
+        <div className="trip-group-cute mt-30">
+          <div className="section-header-cute">
+            <h3>👤 Bireysel Maceralar</h3>
+            <div className="indiv-filter-toggles">
+              <button 
+                className={`ift-btn ${individualFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setIndividualFilter('all')}
+              >Hepsi</button>
+              <button 
+                className={`ift-btn ${individualFilter === 'gorkem' ? 'active' : ''}`}
+                onClick={() => setIndividualFilter('gorkem')}
+              >Görkem</button>
+              <button 
+                className={`ift-btn ${individualFilter === 'esra' ? 'active' : ''}`}
+                onClick={() => setIndividualFilter('esra')}
+              >Esra</button>
+            </div>
+          </div>
+          
+          <div className="individual-adventures-list scrollable-history">
+            {individualPast.length > 0 ? (
+              individualPast.map(t => (
                 <div key={t.id} className="indiv-adventure-card glass animate-slideRight" onClick={() => onSelectTrip(t)}>
                    <div className="iac-flag">{getCountryFlag(t.title, t.city, t.country)}</div>
                    <div className="iac-info">
@@ -537,10 +613,12 @@ function AnilarTab({ tatil, onSelectTrip }) {
                    </div>
                    <ChevronRight size={14} opacity={0.3} />
                 </div>
-              ))}
-            </div>
+              ))
+            ) : (
+              <div className="empty-state-cute glass">Bu filtreye uygun macera bulunamadı. 🔍</div>
+            )}
           </div>
-        )}
+        </div>
 
         <div className="memories-footer animate-fadeIn" style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '20px', opacity: 0.6 }}>
            <p style={{ fontSize: '12px', fontStyle: 'italic' }}>"Dünya bir kitap ve seyahat etmeyenler sadece bir sayfasını okur." ✨</p>
@@ -552,19 +630,34 @@ function AnilarTab({ tatil, onSelectTrip }) {
 }
 
 function MemoryCard({ trip, onClick }) {
+  const [imgError, setImgError] = useState(false);
   const randomCover = useMemo(() => {
-    if (!trip.photos || trip.photos.length === 0) return null;
-    const idx = Math.floor(Math.random() * trip.photos.length);
-    return trip.photos[idx];
-  }, [trip.photos]);
+    // Collect all unique photos from evaluations and main array
+    const gPhotos = trip.evaluations?.gorkem?.photos || [];
+    const ePhotos = trip.evaluations?.esra?.photos || [];
+    const mainPhotos = trip.photos || [];
+    
+    const all = [...gPhotos, ...ePhotos, ...mainPhotos].filter(p => !!p && typeof p === 'string' && p.length > 0);
+    const unique = Array.from(new Set(all));
+    
+    if (unique.length > 0) {
+      const idx = Math.floor(Math.random() * unique.length);
+      return unique[idx];
+    }
+
+    return null;
+  }, [trip.photos, trip.evaluations]);
 
   return (
     <div className="memory-card-cute glass" onClick={onClick}>
       <div className="mc-photo-preview">
-        {randomCover ? (
-          <img src={randomCover} alt={trip.city} />
+        {randomCover && !imgError ? (
+          <img src={randomCover} alt={trip.city} onError={() => setImgError(true)} />
         ) : (
-          <div className="mc-placeholder">{getCountryFlag(trip.title, trip.city, trip.country)}</div>
+          <div className="mc-placeholder">
+            <span className="mcp-flag">{getCountryFlag(trip.title, trip.city, trip.country)}</span>
+            <span className="mcp-city">{trip.city || trip.title}</span>
+          </div>
         )}
       </div>
       <div className="mc-info">
@@ -923,11 +1016,17 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
 
                 if (isFinished) {
                     updates.status = 'completed';
-                    // Merge photos if they exist in evalData
-                    const allPhotos = [];
-                    if (newEvals.gorkem?.photos) allPhotos.push(...newEvals.gorkem.photos);
-                    if (newEvals.esra?.photos) allPhotos.push(...newEvals.esra.photos);
-                    if (allPhotos.length > 0) updates.photos = allPhotos.slice(0, 6); // Max 6 for anı
+                    
+                    // Always re-calculate trip.photos from BOTH evaluations for the gallery
+                    const allGalleryPhotos = [];
+                    const gPhotos = newEvals.gorkem?.photos || [];
+                    const ePhotos = newEvals.esra?.photos || [];
+                    
+                    // Fill from gorkem first, then esra
+                    gPhotos.forEach(p => { if(p) allGalleryPhotos.push(p); });
+                    ePhotos.forEach(p => { if(p) allGalleryPhotos.push(p); });
+                    
+                    updates.photos = allGalleryPhotos.slice(0, 6);
                     
                     handleUpdateTrip(updates);
                     toast.success('Seyahat tamamlandı ve anılara eklendi! 📖');
@@ -1593,42 +1692,94 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
 function MemoryDetailView({ trip, onEditEval }) {
   const gEval = trip.evaluations?.gorkem;
   const eEval = trip.evaluations?.esra;
+  const [brokenImgs, setBrokenImgs] = useState({});
+
+  const handleImgError = (id) => setBrokenImgs(prev => ({ ...prev, [id]: true }));
   
-  // Collect photos: 3 from Gorkem, 3 from Esra
-  // Fallback to trip.photos for legacy data compatibility
-  const gPhotos = gEval?.photos?.length ? gEval.photos : (trip.photos || []);
-  const ePhotos = eEval?.photos?.length ? eEval.photos : (trip.photos || []);
+  const isJoint = trip.travelers === 'ikimiz';
+  
+  // Robust photo collection: Merge all evaluation photos + main trip photos
+  const allAvailablePhotos = [
+    ...(gEval?.photos || []),
+    ...(eEval?.photos || []),
+    ...(trip.photos || [])
+  ].filter(p => !!p && typeof p === 'string' && p.length > 0);
+
+  // De-duplicate if needed (optional but good)
+  const uniquePhotos = Array.from(new Set(allAvailablePhotos));
 
   return (
     <div className="memory-detail-view animate-fadeIn">
       <div className="memory-photos-section">
         <div className="ms-header">
            <Star size={16} color="#FBBF24" fill="#FBBF24" />
-           <h3>En Sevdiğimiz Kareler (3'er Adet)</h3>
+           <h3>En Sevdiğimiz Kareler</h3>
         </div>
         <div className="m-photo-grid-premium">
-          {/* Görkem's Photos */}
-          <div className="user-photo-row">
-            <div className="user-indicator">👨🏻‍💻 Görkem</div>
-            <div className="photo-slots">
-              {[0, 1, 2].map(i => (
-                <div key={i} className="m-photo-slot glass" onClick={() => onEditEval('gorkem')}>
-                  {gPhotos[i] ? <img src={gPhotos[i]} alt="Görkem" /> : <Plus size={20} opacity={0.3} />}
+          {isJoint ? (
+            <>
+              <div className="user-photo-row">
+                <div className="user-indicator">👨🏻‍💻 Görkem</div>
+                <div className="photo-slots">
+                  {[0, 1, 2].map(i => {
+                    const imgId = `g-${i}`;
+                    const img = gEval?.photos?.[i] || uniquePhotos[i];
+                    const isBroken = brokenImgs[imgId];
+                    return (
+                      <div key={i} className="m-photo-slot glass" onClick={() => onEditEval('gorkem')}>
+                        {img && !isBroken ? (
+                          <img src={img} alt="Görkem" onError={() => handleImgError(imgId)} />
+                        ) : (
+                          <Plus size={20} opacity={0.3} />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-          </div>
-          {/* Esra's Photos */}
-          <div className="user-photo-row mt-10">
-            <div className="user-indicator">👩 Esra</div>
-            <div className="photo-slots">
-              {[0, 1, 2].map(i => (
-                <div key={i} className="m-photo-slot glass" onClick={() => onEditEval('esra')}>
-                  {ePhotos[i] ? <img src={ePhotos[i]} alt="Esra" /> : <Plus size={20} opacity={0.3} />}
+              </div>
+              <div className="user-photo-row mt-10">
+                <div className="user-indicator">👩 Esra</div>
+                <div className="photo-slots">
+                  {[0, 1, 2].map(i => {
+                    const imgId = `e-${i}`;
+                    const img = eEval?.photos?.[i] || uniquePhotos[i + 3];
+                    const isBroken = brokenImgs[imgId];
+                    return (
+                      <div key={i} className="m-photo-slot glass" onClick={() => onEditEval('esra')}>
+                        {img && !isBroken ? (
+                          <img src={img} alt="Esra" onError={() => handleImgError(imgId)} />
+                        ) : (
+                          <Plus size={20} opacity={0.3} />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              </div>
+            </>
+          ) : (
+            <div className="user-photo-row">
+              <div className="user-indicator">
+                {trip.travelers === 'gorkem' ? '👨🏻‍💻 Görkem' : '👩 Esra'}
+              </div>
+              <div className="photo-slots solo">
+                {[0, 1, 2, 3, 4, 5].map(i => {
+                  const imgId = `s-${i}`;
+                  const img = uniquePhotos[i];
+                  const isBroken = brokenImgs[imgId];
+                  return (
+                    <div key={i} className="m-photo-slot glass" onClick={() => onEditEval(trip.travelers)}>
+                      {img && !isBroken ? (
+                        <img src={img} alt="Maceramız" onError={() => handleImgError(imgId)} />
+                      ) : (
+                        <Plus size={20} opacity={0.3} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -1668,9 +1819,9 @@ function TripReviewPanel({ trip, onComplete }) {
   const [evalData, setEvalData] = useState({ 
     star: trip.evaluations?.[activeUser]?.star || 10, 
     note: trip.evaluations?.[activeUser]?.note || '', 
-    photos: (trip.evaluations?.[activeUser]?.photos?.length) 
-      ? trip.evaluations[activeUser].photos 
-      : (trip.photos || [])
+    photos: (trip.evaluations?.[activeUser]?.photos && trip.evaluations[activeUser].photos.length > 0) 
+      ? [...trip.evaluations[activeUser].photos] 
+      : [null, null, null]
   });
 
   // Sync state if initialUser changes
@@ -1678,11 +1829,11 @@ function TripReviewPanel({ trip, onComplete }) {
     setEvalData({ 
       star: trip.evaluations?.[activeUser]?.star || 10, 
       note: trip.evaluations?.[activeUser]?.note || '', 
-      photos: (trip.evaluations?.[activeUser]?.photos?.length) 
-        ? trip.evaluations[activeUser].photos 
-        : (trip.photos || [])
+      photos: (trip.evaluations?.[activeUser]?.photos && trip.evaluations[activeUser].photos.length > 0) 
+        ? [...trip.evaluations[activeUser].photos] 
+        : [null, null, null]
     });
-  }, [activeUser]);
+  }, [activeUser, trip.id]);
 
   const handleSubmit = () => {
     toast.success('Değerlendirme başarıyla kaydedildi! ✨');
@@ -1696,7 +1847,7 @@ function TripReviewPanel({ trip, onComplete }) {
       img.src = base64Str;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
+        const MAX_WIDTH = 700;
         let width = img.width;
         let height = img.height;
         if (width > MAX_WIDTH) {
@@ -1707,7 +1858,7 @@ function TripReviewPanel({ trip, onComplete }) {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.6));
+        resolve(canvas.toDataURL('image/jpeg', 0.5));
       };
       img.onerror = (e) => reject(e);
     });
@@ -2350,6 +2501,8 @@ const LEGACY_CITY_COORDS = {
 function HaritaTab({ tatil, onTabChange }) {
   const [selectedContinent, setSelectedContinent] = useState('world');
   const [showCityWizard, setShowCityWizard] = useState(null); // trip object
+  const [visibleTravelers, setVisibleTravelers] = useState(['gorkem', 'esra', 'ikimiz']);
+  const [hiddenStats, setHiddenStats] = useState([]); // Array of 'esra', 'gorkem'
   
   const allTripsForMap = useMemo(() => {
     return (tatil.trips || [])
@@ -2357,27 +2510,53 @@ function HaritaTab({ tatil, onTabChange }) {
       .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
   }, [tatil.trips]);
 
-  const getStats = (traveler) => {
-    const list = traveler === 'ortak' ? allTripsForMap.filter(t => t.travelers === 'ikimiz') : allTripsForMap.filter(t => t.travelers === traveler);
-    const countries = new Set(list.map(t => t.country?.toLowerCase().trim()).filter(Boolean));
-    const cities = new Set(list.flatMap(t => [
-      t.city?.toLowerCase().trim(), 
-      ...(t.visitedCities || []).map(vc => vc.name?.toLowerCase().trim())
-    ]).filter(Boolean));
+  const visitedData = useMemo(() => {
+    const gorkemPlaces = new Set();
+    const esraPlaces = new Set();
+    const gorkemCountries = new Set();
+    const esraCountries = new Set();
+    let ortakDays = 0;
+
+    allTripsForMap.forEach(t => {
+      const country = t.country?.toLowerCase().trim();
+      const city = t.city?.toLowerCase().trim();
+      const extraCities = (t.visitedCities || []).map(vc => vc.name?.toLowerCase().trim()).filter(Boolean);
+      
+      const duration = (t.startDate && t.endDate) ? (Math.ceil((new Date(t.endDate) - new Date(t.startDate)) / 864e5) + 1) : 0;
+
+      if (t.travelers === 'gorkem' || t.travelers === 'ikimiz') {
+        if (country) gorkemCountries.add(country);
+        if (city) gorkemPlaces.add(`${country}:${city}`);
+        extraCities.forEach(c => gorkemPlaces.add(`${country}:${c}`));
+      }
+      if (t.travelers === 'esra' || t.travelers === 'ikimiz') {
+        if (country) esraCountries.add(country);
+        if (city) esraPlaces.add(`${country}:${city}`);
+        extraCities.forEach(c => esraPlaces.add(`${country}:${c}`));
+      }
+      if (t.travelers === 'ikimiz') {
+        ortakDays += duration;
+      }
+    });
+
+    const ortakCountries = new Set([...gorkemCountries].filter(c => esraCountries.has(c)));
+    const gorkemOnlyCountries = new Set([...gorkemCountries].filter(c => !esraCountries.has(c)));
+    const esraOnlyCountries = new Set([...esraCountries].filter(c => !gorkemCountries.has(c)));
+
+    const ortakCities = new Set([...gorkemPlaces].filter(p => esraPlaces.has(p)));
+    const gorkemOnlyCities = new Set([...gorkemPlaces].filter(p => !esraPlaces.has(p)));
+    const esraOnlyCities = new Set([...esraPlaces].filter(p => !gorkemPlaces.has(p)));
 
     return {
-      countries: countries.size,
-      cities: cities.size,
-      days: list.reduce((acc, t) => {
-        if (!t.startDate || !t.endDate) return acc;
-        return acc + (Math.ceil((new Date(t.endDate) - new Date(t.startDate)) / 864e5) + 1);
-      }, 0)
+      ortak: { countries: ortakCountries.size, cities: ortakCities.size, days: ortakDays },
+      gorkem: { countries: gorkemOnlyCountries.size, cities: gorkemOnlyCities.size },
+      esra: { countries: esraOnlyCountries.size, cities: esraOnlyCities.size }
     };
-  };
+  }, [allTripsForMap]);
 
-  const esraStats = getStats('esra');
-  const gorkemStats = getStats('gorkem');
-  const ortakStats = getStats('ortak');
+  const esraStats = visitedData.esra;
+  const gorkemStats = visitedData.gorkem;
+  const ortakStats = visitedData.ortak;
 
   const continents = [
     { id: 'world', label: 'Dünya' },
@@ -2397,6 +2576,9 @@ function HaritaTab({ tatil, onTabChange }) {
     const seen = new Set();
 
     allTripsForMap.forEach(trip => {
+      // Filter by visible travelers toggle
+      if (!visibleTravelers.includes(trip.travelers)) return;
+
       const tripPins = [];
       if (trip.visitedCities && trip.visitedCities.length > 0) {
         trip.visitedCities.forEach(city => {
@@ -2417,34 +2599,59 @@ function HaritaTab({ tatil, onTabChange }) {
       });
     });
     return pins;
-  }, [allTripsForMap]);
+  }, [allTripsForMap, visibleTravelers]);
 
   return (
     <div className="tab-pane animate-fadeIn">
       <div className="harita-stats-split mb-20">
-        <div className="hss-column esra">
-           <div className="hss-avatar">👩🏻</div>
-           <div className="hss-data">
-              <div className="hss-row"><strong>{esraStats.countries}</strong> <small>Ülke</small></div>
-              <div className="hss-row"><strong>{esraStats.cities}</strong> <small>Şehir</small></div>
-           </div>
-           <span className="hss-label">ESRA</span>
+        {/* Esra Column */}
+        <div 
+          className={`hss-column esra animate-fadeIn ${hiddenStats.includes('esra') ? 'is-hidden' : ''}`} 
+          onClick={() => setHiddenStats(prev => prev.includes('esra') ? prev.filter(x => x !== 'esra') : [...prev, 'esra'])}
+          style={{ cursor: 'pointer' }}
+        >
+           {hiddenStats.includes('esra') ? (
+             <span className="hss-pet-tag">🐱 miyav</span>
+           ) : (
+             <>
+               <div className="hss-avatar">👩🏻</div>
+               <div className="hss-data">
+                  <div className="hss-row"><strong>{esraStats.countries}</strong> <small>Ülke</small></div>
+                  <div className="hss-row"><strong>{esraStats.cities}</strong> <small>Şehir</small></div>
+               </div>
+               <span className="hss-label">ESRA</span>
+             </>
+           )}
         </div>
-        <div className="hss-column ortak">
+        
+        {/* Ortak Column - Always visible as requested */}
+        <div className="hss-column ortak animate-fadeIn">
            <div className="hss-avatar">👩‍❤️‍👨</div>
            <div className="hss-data">
               <div className="hss-row"><strong>{ortakStats.countries}</strong> <small>Ülke</small> <strong>{ortakStats.cities}</strong> <small>Şehir</small></div>
-              <div className="hss-days">{ortakStats.days} Gün Beraber</div>
+              <div className="hss-row primary"><strong>{ortakStats.days} Gün Beraber</strong></div>
            </div>
            <span className="hss-label">ORTAK</span>
         </div>
-        <div className="hss-column gorkem">
-           <div className="hss-avatar">👨🏻‍💻</div>
-           <div className="hss-data">
-              <div className="hss-row"><strong>{gorkemStats.countries}</strong> <small>Ülke</small></div>
-              <div className="hss-row"><strong>{gorkemStats.cities}</strong> <small>Şehir</small></div>
-           </div>
-           <span className="hss-label">GÖRKEM</span>
+
+        {/* Gorkem Column */}
+        <div 
+          className={`hss-column gorkem animate-fadeIn ${hiddenStats.includes('gorkem') ? 'is-hidden' : ''}`}
+          onClick={() => setHiddenStats(prev => prev.includes('gorkem') ? prev.filter(x => x !== 'gorkem') : [...prev, 'gorkem'])}
+          style={{ cursor: 'pointer' }}
+        >
+           {hiddenStats.includes('gorkem') ? (
+             <span className="hss-pet-tag">🐶 hav hav</span>
+           ) : (
+             <>
+               <div className="hss-avatar">👨🏻‍💻</div>
+               <div className="hss-data">
+                  <div className="hss-row"><strong>{gorkemStats.countries}</strong> <small>Ülke</small></div>
+                  <div className="hss-row"><strong>{gorkemStats.cities}</strong> <small>Şehir</small></div>
+               </div>
+               <span className="hss-label">GÖRKEM</span>
+             </>
+           )}
         </div>
       </div>
 
@@ -2465,14 +2672,39 @@ function HaritaTab({ tatil, onTabChange }) {
           pins={allPins} 
           region={selectedContinent} 
         />
+        
+        {/* Floating Pill HUD */}
+        <div className="map-traveler-pill-container floating-hud animate-fadeIn">
+          <div className="mtp-inner glass">
+            {[
+              { id: 'esra', label: 'Esra' },
+              { id: 'ikimiz', label: 'Ortak' },
+              { id: 'gorkem', label: 'Görkem' }
+            ].map((t, idx) => (
+              <React.Fragment key={t.id}>
+                {idx > 0 && <div className="mtp-divider" />}
+                <button 
+                  className={`mtp-btn ${visibleTravelers.includes(t.id) ? 'active' : ''} ${t.id}`}
+                  onClick={() => {
+                    setVisibleTravelers(prev => 
+                      prev.includes(t.id) ? prev.filter(x => x !== t.id) : [...prev, t.id]
+                    );
+                  }}
+                >
+                  {t.label}
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="full-trip-history" style={{ marginTop: '45px' }}>
-        <h4 className="section-title-cute">Tüm Seyahatleriniz (Anılar)</h4>
-        <div className="rd-list-compact">
+      <div className="full-trip-history" style={{ marginTop: '55px' }}>
+        <h4 className="section-title-cute" style={{ marginBottom: '20px' }}>Tüm Seyahatleriniz (Anılar)</h4>
+        <div className="rd-list-compact scrollable-history">
           {allTripsForMap.map(t => (
             <div key={t.id} className="rd-item-small glass animate-slideRight" onClick={() => setShowCityWizard(t)}>
-              <span className="rd-flag-small">{getCountryFlag('', '', t.country)}</span>
+              <span className="rd-flag-small">{getCountryFlag(t.title, t.city, t.country)}</span>
               <div className="rd-info-small">
                 <strong>{t.city || t.title}</strong>
                 <small>{t.country} · {new Date(t.startDate).getFullYear()} {t.travelers !== 'ikimiz' && `(${t.travelers === 'gorkem' ? 'Görkem' : 'Esra'})`}</small>
@@ -2630,7 +2862,7 @@ function HayalTab({ tatil, requestConfirm }) {
                 </div>
                 <div className="exp-card-main">
                   <div className="exp-visual">
-                    <span className="exp-emoji">{item.flag}</span>
+                    <span className="exp-emoji">{getCountryFlag(item.title, item.city, item.country)}</span>
                   </div>
                   <div className="exp-info">
                     <h4>{item.title}</h4>
@@ -3076,7 +3308,7 @@ function DiscoveryGuideContent({ item }) {
             />
             <div className="dg-hero-overlay">
               <div className="dg-hero-label">
-                <span className="dg-label-flag">{item.flag}</span>
+                <span className="dg-label-flag">{getCountryFlag(item.title, item.city, item.country)}</span>
                 <div className="dg-label-text">
                   <h3>{item.title}</h3>
                   <p>{item.city}, {item.country}</p>
