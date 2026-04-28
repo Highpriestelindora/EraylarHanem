@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "4fd7d87fe94cc6a7",
+        "id": "fe16f551e9e90ba1",
         "type": "tabs",
         "children": [
           {
-            "id": "346e2a911bce7e65",
+            "id": "604643cf77e47817",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "entities/tatil.md",
+                "file": "index.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "tatil"
+              "title": "index"
             }
           }
         ]
@@ -44,7 +44,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "Files"
+              "title": "Dosya Gezgini"
             }
           },
           {
@@ -174,19 +174,19 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Open quick switcher": false,
-      "graph:Open graph view": false,
-      "canvas:Create new canvas": false,
-      "daily-notes:Open today's daily note": false,
-      "templates:Insert template": false,
-      "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "switcher:Hızlı geçişi aç": false,
+      "graph:Grafik görünümünü aç": false,
+      "canvas:Yeni tuval oluşturun": false,
+      "daily-notes:Bugünün Notunu Aç": false,
+      "templates:Şablon ekle": false,
+      "command-palette:Komut paletini aç": false,
+      "bases:Yeni taban oluştur": false
     }
   },
-  "active": "346e2a911bce7e65",
+  "active": "604643cf77e47817",
   "lastOpenFiles": [
-    "index.md",
     "entities/tatil.md",
+    "index.md",
     "entities/ev_ve_yasam.md",
     "entities/finans_ve_kasa.md",
     "entities/aracim.md",

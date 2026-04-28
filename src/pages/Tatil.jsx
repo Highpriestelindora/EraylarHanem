@@ -664,8 +664,15 @@ function MemoryCard({ trip, onClick }) {
         <strong>{trip.city}</strong>
         <span>{new Date(trip.startDate).getFullYear()}</span>
         <div className="mc-stars">
-          <Star size={10} fill="gold" stroke="gold" />
-          <span>{( ( (trip.evaluations?.gorkem?.star || 10) + (trip.evaluations?.esra?.star || 10) ) / 2 ).toFixed(1)}</span>
+          <Star size={10} fill="#FBBF24" stroke="#FBBF24" />
+          <span>
+            {(() => {
+              const gStar = trip.evaluations?.gorkem?.star ?? (typeof trip.evaluations?.gorkem === 'number' ? trip.evaluations.gorkem : null);
+              const eStar = trip.evaluations?.esra?.star ?? (typeof trip.evaluations?.esra === 'number' ? trip.evaluations.esra : null);
+              const stars = [gStar, eStar].filter(s => s !== null && s !== undefined);
+              return stars.length > 0 ? (stars.reduce((a, b) => a + b, 0) / stars.length).toFixed(1) : "---";
+            })()}
+          </span>
         </div>
       </div>
     </div>
@@ -1792,7 +1799,7 @@ function MemoryDetailView({ trip, onEditEval }) {
           <div className="eval-card-v2 gorkem glass">
             <div className="ec-header">
               <span>👨🏻‍💻 Görkem</span> 
-              <strong>{gEval?.star || 0}/10</strong>
+              <strong>{gEval?.star ? `${gEval.star}/10` : 'Puan Yok'}</strong>
               <button className="ec-edit-btn" onClick={() => onEditEval('gorkem')}><Edit3 size={12} /></button>
             </div>
             <p>{gEval?.note || 'Not bırakılmamış.'}</p>
@@ -1800,7 +1807,7 @@ function MemoryDetailView({ trip, onEditEval }) {
           <div className="eval-card-v2 esra glass">
             <div className="ec-header">
               <span>👩 Esra</span> 
-              <strong>{eEval?.star || 0}/10</strong>
+              <strong>{eEval?.star ? `${eEval.star}/10` : 'Puan Yok'}</strong>
               <button className="ec-edit-btn" onClick={() => onEditEval('esra')}><Edit3 size={12} /></button>
             </div>
             <p>{eEval?.note || 'Not bırakılmamış.'}</p>
@@ -1817,7 +1824,7 @@ function TripReviewPanel({ trip, onComplete }) {
   const activeUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
   
   const [evalData, setEvalData] = useState({ 
-    star: trip.evaluations?.[activeUser]?.star || 10, 
+    star: trip.evaluations?.[activeUser]?.star ?? (typeof trip.evaluations?.[activeUser] === 'number' ? trip.evaluations[activeUser] : 0), 
     note: trip.evaluations?.[activeUser]?.note || '', 
     photos: (trip.evaluations?.[activeUser]?.photos && trip.evaluations[activeUser].photos.length > 0) 
       ? [...trip.evaluations[activeUser].photos] 
@@ -1827,7 +1834,7 @@ function TripReviewPanel({ trip, onComplete }) {
   // Sync state if initialUser changes
   useEffect(() => {
     setEvalData({ 
-      star: trip.evaluations?.[activeUser]?.star || 10, 
+      star: trip.evaluations?.[activeUser]?.star ?? (typeof trip.evaluations?.[activeUser] === 'number' ? trip.evaluations[activeUser] : 0), 
       note: trip.evaluations?.[activeUser]?.note || '', 
       photos: (trip.evaluations?.[activeUser]?.photos && trip.evaluations[activeUser].photos.length > 0) 
         ? [...trip.evaluations[activeUser].photos] 
