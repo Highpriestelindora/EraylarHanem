@@ -1858,11 +1858,16 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Important for ellipsis */
 }
 
 .tc-info strong {
   font-size: 14px;
   color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
 .tc-info span {
@@ -1921,12 +1926,12 @@
   flex: 1;
   border: none;
   background: transparent;
-  padding: 12px;
+  padding: 8px; /* Reduced from 12px */
   border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px; /* Reduced from 6px */
   cursor: pointer;
   transition: all 0.2s;
   touch-action: manipulation;
@@ -1939,7 +1944,7 @@
 }
 
 .sub-tab-btn-cute span {
-  font-size: 13px;
+  font-size: 11px; /* Reduced from 13px */
   font-weight: 800;
   color: #64748b;
 }
@@ -1949,7 +1954,7 @@
 }
 
 .sub-tab-btn-cute .btn-emoji {
-  font-size: 20px !important;
+  font-size: 16px !important; /* Reduced from 20px */
   opacity: 0.8;
 }
 
@@ -2625,24 +2630,35 @@
 
 .vc-input-group {
   display: flex;
-  gap: 5px;
+  gap: 8px;
 }
 
 .vc-input-group input {
   flex: 1;
-  background: rgba(0,0,0,0.1);
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 12px;
-  color: white;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  color: #1e293b;
   outline: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.vc-input-group input:focus {
+  border-color: var(--tatil);
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+}
+
+.vc-input-group input::placeholder {
+  color: #94a3b8;
 }
 
 .vc-input-group button {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   border: none;
   background: var(--tatil);
   color: white;
@@ -2656,6 +2672,27 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 5px;
+  /* Smooth scrolling */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Custom Mini Scrollbar for Valiz List */
+.vc-list::-webkit-scrollbar {
+  width: 3px;
+}
+
+.vc-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
+}
+
+.vc-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
 }
 
 .vc-item {
@@ -2679,6 +2716,133 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* VALIZ 5.0 GEO ADVICE */
+.va-geo-advice {
+  padding: 12px 15px;
+  background: linear-gradient(135deg, rgba(126, 34, 206, 0.05), rgba(126, 34, 206, 0.1));
+  border: 1px solid rgba(126, 34, 206, 0.2);
+  border-radius: 15px;
+}
+
+.vga-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.vga-header span {
+  font-size: 11px;
+  font-weight: 900;
+  color: #7e22ce;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vga-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vga-tips p {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* RATING SYSTEM PREMIUM */
+.premium-avg-score-box {
+  background: white;
+  padding: 20px;
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  border: 1px solid #f1f5f9;
+}
+
+.pas-label {
+  font-size: 10px;
+  font-weight: 900;
+  color: #94a3b8;
+  letter-spacing: 2px;
+  margin-bottom: 5px;
+}
+
+.pas-value {
+  font-size: 36px;
+  font-weight: 900;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.pas-value span {
+  font-size: 16px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.pas-stars {
+  display: flex;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.header-with-rating {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-mini-ratings {
+  display: flex;
+  gap: 6px;
+}
+
+.um-badge {
+  font-size: 10px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 100px;
+  color: white;
+}
+
+.um-badge.gorkem { background: #3b82f6; }
+.um-badge.esra { background: #ec4899; }
+
+.u-star {
+  font-size: 10px;
+  font-weight: 900;
+  color: #f59e0b;
+  margin-left: 5px;
+}
+
+.ec-stars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ec-stars strong {
+  font-size: 11px;
+  font-weight: 900;
+  color: #1e293b;
+}
+
+/* SHRINK ACTION BUTTONS */
+.btn-action-premium.tatil, .submit-btn-premium.tatil {
+  padding: 8px 16px !important;
+  font-size: 12px !important;
+  min-height: auto !important;
 }
 
 .valiz-assistant-box-v2 {
@@ -2712,6 +2876,32 @@
   margin: 10px 0;
 }
 
+.va-suggestions-cute {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.va-suggestion-btn-cute {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.va-suggestion-btn-cute:hover {
+  background: var(--tatil);
+  transform: scale(1.05);
+}
+
 /* Rest of existing styles */
 .vc-item.done .vc-check { background: var(--tatil); border-color: var(--tatil); }
 
@@ -2727,6 +2917,91 @@
 .lifecycle-actions-premium {
   padding: 0 20px;
   margin-bottom: 20px;
+}
+
+.status-lifecycle-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.confirm-toggle-btn {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 3px 18px;
+  border-radius: 12px;
+  font-size: 10px; 
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.confirm-toggle-btn.confirmed {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.confirmed-badge-mini {
+  font-size: 8px;
+  font-weight: 800;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 100px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1;
+  flex-shrink: 0; /* Prevents overlap */
+  margin-left: 4px;
+}
+
+.ongoing-badge-mini {
+  font-size: 8px;
+  font-weight: 800;
+  color: #1d4ed8;
+  background: #eff6ff;
+  padding: 2px 8px;
+  border-radius: 100px;
+  border: 1px solid rgba(29, 78, 216, 0.2);
+  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.status-info-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.status-info-badge.planned {
+  background: #f0f9ff;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.status-info-badge.active {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bbf7d0;
+  width: 100%;
 }
 
 .premium-action-btn {
@@ -3282,12 +3557,95 @@
   gap: 10px;
 }
 
+.rd-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .rd-item {
   padding: 12px;
   border-radius: 16px;
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.rd-item-small {
+  padding: 12px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.rd-item-small:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.rd-flag-small {
+  font-size: 24px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.rd-info-small {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.rd-main-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.rd-info-small strong {
+  font-size: 13px;
+  color: #1E1B4B;
+  font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.rd-meta-inline {
+  font-size: 10px;
+  opacity: 0.5;
+  color: #4338CA;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.traveler-mini-label {
+  margin-left: 2px;
+  font-weight: 800;
+}
+
+.rd-city-count {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  background: rgba(0,0,0,0.03);
+  padding: 3px 6px;
+  border-radius: 6px;
+  color: #64748B;
+  font-weight: 800;
+  margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .rd-flag { font-size: 20px; }
@@ -3769,7 +4127,29 @@
 }
 
 .wf-day small { font-size: 10px; text-transform: uppercase; opacity: 0.6; font-weight: 700; color: #64748B; }
+.wf-mini-date { font-size: 8px; font-weight: 800; opacity: 0.5; margin-top: -3px; margin-bottom: 1px; color: #64748B; }
 .wf-day strong { font-size: 14px; color: #1E293B; font-weight: 800; }
+
+.oracle-forecast-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0;
+  scrollbar-width: none;
+}
+.oracle-forecast-row::-webkit-scrollbar { display: none; }
+
+.forecast-mini-item {
+  flex: 0 0 45px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.fm-day { font-size: 9px; font-weight: 900; opacity: 0.7; }
+.fm-date { font-size: 8px; font-weight: 800; opacity: 0.4; margin-top: -2px; }
+.fm-temp { font-size: 11px; font-weight: 900; }
 
 /* Mini Buttons for Details */
 .vc-add-btn, .asistan-btn, .canli-btn, .harita-btn, .mdf-save-btn {
@@ -4109,18 +4489,7 @@
 .empty-dream-state p { margin-top: 15px; font-size: 13px; }
 
 /* Finalized Status Styles */
-.confirmed-badge-mini {
-  background: #10B981;
-  color: white;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8px;
-  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-}
+/* Duplicate deleted */
 
 .status-lifecycle-row {
   display: flex;
@@ -4428,16 +4797,7 @@
   transform: translateX(-50%) scale(1);
 }
 
-.rd-city-count {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 10px;
-  opacity: 0.6;
-  font-weight: 700;
-  margin-left: auto;
-  margin-right: 15px;
-}
+/* Handled in rd-item-small section above */
 
 /* City Wizard */
 .city-add-btn {

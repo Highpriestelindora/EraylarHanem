@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { PACKING_POOL, BUCKET_LIST, INITIAL_TRIPS, INITIAL_VISAS } from '../constants/data';
+import { PACKING_POOL, BUCKET_LIST, INITIAL_TRIPS, INITIAL_VISAS, GEO_ADVICE } from '../constants/data';
 import { calculateTripStatus, getNowUTC } from '../lib/dateUtils';
 import './Tatil.css';
 
@@ -85,50 +85,54 @@ async function fetchWeatherForTrip(city, country, startDate) {
     }
   } catch (e) {}
   return null;
-}
-
-// --- HELPERS ---
+}// --- HELPERS ---
 const getCountryFlag = (title = '', city = '', country = '') => {
   const text = normalizeText(title + ' ' + city + ' ' + country);
   
   let code = '';
   if (text.includes('avusturya') || text.includes('viyana') || text.includes('vienna') || text.includes('austria')) code = 'at';
-  else if (text.includes('kibris') || text.includes('kktc') || text.includes('cyprus')) code = 'tr';
+  else if (text.includes('kibris') || text.includes('kktc') || text.includes('cyprus')) code = 'cy';
   else if (text.includes('italya') || text.includes('italy') || text.includes('roma') || text.includes('milano') || text.includes('venedik')) code = 'it';
   else if (text.includes('almanya') || text.includes('germany') || text.includes('berlin') || text.includes('munih') || text.includes('heidelberg')) code = 'de';
   else if (text.includes('fransa') || text.includes('france') || text.includes('paris') || text.includes('marsilya') || text.includes('marseille')) code = 'fr';
   else if (text.includes('ingiltere') || text.includes('london') || text.includes('londra') || text.includes('uk') || text.includes('kingdom') || text.includes('britanya')) code = 'gb';
-  else if (text.includes('yunanistan') || text.includes('greece') || text.includes('athens') || text.includes('selanik') || text.includes('kavala') || text.includes('atina')) code = 'gr';
-  else if (text.includes('ispanya') || text.includes('spain') || text.includes('madrid') || text.includes('barcelona')) code = 'es';
-  else if (text.includes('hollanda') || text.includes('netherlands') || text.includes('amsterdam')) code = 'nl';
-  else if (text.includes('bulgaristan') || text.includes('bulgaria') || text.includes('sofya') || text.includes('sofiya')) code = 'bg';
+  else if (text.includes('yunanistan') || text.includes('greece') || text.includes('athens') || text.includes('selanik') || text.includes('kavala') || text.includes('atina') || text.includes('sakiz')) code = 'gr';
+  else if (text.includes('ispanya') || text.includes('spain') || text.includes('madrid') || text.includes('barcelona') || text.includes('valencia')) code = 'es';
+  else if (text.includes('hollanda') || text.includes('netherlands') || text.includes('amsterdam') || text.includes('eindhoven')) code = 'nl';
+  else if (text.includes('bulgaristan') || text.includes('bulgaria') || text.includes('sofya') || text.includes('sofiya') || text.includes('plovdiv')) code = 'bg';
   else if (text.includes('bosna') || text.includes('saraybosna') || text.includes('sarajevo') || text.includes('mostar')) code = 'ba';
-  else if (text.includes('japonya') || text.includes('japan') || text.includes('tokyo')) code = 'jp';
-  else if (text.includes('izlanda') || text.includes('iceland')) code = 'is';
+  else if (text.includes('japonya') || text.includes('japan') || text.includes('tokyo') || text.includes('osaka')) code = 'jp';
+  else if (text.includes('izlanda') || text.includes('iceland') || text.includes('reykjavik')) code = 'is';
   else if (text.includes('turkiye') || text.includes('turkey') || text.includes('konya') || text.includes('istanbul') || text.includes('ankara') || text.includes('izmir') || text.includes('antalya')) code = 'tr';
-  else if (text.includes('peru')) code = 'pe';
-  else if (text.includes('tanzanya') || text.includes('serengeti')) code = 'tz';
-  else if (text.includes('brezilya') || text.includes('amazon') || text.includes('rio')) code = 'br';
-  else if (text.includes('guney afrika')) code = 'za';
-  else if (text.includes('kambocya')) code = 'kh';
-  else if (text.includes('bae') || text.includes('dubai')) code = 'ae';
-  else if (text.includes('kanada')) code = 'ca';
-  else if (text.includes('cekya') || text.includes('prag')) code = 'cz';
-  else if (text.includes('macaristan') || text.includes('budapeste')) code = 'hu';
-  else if (text.includes('misir') || text.includes('kahire') || text.includes('piramit')) code = 'eg';
-  else if (text.includes('rusya') || text.includes('moskova')) code = 'ru';
-  else if (text.includes('tayland') || text.includes('bangkok')) code = 'th';
-  else if (text.includes('singapur')) code = 'sg';
+  else if (text.includes('peru') || text.includes('lima') || text.includes('cusco')) code = 'pe';
+  else if (text.includes('tanzanya') || text.includes('serengeti') || text.includes('zanzibar')) code = 'tz';
+  else if (text.includes('brezilya') || text.includes('amazon') || text.includes('rio') || text.includes('sao paulo')) code = 'br';
+  else if (text.includes('guney afrika') || text.includes('cape town')) code = 'za';
+  else if (text.includes('kambocya') || text.includes('siem reap')) code = 'kh';
+  else if (text.includes('bae') || text.includes('dubai') || text.includes('doha') || text.includes('qatar') || text.includes('katar')) {
+    if (text.includes('doha') || text.includes('qatar') || text.includes('katar')) code = 'qa';
+    else code = 'ae';
+  }
+  else if (text.includes('kanada') || text.includes('toronto')) code = 'ca';
+  else if (text.includes('cekya') || text.includes('prag') || text.includes('czech')) code = 'cz';
+  else if (text.includes('macaristan') || text.includes('budapeste') || text.includes('hungary')) code = 'hu';
+  else if (text.includes('misir') || text.includes('kahire') || text.includes('piramit') || text.includes('egypt')) code = 'eg';
+  else if (text.includes('rusya') || text.includes('moskova') || text.includes('russia')) code = 'ru';
+  else if (text.includes('tayland') || text.includes('bangkok') || text.includes('phuket')) code = 'th';
+  else if (text.includes('singapur') || text.includes('singapore')) code = 'sg';
   else if (text.includes('hong kong')) code = 'hk';
-  else if (text.includes('guney kore')) code = 'kr';
-  else if (text.includes('abd') || text.includes('amerika') || text.includes('usa')) code = 'us';
-  else if (text.includes('avustralya')) code = 'au';
-  else if (text.includes('yeni zelanda')) code = 'nz';
-  else if (text.includes('arjantin')) code = 'ar';
-  else if (text.includes('norvec')) code = 'no';
-  else if (text.includes('isvec')) code = 'se';
-  else if (text.includes('finlandiya')) code = 'fi';
-  else if (text.includes('isvicre')) code = 'ch';
+  else if (text.includes('guney kore') || text.includes('korea') || text.includes('seul') || text.includes('seoul')) code = 'kr';
+  else if (text.includes('abd') || text.includes('amerika') || text.includes('usa') || text.includes('new york') || text.includes('miami')) code = 'us';
+  else if (text.includes('avustralya') || text.includes('australia') || text.includes('sydney')) code = 'au';
+  else if (text.includes('yeni zelanda') || text.includes('new zealand')) code = 'nz';
+  else if (text.includes('arjantin') || text.includes('argentina') || text.includes('buenos aires')) code = 'ar';
+  else if (text.includes('norvec') || text.includes('norway') || text.includes('oslo')) code = 'no';
+  else if (text.includes('isvec') || text.includes('sweden') || text.includes('stockholm')) code = 'se';
+  else if (text.includes('finlandiya') || text.includes('finland') || text.includes('helsinki')) code = 'fi';
+  else if (text.includes('isvicre') || text.includes('switzerland') || text.includes('zurih') || text.includes('geneve')) code = 'ch';
+  else if (text.includes('cin') || text.includes('china') || text.includes('shanghai') || text.includes('pekin')) code = 'cn';
+  else if (text.includes('portekiz') || text.includes('portugal') || text.includes('lizbon')) code = 'pt';
+  else if (text.includes('belçika') || text.includes('belgium') || text.includes('bruksel')) code = 'be';
 
   if (!code) return '🌍';
   return (
@@ -479,31 +483,19 @@ function TripsTab({ tatil, onSelectTrip, onShowWizard, onEditTrip }) {
   return (
     <div className="tab-pane animate-fadeIn">
       <div className="trip-sections-cute">
-        {/* SECTION 1: ACTIVE */}
+        {/* SECTION 1: SEYAHATLER (ACTIVE + FINALIZED) */}
         <div className="trip-group-cute">
           <div className="section-header-cute">
-            <h3>📍 Şu An Devam Edenler</h3>
+            <h3>🌍 Seyahatler</h3>
           </div>
-          {kesin.length > 0 ? (
-            kesin.map(t => <TripCard key={t.id} trip={t} onClick={() => onSelectTrip(t)} onEdit={() => onEditTrip(t)} />)
+          {[...kesin, ...kesinlesmis].length > 0 ? (
+            [...kesin, ...kesinlesmis].map(t => <TripCard key={t.id} trip={t} onClick={() => onSelectTrip(t)} onEdit={() => onEditTrip(t)} />)
           ) : (
-            <div className="empty-state-cute glass">Şu an aktif bir seyahat yok. ✨</div>
+            <div className="empty-state-cute glass">Planlanmış veya devam eden bir seyahat yok. ✈️</div>
           )}
         </div>
 
-        {/* SECTION 2: FINALIZED UPCOMING */}
-        <div className="trip-group-cute">
-          <div className="section-header-cute">
-            <h3>✅ Kesinleşen Yaklaşanlar</h3>
-          </div>
-          {kesinlesmis.length > 0 ? (
-            kesinlesmis.map(t => <TripCard key={t.id} trip={t} onClick={() => onSelectTrip(t)} onEdit={() => onEditTrip(t)} />)
-          ) : (
-            <div className="empty-state-cute glass">Bileti hazır yaklaşan seyahat yok. ✈️</div>
-          )}
-        </div>
-
-        {/* SECTION 3: PLANNING */}
+        {/* SECTION 2: PLANNING */}
         <div className="trip-group-cute">
           <div className="section-header-cute">
             <h3>📝 Planlama Aşamasındakiler</h3>
@@ -685,9 +677,13 @@ function TripCard({ trip, onClick, onEdit }) {
     <div className="trip-card-cute glass" onClick={onClick}>
       <div className="tc-flag">{getCountryFlag(trip.title, trip.city, trip.country)}</div>
       <div className="tc-info">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <strong>{trip.title || trip.city}</strong>
-          {trip.isConfirmed && <div className="confirmed-badge-mini" title="Kesinleşti">✅</div>}
+          {trip.derivedStatus === 'active' ? (
+            <div className="ongoing-badge-mini">🔵 devam ediyor</div>
+          ) : (
+            trip.isConfirmed && <div className="confirmed-badge-mini">✅ kesinleşti</div>
+          )}
         </div>
         <span>{trip.startDate} · {trip.tripType === 'is' ? '💼 İş' : '🏖️ Tatil'}</span>
       </div>
@@ -951,7 +947,8 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
               
               return weatherForecast.daily.time.slice(0, durationDays).map((t, i) => (
                 <div key={t} className="wf-day glass">
-                  <small>{new Date(t).toLocaleDateString('tr-TR', { weekday: 'short' })}</small>
+                  <small>{new Date(t).toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase()}</small>
+                  <span className="wf-mini-date">{new Date(t).getDate()}/{new Date(t).getMonth() + 1}</span>
                   {getWeatherIcon(weatherForecast.daily.weathercode[i])}
                   <strong>{Math.round(weatherForecast.daily.temperature_2m_max[i])}°</strong>
                 </div>
@@ -987,7 +984,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
                 toast.success(trip.isConfirmed ? 'Plan aşamasına geri alındı.' : 'Seyahat kesinleşti! ✈️✅');
               }}
             >
-              {trip.isConfirmed ? '✅ Kesinleşti' : '✈️ Kesinleştir'}
+              {trip.isConfirmed ? '✅ kesinleşti' : '✈️ kesinleştir'}
             </button>
           </div>
         )}
@@ -1530,18 +1527,56 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
   const [currentSuggestions, setCurrentSuggestions] = useState([]);
 
   const refreshSuggestions = () => {
+    // VALIZ 5.0 LOGIC
     const pool = PACKING_POOL.filter(item => {
+      // 1. Basic Duration/Type Checks
       if (item.minDays > tripDuration) return false;
-      if (item.type === 'yurtdisi' && trip.type !== 'yurtdisi') return false;
+      if (item.type === 'yurtdisi' && trip.locationType !== 'yurtdisi') return false;
       if (item.type === 'is' && trip.tripType !== 'is') return false;
+      
+      // 2. Owner Filtering
+      if (item.owner && item.owner !== activePackingUser) return false;
+
+      // 3. Weather Filtering
+      if (weatherAdvice) {
+        const { avgTemp, hasRain } = weatherAdvice;
+        if (item.temp === 'hot' && avgTemp < 20) return false;
+        if (item.temp === 'cold' && avgTemp > 15) return false;
+        if (item.weather === 'rainy' && !hasRain) return false;
+      }
+
+      // 4. Duplicate Check
       const inGorkem = (trip.valiz?.gorkem || []).some(v => v.text === item.text);
       const inEsra = (trip.valiz?.esra || []).some(v => v.text === item.text);
       return !inGorkem && !inEsra;
     });
+
+    // CATEGORY BALANCED SELECTION
+    const getSelection = () => {
+      const essentials = pool.filter(i => i.category === 'Temel' || i.priority >= 90).sort(() => 0.5 - Math.random());
+      const clothes = pool.filter(i => i.category === 'Giyim').sort(() => 0.5 - Math.random());
+      const others = pool.filter(i => i.category !== 'Temel' && i.category !== 'Giyim').sort(() => 0.5 - Math.random());
+
+      return [
+        ...essentials.slice(0, 2),
+        ...clothes.slice(0, 2),
+        ...others.slice(0, 2)
+      ];
+    };
     
-    // Pick 6 random
-    const shuffled = [...pool].sort(() => 0.5 - Math.random());
-    setCurrentSuggestions(shuffled.slice(0, 6));
+    let selected = getSelection();
+    
+    // Add dynamic quantities
+    const finalSelection = selected.map(item => {
+      let text = item.text;
+      if (item.perDay) {
+        const qty = Math.ceil(tripDuration * item.perDay);
+        text = `${item.text} (${qty} adet)`;
+      }
+      return { ...item, text };
+    });
+
+    setCurrentSuggestions(finalSelection);
   };
 
   useEffect(() => {
@@ -1612,6 +1647,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
                 return (
                   <div key={time} className="forecast-mini-item">
                     <span className="fm-day">{dayName}</span>
+                    <span className="fm-date">{`${new Date(time).getDate()}/${new Date(time).getMonth() + 1}`}</span>
                     <span className="fm-icon">
                       {code <= 3 ? '☀️' : code <= 67 ? '🌧️' : '❄️'}
                     </span>
@@ -1664,8 +1700,8 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
           <div className="va-title">
             <span className="va-emoji">🤖</span>
             <div>
-              <strong>Valiz 2.0 Akıllı Asistan</strong>
-              <p>{tripDuration} günlük seyahat önerileri</p>
+              <strong>Valiz 5.0 Seyahat Kahini</strong>
+              <p>{tripDuration} günlük akıllı strateji</p>
             </div>
           </div>
           {showAssistant ? <X size={18} /> : <PlusCircle size={18} />}
@@ -1673,15 +1709,45 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
         
         {showAssistant && (
           <div className="va-suggestions-v2 animate-slideDown">
+            {/* Geo Advice Section */}
+            {(() => {
+              const cityKey = normalizeText(trip.city || '');
+              const countryKey = normalizeText(trip.country || '');
+              const advice = GEO_ADVICE.cities[cityKey] || GEO_ADVICE.countries[countryKey];
+              
+              if (!advice) return null;
+              
+              return (
+                <div className="va-geo-advice glass mb-15 animate-fadeIn">
+                  <div className="vga-header">
+                    <MapPin size={14} color="#7e22ce" />
+                    <span>Kahinin {trip.city || trip.country} Notu:</span>
+                  </div>
+                  <div className="vga-tips">
+                    {advice.tips.map((tip, idx) => (
+                      <p key={idx}>✨ {tip}</p>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="va-header-mini">
-              <p className="va-info">Senin için seçtiklerim:</p>
+              <p className="va-info">Bu seyahat için özel seçtiklerim:</p>
               <button className="va-refresh-btn-cute" onClick={refreshSuggestions} title="Yeni Öneriler">
-                <Moon size={14} />
+                <RotateCcw size={14} />
               </button>
             </div>
             <div className="va-suggestions-cute">
               {currentSuggestions.map(s => (
-                <button key={s.id} className="va-suggestion-btn-cute glass" onClick={() => addItem(s.text)}>
+                <button 
+                  key={s.id} 
+                  className="va-suggestion-btn-cute glass" 
+                  onClick={() => {
+                    addItem(s.text);
+                    setCurrentSuggestions(prev => prev.filter(item => item.id !== s.id));
+                  }}
+                >
                   <span className="va-s-icon">{s.icon}</span>
                   <span className="va-s-text">{s.text}</span>
                   <Plus size={10} className="va-s-plus" />
@@ -1702,31 +1768,60 @@ function MemoryDetailView({ trip, onEditEval }) {
   const [brokenImgs, setBrokenImgs] = useState({});
 
   const handleImgError = (id) => setBrokenImgs(prev => ({ ...prev, [id]: true }));
-  
   const isJoint = trip.travelers === 'ikimiz';
   
-  // Robust photo collection: Merge all evaluation photos + main trip photos
   const allAvailablePhotos = [
     ...(gEval?.photos || []),
     ...(eEval?.photos || []),
     ...(trip.photos || [])
   ].filter(p => !!p && typeof p === 'string' && p.length > 0);
 
-  // De-duplicate if needed (optional but good)
   const uniquePhotos = Array.from(new Set(allAvailablePhotos));
+
+  const avgStar = useMemo(() => {
+    const scores = [gEval?.star, eEval?.star].filter(s => typeof s === 'number' && s > 0);
+    if (scores.length === 0) return null;
+    return (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+  }, [gEval, eEval]);
+
+  const renderStars = (count) => {
+    return Array.from({ length: 10 }).map((_, i) => (
+      <Star 
+        key={i} 
+        size={10} 
+        fill={i < count ? "#FBBF24" : "none"} 
+        stroke={i < count ? "#FBBF24" : "#CBD5E1"} 
+        style={{ marginRight: 1 }}
+      />
+    ));
+  };
 
   return (
     <div className="memory-detail-view animate-fadeIn">
+      {/* Premium Average Badge */}
+      {avgStar && (
+        <div className="premium-avg-score-box glass">
+          <div className="pas-label">GENEL PUAN</div>
+          <div className="pas-value">{avgStar}<span>/10</span></div>
+          <div className="pas-stars">{renderStars(Math.round(avgStar))}</div>
+        </div>
+      )}
+
       <div className="memory-photos-section">
         <div className="ms-header">
-           <Star size={16} color="#FBBF24" fill="#FBBF24" />
-           <h3>En Sevdiğimiz Kareler</h3>
+           <div className="header-with-rating">
+              <h3>En Sevdiğimiz Kareler</h3>
+              <div className="user-mini-ratings">
+                {gEval?.star > 0 && <div className="um-badge gorkem">G: {gEval.star}★</div>}
+                {eEval?.star > 0 && <div className="um-badge esra">E: {eEval.star}★</div>}
+              </div>
+           </div>
         </div>
         <div className="m-photo-grid-premium">
           {isJoint ? (
             <>
               <div className="user-photo-row">
-                <div className="user-indicator">👨🏻‍💻 Görkem</div>
+                <div className="user-indicator">👨🏻‍💻 Görkem {gEval?.star > 0 && <span className="u-star">{gEval.star}★</span>}</div>
                 <div className="photo-slots">
                   {[0, 1, 2].map(i => {
                     const imgId = `g-${i}`;
@@ -1745,7 +1840,7 @@ function MemoryDetailView({ trip, onEditEval }) {
                 </div>
               </div>
               <div className="user-photo-row mt-10">
-                <div className="user-indicator">👩 Esra</div>
+                <div className="user-indicator">👩 Esra {eEval?.star > 0 && <span className="u-star">{eEval.star}★</span>}</div>
                 <div className="photo-slots">
                   {[0, 1, 2].map(i => {
                     const imgId = `e-${i}`;
@@ -1768,6 +1863,7 @@ function MemoryDetailView({ trip, onEditEval }) {
             <div className="user-photo-row">
               <div className="user-indicator">
                 {trip.travelers === 'gorkem' ? '👨🏻‍💻 Görkem' : '👩 Esra'}
+                {trip.evaluations?.[trip.travelers]?.star > 0 && <span className="u-star">{trip.evaluations[trip.travelers].star}★</span>}
               </div>
               <div className="photo-slots solo">
                 {[0, 1, 2, 3, 4, 5].map(i => {
@@ -1799,7 +1895,10 @@ function MemoryDetailView({ trip, onEditEval }) {
           <div className="eval-card-v2 gorkem glass">
             <div className="ec-header">
               <span>👨🏻‍💻 Görkem</span> 
-              <strong>{gEval?.star ? `${gEval.star}/10` : 'Puan Yok'}</strong>
+              <div className="ec-stars">
+                {gEval?.star ? renderStars(gEval.star) : 'Puan Yok'}
+                {gEval?.star > 0 && <strong className="ml-5">{gEval.star}</strong>}
+              </div>
               <button className="ec-edit-btn" onClick={() => onEditEval('gorkem')}><Edit3 size={12} /></button>
             </div>
             <p>{gEval?.note || 'Not bırakılmamış.'}</p>
@@ -1807,7 +1906,10 @@ function MemoryDetailView({ trip, onEditEval }) {
           <div className="eval-card-v2 esra glass">
             <div className="ec-header">
               <span>👩 Esra</span> 
-              <strong>{eEval?.star ? `${eEval.star}/10` : 'Puan Yok'}</strong>
+              <div className="ec-stars">
+                {eEval?.star ? renderStars(eEval.star) : 'Puan Yok'}
+                {eEval?.star > 0 && <strong className="ml-5">{eEval.star}</strong>}
+              </div>
               <button className="ec-edit-btn" onClick={() => onEditEval('esra')}><Edit3 size={12} /></button>
             </div>
             <p>{eEval?.note || 'Not bırakılmamış.'}</p>
@@ -2713,8 +2815,13 @@ function HaritaTab({ tatil, onTabChange }) {
             <div key={t.id} className="rd-item-small glass animate-slideRight" onClick={() => setShowCityWizard(t)}>
               <span className="rd-flag-small">{getCountryFlag(t.title, t.city, t.country)}</span>
               <div className="rd-info-small">
-                <strong>{t.city || t.title}</strong>
-                <small>{t.country} · {new Date(t.startDate).getFullYear()} {t.travelers !== 'ikimiz' && `(${t.travelers === 'gorkem' ? 'Görkem' : 'Esra'})`}</small>
+                <div className="rd-main-line">
+                  <strong>{t.city || t.title}</strong>
+                  <span className="rd-meta-inline">
+                    {t.country} · {new Date(t.startDate).getFullYear()} 
+                    {t.travelers !== 'ikimiz' && <span className="traveler-mini-label">({t.travelers === 'gorkem' ? 'G' : 'E'})</span>}
+                  </span>
+                </div>
               </div>
               <div className="rd-city-count">
                  <MapPin size={10} />
