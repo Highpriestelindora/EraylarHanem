@@ -3,10 +3,11 @@ import {
   Lightbulb, Wrench, ShieldCheck, 
   CheckCircle2, Plus, Trash2, 
   AlertTriangle, DollarSign, Calendar, Sparkles, Clock,
-  Droplets, Zap, Flame, Globe, ChevronRight,
+  Droplets, Zap, Flame, Globe, ChevronRight, ChevronDown,
   Shield, Key, Phone, User, Star, MoreVertical,
   PlusCircle, ArrowLeft, Camera, Settings, Info,
-  Building, FileText, Landmark, Home, MapPin, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode
+  Building, FileText, Landmark, Home, MapPin, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode,
+  Book, Lock, Unlock
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -26,6 +27,7 @@ const formatMoney = (val) =>
 
 export default function Ev() {
   const [activeTab, setActiveTab] = useState('yasam');
+  const [showWifiMain, setShowWifiMain] = useState(false);
   const navigate = useNavigate();
   const { 
     ev, kasa, users, currentUser, setCurrentUser, addFatura, addRepairItem, addBakimItem, 
@@ -153,7 +155,6 @@ export default function Ev() {
             >
               <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
               <span>{tab.label}</span>
-              {activeTab === tab.id && <div className="tab-dot" />}
             </button>
           ))}
         </nav>
@@ -535,62 +536,82 @@ export default function Ev() {
               ))}
             </div>
 
-            {/* Premium Guest Card */}
-            <div className="wifi-cards-grid mb-24">
-              {/* Main Wi-Fi Card */}
-              <div className="premium-wifi-card main glass animate-fadeIn">
-                <span className="wifi-badge">ANA HAT</span>
-                <div className="wifi-content-v2">
-                  <div className="wifi-info-main">
-                    <label>AĞ ADI</label>
-                    <strong>{ev.guvenlik?.wifiMain?.ssid || 'superonline_wifi_1023'}</strong>
-                    <div className="wifi-pass-container">
-                      <Key size={14} opacity={0.5} />
-                      <span style={{ fontFamily: 'monospace', letterSpacing: showMainPass ? '1px' : '3px' }}>
-                        {showMainPass ? (ev.guvenlik?.wifiMain?.pass || 'MAUMFUFTH74L') : '••••••••'}
-                      </span>
-                      <button className="show-pass-btn" onClick={() => setShowMainPass(!showMainPass)}>
-                        {showMainPass ? <EyeOff size={14} /> : <Eye size={14} />}
-                      </button>
-                    </div>
+            {/* Premium Wi-Fi Section */}
+            <div className="wifi-section-container mb-24">
+              
+              {/* Main Wi-Fi Card (Collapsible) */}
+              <div className={`premium-wifi-card main glass animate-fadeIn ${!showWifiMain ? 'collapsed' : ''}`}>
+                <div className="wifi-card-header" onClick={() => setShowWifiMain(!showWifiMain)}>
+                  <div className="wifi-toggle-btn">
+                    {showWifiMain ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
                   </div>
-                  <div className="wifi-qr-placeholder">
-                     <div className="qr-pattern" />
+                  <div className="wifi-title-group">
+                    <label>AĞ ADI</label>
+                    <strong>Superonline_Wi-Fi_1023</strong>
                   </div>
                 </div>
+
+                {showWifiMain && (
+                  <div className="wifi-card-body animate-fadeIn">
+                    <div className="wifi-content-v2">
+                      <div className="wifi-info-main">
+                        <label>ŞİFRE</label>
+                        <div className="wifi-pass-container static">
+                          <Key size={14} opacity={0.5} />
+                          <span className="handwriting-pass">MAUMFUFTH74L</span>
+                        </div>
+                      </div>
+                      <span className="wifi-badge main side">ANA HAT</span>
+                      <div className="wifi-qr-placeholder">
+                         <img 
+                           src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('WIFI:S:Superonline_Wi-Fi_1023;T:WPA;P:MAUMFUFTH74L;;')}`} 
+                           alt="QR Code" 
+                           className="real-qr-img"
+                         />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Guest Wi-Fi Card */}
-              <div className="premium-wifi-card guest glass animate-fadeIn">
-                <span className="wifi-badge">MİSAFİR</span>
+              {/* Guest Wi-Fi Card (Always visible) */}
+              <div className="premium-wifi-card guest glass animate-fadeIn" style={{ marginTop: '16px' }}>
                 <div className="wifi-content-v2">
                   <div className="wifi-info-main">
                     <label>HIZLI BAĞLANTI</label>
-                    <strong style={{ fontSize: '14px', color: 'var(--txt)' }}>{ev.guvenlik?.wifiGuest?.ssid || 'Tombis Yiğit'}</strong>
-                    <p style={{ fontSize: '10px', opacity: 0.6, margin: '4px 0 0 0' }}>Şifre: {ev.guvenlik?.wifiGuest?.pass || 'Love2013'}</p>
+                    <strong className="guest-ssid">Tombis Yiğit</strong>
+                    <div className="wifi-pass-container static guest">
+                       <Key size={14} opacity={0.5} />
+                       <span className="handwriting-pass">Love2013</span>
+                    </div>
                   </div>
-                  <div className="wifi-qr-placeholder" onClick={() => toast.success('Misafir QR Kodu Paylaşıldı! 📲')}>
-                     <div className="qr-pattern" />
+                  <span className="wifi-badge guest side">MİSAFİR</span>
+                  <div className="wifi-qr-placeholder" onClick={() => toast.success('QR Kod paylaşıma hazır! 📲')}>
+                     <img 
+                       src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('WIFI:S:Tombis Yiğit;T:WPA;P:Love2013;;')}`} 
+                       alt="QR Code" 
+                       className="real-qr-img"
+                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Encrypted Safe (Şifreli Defter) */}
-            <div className="personal-safe-section glass">
-                <div className="ps-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <Key size={18} color="#7c3aed" />
+            {/* Encrypted Safe (Şifreli Defter) - Vintage Edition */}
+            <div className="vintage-safe-container glass">
+                <div className="vs-header">
+                  <div className="vs-title">
+                    <Book size={20} color="#7c3aed" />
                     <h3>Kişisel Şifreli Defter</h3>
                   </div>
                   {!ev.guvenlik?.safePassword ? (
-                    <button className="ps-unlock-btn" style={{ background: '#f59e0b' }} onClick={() => navigate('/profil')}>
+                    <button className="vs-action-btn setup" onClick={() => navigate('/profil')}>
                       <AlertCircle size={16} /> Şifre Belirle
                     </button>
                   ) : ev.personalSafe?.locked ? (
-                    <button className="ps-unlock-btn" onClick={() => {
+                    <button className="vs-action-btn unlock" onClick={() => {
                       if (unlockSafe(safeInput)) {
-                        toast.success('Kasa açıldı! 🔓');
+                        toast.success('Defter açıldı! 🖋️');
                         setSafeInput('');
                       } else {
                         setSafeError(true);
@@ -598,48 +619,54 @@ export default function Ev() {
                         setTimeout(() => setSafeError(false), 500);
                       }
                     }}>
-                      <ShieldCheck size={16} /> Kilidi Aç
+                      <Lock size={16} /> Kilidi Aç
                     </button>
                   ) : (
-                    <button className="ps-unlock-btn" style={{ background: '#ef4444' }} onClick={lockSafe}>
-                      <Shield size={16} /> Kilitle
+                    <button className="vs-action-btn lock" onClick={lockSafe}>
+                      <Unlock size={16} /> Defteri Kapat
                     </button>
                   )}
                 </div>
-                <div className="ps-content">
+
+                <div className="vs-body">
                   {!ev.guvenlik?.safePassword ? (
-                    <div className="ps-setup-hint">
-                      <p>Kasanızı kullanmak için önce bir güvenlik şifresi belirlemelisiniz.</p>
-                      <button className="btn-setup-safe" onClick={() => navigate('/profil')}>Profil Ayarlarına Git</button>
+                    <div className="vs-setup-hint">
+                      <p>Özel notlarınızı saklamak için profilinizden bir şifre belirleyin.</p>
+                      <button className="btn-setup-safe" onClick={() => navigate('/profil')}>Ayarlara Git</button>
                     </div>
                   ) : ev.personalSafe?.locked ? (
-                    <div className="ps-unlock-area">
-                      <input 
-                        type="password" 
-                        className={`ps-pass-input ${safeError ? 'error' : ''}`}
-                        placeholder="••••"
-                        value={safeInput}
-                        onChange={(e) => setSafeInput(e.target.value)}
-                        onKeyDown={(e) => {
-                           if(e.key === 'Enter') {
-                             if(unlockSafe(safeInput)) toast.success('Kasa açıldı! 🔓');
-                             else { setSafeError(true); setTimeout(() => setSafeError(false), 500); }
-                           }
-                        }}
-                      />
-                      <p style={{ fontSize: '12px', opacity: 0.5 }}>Erişim kodunu girip "Kilidi Aç" butonuna basın</p>
+                    <div className="vs-lock-overlay">
+                      <div className="vs-lock-box">
+                        <Lock size={40} className={safeError ? 'shake' : ''} />
+                        <input 
+                          type="password" 
+                          className={`vs-pin-input ${safeError ? 'error' : ''}`}
+                          placeholder="••••"
+                          value={safeInput}
+                          onChange={(e) => setSafeInput(e.target.value)}
+                          maxLength={10}
+                        />
+                        <p>Erişim kodunu giriniz</p>
+                      </div>
                     </div>
                   ) : (
-                    <div className="ps-safe-open animate-fadeIn" style={{ padding: '20px' }}>
+                    <div className="vs-notebook-paper animate-fadeIn">
+                      <div className="notebook-header">
+                         <span className="notebook-date">{new Date().toLocaleDateString('tr-TR')}</span>
+                      </div>
                       <textarea 
-                        className="glass"
-                        style={{ width: '100%', height: '150px', background: 'white', border: '1px solid var(--brd)', borderRadius: '12px', padding: '15px', fontFamily: 'inherit', fontSize: '14px' }}
-                        placeholder="Kişisel notlarınızı buraya yazabilirsiniz..."
+                        className="notebook-textarea"
+                        placeholder="Eski sandıktan çıkan hatıralar gibi..."
                         defaultValue={ev.personalSafe?.notes || ''}
+                        spellCheck="false"
                       />
-                      <p style={{ fontSize: '11px', color: '#16a34a', fontWeight: '700', marginTop: '10px' }}>
-                        <ShieldCheck size={12} /> Bilgileriniz AES-256 ile şifrelenmiştir.
-                      </p>
+                      <div className="notebook-footer">
+                         <div className="vintage-stamp">
+                            <span className="stamp-text">ERAYLAR</span>
+                            <span className="stamp-sub">RESMİ MÜHÜR</span>
+                         </div>
+                         <div className="personal-signature">Eraylar Hanem</div>
+                      </div>
                     </div>
                   )}
                 </div>

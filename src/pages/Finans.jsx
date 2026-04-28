@@ -76,12 +76,10 @@ export default function Finans() {
           <button className={`tab-btn ${activeTab === 'havuz' ? 'active' : ''}`} onClick={() => setActiveTab('havuz')}>
             <span style={{ fontSize: '16px', marginBottom: '2px' }}>⌛</span>
             <span>Havuz {pool.length > 0 && `(${pool.length})`}</span>
-            {activeTab === 'havuz' && <div className="tab-dot" />}
           </button>
           <button className={`tab-btn ${activeTab === 'borclar' ? 'active' : ''}`} onClick={() => setActiveTab('borclar')}>
             <span style={{ fontSize: '16px', marginBottom: '2px' }}>💳</span>
             <span>Borçlar</span>
-            {activeTab === 'borclar' && <div className="tab-dot" />}
           </button>
           <button className={`tab-btn ${activeTab === 'analiz' ? 'active' : ''}`} onClick={() => setActiveTab('analiz')}>
             <span style={{ fontSize: '16px', marginBottom: '2px' }}>📊</span>

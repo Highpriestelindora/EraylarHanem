@@ -233,7 +233,7 @@ export default function Alisveris() {
             >
               <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
               <span style={{ fontSize: '9px', fontWeight: '500', opacity: 0.8 }}>{tab.label}</span>
-              {activeTab === tab.id && <div className="tab-dot" />}
+
             </button>
           ))}
         </nav>

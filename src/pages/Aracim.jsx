@@ -130,7 +130,7 @@ export default function Aracim() {
             >
               <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
               <span>{tab.label}</span>
-              {activeTab === tab.id && <div className="tab-dot" />}
+
             </button>
           ))}
         </nav>
