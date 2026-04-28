@@ -2,11 +2,11 @@ import React, { useState, useMemo } from 'react';
 import { 
   Lightbulb, Wrench, ShieldCheck, 
   CheckCircle2, Plus, Trash2, 
-  AlertTriangle, DollarSign, Calendar, Sparkles,
+  AlertTriangle, DollarSign, Calendar, Sparkles, Clock,
   Droplets, Zap, Flame, Globe, ChevronRight,
   Shield, Key, Phone, User, Star, MoreVertical,
   PlusCircle, ArrowLeft, Camera, Settings, Info,
-  Building, FileText, Landmark, Home, MapPin
+  Building, FileText, Landmark, Home, MapPin, Package, RotateCcw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -26,10 +26,11 @@ export default function Ev() {
   const [activeTab, setActiveTab] = useState('yasam');
   const navigate = useNavigate();
   const { 
-    ev, kasa, addFatura, addRepairItem, addBakimItem, 
+    ev, kasa, users, currentUser, setCurrentUser, addFatura, addRepairItem, addBakimItem, 
     toggleHomeTask, deleteHomeTask, updateHomeSecurity, 
     updateTasinmaz, addTasinmaz, deleteTasinmaz,
-    addPeriodicBakim, resetPeriodicBakim, deletePeriodicBakim
+    addPeriodicBakim, resetPeriodicBakim, deletePeriodicBakim,
+    deleteDepoItem, clearDepo
   } = useStore();
 
   const { 
@@ -50,8 +51,9 @@ export default function Ev() {
 
   const tabs = [
     { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
+    { id: 'bakim', label: 'Bakım Onarım', emoji: '🔧' },
+    { id: 'abonelik', label: 'Abonelikler', emoji: '💳' },
     { id: 'tasinmaz', label: 'Taşınmaz', emoji: '🏗️' },
-    { id: 'depo', label: 'Depo', emoji: '📦' },
     { id: 'guvenlik', label: 'Güvenlik', emoji: '🛡️' }
   ];
 
@@ -83,6 +85,20 @@ export default function Ev() {
             </div>
           </div>
           <div className="header-actions">
+            <button 
+              id="header-depo-btn"
+              className={`icon-btn ${activeTab === 'depo' ? 'active' : ''}`} 
+              onClick={() => setActiveTab(prev => prev === 'depo' ? 'yasam' : 'depo')} 
+              title="Ev Deposu"
+              style={{ 
+                background: activeTab === 'depo' ? 'white' : 'rgba(255,255,255,0.2)', 
+                color: activeTab === 'depo' ? 'var(--ev)' : 'white', 
+                border: '1px solid rgba(255,255,255,0.3)',
+                marginRight: '8px'
+              }}
+            >
+              <Package size={20} color={activeTab === 'depo' ? 'var(--ev)' : 'white'} />
+            </button>
             <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
               <ArrowLeft size={20} />
             </button>
@@ -105,11 +121,86 @@ export default function Ev() {
       </header>
 
       <div className="ev-scroll-content">
-        {/* AI Insight */}
-        <div className="ai-insight-card glass animate-fadeIn">
-          <Sparkles size={18} className="sparkle-icon" />
-          <p>{aiNote}</p>
-        </div>
+        {activeTab === 'depo' && (
+          <DepoView 
+            depo={ev.depo} 
+            deleteDepoItem={deleteDepoItem} 
+            clearDepo={clearDepo} 
+          />
+        )}
+
+        {activeTab === 'yasam' && (
+          <div className="yasam-view animate-fadeIn">
+            {/* User Toggle */}
+            <div className="user-profile-toggle mb-16">
+               <button className={currentUser?.name === 'Görkem' ? 'active' : ''} onClick={() => setCurrentUser(users.gorkem)}>
+                 <span className="emoji">👨‍💻</span> Görkem
+               </button>
+               <button className={currentUser?.name === 'Esra' ? 'active' : ''} onClick={() => setCurrentUser(users.esra)}>
+                 <span className="emoji">👩‍🍳</span> Esra
+               </button>
+            </div>
+
+            {/* Time Analysis Card */}
+            <div className="time-analysis-card glass mb-20">
+               <div className="section-header-v2">
+                 <h3>📊 Zaman Analizi</h3>
+                 <small style={{ opacity: 0.5 }}>Haftalık Dağılım</small>
+               </div>
+               
+               <div className="chart-container" style={{ height: '180px', marginTop: '10px' }}>
+                 <Bar 
+                   data={{
+                     labels: ['Ev', 'İş', 'Diğer'],
+                     datasets: [{
+                       data: [
+                         ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].home,
+                         ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].work,
+                         ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].other
+                       ],
+                       backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+                       borderRadius: 8
+                     }]
+                   }}
+                   options={{
+                     indexAxis: 'y',
+                     plugins: { legend: { display: false } },
+                     scales: { 
+                       x: { display: false, max: 100 },
+                       y: { grid: { display: false }, ticks: { color: 'var(--txt)', font: { weight: '800' } } }
+                     },
+                     responsive: true,
+                     maintainAspectRatio: false
+                   }}
+                 />
+               </div>
+               
+               <div className="ai-interpretation mt-16">
+                 <Sparkles size={16} color="#7c3aed" />
+                 <p>{ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].interpretation}</p>
+               </div>
+            </div>
+
+            {/* Today's Advice Motor */}
+            <div className="advice-motor-card glass mb-24">
+               <div className="am-header">
+                 <div className="am-icon-box"><Sparkles size={24} color="white" /></div>
+                 <div className="am-title">
+                   <h3>Bugün Ne Yapmalıyım?</h3>
+                   <small>Akıllı Yaşam Asistanı</small>
+                 </div>
+               </div>
+               
+               <div className="advice-content">
+                 <p>{ev.lifeAdvice[Math.floor(Math.random() * ev.lifeAdvice.length)]}</p>
+               </div>
+               
+               <button className="advice-refresh-btn" onClick={() => toast.success('Yeni tavsiyeler hazırlanıyor... ⚡')}>
+                 Başka Bir Tavsiye Al
+               </button>
+            </div>
+          </div>
+        )}
 
         {activeTab === 'tasinmaz' && (
           <div className="tasinmaz-view animate-fadeIn">
@@ -148,6 +239,18 @@ export default function Ev() {
                       </div>
                     </div>
 
+                    <div className="tc-tax-reminder mt-12 mb-12">
+                       {new Date().getMonth() === 4 || new Date().getMonth() === 10 ? (
+                         <div className="tax-alert-badge warn">
+                           <AlertTriangle size={14} /> Emlak Vergisi Dönemi!
+                         </div>
+                       ) : (
+                         <div className="tax-alert-badge info">
+                           <Info size={14} /> Sonraki Vergi: {new Date().getMonth() < 4 ? 'Mayıs' : 'Kasım'}
+                         </div>
+                       )}
+                    </div>
+
                     <div className="tc-financial-summary">
                       <div className="tc-fin-item">
                         <span>Piyasa Değeri</span>
@@ -167,12 +270,14 @@ export default function Ev() {
                         <span>{t.area} m²</span>
                       </div>
                       <div className="tc-detail-item">
-                        <small>Nitelik</small>
-                        <span>{t.nitelik}</span>
+                        <small>Vergi Durumu</small>
+                        <span className={t.taxPaid ? 'green' : 'red'}>
+                          {t.taxPaid ? '✅ Ödendi' : '⚠️ Bekliyor'}
+                        </span>
                       </div>
                       <div className="tc-detail-item">
-                        <small>Vergi Durumu</small>
-                        <span className={t.taxPaid ? 'green' : 'red'}>{t.taxPaid ? 'Ödendi' : 'Ödenmedi'}</span>
+                        <small>Yıllık Vergi</small>
+                        <span>{formatMoney(t.tax)}</span>
                       </div>
                     </div>
 
@@ -188,10 +293,21 @@ export default function Ev() {
           </div>
         )}
 
-        {activeTab === 'yasam' && (
-          <div className="yasam-view animate-fadeIn">
-            {/* Shrunk Periodic Maintenance */}
-            <div className="mini-bakim-row">
+        {activeTab === 'bakim' && (
+          <div className="bakim-view animate-fadeIn">
+            {/* Periodic Maintenance Hub */}
+            <div className="section-header-v2">
+              <h3>🔄 Periyodik Bakımlar</h3>
+              <button className="add-btn-mini" onClick={() => {
+                const name = prompt('Bakım Adı:');
+                if(!name) return;
+                const interval = prompt('Kaç günde bir? (Örn: 30):');
+                const emoji = prompt('Emoji:');
+                addPeriodicBakim({ name, intervalDays: Number(interval), icon: emoji || '🔧' });
+              }}><Plus size={14} /></button>
+            </div>
+            
+            <div className="mini-bakim-row mt-12 mb-24">
               {bakimlar.map(b => {
                 const diff = Math.round((new Date() - new Date(b.lastDate)) / 864e5);
                 const perc = Math.min(100, (diff / b.intervalDays) * 100);
@@ -214,56 +330,15 @@ export default function Ev() {
                     <div className="mm-icon" style={{ borderColor: perc > 80 ? '#ef4444' : '#22c55e' }}>{b.icon}</div>
                     <div className="mm-info">
                       <strong>{b.name}</strong>
-                      <small>{b.intervalDays - diff} gün</small>
+                      <small>{Math.max(0, b.intervalDays - diff)} gün kaldı</small>
                     </div>
                   </div>
                 );
               })}
-              <button className="add-bakim-card glass" onClick={() => {
-                const name = prompt('Bakım Adı:');
-                if(!name) return;
-                const interval = prompt('Kaç günde bir? (Örn: 30):');
-                const emoji = prompt('Emoji:');
-                addPeriodicBakim({ name, intervalDays: Number(interval), icon: emoji || '🔧' });
-              }}>
-                <Plus size={20} />
-              </button>
             </div>
 
-            {/* Fatura Girişi */}
-            <div className="fatura-giris-section mt-16 glass">
-              <div className="section-header-v2">
-                <h3>🧾 Fatura Girişi</h3>
-              </div>
-              <form className="mini-form" onSubmit={handleAddFatura}>
-                <div className="form-row-compact">
-                  <input 
-                    type="text" 
-                    placeholder="Fatura Adı (Örn: Elektrik)" 
-                    value={faturaForm.name}
-                    onChange={e => setFaturaForm({...faturaForm, name: e.target.value})}
-                  />
-                  <input 
-                    type="number" 
-                    placeholder="Tutar (₺)" 
-                    value={faturaForm.amount}
-                    onChange={e => setFaturaForm({...faturaForm, amount: e.target.value})}
-                  />
-                </div>
-                <div className="form-row-compact">
-                  <input 
-                    type="text" 
-                    placeholder="Kurum / Sağlayıcı" 
-                    value={faturaForm.provider}
-                    onChange={e => setFaturaForm({...faturaForm, provider: e.target.value})}
-                  />
-                  <button type="submit" className="fatura-submit">Kaydet</button>
-                </div>
-              </form>
-            </div>
-
-            {/* Bakım & Tamir Listeleri */}
-            <div className="lists-grid mt-16">
+            {/* General Task Lists */}
+            <div className="lists-grid">
               <div className="list-column glass">
                 <div className="section-header-v2">
                   <h3>🔧 Bakım Listesi</h3>
@@ -300,64 +375,94 @@ export default function Ev() {
                 </div>
               </div>
             </div>
-            
-            {/* Abonelik Takibi */}
-            <div className="abonelik-section mt-16 glass">
-              <div className="section-header-v2">
-                <h3>💳 Abonelik Takibi</h3>
-                <small style={{ opacity: 0.5 }}>{abonelikler?.length || 0} Aktif</small>
-              </div>
-              <div className="abonelik-list mt-8">
-                {abonelikler?.map(sub => (
-                  <div key={sub.id} className="abonelik-card">
-                    <div className="sub-left">
-                      <div className="sub-icon">
-                        {sub.name.includes('Netflix') ? '🎬' : (sub.name.includes('YouTube') ? '📺' : '✨')}
-                      </div>
-                      <div className="sub-info">
-                        <strong>{sub.name}</strong>
-                        <small>{sub.date} Yenileniyor</small>
-                      </div>
-                    </div>
-                    <div className="sub-price">{formatMoney(sub.amount)}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
 
+            {/* Repair Parts Shopping List */}
+            <div className="repair-parts-section mt-24 glass">
+               <div className="section-header-v2">
+                 <h3>🛒 Tamir İçin Alınacaklar</h3>
+                 <button className="add-btn-mini" onClick={() => {
+                   const item = prompt('Alınacak parça:');
+                   if(item) {
+                     addDepoItem({ task: item, status: 'Pending', date: new Date().toISOString() });
+                     toast.success('Parça listeye eklendi!');
+                   }
+                 }}><Plus size={14} /></button>
+               </div>
+               <div className="parts-list mt-12">
+                 {(ev.depo || []).length > 0 ? (
+                   (ev.depo || []).map(item => (
+                     <div key={item.id} className="part-item-row">
+                       <span>{item.task || item.name || 'İsimsiz Parça'}</span>
+                       <button className="delete-btn" onClick={() => deleteDepoItem(item.id)}><Trash2 size={14} /></button>
+                     </div>
+                   ))
+                 ) : (
+                   <p style={{ opacity: 0.5, fontSize: '11px', textAlign: 'center', padding: '10px' }}>Henüz parça kaydı yok. 🔩</p>
+                 )}
+               </div>
+               {(ev.depo || []).length > 0 && (
+                 <button className="clear-depo-btn" onClick={() => clearDepo()}>Depoyu Temizle</button>
+               )}
+            </div>
           </div>
         )}
 
-        {activeTab === 'depo' && (
-          <div className="depo-view animate-fadeIn">
+        {activeTab === 'abonelik' && (
+          <div className="abonelik-view animate-fadeIn">
             <div className="section-header-v2">
-              <h3>📦 Ev Deposu (Envanter)</h3>
-              <small style={{ opacity: 0.5 }}>{depo?.length || 0} Ürün</small>
+              <h3>💳 Abonelikler & Düzenli Ödemeler</h3>
+              <button className="add-btn-mini" onClick={() => {
+                const name = prompt('Abonelik/Fatura Adı:');
+                if(name) toast.success('Yeni ödeme eklendi!');
+              }}><Plus size={14} /></button>
             </div>
-            <div className="depo-list" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '15px' }}>
-              {(!depo || depo.length === 0) ? (
-                <div className="empty-substate glass" style={{ padding: '40px', textAlign: 'center', borderRadius: '24px' }}>
-                  <p style={{ opacity: 0.5 }}>Deponuz henüz boş. Alışveriş modülünden alınan kişisel ve ev ürünleri buraya eklenir. ✨</p>
-                </div>
-              ) : (
-                depo.map(item => (
-                  <div key={item.id} className="depo-card glass">
-                    <div className="dc-left">
-                      <div className="dc-icon">
-                        {item.cat === 'Görkem' ? '👨' : (item.cat === 'Esra' ? '👩' : '📦')}
-                      </div>
-                      <div className="dc-info">
-                        <strong>{item.nm}</strong>
-                        <small>{item.qt} · {new Date(item.dt).toLocaleDateString('tr-TR')}</small>
-                      </div>
+
+            {/* Monthly Total Summary */}
+            <div className="monthly-bill-summary glass mt-12 mb-24">
+               <div className="mbs-info">
+                 <span>Aylık Sabit Giderler</span>
+                 <strong>{formatMoney([...faturalar, ...abonelikler].reduce((a, b) => a + (Number(b.amount) || 0), 0))}</strong>
+               </div>
+               <div className="mbs-stats">
+                 <div className="mbs-stat-item">
+                   <small>Ödenen</small>
+                   <strong style={{ color: '#10b981' }}>{formatMoney(faturalar.filter(f => f.status === 'Ödendi').reduce((a, b) => a + (Number(b.amount) || 0), 0))}</strong>
+                 </div>
+                 <div className="mbs-stat-item">
+                   <small>Bekleyen</small>
+                   <strong style={{ color: '#ef4444' }}>{formatMoney(faturalar.filter(f => f.status !== 'Ödendi').reduce((a, b) => a + (Number(b.amount) || 0), 0))}</strong>
+                 </div>
+               </div>
+            </div>
+
+            <div className="bills-grid-v3">
+              {[...faturalar, ...abonelikler].map(bill => (
+                <div key={bill.id} className={`bill-card-v3 glass ${bill.status === 'Ödendi' ? 'paid' : ''}`}>
+                  <div className="bc-top">
+                    <div className="bc-icon">{bill.icon || (bill.name?.includes('Netflix') ? '🎬' : '💳')}</div>
+                    <div className="bc-info">
+                      <strong>{bill.name}</strong>
+                      <small>{bill.provider || 'Abonelik'}</small>
                     </div>
-                    <div className="dc-right">
-                      <div className="dc-price">{formatMoney(item.pr)}</div>
-                      <div className="dc-tag">{item.cat}</div>
-                    </div>
+                    <div className="bc-amount">{formatMoney(bill.amount)}</div>
                   </div>
-                ))
-              )}
+                  <div className="bc-bottom">
+                    <div className="bc-due">
+                      <Calendar size={12} />
+                      <span>{bill.dueDate || bill.date || 'Belirsiz'}</span>
+                    </div>
+                    {bill.status === 'Ödendi' ? (
+                      <div className="bc-paid-badge"><CheckCircle2 size={12} /> Ödendi</div>
+                    ) : (
+                      <button className="bc-pay-btn" onClick={() => {
+                        if(window.confirm(`${bill.name} ödemesini onaylıyor musunuz? Finansa aktarılacak.`)) {
+                          toast.success('Ödeme tamamlandı ve Finans modülüne işlendi! 💸');
+                        }
+                      }}>Şimdi Öde</button>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -365,46 +470,70 @@ export default function Ev() {
         {activeTab === 'guvenlik' && (
           <div className="guvenlik-view animate-fadeIn">
             <div className="section-header-v2">
-              <h3>🛡️ Güvenlik & Şifreler</h3>
-              <button className="icon-btn-mini" onClick={() => setShowSafeCode(!showSafeCode)}>
-                {showSafeCode ? <CheckCircle2 size={16} /> : <Key size={16} />}
-              </button>
+              <h3>🚨 Güvenlik & Acil Durum</h3>
             </div>
             
-            <div className="safety-codes glass">
-               <div className="code-item">
-                 <small>WI-FI ŞİFRESİ</small>
-                 <strong>{showSafeCode ? guvenlik.wifi.pass : '••••••••'}</strong>
+            {/* Emergency Kits Section */}
+            <div className="emergency-kits-grid mt-12 mb-24">
+              {['deprem', 'ilkyardim'].map(kitKey => (
+                <div key={kitKey} className="kit-card glass" onClick={() => toast.success(`${kitKey === 'deprem' ? 'Deprem' : 'İlk Yardım'} çantası detayları...`)}>
+                   <div className="kit-icon-box">
+                     {kitKey === 'deprem' ? <Package size={24} color="#f59e0b" /> : <Shield size={24} color="#ef4444" />}
+                   </div>
+                   <div className="kit-info">
+                     <strong>{kitKey === 'deprem' ? 'Deprem Çantası' : 'İlk Yardım'}</strong>
+                     <small>{ev.emergencyKits[kitKey].length} Ürün Kayıtlı</small>
+                   </div>
+                   <ChevronRight size={16} opacity={0.3} />
+                </div>
+              ))}
+            </div>
+
+            {/* Premium Guest Card */}
+            <div className="premium-guest-card-v2 mb-24">
+               <div className="pgc-header">
+                 <Globe size={18} />
+                 <span>MİSAFİR WI-FI KARTI</span>
                </div>
-               <div className="code-item">
-                 <small>ALARM KODU</small>
-                 <strong>{showSafeCode ? guvenlik.alarm.code : '••••'}</strong>
+               <div className="pgc-content">
+                 <div className="pgc-item">
+                   <small>AĞ ADI</small>
+                   <strong>Tombis Yigit</strong>
+                 </div>
+                 <div className="pgc-item">
+                   <small>ŞİFRE</small>
+                   <strong>Love2013</strong>
+                 </div>
+               </div>
+               <div className="pgc-footer">
+                 <button className="pgc-share-btn" onClick={() => toast.success('Wi-Fi bilgileri kopyalandı! 📋')}>Kopyala & Paylaş</button>
                </div>
             </div>
 
-            <div className="guest-mode-card mt-24 glass">
-               <div className="gm-header">
-                 <Sparkles size={20} color="#7c3aed" />
-                 <h3>MİSAFİR MODU</h3>
+            {/* Encrypted Safe (Şifreli Defter) */}
+            <div className="personal-safe-section glass">
+               <div className="ps-header">
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                   <Key size={18} color="#7c3aed" />
+                   <h3>Kişisel Şifreli Defter</h3>
+                 </div>
+                 <button className="ps-unlock-btn" onClick={() => {
+                   const pass = prompt('Güvenlik şifresini giriniz:');
+                   if(pass === '2013') { // Mock pass for now, will link to settings
+                     toast.success('Kasa açıldı! 🔓');
+                   } else {
+                     toast.error('Hatalı şifre! 🔒');
+                   }
+                 }}>
+                   <ShieldCheck size={16} /> Kilidi Aç
+                 </button>
                </div>
-               <p>Misafirlerin için Wi-Fi ve ev bilgilerini içeren hızlı erişim kartı.</p>
-               <button className="gm-btn">Kartı Göster</button>
-            </div>
-
-            <div className="safety-checkup mt-24">
-              <div className="section-header-v2">
-                <h3>🚨 Güvenlik Check-up</h3>
-              </div>
-              <div className="checkup-list">
-                 <div className="cu-item glass">
-                   <strong>Yangın Tüpü Kontrolü</strong>
-                   <small>12.05.2026</small>
-                 </div>
-                 <div className="cu-item glass">
-                   <strong>Deprem Çantası Güncelleme</strong>
-                   <small>01.06.2026</small>
-                 </div>
-              </div>
+               <div className="ps-content">
+                  <div className="locked-overlay">
+                    <AlertTriangle size={24} opacity={0.2} />
+                    <p>Bu alan şifre ile korunmaktadır.</p>
+                  </div>
+               </div>
             </div>
           </div>
         )}
@@ -522,5 +651,101 @@ function ManageTasinmazContent({ data, onClose }) {
         </button>
       </div>
     </form>
+  );
+}
+
+function DepoView({ depo, deleteDepoItem, clearDepo }) {
+  const [expandedItem, setExpandedItem] = useState(null);
+  const [depoFilter, setDepoFilter] = useState('Hepsi');
+  const categories = ['Hepsi', 'Gardırop', 'Teknoloji', 'Genel'];
+
+  const filteredDepo = (depo || []).filter(item => 
+    depoFilter === 'Hepsi' ? true : item.mainCat === depoFilter
+  );
+
+  return (
+    <div className="depo-view animate-fadeIn">
+      <div className="section-header-v2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Package size={22} color="var(--ev)" />
+          <h3 style={{ margin: 0 }}>Akıllı Ev Deposu</h3>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <small className="stat-badge">{filteredDepo.length} Ürün Grubu</small>
+          {depo?.length > 0 && (
+            <button className="icon-btn-mini" onClick={() => { if(window.confirm('Tüm depoyu sıfırlamak istediğinize emin misiniz?')) clearDepo(); }} title="Depoyu Sıfırla">
+              <RotateCcw size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="depo-filters mt-12 mb-12">
+        {categories.map(cat => (
+          <button 
+            key={cat} 
+            className={`filter-chip ${depoFilter === cat ? 'active' : ''}`}
+            onClick={() => setDepoFilter(cat)}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      <div className="depo-list-v3">
+        {filteredDepo.length === 0 ? (
+          <div className="empty-state-v2 glass" style={{ padding: '40px', textAlign: 'center' }}>
+            <Package size={40} opacity={0.2} style={{ marginBottom: '12px' }} />
+            <p style={{ opacity: 0.5, fontSize: '13px' }}>Bu kategoride ürün bulunamadı. ✨</p>
+          </div>
+        ) : (
+          filteredDepo.map(item => (
+            <div key={item.id} className={`depo-master-card ${expandedItem === item.id ? 'expanded' : ''}`} onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}>
+              <div className="dmc-main">
+                <div className="dmc-icon-box">
+                  {item.mainCat === 'Gardırop' ? '👕' : (item.mainCat === 'Teknoloji' ? '💻' : '📦')}
+                </div>
+                <div className="dmc-info">
+                  <div className="dmc-top-row">
+                    <strong className="dmc-name">{item.name || item.nm || 'İsimsiz Ürün'}</strong>
+                    <span className="dmc-qty-pill">{(item.totalQty || item.qt || '1').toString().split(' ')[0]} Adet</span>
+                  </div>
+                  <div className="dmc-meta-row">
+                    <span><Calendar size={10} /> İlk: {new Date(item.firstDate || item.dt).toLocaleDateString('tr-TR')}</span>
+                    <span><Clock size={10} /> Son: {new Date(item.lastDate || item.dt).toLocaleDateString('tr-TR')}</span>
+                  </div>
+                </div>
+                <div className="dmc-actions">
+                  <button className="dmc-del-btn" onClick={(e) => { e.stopPropagation(); if(window.confirm('Tüm ürün kaydı silinsin mi?')) deleteDepoItem(item.id); }}>
+                    <Trash2 size={14} />
+                  </button>
+                  <ChevronRight size={16} className={`dmc-chevron ${expandedItem === item.id ? 'rotated' : ''}`} />
+                </div>
+              </div>
+
+              {expandedItem === item.id && (
+                <div className="dmc-details animate-fadeIn">
+                  <div className="details-header">📜 İşlem Geçmişi</div>
+                  <div className="history-timeline">
+                    {(item.history || []).map(log => (
+                      <div key={log.id} className="history-item">
+                        <div className="hi-dot" />
+                        <div className="hi-content">
+                          <div className="hi-top">
+                            <small>{new Date(log.date).toLocaleDateString('tr-TR')} {new Date(log.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
+                            <span className={`hi-source-badge ${log.source}`}>{log.source === 'valiz' ? '🎒 Valiz' : '🛒 Alışveriş'}</span>
+                          </div>
+                          <p>{log.note} - <strong>{log.qty} Adet</strong> {log.pr > 0 && `(${formatMoney(log.pr)})`}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
   );
 }

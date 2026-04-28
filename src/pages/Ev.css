@@ -392,10 +392,323 @@
   border: 1px solid #cbd5e1;
 }
 
-.yasam-footer-items {
-  display: grid;
-  grid-template-columns: 1fr;
+/* Yaşam v3.0 */
+.user-profile-toggle {
+  display: flex;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 6px;
+  border-radius: 16px;
+  border: 1px solid var(--brd);
 }
+
+.user-profile-toggle button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: var(--txt-light);
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.user-profile-toggle button.active {
+  background: white;
+  color: var(--ev);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.time-analysis-card {
+  padding: 20px;
+  border-radius: 28px;
+  background: white;
+  border: 1px solid var(--brd);
+}
+
+.ai-interpretation {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: #f5f3ff;
+  border-radius: 16px;
+  border: 1px solid #ddd6fe;
+}
+
+.ai-interpretation p {
+  font-size: 12px;
+  color: #5b21b6;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.advice-motor-card {
+  padding: 24px;
+  border-radius: 32px;
+  background: linear-gradient(135deg, #7c3aed, #4338ca);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.am-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.am-icon-box {
+  width: 48px;
+  height: 48px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.am-title h3 { font-size: 18px; font-weight: 900; margin: 0; }
+.am-title small { font-size: 11px; opacity: 0.7; font-weight: 700; }
+
+.advice-content {
+  background: rgba(255,255,255,0.1);
+  padding: 20px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.advice-content p {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.advice-refresh-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 16px;
+  border: none;
+  background: white;
+  color: #4338ca;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+/* Abonelikler v3.0 */
+.monthly-bill-summary {
+  padding: 24px;
+  border-radius: 24px;
+  background: white;
+  border: 1px solid var(--brd);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mbs-info span { display: block; font-size: 12px; font-weight: 800; color: var(--txt-light); margin-bottom: 4px; }
+.mbs-info strong { font-size: 24px; font-weight: 900; color: var(--ev); }
+
+.mbs-stats { display: flex; gap: 20px; }
+.mbs-stat-item { text-align: right; }
+.mbs-stat-item small { display: block; font-size: 10px; font-weight: 800; color: var(--txt-light); text-transform: uppercase; }
+.mbs-stat-item strong { font-size: 15px; font-weight: 900; }
+
+.bills-grid-v3 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bill-card-v3 {
+  padding: 16px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid var(--brd);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bill-card-v3.paid { border-left: 4px solid #10b981; }
+
+.bc-top { display: flex; align-items: center; gap: 12px; }
+.bc-icon { width: 40px; height: 40px; border-radius: 12px; background: #f8fafc; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.bc-info { flex: 1; }
+.bc-info strong { display: block; font-size: 14px; font-weight: 800; color: var(--txt); }
+.bc-info small { font-size: 11px; color: var(--txt-light); font-weight: 700; }
+.bc-amount { font-size: 16px; font-weight: 900; color: var(--txt); }
+
+.bc-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid #f1f5f9; }
+.bc-due { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--txt-light); }
+.bc-pay-btn { padding: 8px 16px; border-radius: 10px; border: none; background: #f5f3ff; color: #7c3aed; font-size: 11px; font-weight: 900; cursor: pointer; }
+/* Taşınmaz v3.0 Updates */
+.tax-alert-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.tax-alert-badge.info { background: #eff6ff; color: #1d4ed8; }
+/* Güvenlik v3.0 Updates */
+.emergency-kits-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.kit-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid var(--brd);
+}
+
+.kit-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kit-info { flex: 1; }
+.kit-info strong { display: block; font-size: 14px; color: var(--txt); }
+.kit-info small { font-size: 11px; color: var(--txt-light); font-weight: 700; }
+
+.premium-guest-card-v2 {
+  padding: 24px;
+  border-radius: 32px;
+  background: #0f172a;
+  color: white;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.pgc-header { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 900; opacity: 0.6; margin-bottom: 20px; letter-spacing: 1px; }
+.pgc-content { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+.pgc-item small { display: block; font-size: 9px; opacity: 0.5; font-weight: 800; margin-bottom: 4px; }
+.pgc-item strong { font-size: 20px; font-weight: 900; letter-spacing: 0.5px; }
+
+.pgc-share-btn { width: 100%; padding: 12px; border-radius: 12px; border: none; background: #334155; color: white; font-weight: 800; font-size: 12px; }
+
+.personal-safe-section {
+  padding: 24px;
+  border-radius: 32px;
+  background: white;
+  border: 1px solid var(--brd);
+}
+
+.ps-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.ps-header h3 { font-size: 15px; font-weight: 900; margin: 0; }
+
+.ps-unlock-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 12px; border: none; background: #f5f3ff; color: #7c3aed; font-size: 11px; font-weight: 900; }
+
+.ps-content {
+  height: 120px;
+  background: #f8fafc;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed #e2e8f0;
+}
+
+.locked-overlay { text-align: center; color: var(--txt-light); }
+/* Depo v3.5 Master Catalog Styles */
+.depo-master-card {
+  background: white;
+  border-radius: 20px;
+  border: 1px solid var(--brd);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+.depo-master-card:hover { border-color: var(--ev); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+.depo-master-card.expanded { border-color: var(--ev); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
+
+.dmc-main { padding: 16px; display: flex; align-items: center; gap: 16px; }
+
+.dmc-icon-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border: 1px solid #f1f5f9;
+}
+
+.dmc-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.dmc-top-row { display: flex; align-items: center; justify-content: space-between; }
+.dmc-name { font-size: 15px; font-weight: 800; color: var(--txt); }
+
+.dmc-qty-pill {
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.dmc-meta-row { display: flex; gap: 16px; margin-top: 4px; }
+.dmc-meta-row span { font-size: 10px; font-weight: 700; color: var(--txt-light); opacity: 0.7; display: flex; align-items: center; gap: 4px; }
+
+.dmc-actions { display: flex; align-items: center; gap: 12px; }
+.dmc-del-btn { width: 34px; height: 34px; border-radius: 10px; border: none; background: #fff1f2; color: #e11d48; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+.dmc-del-btn:hover { background: #ffe4e6; transform: scale(1.1); }
+
+.dmc-chevron { color: var(--txt-light); transition: 0.3s ease; }
+.dmc-chevron.rotated { transform: rotate(90deg); color: var(--ev); }
+
+/* Expansion Area */
+.dmc-details { padding: 0 16px 16px 16px; border-top: 1px dashed #f1f5f9; background: #fcfdfe; }
+.details-header { padding: 12px 0; font-size: 12px; font-weight: 900; color: var(--ev); letter-spacing: 0.5px; }
+
+.history-timeline { display: flex; flex-direction: column; gap: 16px; position: relative; padding-left: 12px; }
+.history-timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #f1f5f9; }
+
+.history-item { position: relative; }
+.hi-dot { position: absolute; left: -16px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--ev); border: 2px solid white; box-shadow: 0 0 0 2px #f1f5f9; }
+
+.hi-content { display: flex; flex-direction: column; gap: 4px; }
+.hi-top { display: flex; align-items: center; justify-content: space-between; }
+.hi-top small { font-size: 10px; font-weight: 700; color: var(--txt-light); }
+
+.hi-source-badge { padding: 2px 6px; border-radius: 6px; font-size: 9px; font-weight: 900; text-transform: uppercase; }
+.hi-source-badge.valiz { background: #eff6ff; color: #2563eb; }
+.hi-source-badge.alisveris { background: #f0fdf4; color: #16a34a; }
+
+.hi-content p { font-size: 12px; font-weight: 700; color: var(--txt); margin: 0; }
+
+/* Filter Chips */
+.depo-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; }
+.filter-chip { padding: 8px 16px; border-radius: 12px; background: white; border: 1px solid var(--brd); font-size: 12px; font-weight: 800; color: var(--txt-light); cursor: pointer; transition: 0.2s; white-space: nowrap; }
+.filter-chip.active { background: var(--ev); color: white; border-color: var(--ev); box-shadow: 0 4px 12px rgba(103,58,183,0.2); }
+
+.stat-badge { padding: 4px 10px; border-radius: 20px; background: #ede9fe; color: #6d28d9; font-size: 11px; font-weight: 800; }
 
 /* Portfolio Summary */
 .portfolio-total {

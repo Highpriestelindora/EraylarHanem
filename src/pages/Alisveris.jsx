@@ -112,7 +112,10 @@ export default function Alisveris() {
 
   const navigate = useNavigate();
   
-  const { mutfak, alisveris, confirmShoppingItem, deleteShoppingItem, addShoppingItem, setModuleData, addExpense } = useStore();
+  const { 
+    mutfak, alisveris, confirmShoppingItem, deleteShoppingItem, addShoppingItem, 
+    setModuleData, addExpense, addDepoItem 
+  } = useStore();
 
   // Filtered List based on Active Tab
   const filteredList = useMemo(() => {
@@ -179,18 +182,16 @@ export default function Alisveris() {
       market: market || 'Diğer'
     });
 
-    // 2. Add to Ev Depo
-    const { ev } = useStore.getState();
-    const newDepoItem = {
-      id: Date.now(),
-      nm: item.nm,
-      qt: item.qt || '1 adet',
-      dt: new Date().toISOString(),
-      pr: Number(amount),
-      payer: owner,
-      cat: item.cat
-    };
-    useStore.getState().setModuleData('ev', { ...ev, depo: [newDepoItem, ...(ev.depo || [])] });
+    // 2. Add to Ev Depo (Phase 3: Smart Catalog Integration)
+    addDepoItem({
+      name: item.nm,
+      mainCat: (owner === 'gorkem' || owner === 'esra') ? 'Gardırop' : 'Genel',
+      subCat: item.cat || 'Diğer',
+      qty: 1,
+      price: Number(amount),
+      source: 'alisveris',
+      note: `${owner === 'gorkem' ? '👨 Görkem' : (owner === 'esra' ? '👩 Esra' : '🏠 Ev')} için alındı.`
+    });
 
     // 3. Remove from shopping list
     deleteShoppingItem(owner, item.id);

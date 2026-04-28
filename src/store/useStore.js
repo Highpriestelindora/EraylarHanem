@@ -243,7 +243,32 @@ const DEFAULT_STATE = {
     },
     yillikPlan: [
       { id: 1, task: 'Boya Badana', date: '2026-06-01', status: 'Planned' }
-    ]
+    ],
+    timeAnalysis: {
+      gorkem: { home: 45, work: 40, other: 15, interpretation: "Bu hafta iş dengen gayet iyi görünüyor Görkem! ⚖️" },
+      esra: { home: 60, work: 20, other: 20, interpretation: "Evde verimli bir hafta geçirdin Esra, sanat projelerine odaklanabilirsin. 🎨" }
+    },
+    lifeAdvice: [
+      "Bugün hava çok güzel, 20 dakika yürüyüşe ne dersin? 🌳",
+      "Uzun zamandır kitap okumadın, akşam 1 saat okuma saati yapabiliriz. 📖",
+      "Evdeki bitkileri kontrol etmeyi unutma, sevgiye ihtiyaçları olabilir. 🪴",
+      "Bugün yeni bir yemek tarifi denemek için harika bir gün! 🍲"
+    ],
+    emergencyKits: {
+      deprem: [
+        { id: 1, item: "Su (5L)", buyDate: "2026-01-01", expDate: "2027-01-01" },
+        { id: 2, item: "Konserve Gıda", buyDate: "2026-02-01", expDate: "2028-02-01" },
+        { id: 3, item: "Piller", buyDate: "2026-03-01", expDate: "2030-03-01" }
+      ],
+      ilkyardim: [
+        { id: 1, item: "Ağrı Kesici", buyDate: "2026-01-10", expDate: "2027-01-10" },
+        { id: 2, item: "Sargı Bezi", buyDate: "2025-05-15", expDate: "2028-05-15" }
+      ]
+    },
+    personalSafe: {
+      locked: true,
+      notes: ""
+    }
   },
   pet: {
     meta: PET_META,
@@ -2469,11 +2494,93 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      syncValizToDepo: (name, source) => {
+      // ── Depo v3.5 Foundation (Phase 1) ────────────────
+      addDepoItem: (itemData) => {
         const state = get();
-        const newItem = { id: Date.now(), nm: name, qt: '1 adet', dt: new Date().toISOString(), pr: 0, source };
-        set({ ev: { ...state.ev, depo: [newItem, ...(state.ev.depo || [])] } });
+        const currentDepo = Array.isArray(state.ev.depo) ? state.ev.depo : [];
+        const { name, mainCat, subCat, qty, price, source, note } = itemData;
+
+        if (!name) return;
+
+        const now = new Date().toISOString();
+        const existingIdx = currentDepo.findIndex(item => {
+          const itemName = item.name || item.nm; // Fallback for legacy data
+          return itemName && itemName.toLowerCase() === name.toLowerCase();
+        });
+        
+        let updatedDepo;
+
+        if (existingIdx !== -1) {
+          // Smart Merge Logic
+          const item = currentDepo[existingIdx];
+          updatedDepo = [...currentDepo];
+          updatedDepo[existingIdx] = {
+            ...item,
+            mainCat: mainCat || item.mainCat,
+            subCat: subCat || item.subCat,
+            totalQty: Number(item.totalQty || 0) + Number(qty || 1),
+            lastDate: now,
+            history: [
+              { 
+                id: Date.now(), 
+                date: now, 
+                qty: Number(qty || 1), 
+                pr: price || 0, 
+                source: source || 'manual', 
+                note: note || 'Güncelleme' 
+              },
+              ...(item.history || [])
+            ].slice(0, 50) // Keep last 50 events
+          };
+        } else {
+          // New Entry
+          const newItem = {
+            id: Date.now().toString(),
+            name: name,
+            mainCat: mainCat || 'Genel',
+            subCat: subCat || 'Diğer',
+            totalQty: Number(qty || 1),
+            firstDate: now,
+            lastDate: now,
+            history: [{ 
+              id: Date.now(), 
+              date: now, 
+              qty: Number(qty || 1), 
+              pr: price || 0, 
+              source: source || 'manual', 
+              note: note || 'Kayıt' 
+            }]
+          };
+          updatedDepo = [newItem, ...currentDepo];
+        }
+
+        set({ ev: { ...state.ev, depo: updatedDepo } });
         get().saveToSupabase();
+      },
+
+      deleteDepoItem: (id) => {
+        const state = get();
+        const updatedDepo = (state.ev.depo || []).filter(item => String(item.id) !== String(id));
+        set({ ev: { ...state.ev, depo: updatedDepo } });
+        get().saveToSupabase();
+        toast.success('Ürün depodan silindi.');
+      },
+
+      clearDepo: () => {
+        const state = get();
+        set({ ev: { ...state.ev, depo: [] } });
+        get().saveToSupabase();
+        toast.success('Depo sıfırlandı. ✨');
+      },
+
+      syncValizToDepo: (name, source, qty = 1) => {
+        // Wrapper for addDepoItem to maintain compatibility
+        get().addDepoItem({
+          name: name,
+          source: source || 'valiz',
+          qty: qty,
+          note: 'Valizden aktarıldı'
+        });
       },
       // ── System Actions ────────────────────────────────
       calculateGlobalScore: () => {
