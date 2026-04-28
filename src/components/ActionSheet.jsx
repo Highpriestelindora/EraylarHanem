@@ -97,19 +97,23 @@ export default function ActionSheet({
                 <button 
                   onClick={onClose}
                   style={{ 
-                    background: 'var(--bg)', 
-                    border: '1px solid var(--brd)', 
-                    width: '36px', 
-                    height: '36px', 
-                    borderRadius: '50%', 
+                    background: '#fff1f2', 
+                    border: 'none', 
+                    width: '32px', 
+                    height: '32px', 
+                    borderRadius: '10px', 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center',
                     cursor: 'pointer',
-                    color: 'var(--txt-light)'
+                    color: '#e11d48',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: '0 2px 8px rgba(225, 29, 72, 0.1)'
                   }}
+                  onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.background = '#ffe4e6'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = '#fff1f2'; }}
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 

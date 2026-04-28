@@ -237,7 +237,9 @@ const DEFAULT_STATE = {
       { id: 1, name: 'Salon Çiçeği', lastWatered: '2026-04-22', interval: 3 }
     ],
     guvenlik: {
-      wifi: { ssid: 'Eraylar_5G', pass: '********' },
+      wifiMain: { ssid: 'superonline_wifi_1023', pass: 'MAUMFUFTH74L' },
+      wifiGuest: { ssid: 'Tombis Yiğit', pass: 'Love2013' },
+      safePassword: '', // User defined alphanumeric
       alarm: { code: '****', status: 'Armed' },
       fireExt: '2027-01-01'
     },
@@ -536,14 +538,33 @@ const useStore = create(
         }
 
         // 3. Ev Bakım Kontrolü
-        if (state.ev?.bakim) {
-          state.ev.bakim.forEach(b => {
-            const diff = new Date(b.nextDate) - now;
+        if (state.ev?.bakimlar) {
+          state.ev.bakimlar.forEach(b => {
+            const last = new Date(b.lastDate);
+            const next = new Date(last.getTime() + (b.intervalDays * 24 * 60 * 60 * 1000));
+            const diff = next - now;
             if (diff > 0 && diff < sevenDays) {
-              notificationService.send('🏠 Ev Bakımı', `${b.title} zamanı yaklaşıyor!`);
+              notificationService.send('🏠 Ev Bakımı', `${b.name} zamanı yaklaşıyor!`);
             }
           });
         }
+
+        // 4. Deprem & İlk Yardım Çantası Kontrolü
+        const kits = state.ev?.emergencyKits || {};
+        Object.keys(kits).forEach(kitType => {
+          kits[kitType].forEach(item => {
+            if (!item.expDate) return;
+            const diff = new Date(item.expDate) - now;
+            if (diff > 0 && diff < sevenDays) {
+              const days = Math.round(diff / (24 * 60 * 60 * 1000));
+              notificationService.send(
+                kitType === 'deprem' ? '🚨 Deprem Çantası' : '🩹 İlk Yardım Çantası',
+                `${item.item} son kullanma tarihine ${days} gün kaldı! Lütfen yenileyin.`
+              );
+              get().addLog('Güvenlik Uyarısı', `${item.item} (${kitType === 'deprem' ? 'Deprem' : 'İlk Yardım'}) son kullanma tarihine ${days} gün kaldı!`);
+            }
+          });
+        });
       },
 
       initSync: async () => {
@@ -790,6 +811,78 @@ const useStore = create(
         });
       },
 
+      addEmergencyItem: (kitType, itemData, userName) => {
+        const state = get();
+        const kits = { ...state.ev.emergencyKits };
+        if (!kits[kitType]) kits[kitType] = [];
+
+        // Smart Expiry Calculator
+        const SHELF_LIFE = {
+          "su": 12, "konserve": 24, "bisküvi": 12, "kuruyemiş": 12, "pil": 60,
+          "yara": 36, "sargı": 60, "antiseptik": 24, "ağrı": 24, "ateş": 120,
+          "düdük": 120, "fener": 60, "radyo": 60, "yağmurluk": 120, "nakit": 120,
+          "anahtar": 120, "hijyen": 24, "sabun": 36, "maske": 60
+        };
+
+        let calculatedExp = itemData.expDate;
+        if (!calculatedExp) {
+          const name = itemData.item.toLowerCase();
+          const matchKey = Object.keys(SHELF_LIFE).find(key => name.includes(key));
+          if (matchKey) {
+            const months = SHELF_LIFE[matchKey];
+            const date = new Date();
+            // Subtract 1 month for safety as requested
+            date.setMonth(date.getMonth() + (months - 1));
+            calculatedExp = date.toISOString().split('T')[0];
+          }
+        }
+        
+        const newItem = {
+          id: Date.now(),
+          buyDate: new Date().toISOString().split('T')[0],
+          addedBy: userName || 'Sistem',
+          ...itemData,
+          expDate: calculatedExp
+        };
+        
+        kits[kitType] = [newItem, ...kits[kitType]];
+        set({ ev: { ...state.ev, emergencyKits: kits } });
+        get().addLog('Güvenlik', `${newItem.item} ${kitType === 'deprem' ? 'Deprem' : 'İlk Yardım'} çantasına eklendi.`);
+        get().saveToSupabase();
+      },
+
+      addEmergencyToShopping: (item) => {
+        const state = get();
+        const alisveris = [...(state.mutfak.alisveris || [])];
+        
+        const newItem = {
+          id: Date.now(),
+          nm: item.item || item,
+          qt: 1,
+          u: 'Adet',
+          st: 'bekliyor',
+          cat: 'Güvenlik/Acil Durum',
+          dt: new Date().toISOString().split('T')[0],
+          note: 'Acil durum çantası için önerildi.'
+        };
+
+        set({
+          mutfak: { ...state.mutfak, alisveris: [newItem, ...alisveris] }
+        });
+        toast.success(`"${newItem.nm}" alışveriş listesine eklendi! 🛒`);
+        get().saveToSupabase();
+      },
+
+      deleteEmergencyItem: (kitType, id) => {
+        const state = get();
+        const kits = { ...state.ev.emergencyKits };
+        if (!kits[kitType]) return;
+        
+        kits[kitType] = kits[kitType].filter(item => item.id !== id);
+        set({ ev: { ...state.ev, emergencyKits: kits } });
+        get().saveToSupabase();
+      },
+
       updateKasaBakiye: async (kisi, yeniTutar) => {
         const state = get();
         set({
@@ -798,6 +891,31 @@ const useStore = create(
             bakiyeler: { ...state.kasa.bakiyeler, [kisi]: yeniTutar }
           }
         });
+        get().saveToSupabase();
+      },
+      updateSafePassword: (newPass) => {
+        const state = get();
+        set({ ev: { ...state.ev, guvenlik: { ...state.ev.guvenlik, safePassword: newPass } } });
+        get().saveToSupabase();
+      },
+
+      unlockSafe: (pass) => {
+        const state = get();
+        if (pass === state.ev.guvenlik.safePassword) {
+          set({ ev: { ...state.ev, personalSafe: { ...state.ev.personalSafe, locked: false } } });
+          return true;
+        }
+        return false;
+      },
+
+      lockSafe: () => {
+        const state = get();
+        set({ ev: { ...state.ev, personalSafe: { ...state.ev.personalSafe, locked: true } } });
+      },
+
+      updatePersonalSafeNote: (note) => {
+        const state = get();
+        set({ ev: { ...state.ev, personalSafe: { ...state.ev.personalSafe, notes: note } } });
         get().saveToSupabase();
       },
 

@@ -12,6 +12,7 @@ import {
   ChevronUp, ChevronDown,
   Search, Flag, Edit3, Check, DollarSign, Package, RotateCcw
 } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { PACKING_POOL, BUCKET_LIST, INITIAL_TRIPS, INITIAL_VISAS, GEO_ADVICE } from '../constants/data';
@@ -441,25 +442,16 @@ export default function Tatil() {
           />
         </div>
       </ActionSheet>
-      {/* Confirmation Modal */}
-      {showConfirm.open && (
-        <Portal>
-          <div className="md-confirm-overlay" style={{ zIndex: 99999999 }}>
-            <div className="md-confirm-modal animate-bounceIn">
-              <div className="md-confirm-icon">⚠️</div>
-              <h3>Emin misiniz?</h3>
-              <p>{showConfirm.title}</p>
-              <div className="md-confirm-actions">
-                <button className="md-confirm-cancel" onClick={() => setShowConfirm({ ...showConfirm, open: false })}>İptal</button>
-                <button className="md-confirm-yes" onClick={() => {
-                  showConfirm.onConfirm();
-                  setShowConfirm({ ...showConfirm, open: false });
-                }}>Evet, Sil</button>
-              </div>
-            </div>
-          </div>
-        </Portal>
-      )}
+      <ConfirmModal 
+        isOpen={showConfirm.open}
+        title="Emin misiniz?"
+        message={showConfirm.title}
+        onConfirm={() => {
+          showConfirm.onConfirm();
+          setShowConfirm({ ...showConfirm, open: false });
+        }}
+        onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
+      />
     </AnimatedPage>
   );
 }

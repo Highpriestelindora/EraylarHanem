@@ -20,7 +20,14 @@
 .header-title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.header-title-main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .header-logo-mini {
@@ -30,11 +37,12 @@
 }
 
 .status-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   box-shadow: 0 0 10px currentColor;
-  border: 2px solid white;
+  border: 1.5px solid white;
+  flex-shrink: 0;
 }
 
 .status-dot.online {
@@ -48,15 +56,18 @@
 }
 
 .app-header h1 {
-  font-size: 20px;
+  font-size: 18px;
   color: var(--txt);
   letter-spacing: -0.5px;
+  line-height: 1.2;
 }
 
 .app-header small {
   color: var(--txt-light);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1.2;
+  margin-top: -2px;
 }
 
 .avatar {

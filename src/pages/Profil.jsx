@@ -13,6 +13,11 @@ export default function Profil() {
   const { currentUser, setCurrentUser, users, updateUser } = useStore();
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const { ev, updateSafePassword } = useStore();
+  
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
 
   const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
   const profile = users[userKey] || {};
@@ -36,6 +41,22 @@ export default function Profil() {
   const confirmAndLogout = () => {
     setCurrentUser(null);
     navigate('/');
+  };
+
+  const handleUpdatePassword = () => {
+    if (!newPass) {
+      toast.error('Lütfen bir şifre giriniz.');
+      return;
+    }
+    if (newPass !== confirmPass) {
+      toast.error('Şifreler eşleşmiyor!');
+      return;
+    }
+    updateSafePassword(newPass);
+    toast.success('Güvenlik şifresi güncellendi! 🛡️');
+    setShowSecurityModal(false);
+    setNewPass('');
+    setConfirmPass('');
   };
 
   return (
@@ -123,11 +144,18 @@ export default function Profil() {
       <div className="settings-group">
         <h4>Güvenlik & Hesap</h4>
         
-        <div className="setting-item clickable">
+        <div className="setting-item clickable" onClick={() => setShowSecurityModal(true)}>
           <div className="setting-icon" style={{ background: '#f5f3ff', color: '#8b5cf6' }}><Fingerprint size={20} /></div>
           <div className="setting-content">
-            <span className="setting-title">Güvenlik Ayarları</span>
-            <span className="setting-desc">Şifre ve erişim yönetimi</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="setting-title">Güvenlik Ayarları</span>
+              {ev.guvenlik?.safePassword ? (
+                <span className="status-tag success">AKTİF</span>
+              ) : (
+                <span className="status-tag warning">ŞİFRE YOK</span>
+              )}
+            </div>
+            <span className="setting-desc">Kasa ve hassas alan erişim şifresi</span>
           </div>
           <ChevronRight size={18} className="chevron" />
         </div>
@@ -228,6 +256,45 @@ export default function Profil() {
 
             <button className="btn-primary" onClick={handleSaveProfile} style={{ marginTop: '20px', width: '100%', background: 'var(--txt)', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Save size={18} style={{ marginRight: '8px' }} /> KİMLİĞİ GÜNCELLE
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showSecurityModal && (
+        <div className="modal-overlay" onClick={() => setShowSecurityModal(false)}>
+          <div className="modal-content profile-edit-modal glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Güvenlik Ayarları</h3>
+              <button onClick={() => setShowSecurityModal(false)}><X /></button>
+            </div>
+            
+            <p style={{ fontSize: '12px', opacity: 0.6, marginBottom: '20px' }}>
+              Şifreli defter ve hassas alanlara erişim için kullanılacak ana şifrenizi buradan belirleyebilirsiniz.
+            </p>
+
+            <div className="form-group">
+              <label><Shield size={14} /> Yeni Şifre</label>
+              <input 
+                type="password" 
+                value={newPass} 
+                placeholder="Yeni şifrenizi girin"
+                onChange={e => setNewPass(e.target.value)} 
+              />
+            </div>
+
+            <div className="form-group">
+              <label><Shield size={14} /> Şifre Tekrar</label>
+              <input 
+                type="password" 
+                value={confirmPass} 
+                placeholder="Şifrenizi doğrulayın"
+                onChange={e => setConfirmPass(e.target.value)} 
+              />
+            </div>
+
+            <button className="btn-primary" onClick={handleUpdatePassword} style={{ marginTop: '20px', width: '100%', background: '#7c3aed', color: 'white' }}>
+              <Save size={18} style={{ marginRight: '8px' }} /> ŞİFREYİ KAYDET
             </button>
           </div>
         </div>

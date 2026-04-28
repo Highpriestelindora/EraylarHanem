@@ -8,6 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
@@ -50,6 +51,11 @@ export default function Aracim() {
   const [showPartModal, setShowPartForm] = useState(false);
   const [selectedPart, setSelectedPart] = useState(null);
   const [activeDocAction, setActiveDocAction] = useState(null); // The doc for ActionSheet
+  const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
+
+  const requestConfirm = (message, onConfirm) => {
+    setShowConfirm({ open: true, message, onConfirm });
+  };
 
   const { 
     km, parts, fuelLogs, services, documents, 
@@ -242,7 +248,11 @@ export default function Aracim() {
                     </div>
                     <div className="sti-actions">
                       <div className="sti-cost">{formatMoney(s.cost)}</div>
-                      <button className="delete-btn-mini" onClick={() => { if(window.confirm('Bu servis kaydını silmek istediğinize emin misiniz?')) useStore.getState().deleteServiceRecord(vehicle.id, s.id); }}><Trash2 size={12} /></button>
+                      <button className="delete-btn-mini" onClick={() => { 
+                        requestConfirm('Bu servis kaydını silmek istediğinize emin misiniz?', () => {
+                          useStore.getState().deleteServiceRecord(vehicle.id, s.id);
+                        });
+                      }}><Trash2 size={12} /></button>
                     </div>
                   </div>
                 </div>
@@ -328,7 +338,11 @@ export default function Aracim() {
                       <div className="fip-cons">{l.consumption} L</div>
                       <div className="fip-cost">{formatMoney(l.amount * l.price)}</div>
                     </div>
-                    <button className="delete-btn-mini" onClick={() => { if(window.confirm('Bu yakıt kaydını silmek istediğinize emin misiniz?')) deleteFuelLog(vehicle.id, l.id); }}><Trash2 size={12} /></button>
+                    <button className="delete-btn-mini" onClick={() => { 
+                      requestConfirm('Bu yakıt kaydını silmek istediğinize emin misiniz?', () => {
+                        deleteFuelLog(vehicle.id, l.id);
+                      });
+                    }}><Trash2 size={12} /></button>
                   </div>
                 </div>
               ))}
@@ -423,10 +437,10 @@ export default function Aracim() {
           <button 
             className="submit-btn-premium red"
             onClick={() => {
-              if (window.confirm('Bu belgeyi silmek istediğinize emin misiniz?')) {
+              requestConfirm('Bu belgeyi silmek istediğinize emin misiniz?', () => {
                 deleteDocument(vehicle.id, activeDocAction.id);
                 setActiveDocAction(null);
-              }
+              });
             }}
           >
             <Trash2 size={18} /> Sil
@@ -449,6 +463,17 @@ export default function Aracim() {
           onClose={() => setShowSupportModal(false)}
         />
       )}
+
+      <ConfirmModal 
+        isOpen={showConfirm.open}
+        title="Emin misiniz?"
+        message={showConfirm.message}
+        onConfirm={() => {
+          showConfirm.onConfirm();
+          setShowConfirm({ ...showConfirm, open: false });
+        }}
+        onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
+      />
     </AnimatedPage>
   );
 }
@@ -644,7 +669,12 @@ function VehicleFormModal({ vehicle, onSave, onDelete, onClose }) {
           </div>
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
             <button className="submit-btn-premium" style={{ flex: 2 }} onClick={() => { onSave(form); onClose(); }}>Kaydet</button>
-            {vehicle && <button className="submit-btn-premium" style={{ flex: 1, background: '#ef4444' }} onClick={() => { if(window.confirm('Silmek istediğinize emin misiniz?')) { onDelete(vehicle.id); onClose(); } }}><Trash2 size={18} /></button>}
+            {vehicle && <button className="submit-btn-premium" style={{ flex: 1, background: '#ef4444' }} onClick={() => { 
+              requestConfirm('Silmek istediğinize emin misiniz?', () => {
+                onDelete(vehicle.id); 
+                onClose(); 
+              });
+            }}><Trash2 size={18} /></button>}
           </div>
         </div>
       </div>

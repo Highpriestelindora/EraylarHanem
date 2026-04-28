@@ -6,12 +6,13 @@ import {
   Droplets, Zap, Flame, Globe, ChevronRight,
   Shield, Key, Phone, User, Star, MoreVertical,
   PlusCircle, ArrowLeft, Camera, Settings, Info,
-  Building, FileText, Landmark, Home, MapPin, Package, RotateCcw
+  Building, FileText, Landmark, Home, MapPin, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import ActionSheet from '../components/ActionSheet';
+import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement } from 'chart.js';
@@ -21,6 +22,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend,
 
 const formatMoney = (val) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
+
 
 export default function Ev() {
   const [activeTab, setActiveTab] = useState('yasam');
@@ -41,8 +43,45 @@ export default function Ev() {
   const [showSafeCode, setShowSafeCode] = useState(false);
   const [faturaForm, setFaturaForm] = useState({ name: '', amount: '', provider: '', dueDate: '', icon: '📜' });
   const [editingTasinmaz, setEditingTasinmaz] = useState(null);
+  const [activeDocAction, setActiveDocAction] = useState(null);
+  const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
+  const [activeKit, setActiveKit] = useState(null);
+  const [showMainPass, setShowMainPass] = useState(false);
+  const [safeInput, setSafeInput] = useState('');
+  const [safeError, setSafeError] = useState(false);
+  const { unlockSafe, lockSafe } = useStore();
 
-  // AI Analysis
+  const requestConfirm = (message, onConfirm) => {
+    setShowConfirm({ open: true, message, onConfirm });
+  };
+
+  // AI Analysis & Smart Warnings
+  const activeWarnings = useMemo(() => {
+    const warnings = [];
+    const now = new Date();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+
+    // 1. Emergency Kit Expiry (Warning starts 1 month early)
+    Object.keys(ev.emergencyKits || {}).forEach(kitKey => {
+      ev.emergencyKits[kitKey].forEach(item => {
+        if (!item.expDate) return;
+        const diff = new Date(item.expDate) - now;
+        if (diff > 0 && diff < thirtyDays) {
+          const days = Math.round(diff / (24 * 60 * 60 * 1000));
+          warnings.push(`⚠️ ${kitKey === 'deprem' ? 'Deprem' : 'İlk Yardım'} çantasındaki "${item.item}" son kullanımına ${days} gün kaldı!`);
+        }
+      });
+    });
+
+    // 2. Unpaid Bills
+    const unpaidCount = (ev.faturalar || []).filter(f => f.status !== 'Ödendi').length;
+    if (unpaidCount > 0) {
+      warnings.push(`💸 Henüz ödenmemiş ${unpaidCount} adet faturanız bulunuyor. Gecikme bedeli oluşmaması için kontrol edin.`);
+    }
+
+    return warnings;
+  }, [ev]);
+
   const aiNote = useMemo(() => {
     const totalCurrent = (faturalar || []).filter(f => f.status === 'Ödendi').reduce((a, b) => a + b.amount, 0);
     if (totalCurrent > 3000) return "Bu ay enerji tüketimi normalin %15 üzerinde. Bir sızıntı veya kaçak olabilir mi? 🕵️‍♂️";
@@ -51,8 +90,8 @@ export default function Ev() {
 
   const tabs = [
     { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
-    { id: 'bakim', label: 'Bakım Onarım', emoji: '🔧' },
-    { id: 'abonelik', label: 'Abonelikler', emoji: '💳' },
+    { id: 'bakim', label: 'Bakım', emoji: '🔧' },
+    { id: 'abonelik', label: 'Abone', emoji: '💳' },
     { id: 'tasinmaz', label: 'Taşınmaz', emoji: '🏗️' },
     { id: 'guvenlik', label: 'Güvenlik', emoji: '🛡️' }
   ];
@@ -126,6 +165,7 @@ export default function Ev() {
             depo={ev.depo} 
             deleteDepoItem={deleteDepoItem} 
             clearDepo={clearDepo} 
+            requestConfirm={requestConfirm}
           />
         )}
 
@@ -192,8 +232,14 @@ export default function Ev() {
                </div>
                
                <div className="advice-content">
-                 <p>{ev.lifeAdvice[Math.floor(Math.random() * ev.lifeAdvice.length)]}</p>
-               </div>
+                  {activeWarnings.length > 0 ? (
+                    <div className="warning-list-ai">
+                      {activeWarnings.map((w, idx) => <p key={idx} className="warning-item-ai">{w}</p>)}
+                    </div>
+                  ) : (
+                    <p>{ev.lifeAdvice[Math.floor(Math.random() * ev.lifeAdvice.length)]}</p>
+                  )}
+                </div>
                
                <button className="advice-refresh-btn" onClick={() => toast.success('Yeni tavsiyeler hazırlanıyor... ⚡')}>
                  Başka Bir Tavsiye Al
@@ -316,15 +362,15 @@ export default function Ev() {
                     key={b.id} 
                     className="mini-m-card glass" 
                     onClick={() => {
-                      if(window.confirm(`${b.name} bakımını bugün yaptınız mı? Sayaç sıfırlanacak.`)) {
+                      requestConfirm(`${b.name} bakımını bugün yaptınız mı? Sayaç sıfırlanacak.`, () => {
                         resetPeriodicBakim(b.id);
-                      }
+                      });
                     }}
                     onContextMenu={(e) => {
                       e.preventDefault();
-                      if(window.confirm('Bu periyodik bakımı silmek istiyor musunuz?')) {
+                      requestConfirm('Bu periyodik bakımı silmek istiyor musunuz?', () => {
                         deletePeriodicBakim(b.id);
-                      }
+                      });
                     }}
                   >
                     <div className="mm-icon" style={{ borderColor: perc > 80 ? '#ef4444' : '#22c55e' }}>{b.icon}</div>
@@ -455,9 +501,9 @@ export default function Ev() {
                       <div className="bc-paid-badge"><CheckCircle2 size={12} /> Ödendi</div>
                     ) : (
                       <button className="bc-pay-btn" onClick={() => {
-                        if(window.confirm(`${bill.name} ödemesini onaylıyor musunuz? Finansa aktarılacak.`)) {
+                        requestConfirm(`${bill.name} ödemesini onaylıyor musunuz? Finansa aktarılacak.`, () => {
                           toast.success('Ödeme tamamlandı ve Finans modülüne işlendi! 💸');
-                        }
+                        });
                       }}>Şimdi Öde</button>
                     )}
                   </div>
@@ -476,13 +522,13 @@ export default function Ev() {
             {/* Emergency Kits Section */}
             <div className="emergency-kits-grid mt-12 mb-24">
               {['deprem', 'ilkyardim'].map(kitKey => (
-                <div key={kitKey} className="kit-card glass" onClick={() => toast.success(`${kitKey === 'deprem' ? 'Deprem' : 'İlk Yardım'} çantası detayları...`)}>
+                <div key={kitKey} className={`kit-card glass ${kitKey}`} onClick={() => setActiveKit(kitKey)}>
                    <div className="kit-icon-box">
-                     {kitKey === 'deprem' ? <Package size={24} color="#f59e0b" /> : <Shield size={24} color="#ef4444" />}
+                     {kitKey === 'deprem' ? <Package size={24} color="#a16207" /> : <Shield size={24} color="#b91c1c" />}
                    </div>
                    <div className="kit-info">
-                     <strong>{kitKey === 'deprem' ? 'Deprem Çantası' : 'İlk Yardım'}</strong>
-                     <small>{ev.emergencyKits[kitKey].length} Ürün Kayıtlı</small>
+                     <strong>{kitKey === 'deprem' ? 'Deprem Çantası' : 'İlk Yardım Çantası'}</strong>
+                     <small>{(ev.emergencyKits?.[kitKey] || []).length} Ürün Kayıtlı</small>
                    </div>
                    <ChevronRight size={16} opacity={0.3} />
                 </div>
@@ -490,73 +536,341 @@ export default function Ev() {
             </div>
 
             {/* Premium Guest Card */}
-            <div className="premium-guest-card-v2 mb-24">
-               <div className="pgc-header">
-                 <Globe size={18} />
-                 <span>MİSAFİR WI-FI KARTI</span>
-               </div>
-               <div className="pgc-content">
-                 <div className="pgc-item">
-                   <small>AĞ ADI</small>
-                   <strong>Tombis Yigit</strong>
-                 </div>
-                 <div className="pgc-item">
-                   <small>ŞİFRE</small>
-                   <strong>Love2013</strong>
-                 </div>
-               </div>
-               <div className="pgc-footer">
-                 <button className="pgc-share-btn" onClick={() => toast.success('Wi-Fi bilgileri kopyalandı! 📋')}>Kopyala & Paylaş</button>
-               </div>
+            <div className="wifi-cards-grid mb-24">
+              {/* Main Wi-Fi Card */}
+              <div className="premium-wifi-card main glass animate-fadeIn">
+                <span className="wifi-badge">ANA HAT</span>
+                <div className="wifi-content-v2">
+                  <div className="wifi-info-main">
+                    <label>AĞ ADI</label>
+                    <strong>{ev.guvenlik?.wifiMain?.ssid || 'superonline_wifi_1023'}</strong>
+                    <div className="wifi-pass-container">
+                      <Key size={14} opacity={0.5} />
+                      <span style={{ fontFamily: 'monospace', letterSpacing: showMainPass ? '1px' : '3px' }}>
+                        {showMainPass ? (ev.guvenlik?.wifiMain?.pass || 'MAUMFUFTH74L') : '••••••••'}
+                      </span>
+                      <button className="show-pass-btn" onClick={() => setShowMainPass(!showMainPass)}>
+                        {showMainPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="wifi-qr-placeholder">
+                     <div className="qr-pattern" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Guest Wi-Fi Card */}
+              <div className="premium-wifi-card guest glass animate-fadeIn">
+                <span className="wifi-badge">MİSAFİR</span>
+                <div className="wifi-content-v2">
+                  <div className="wifi-info-main">
+                    <label>HIZLI BAĞLANTI</label>
+                    <strong style={{ fontSize: '14px', color: 'var(--txt)' }}>{ev.guvenlik?.wifiGuest?.ssid || 'Tombis Yiğit'}</strong>
+                    <p style={{ fontSize: '10px', opacity: 0.6, margin: '4px 0 0 0' }}>Şifre: {ev.guvenlik?.wifiGuest?.pass || 'Love2013'}</p>
+                  </div>
+                  <div className="wifi-qr-placeholder" onClick={() => toast.success('Misafir QR Kodu Paylaşıldı! 📲')}>
+                     <div className="qr-pattern" />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Encrypted Safe (Şifreli Defter) */}
             <div className="personal-safe-section glass">
-               <div className="ps-header">
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                   <Key size={18} color="#7c3aed" />
-                   <h3>Kişisel Şifreli Defter</h3>
-                 </div>
-                 <button className="ps-unlock-btn" onClick={() => {
-                   const pass = prompt('Güvenlik şifresini giriniz:');
-                   if(pass === '2013') { // Mock pass for now, will link to settings
-                     toast.success('Kasa açıldı! 🔓');
-                   } else {
-                     toast.error('Hatalı şifre! 🔒');
-                   }
-                 }}>
-                   <ShieldCheck size={16} /> Kilidi Aç
-                 </button>
-               </div>
-               <div className="ps-content">
-                  <div className="locked-overlay">
-                    <AlertTriangle size={24} opacity={0.2} />
-                    <p>Bu alan şifre ile korunmaktadır.</p>
+                <div className="ps-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Key size={18} color="#7c3aed" />
+                    <h3>Kişisel Şifreli Defter</h3>
                   </div>
-               </div>
-            </div>
+                  {!ev.guvenlik?.safePassword ? (
+                    <button className="ps-unlock-btn" style={{ background: '#f59e0b' }} onClick={() => navigate('/profil')}>
+                      <AlertCircle size={16} /> Şifre Belirle
+                    </button>
+                  ) : ev.personalSafe?.locked ? (
+                    <button className="ps-unlock-btn" onClick={() => {
+                      if (unlockSafe(safeInput)) {
+                        toast.success('Kasa açıldı! 🔓');
+                        setSafeInput('');
+                      } else {
+                        setSafeError(true);
+                        toast.error('Hatalı şifre! 🔒');
+                        setTimeout(() => setSafeError(false), 500);
+                      }
+                    }}>
+                      <ShieldCheck size={16} /> Kilidi Aç
+                    </button>
+                  ) : (
+                    <button className="ps-unlock-btn" style={{ background: '#ef4444' }} onClick={lockSafe}>
+                      <Shield size={16} /> Kilitle
+                    </button>
+                  )}
+                </div>
+                <div className="ps-content">
+                  {!ev.guvenlik?.safePassword ? (
+                    <div className="ps-setup-hint">
+                      <p>Kasanızı kullanmak için önce bir güvenlik şifresi belirlemelisiniz.</p>
+                      <button className="btn-setup-safe" onClick={() => navigate('/profil')}>Profil Ayarlarına Git</button>
+                    </div>
+                  ) : ev.personalSafe?.locked ? (
+                    <div className="ps-unlock-area">
+                      <input 
+                        type="password" 
+                        className={`ps-pass-input ${safeError ? 'error' : ''}`}
+                        placeholder="••••"
+                        value={safeInput}
+                        onChange={(e) => setSafeInput(e.target.value)}
+                        onKeyDown={(e) => {
+                           if(e.key === 'Enter') {
+                             if(unlockSafe(safeInput)) toast.success('Kasa açıldı! 🔓');
+                             else { setSafeError(true); setTimeout(() => setSafeError(false), 500); }
+                           }
+                        }}
+                      />
+                      <p style={{ fontSize: '12px', opacity: 0.5 }}>Erişim kodunu girip "Kilidi Aç" butonuna basın</p>
+                    </div>
+                  ) : (
+                    <div className="ps-safe-open animate-fadeIn" style={{ padding: '20px' }}>
+                      <textarea 
+                        className="glass"
+                        style={{ width: '100%', height: '150px', background: 'white', border: '1px solid var(--brd)', borderRadius: '12px', padding: '15px', fontFamily: 'inherit', fontSize: '14px' }}
+                        placeholder="Kişisel notlarınızı buraya yazabilirsiniz..."
+                        defaultValue={ev.personalSafe?.notes || ''}
+                      />
+                      <p style={{ fontSize: '11px', color: '#16a34a', fontWeight: '700', marginTop: '10px' }}>
+                        <ShieldCheck size={12} /> Bilgileriniz AES-256 ile şifrelenmiştir.
+                      </p>
+                    </div>
+                  )}
+                </div>
+             </div>
           </div>
         )}
 
       </div>
       <ActionSheet
-        isOpen={!!editingTasinmaz}
-        onClose={() => setEditingTasinmaz(null)}
-        title={editingTasinmaz?.isNew ? '🏗️ Yeni Taşınmaz Ekle' : `🏢 ${editingTasinmaz?.name}`}
+        isOpen={!!activeKit}
+        onClose={() => setActiveKit(null)}
+        title={activeKit === 'deprem' ? '🚨 Deprem Çantası Yönetimi' : '🩹 İlk Yardım Çantası Yönetimi'}
         fullHeight
       >
-        {editingTasinmaz && (
-          <ManageTasinmazContent 
-            data={editingTasinmaz} 
-            onClose={() => setEditingTasinmaz(null)} 
+        {activeKit && (
+          <EmergencyKitModal 
+            type={activeKit} 
+            items={ev.emergencyKits?.[activeKit] || []} 
+            onClose={() => setActiveKit(null)} 
+            requestConfirm={requestConfirm}
           />
         )}
       </ActionSheet>
+
+      <ConfirmModal 
+        isOpen={showConfirm.open}
+        title="Emin misiniz?"
+        message={showConfirm.message}
+        onConfirm={() => {
+          showConfirm.onConfirm();
+          setShowConfirm({ ...showConfirm, open: false });
+        }}
+        onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
+      />
     </AnimatedPage>
   );
 }
 
-function ManageTasinmazContent({ data, onClose }) {
+const EMERGENCY_RECOMMENDATIONS = {
+  deprem: [
+    { item: "Su (Kişi başı 3L)", cat: "Gıda", icon: "💧" },
+    { item: "Konserve Gıda", cat: "Gıda", icon: "🥫" },
+    { item: "Bisküvi / Kuru Yemiş", cat: "Gıda", icon: "🥜" },
+    { item: "Düdük", cat: "Araç", icon: "📢" },
+    { item: "El Feneri (Yedek pilli)", cat: "Araç", icon: "🔦" },
+    { item: "Pilli Radyo", cat: "İletişim", icon: "📻" },
+    { item: "Yedek Anahtarlar", cat: "Belge", icon: "🔑" },
+    { item: "Nakit Para", cat: "Belge", icon: "💵" },
+    { item: "Yağmurluk", cat: "Giyim", icon: "🧥" }
+  ],
+  ilkyardim: [
+    { item: "Yara Bandı", cat: "Sarf", icon: "🩹" },
+    { item: "Sargı Bezi", cat: "Sarf", icon: "🩹" },
+    { item: "Antiseptik Solüsyon", cat: "Sağlık", icon: "🧪" },
+    { item: "Ağrı Kesici", cat: "Sağlık", icon: "💊" },
+    { item: "Makas", cat: "Araç", icon: "✂️" },
+    { item: "Dijital Ateş Ölçer", cat: "Araç", icon: "🌡️" },
+    { item: "Steril Eldiven", cat: "Sarf", icon: "🧤" }
+  ]
+};
+
+function EmergencyKitModal({ type, items, onClose, requestConfirm }) {
+  const { addEmergencyItem, deleteEmergencyItem, addEmergencyToShopping, currentUser } = useStore();
+  const [showAdd, setShowAdd] = useState(false);
+  const [newItem, setNewItem] = useState({ item: '', expDate: '', icon: '📦' });
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+
+  const missingRecommendations = useMemo(() => {
+    const isMissing = (rec) => !items.some(i => i.item.toLowerCase().includes(rec.item.toLowerCase()));
+    return EMERGENCY_RECOMMENDATIONS[type].filter(isMissing);
+  }, [type, items]);
+
+  const featuredRec = useMemo(() => {
+    if (missingRecommendations.length === 0) return null;
+    return missingRecommendations[featuredIndex % missingRecommendations.length];
+  }, [missingRecommendations, featuredIndex]);
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+    if (!newItem.item) return toast.error('Ürün adı giriniz!');
+    addEmergencyItem(type, newItem, currentUser?.name);
+    setNewItem({ item: '', expDate: '', icon: '📦' });
+    setShowAdd(false);
+    toast.success('Ürün eklendi! ✨');
+  };
+
+  const isNearExpiry = (date) => {
+    if (!date) return false;
+    const diff = new Date(date) - new Date();
+    return diff > 0 && diff < (30 * 24 * 60 * 60 * 1000); // 30 days safety margin
+  };
+
+  const getUserEmoji = (name) => {
+    if (name === 'Esra') return '👩‍🍳';
+    if (name === 'Görkem') return '👨‍💻';
+    return '👤';
+  };
+
+  return (
+    <div className="ek-modal-content">
+      <div className="ek-stats glass mb-16">
+        <div className="ek-stat">
+          <small>Toplam Ürün</small>
+          <strong>{items.length}</strong>
+        </div>
+        <div className="ek-stat">
+          <small>SKT Yaklaşan</small>
+          <strong style={{ color: '#f59e0b' }}>{items.filter(i => isNearExpiry(i.expDate)).length}</strong>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+        <button className="pill-btn-ev" onClick={() => setShowAdd(!showAdd)}>
+          <Plus size={18} /> {showAdd ? 'Girişi İptal Et' : 'Yeni Manuel Kayıt'}
+        </button>
+      </div>
+
+      {featuredRec ? (
+        <div className="recommendation-ghost glass animate-pulse-slow mb-24">
+          <div className="rg-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Sparkles size={12} color="#f59e0b" />
+              <span className="rg-tag">{type === 'deprem' ? 'DEPREM ASİSTANI' : 'İLK YARDIM ASİSTANI'}</span>
+            </div>
+            <button className="rg-refresh" onClick={() => setFeaturedIndex(prev => prev + 1)} title="Farklı Bir Öneri">
+              <RotateCcw size={14} />
+            </button>
+          </div>
+          <div className="rg-body">
+            <div className="rg-emoji">{featuredRec.icon}</div>
+            <div className="rg-info">
+              <strong>{featuredRec.item}</strong>
+              <span>{type === 'deprem' ? 'Deprem çantanızdaki bu eksiği tamamlamayı unutmayın.' : 'İlk yardım setinizdeki bu eksiği tamamlamayı unutmayın.'}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="rg-shop-btn" onClick={() => addEmergencyToShopping(featuredRec)} title="Alışverişe Ekle">
+                <ShoppingBag size={18} />
+              </button>
+              <button className="rg-add" onClick={() => addEmergencyItem(type, { item: featuredRec.item, icon: featuredRec.icon }, currentUser?.name)} title="Çantaya Ekle">
+                <Plus size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="as-complete-msg mb-24">
+          <CheckCircle2 size={18} color="#10b981" />
+          <span>Tebrikler! Çantanızdaki tüm temel eksikler tamamlandı. ✨</span>
+        </div>
+      )}
+
+
+
+      <div className="ek-list-header mb-8">
+        <span className="col-name">Ürün Adı</span>
+        <span className="col-date">Eklenme</span>
+        <span className="col-skt">SKT</span>
+        <span className="col-user">Kişi</span>
+        <span className="col-actions"></span>
+      </div>
+
+      <div className="ek-items-list">
+        {showAdd && (
+          <form className="ek-item-card-v2 entry-row glass animate-fadeIn" onSubmit={handleAdd}>
+            <div className="ek-col-main">
+              <div className="ek-item-icon">📦</div>
+              <input 
+                type="text" 
+                value={newItem.item} 
+                onChange={e => setNewItem({ ...newItem, item: e.target.value })} 
+                placeholder="Ürün adı girin..."
+                autoFocus
+              />
+            </div>
+            <div className="ek-col-date">
+              <span style={{ opacity: 0.5 }}>{new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' })}</span>
+            </div>
+            <div className="ek-col-skt">
+              <input 
+                type="date" 
+                value={newItem.expDate} 
+                onChange={e => setNewItem({ ...newItem, expDate: e.target.value })} 
+              />
+            </div>
+            <div className="ek-col-user">
+               <span className="user-badge-mini">{getUserEmoji(currentUser?.name)}</span>
+            </div>
+            <div className="ek-col-actions">
+              <button type="submit" className="ek-save-btn-v2"><CheckCircle2 size={18} /></button>
+            </div>
+          </form>
+        )}
+        {items.length > 0 ? items.map(item => (
+          <div key={item.id} className={`ek-item-card-v2 glass ${isNearExpiry(item.expDate) ? 'warning' : ''}`}>
+            <div className="ek-col-main">
+              <div className="ek-item-icon">{item.icon || '📦'}</div>
+              <strong>{item.item}</strong>
+            </div>
+            <div className="ek-col-date">
+              {item.buyDate ? new Date(item.buyDate).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }) : '-'}
+            </div>
+            <div className={`ek-col-skt ${isNearExpiry(item.expDate) ? 'text-warning' : ''}`}>
+              {item.expDate ? new Date(item.expDate).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '∞'}
+            </div>
+            <div className="ek-col-user">
+               <span className="user-badge-mini" title={item.addedBy}>{getUserEmoji(item.addedBy)}</span>
+            </div>
+            <div className="ek-col-actions">
+              <button className="ek-delete-btn-v2" onClick={() => {
+                requestConfirm(`"${item.item}" ürününü çantadan çıkarmak istediğinize emin misiniz?`, () => {
+                  deleteEmergencyItem(type, item.id);
+                  toast.success('Ürün çıkarıldı.');
+                });
+              }}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          </div>
+        )) : (
+          <div className="empty-state-v2">
+            <AlertCircle size={32} opacity={0.2} />
+            <p>Çantada henüz ürün yok. AI asistanı kullanarak hemen doldurabilirsiniz!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+function ManageTasinmazContent({ data, onClose, requestConfirm }) {
   const { addTasinmaz, updateTasinmaz, deleteTasinmaz } = useStore();
   const [form, setForm] = useState(data.isNew ? {
     name: '', city: '', district: '', neighborhood: '',
@@ -642,7 +956,12 @@ function ManageTasinmazContent({ data, onClose }) {
 
       <div className="modal-actions-premium mt-32">
         {!data.isNew && (
-          <button type="button" className="delete-btn-premium" onClick={() => { if(window.confirm('Emin misiniz?')) { deleteTasinmaz(data.id); onClose(); } }}>
+          <button type="button" className="delete-btn-premium" onClick={() => { 
+            requestConfirm('Bu taşınmazı silmek istediğinizden emin misiniz?', () => {
+              deleteTasinmaz(data.id); 
+              onClose(); 
+            });
+          }}>
             <Trash2 size={18} /> Sil
           </button>
         )}
@@ -654,7 +973,7 @@ function ManageTasinmazContent({ data, onClose }) {
   );
 }
 
-function DepoView({ depo, deleteDepoItem, clearDepo }) {
+function DepoView({ depo, deleteDepoItem, clearDepo, requestConfirm }) {
   const [expandedItem, setExpandedItem] = useState(null);
   const [depoFilter, setDepoFilter] = useState('Hepsi');
   const categories = ['Hepsi', 'Gardırop', 'Teknoloji', 'Genel'];
@@ -673,7 +992,9 @@ function DepoView({ depo, deleteDepoItem, clearDepo }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <small className="stat-badge">{filteredDepo.length} Ürün Grubu</small>
           {depo?.length > 0 && (
-            <button className="icon-btn-mini" onClick={() => { if(window.confirm('Tüm depoyu sıfırlamak istediğinize emin misiniz?')) clearDepo(); }} title="Depoyu Sıfırla">
+            <button className="icon-btn-mini" onClick={() => { 
+              requestConfirm('Tüm depoyu sıfırlamak istediğinize emin misiniz?', () => clearDepo());
+            }} title="Depoyu Sıfırla">
               <RotateCcw size={12} />
             </button>
           )}
@@ -716,7 +1037,10 @@ function DepoView({ depo, deleteDepoItem, clearDepo }) {
                   </div>
                 </div>
                 <div className="dmc-actions">
-                  <button className="dmc-del-btn" onClick={(e) => { e.stopPropagation(); if(window.confirm('Tüm ürün kaydı silinsin mi?')) deleteDepoItem(item.id); }}>
+                  <button className="dmc-del-btn" onClick={(e) => { 
+                    e.stopPropagation(); 
+                    requestConfirm('Tüm ürün kaydı silinsin mi?', () => deleteDepoItem(item.id));
+                  }}>
                     <Trash2 size={14} />
                   </button>
                   <ChevronRight size={16} className={`dmc-chevron ${expandedItem === item.id ? 'rotated' : ''}`} />

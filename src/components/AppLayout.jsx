@@ -17,13 +17,17 @@ export default function AppLayout() {
       {/* Header - Hidden on Home for a cleaner look */}
       {!isHome && (
         <header className="app-header glass">
-        <div>
-          <div className="header-title-row" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+        <div className="header-left">
+          <div className="header-title-row" onClick={() => navigate('/')}>
             <img src={logo} alt="Logo" className="header-logo-mini" />
-            <h1>Eraylar Hanem</h1>
-            <div className={`status-dot ${isOnline ? 'online' : 'offline'}`} title={isOnline ? 'Online' : 'Offline'} />
+            <div className="header-title-main">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <h1>Eraylar Hanem</h1>
+                <div className={`status-dot ${isOnline ? 'online' : 'offline'}`} title={isOnline ? 'Online' : 'Offline'} />
+              </div>
+              <small>Hoş geldin, {currentUser?.name || 'Misafir'}</small>
+            </div>
           </div>
-          <small>Hoş geldin, {currentUser?.name || 'Misafir'}</small>
         </div>
         <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <button 

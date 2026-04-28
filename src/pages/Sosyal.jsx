@@ -1304,6 +1304,11 @@ function RutinTab({ sosyal, onAdd }) {
   const { applySocialRoutine, addSocialRoutinePackage, updateSocialRoutinePackage, deleteSocialRoutinePackage } = useStore();
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [managingPkg, setManagingPkg] = useState(null); // { mode: 'add' | 'edit', pkg: null | object }
+  const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
+
+  const requestConfirm = (message, onConfirm) => {
+    setShowConfirm({ open: true, message, onConfirm });
+  };
 
   const handleApply = (routine) => {
     applySocialRoutine(routine, startDate);
@@ -1323,10 +1328,10 @@ function RutinTab({ sosyal, onAdd }) {
 
   const handleDeletePkg = (e, id) => {
     e.stopPropagation();
-    if (window.confirm('Bu rutin paketini silmek istediğine emin misin?')) {
+    requestConfirm('Bu rutin paketini silmek istediğine emin misin?', () => {
       deleteSocialRoutinePackage(id);
       toast.success('Rutin paketi silindi.');
-    }
+    });
   };
 
   return (
@@ -1418,6 +1423,17 @@ function RutinTab({ sosyal, onAdd }) {
           />
         )}
       </ActionSheet>
+
+      <ConfirmModal 
+        isOpen={showConfirm.open}
+        title="Emin misiniz?"
+        message={showConfirm.message}
+        onConfirm={() => {
+          showConfirm.onConfirm();
+          setShowConfirm({ ...showConfirm, open: false });
+        }}
+        onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
+      />
     </div>
   );
 }
@@ -1429,6 +1445,11 @@ function HavuzTab({ sosyal, onAdd }) {
   const [planningIdea, setPlanningIdea] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Hepsi');
   const [managingItem, setManagingItem] = useState(null); // { mode: 'add' | 'edit', item: null | object }
+  const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
+
+  const requestConfirm = (message, onConfirm) => {
+    setShowConfirm({ open: true, message, onConfirm });
+  };
 
   const categories = ['Hepsi', ...new Set(pool.map(p => p.category).filter(Boolean))];
 
@@ -1459,10 +1480,10 @@ function HavuzTab({ sosyal, onAdd }) {
 
   const handleDeleteItem = (e, id) => {
     e.stopPropagation();
-    if (window.confirm('Bu aktiviteyi havuzdan silmek istediğine emin misin?')) {
+    requestConfirm('Bu aktiviteyi havuzdan silmek istediğine emin misin?', () => {
       deleteSocialPoolItem(id);
       toast.success('Aktivite silindi.');
-    }
+    });
   };
 
   const finishPlanning = (details) => {
@@ -1582,6 +1603,17 @@ function HavuzTab({ sosyal, onAdd }) {
           />
         )}
       </ActionSheet>
+
+      <ConfirmModal 
+        isOpen={showConfirm.open}
+        title="Emin misiniz?"
+        message={showConfirm.message}
+        onConfirm={() => {
+          showConfirm.onConfirm();
+          setShowConfirm({ ...showConfirm, open: false });
+        }}
+        onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
+      />
     </div>
   );
 }

@@ -1,0 +1,91 @@
+.md-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100000000; /* Above everything including action sheets */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.md-confirm-modal {
+  background: white;
+  padding: 30px;
+  border-radius: 35px;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+}
+
+.md-confirm-icon {
+  font-size: 40px;
+  margin-bottom: 15px;
+}
+
+.md-confirm-modal h3 {
+  font-size: 20px;
+  font-weight: 900;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.md-confirm-modal p {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.md-confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.md-confirm-actions button {
+  flex: 1;
+  padding: 14px;
+  border-radius: 18px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.md-confirm-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.md-confirm-yes {
+  background: #ef4444;
+  color: white;
+}
+
+.md-confirm-yes:active {
+  transform: scale(0.95);
+}
+
+.animate-bounceIn {
+  animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounceIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}

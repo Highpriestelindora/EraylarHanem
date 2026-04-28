@@ -9,6 +9,7 @@ import {
 import ActionSheet from '../components/ActionSheet';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -104,6 +105,11 @@ export default function Alisveris() {
   const [confirmingItem, setConfirmingItem] = useState(null);
   const [activeQuickCat, setActiveQuickCat] = useState(null);
   const [quickProductName, setQuickProductName] = useState('');
+  const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
+
+  const requestConfirm = (message, onConfirm) => {
+    setShowConfirm({ open: true, message, onConfirm });
+  };
   
   // Shuffled Categories State
   const [displayGorkem, setDisplayGorkem] = useState(GORKEM_CATS);
@@ -163,10 +169,10 @@ export default function Alisveris() {
   };
 
   const handleDelete = (owner, id) => {
-    if (window.confirm('Bu ürünü silmek istediğinize emin misiniz?')) {
+    requestConfirm('Bu ürünü silmek istediğinize emin misiniz?', () => {
       deleteShoppingItem(owner, id);
       toast.success('Ürün silindi.');
-    }
+    });
   };
 
   const handlePersonalConfirm = (owner, item, purchaseData) => {
@@ -461,6 +467,17 @@ export default function Alisveris() {
           </button>
         </div>
       </ActionSheet>
+
+      <ConfirmModal 
+        isOpen={showConfirm.open}
+        title="Emin misiniz?"
+        message={showConfirm.message}
+        onConfirm={() => {
+          showConfirm.onConfirm();
+          setShowConfirm({ ...showConfirm, open: false });
+        }}
+        onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
+      />
     </AnimatedPage>
   );
 }
