@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Lightbulb, Wrench, ShieldCheck, 
   CheckCircle2, Plus, Trash2, Edit2, 
@@ -15,11 +15,11 @@ import AnimatedPage from '../components/AnimatedPage';
 import ActionSheet from '../components/ActionSheet';
 import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
-import { Bar, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement } from 'chart.js';
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement } from 'chart.js';
 import './Ev.css';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement);
 
 const formatMoney = (val) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
@@ -30,20 +30,24 @@ export default function Ev() {
   const [showWifiMain, setShowWifiMain] = useState(false);
   const navigate = useNavigate();
   const { 
-    ev, kasa, users, currentUser, setCurrentUser, addRepairItem, addBakimItem, 
-    toggleHomeTask, deleteHomeTask, updateHomeSecurity, 
+    ev, kasa, users, currentUser, setCurrentUser,
+    updateHomeSecurity, 
     updateTasinmaz, addTasinmaz, deleteTasinmaz,
-    addPeriodicBakim, resetPeriodicBakim, deletePeriodicBakim,
+    addPeriodicBakim, updatePeriodicBakim, resetPeriodicBakim, deletePeriodicBakim,
     deleteDepoItem, clearDepo,
+    addOnarimItem, toggleOnarimItem, clearCompletedOnarimItems,
     addAbonelik, updateAbonelik, deleteAbonelik,
     addDuzenliOdeme, updateDuzenliOdeme, deleteDuzenliOdeme,
-    addFinanceExpense
+    addFinanceExpense, updateLocationSettings
   } = useStore();
 
   const { 
-    faturalar, bakimlar, demirbaslar, tamirListesi, bakimListesi,
-    ustaRehberi, abonelikler, bitkiler, guvenlik, yillikPlan, depo
-  } = ev || { faturalar: [], bakimlar: [], tamirListesi: [], bakimListesi: [], ustaRehberi: [], bitkiler: [], depo: [] };
+    faturalar = [], demirbaslar = [],
+    ustaRehberi = [], abonelikler = [], bitkiler = [], guvenlik = {}, yillikPlan = [], depo = []
+  } = ev || {};
+  
+  const onarimListesi = Array.isArray(ev?.onarimListesi) ? ev.onarimListesi : [];
+  const bakimlar = Array.isArray(ev?.bakimlar) ? ev.bakimlar : [];
 
   const [showSafeCode, setShowSafeCode] = useState(false);
   const [faturaForm, setFaturaForm] = useState({ name: '', amount: '', provider: '', dueDate: '', icon: '📜' });
@@ -63,6 +67,9 @@ export default function Ev() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [editingAbo, setEditingAbo] = useState(null);
   const [editingFatura, setEditingFatura] = useState(null);
+  const [editingPeriodic, setEditingPeriodic] = useState(null);
+  const [editingPeriodicDetails, setEditingPeriodicDetails] = useState(null);
+  const [editingOnarim, setEditingOnarim] = useState(null);
   const [faturaInput, setFaturaInput] = useState(null); // For manual amount entry
 
   // State Migration & Initialization for Abonelik/Fatura/Kartlar
@@ -76,7 +83,7 @@ export default function Ev() {
           { id: 'gorkem-ziraat', name: 'Ziraat Kart', owner: 'Görkem', type: 'Credit', color: '#e11d48' },
           { id: 'gorkem-ykb', name: 'Yapı Kredi', owner: 'Görkem', type: 'Credit', color: '#2563eb' },
           { id: 'esra-garanti', name: 'Garanti Bonus', owner: 'Esra', type: 'Credit', color: '#16a34a' },
-          { id: 'esra-enpara', name: 'Enpara Kart', owner: 'Esra', type: 'Debit/Credit', color: '#7c3aed' }
+          { id: 'esra-enpara', name: 'Enpara Kart', owner: 'Esra', type: 'Debit/Credit', color: '#10b981' }
         ];
         state.updateHomeSecurity('finans', { ...ev.finans, kartlar: defaultKartlar });
       }
@@ -97,13 +104,53 @@ export default function Ev() {
     setShowConfirm({ open: true, message, onConfirm });
   };
 
-  // AI Analysis & Smart Warnings
+  // Calculate distance between two points (km)
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // Location Tracker Hook
+  useEffect(() => {
+    const logTimeSlice = useStore.getState().logTimeSlice;
+    if (!navigator.geolocation) return;
+
+    let lastLogTime = 0;
+    const logInterval = 15 * 60 * 1000; // 15 minutes
+
+    const watchId = navigator.geolocation.watchPosition((pos) => {
+      const { latitude, longitude } = pos.coords;
+      const { home, work } = ev.tracking || {};
+      
+      let currentZone = 'other';
+      if (home && calculateDistance(latitude, longitude, home.lat, home.lng) * 1000 < (home.radius || 100)) {
+        currentZone = 'home';
+      } else if (work && calculateDistance(latitude, longitude, work.lat, work.lng) * 1000 < (work.radius || 200)) {
+        currentZone = 'work';
+      }
+
+      const now = Date.now();
+      if (now - lastLogTime > logInterval) {
+        logTimeSlice(currentZone, 15);
+        lastLogTime = now;
+      }
+    }, (err) => console.warn(err), { enableHighAccuracy: true });
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [ev.tracking]);
+
   const activeWarnings = useMemo(() => {
     const warnings = [];
     const now = new Date();
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
 
-    // 1. Emergency Kit Expiry (Warning starts 1 month early)
+    // 1. Emergency Kit Expiry
     Object.keys(ev.emergencyKits || {}).forEach(kitKey => {
       ev.emergencyKits[kitKey].forEach(item => {
         if (!item.expDate) return;
@@ -152,6 +199,68 @@ export default function Ev() {
       updateTasinmaz(id, { value: newValue, lastUpdate: new Date().toISOString().split('T')[0] });
       toast.success('Piyasa değeri güncellendi! 📈', { id: 'search' });
     }, 2000);
+  };
+
+  const getAggregatedData = (daysCount) => {
+    const routine = ev.tracking?.routine || {};
+    const stats = { home: 0, work: 0, other: 0 };
+    const logs = ev.tracking?.logs || [];
+    const habits = ev.tracking?.weeklyHabits || {};
+    
+    for (let d = 0; d < daysCount; d++) {
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() - d);
+      const dateStr = targetDate.toISOString().split('T')[0];
+      const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][targetDate.getDay()];
+      
+      for (let i = 0; i < 96; i++) {
+        const timeMs = new Date().setHours(0, i * 15, 0, 0);
+        const timeStr = new Date(timeMs).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const hourStr = timeStr.split(':')[0];
+        const habitKey = `${dayName}-${hourStr}`;
+        
+        const log = logs.find(l => 
+          l.date === dateStr && 
+          Math.abs(l.timestamp - (new Date(dateStr).setHours(0, i * 15, 0, 0))) < 7.5 * 60 * 1000
+        );
+        
+        if (log) {
+          stats[log.type] += 15;
+        } else {
+          const habit = habits[habitKey];
+          if (habit && (habit.home > 0 || habit.work > 0 || habit.other > 0)) {
+            const best = Object.entries(habit).reduce((a, b) => b[1] > a[1] ? b : a);
+            stats[best[0]] += 15;
+          } else {
+            if (timeStr >= (routine.sleepStart || '23:30') || timeStr <= (routine.sleepEnd || '07:30')) stats.home += 15;
+            else if (timeStr >= (routine.workStart || '09:00') && timeStr <= (routine.workEnd || '18:00')) stats.work += 15;
+            else stats.other += 15;
+          }
+        }
+      }
+    }
+
+    const total = daysCount * 1440;
+    return {
+      labels: ['Ev', 'İş', 'Diğer'],
+      datasets: [{
+        data: [
+          Math.round((stats.home / total) * 100),
+          Math.round((stats.work / total) * 100),
+          Math.round((stats.other / total) * 100)
+        ],
+        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    };
+  };
+
+  const doughnutOptions = {
+    plugins: { legend: { display: false } },
+    cutout: '70%',
+    responsive: true,
+    maintainAspectRatio: false
   };
 
   return (
@@ -212,79 +321,112 @@ export default function Ev() {
 
         {activeTab === 'yasam' && (
           <div className="yasam-view animate-fadeIn">
-            {/* User Toggle */}
-            <div className="user-profile-toggle mb-16">
-               <button className={currentUser?.name === 'Görkem' ? 'active' : ''} onClick={() => setCurrentUser(users.gorkem)}>
-                 <span className="emoji">👨‍💻</span> Görkem
-               </button>
-               <button className={currentUser?.name === 'Esra' ? 'active' : ''} onClick={() => setCurrentUser(users.esra)}>
-                 <span className="emoji">👩‍🍳</span> Esra
-               </button>
-            </div>
-
-            {/* Time Analysis Card */}
-            <div className="time-analysis-card glass mb-20">
-               <div className="section-header-v2">
-                 <h3>📊 Zaman Analizi</h3>
-                 <small style={{ opacity: 0.5 }}>Haftalık Dağılım</small>
-               </div>
-               
-               <div className="chart-container" style={{ height: '180px', marginTop: '10px' }}>
-                 <Bar 
-                   data={{
-                     labels: ['Ev', 'İş', 'Diğer'],
-                     datasets: [{
-                       data: [
-                         ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].home,
-                         ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].work,
-                         ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].other
-                       ],
-                       backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
-                       borderRadius: 8
-                     }]
-                   }}
-                   options={{
-                     indexAxis: 'y',
-                     plugins: { legend: { display: false } },
-                     scales: { 
-                       x: { display: false, max: 100 },
-                       y: { grid: { display: false }, ticks: { color: 'var(--txt)', font: { weight: '800' } } }
-                     },
-                     responsive: true,
-                     maintainAspectRatio: false
-                   }}
-                 />
-               </div>
-               
-               <div className="ai-interpretation mt-16">
-                 <Sparkles size={16} color="#7c3aed" />
-                 <p>{ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].interpretation}</p>
-               </div>
-            </div>
-
-            {/* Today's Advice Motor */}
-            <div className="advice-motor-card glass mb-24">
+            {/* 1. Today's Advice Motor (NOW TOP) */}
+            <div className="advice-motor-card glass mb-20">
                <div className="am-header">
-                 <div className="am-icon-box"><Sparkles size={24} color="white" /></div>
                  <div className="am-title">
+                   <Sparkles size={20} color="var(--ev)" />
                    <h3>Bugün Ne Yapmalıyım?</h3>
-                   <small>Akıllı Yaşam Asistanı</small>
+                 </div>
+                 <div className="active-user-badge">
+                   {currentUser?.name === 'Esra' ? '👩‍🍳 Esra' : '👨‍💻 Görkem'}
                  </div>
                </div>
                
-               <div className="advice-content">
-                  {activeWarnings.length > 0 ? (
-                    <div className="warning-list-ai">
-                      {activeWarnings.map((w, idx) => <p key={idx} className="warning-item-ai">{w}</p>)}
-                    </div>
-                  ) : (
-                    <p>{ev.lifeAdvice[Math.floor(Math.random() * ev.lifeAdvice.length)]}</p>
-                  )}
-                </div>
-               
-               <button className="advice-refresh-btn" onClick={() => toast.success('Yeni tavsiyeler hazırlanıyor... ⚡')}>
+               <div className="am-body">
+                  <div className="ai-status-pulse"></div>
+                  <div className="advice-bubble">
+                    {activeWarnings.length > 0 ? (
+                      <p>{activeWarnings[0]}</p>
+                    ) : (
+                      <p>{aiNote}</p>
+                    )}
+                  </div>
+               </div>
+
+               <button className="refresh-advice-btn" onClick={() => toast.success('Yeni tavsiyeler hazırlanıyor... 🤖')}>
                  Başka Bir Tavsiye Al
                </button>
+            </div>
+
+            {/* 2. Time Analysis Card (NOW A FULL DASHBOARD) */}
+            <div className="time-analysis-module glass mb-20">
+               <div className="section-header-v2">
+                 <div style={{ display: 'flex', flexDirection: 'column' }}>
+                   <h3>📊 Yaşam Dengesi Analizi</h3>
+                   <p className="am-sub">Öğrenilen alışkanlıklar ve gerçek logların sentezi</p>
+                 </div>
+                 <div className="active-user-badge">
+                   {currentUser?.name === 'Esra' ? '👩‍🍳 Esra' : '👨‍💻 Görkem'}
+                 </div>
+               </div>
+               
+               <div className="analysis-grid">
+                  {/* HAFTALIK GRAFİK */}
+                  <div className="analysis-chart-item">
+                    <div className="chart-title-mini">HAFTALIK</div>
+                    <div className="chart-rel-container">
+                      <Doughnut 
+                        data={getAggregatedData(7)}
+                        options={doughnutOptions}
+                      />
+                      <div className="chart-center-label">
+                        <span className="val">7g</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AYLIK GRAFİK */}
+                  <div className="analysis-chart-item">
+                    <div className="chart-title-mini">AYLIK</div>
+                    <div className="chart-rel-container">
+                      <Doughnut 
+                        data={getAggregatedData(30)}
+                        options={doughnutOptions}
+                      />
+                      <div className="chart-center-label">
+                        <span className="val">30g</span>
+                      </div>
+                    </div>
+                  </div>
+               </div>
+
+               {/* Veri Detayları & Açıklamalar */}
+               <div className="analysis-metrics mt-12">
+                  {['Ev', 'İş', 'Diğer'].map((label, idx) => {
+                    const weeklyData = getAggregatedData(7).datasets[0].data;
+                    const colors = ['#10b981', '#3b82f6', '#f59e0b'];
+                    return (
+                      <div key={label} className="metric-tag" style={{ borderLeft: `3px solid ${colors[idx]}` }}>
+                        <span className="m-label">{label}</span>
+                        <span className="m-val">%{weeklyData[idx]}</span>
+                      </div>
+                    );
+                  })}
+               </div>
+
+               <div className="analysis-info-box mt-16">
+                 <Info size={14} color="#64748b" />
+                 <p>Yüzdeler, son 30 günlük verileriniz ve rutin alışkanlıklarınızın ortalamasını temsil eder. <strong>34-32-35</strong> gibi değerler, toplam zamanınızın hangi kategoriye ne kadar dağıldığını gösterir.</p>
+               </div>
+               
+               <div className="tracking-setup mt-16 pt-16 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', gap: '8px' }}>
+                 <button className="setup-btn-compact" onClick={() => {
+                   navigator.geolocation.getCurrentPosition(p => {
+                     updateLocationSettings('home', { lat: p.coords.latitude, lng: p.coords.longitude });
+                   });
+                 }}>🏠 Ev Konumu</button>
+                 <button className="setup-btn-compact" onClick={() => {
+                   navigator.geolocation.getCurrentPosition(p => {
+                     updateLocationSettings('work', { lat: p.coords.latitude, lng: p.coords.longitude });
+                   });
+                 }}>🏢 İş Konumu</button>
+               </div>
+
+               <div className="ai-interpretation mt-12">
+                 <Sparkles size={14} color="#10b981" />
+                 <p>{ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].interpretation}</p>
+               </div>
             </div>
           </div>
         )}
@@ -385,16 +527,12 @@ export default function Ev() {
             {/* Periodic Maintenance Hub */}
             <div className="section-header-v2">
               <h3>🔄 Periyodik Bakımlar</h3>
-              <button className="add-btn-mini" onClick={() => {
-                const name = prompt('Bakım Adı:');
-                if(!name) return;
-                const interval = prompt('Kaç günde bir? (Örn: 30):');
-                const emoji = prompt('Emoji:');
-                addPeriodicBakim({ name, intervalDays: Number(interval), icon: emoji || '🔧' });
-              }}><Plus size={14} /></button>
+              <button className="add-btn-mini" onClick={() => setEditingPeriodic({ name: '', intervalDays: 30, icon: '🔧' })}>
+                <Plus size={14} />
+              </button>
             </div>
             
-            <div className="mini-bakim-row mt-12 mb-24">
+            <div className="mini-bakim-row mt-12 mb-24 centered">
               {bakimlar.map(b => {
                 const diff = Math.round((new Date() - new Date(b.lastDate)) / 864e5);
                 const perc = Math.min(100, (diff / b.intervalDays) * 100);
@@ -402,11 +540,7 @@ export default function Ev() {
                   <div 
                     key={b.id} 
                     className="mini-m-card glass" 
-                    onClick={() => {
-                      requestConfirm(`${b.name} bakımını bugün yaptınız mı? Sayaç sıfırlanacak.`, () => {
-                        resetPeriodicBakim(b.id);
-                      });
-                    }}
+                    onClick={() => setEditingPeriodicDetails(b)}
                     onContextMenu={(e) => {
                       e.preventDefault();
                       requestConfirm('Bu periyodik bakımı silmek istiyor musunuz?', () => {
@@ -414,7 +548,19 @@ export default function Ev() {
                       });
                     }}
                   >
-                    <div className="mm-icon" style={{ borderColor: perc > 80 ? '#ef4444' : '#22c55e' }}>{b.icon}</div>
+                    <div 
+                      className="mm-icon-v2" 
+                      style={{ borderColor: perc > 80 ? '#ef4444' : '#22c55e' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        requestConfirm(`${b.name} bakımını bugün yaptınız mı? Sayaç sıfırlanacak.`, () => {
+                          resetPeriodicBakim(b.id);
+                        });
+                      }}
+                    >
+                      {b.icon}
+                      <div className="mm-reset-hint">Sıfırla</div>
+                    </div>
                     <div className="mm-info">
                       <strong>{b.name}</strong>
                       <small>{Math.max(0, b.intervalDays - diff)} gün kaldı</small>
@@ -424,72 +570,73 @@ export default function Ev() {
               })}
             </div>
 
-            {/* General Task Lists */}
-            <div className="lists-grid">
-              <div className="list-column glass">
-                <div className="section-header-v2">
-                  <h3>🔧 Bakım Listesi</h3>
-                  <button className="add-btn-mini" onClick={() => {
-                    const task = prompt('Bakım görevi:');
-                    if (task) addBakimItem({ task });
-                  }}><Plus size={14} /></button>
-                </div>
-                <div className="task-items">
-                  {bakimListesi.map(t => (
-                    <div key={t.id} className={`task-card ${t.status === 'Completed' ? 'done' : ''}`} onClick={() => toggleHomeTask('bakimListesi', t.id)}>
-                      <div className="tc-check">{t.status === 'Completed' ? <CheckCircle2 size={16} color="#22c55e" /> : <div className="circle-check" />}</div>
-                      <span>{t.task}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="list-column glass">
-                <div className="section-header-v2">
-                  <h3>🔨 Tamir Listesi</h3>
-                  <button className="add-btn-mini" onClick={() => {
-                    const task = prompt('Tamir görevi:');
-                    if (task) addRepairItem({ task });
-                  }}><Plus size={14} /></button>
-                </div>
-                <div className="task-items">
-                  {tamirListesi.map(t => (
-                    <div key={t.id} className={`task-card ${t.status === 'Completed' ? 'done' : ''}`} onClick={() => toggleHomeTask('tamirListesi', t.id)}>
-                      <div className="tc-check">{t.status === 'Completed' ? <CheckCircle2 size={16} color="#22c55e" /> : <div className="circle-check" />}</div>
-                      <span>{t.task}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Repair Parts Shopping List */}
-            <div className="repair-parts-section mt-24 glass">
+            {/* Unified Bakım & Onarım Checklist */}
+            <div className="onarim-section-v2 mt-24 glass">
                <div className="section-header-v2">
-                 <h3>🛒 Tamir İçin Alınacaklar</h3>
-                 <button className="add-btn-mini" onClick={() => {
-                   const item = prompt('Alınacak parça:');
-                   if(item) {
-                     addDepoItem({ task: item, status: 'Pending', date: new Date().toISOString() });
-                     toast.success('Parça listeye eklendi!');
-                   }
-                 }}><Plus size={14} /></button>
+                 <div style={{ display: 'flex', flexDirection: 'column' }}>
+                   <h3>🔨 Bakım & Onarım Listesi</h3>
+                   <small style={{ opacity: 0.5 }}>{(onarimListesi || []).filter(i => !i.isArchived).length} Aktif Görev</small>
+                 </div>
+                 <div style={{ display: 'flex', gap: '8px' }}>
+                   {(onarimListesi || []).some(i => i.status === 'Completed' && !i.isArchived) && (
+                     <button 
+                       className="clear-btn-mini" 
+                       title="Tamamlananları Temizle"
+                       onClick={() => {
+                         const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+                         requestConfirm('Tamamlanan görevleri listeden kaldırmak istiyor musunuz? (Kayıtlar arşivlenecektir)', () => clearCompletedOnarimItems(userKey));
+                       }}
+                     >
+                       <RotateCcw size={14} /> Temizle
+                     </button>
+                   )}
+                   <button 
+                     className="add-btn-mini" 
+                     onClick={() => setEditingOnarim({ task: '' })}
+                   >
+                     <Plus size={14} />
+                   </button>
+                 </div>
                </div>
-               <div className="parts-list mt-12">
-                 {(ev.depo || []).length > 0 ? (
-                   (ev.depo || []).map(item => (
-                     <div key={item.id} className="part-item-row">
-                       <span>{item.task || item.name || 'İsimsiz Parça'}</span>
-                       <button className="delete-btn" onClick={() => deleteDepoItem(item.id)}><Trash2 size={14} /></button>
-                     </div>
-                   ))
+
+               <div className="onarim-list-v2 mt-12">
+                 {(onarimListesi || []).filter(item => !item.isArchived).length > 0 ? (
+                   (onarimListesi || []).filter(item => !item.isArchived).map(item => {
+                     const createdUser = users[item.createdBy] || { name: item.createdBy, emoji: '👤' };
+                     return (
+                       <div 
+                         key={item.id} 
+                         className={`task-card-v2 ${item.status === 'Completed' ? 'done' : ''}`}
+                         onClick={() => {
+                           const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+                           toggleOnarimItem(item.id, userKey);
+                         }}
+                       >
+                         <div className="tcv2-check">
+                           {item.status === 'Completed' ? <CheckCircle2 size={18} color="#22c55e" /> : <div className="circle-check-v2" />}
+                         </div>
+                         <div className="tcv2-info">
+                           <span className="tcv2-task">{item.task}</span>
+                           <div className="tcv2-meta">
+                             <small>
+                               {createdUser.emoji} {createdUser.name.split(' ')[0]} • {new Date(item.createdAt).toLocaleDateString('tr-TR')}
+                             </small>
+                             {item.status === 'Completed' && item.completedBy && (
+                               <small style={{ color: '#22c55e' }}>
+                                 • ✅ {users[item.completedBy]?.name.split(' ')[0]} tarafından tamamlandı
+                               </small>
+                             )}
+                           </div>
+                         </div>
+                       </div>
+                     );
+                   })
                  ) : (
-                   <p style={{ opacity: 0.5, fontSize: '11px', textAlign: 'center', padding: '10px' }}>Henüz parça kaydı yok. 🔩</p>
+                   <div className="empty-state-v2">
+                     <p>Şu an yapılacak bir bakım veya onarım bulunmuyor. ✨</p>
+                   </div>
                  )}
                </div>
-               {(ev.depo || []).length > 0 && (
-                 <button className="clear-depo-btn" onClick={() => clearDepo()}>Depoyu Temizle</button>
-               )}
             </div>
           </div>
         )}
@@ -531,7 +678,7 @@ export default function Ev() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h4 className="abo-sub-title">Düzenli Ödemeler (Aidat, BES vb.)</h4>
                 <button className="fatura-giris-btn" onClick={() => setEditingFatura({ name: '', amount: 0, linkedCardId: '', icon: '🔧' })}>
-                   <Wrench size={14} /> Harcama/Fatura Gir
+                   <Wrench size={12} /> Harcama/Fatura Gir
                 </button>
               </div>
               <div className="vize-style-grid">
@@ -641,7 +788,7 @@ export default function Ev() {
             <div className="vintage-safe-container glass">
                 <div className="vs-header">
                   <div className="vs-title">
-                    <Book size={20} color="#7c3aed" />
+                    <Book size={20} color="#10b981" />
                     <h3>Kişisel Şifreli Defter</h3>
                   </div>
                   {!ev.guvenlik?.safePassword ? (
@@ -711,7 +858,7 @@ export default function Ev() {
                         const y = e.clientY - rect.top;
                         
                         const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
-                        const userSeal = users[userKey]?.seal || { icon: 'E', color: '#7c3aed' };
+                        const userSeal = users[userKey]?.seal || { icon: 'E', color: '#10b981' };
                         
                         addPersonalSafeStamp({ x, y, ...userSeal });
                         setIsStamping(false);
@@ -868,11 +1015,13 @@ export default function Ev() {
             </div>
             <div className="form-row-v2">
               <div className="form-group-v2">
-                <label>Aylık Tutar</label>
+                <label>Tutar (TL)</label>
                 <input 
                   type="number" 
-                  value={editingAbo.amount} 
-                  onChange={(e) => setEditingAbo({...editingAbo, amount: Number(e.target.value)})}
+                  step="0.01"
+                  placeholder="0.00"
+                  value={editingAbo.amount || ''} 
+                  onChange={(e) => setEditingAbo({...editingAbo, amount: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                 />
               </div>
               <div className="form-group-v2">
@@ -880,8 +1029,9 @@ export default function Ev() {
                 <input 
                   type="number" 
                   min="1" max="31"
-                  value={editingAbo.date} 
-                  onChange={(e) => setEditingAbo({...editingAbo, date: Number(e.target.value)})}
+                  placeholder="1-31"
+                  value={editingAbo.date || ''} 
+                  onChange={(e) => setEditingAbo({...editingAbo, date: e.target.value === '' ? 0 : parseInt(e.target.value)})}
                 />
               </div>
             </div>
@@ -952,9 +1102,10 @@ export default function Ev() {
               <label>Tutar (TL)</label>
               <input 
                 type="number" 
+                step="0.01"
                 placeholder="0.00"
-                value={editingFatura.amount} 
-                onChange={(e) => setEditingFatura({...editingFatura, amount: Number(e.target.value)})}
+                value={editingFatura.amount || ''} 
+                onChange={(e) => setEditingFatura({...editingFatura, amount: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
               />
             </div>
             <div className="form-group-v2">
@@ -985,16 +1136,173 @@ export default function Ev() {
         )}
       </ActionSheet>
 
-      <ConfirmModal 
-        isOpen={showConfirm.open}
-        title="Emin misiniz?"
-        message={showConfirm.message}
-        onConfirm={() => {
-          showConfirm.onConfirm();
-          setShowConfirm({ ...showConfirm, open: false });
-        }}
-        onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
-      />
+      {/* ActionSheet for Periodic Maintenance Edit/Add */}
+      <ActionSheet
+        isOpen={!!editingPeriodic || !!editingPeriodicDetails}
+        onClose={() => { setEditingPeriodic(null); setEditingPeriodicDetails(null); }}
+        title={editingPeriodicDetails ? `🔧 ${editingPeriodicDetails.name}` : "Yeni Periyodik Bakım"}
+      >
+        {(editingPeriodic || editingPeriodicDetails) && (
+          <div className="edit-form-v2">
+            {editingPeriodicDetails && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                <button 
+                  className="delete-link-v2"
+                  onClick={() => {
+                    requestConfirm(`${editingPeriodicDetails.name} kaydını tamamen silmek istiyor musunuz?`, () => {
+                      deletePeriodicBakim(editingPeriodicDetails.id);
+                      setEditingPeriodicDetails(null);
+                    });
+                  }}
+                >
+                  <Trash2 size={14} /> Kaydı Sil
+                </button>
+              </div>
+            )}
+            <div className="form-group-v2">
+              <label>Bakım Adı</label>
+              <input 
+                type="text" 
+                placeholder="Örn: Su Arıtma Filtresi"
+                value={editingPeriodic?.name || editingPeriodicDetails?.name || ''}
+                onChange={(e) => {
+                  if(editingPeriodic) setEditingPeriodic({...editingPeriodic, name: e.target.value});
+                  else setEditingPeriodicDetails({...editingPeriodicDetails, name: e.target.value});
+                }}
+              />
+            </div>
+            
+            <div className="form-row-v2">
+              <div className="form-group-v2">
+                <label>Marka</label>
+                <input 
+                  type="text" 
+                  placeholder="Örn: Samsung"
+                  value={editingPeriodic?.brand || editingPeriodicDetails?.brand || ''}
+                  onChange={(e) => {
+                    if(editingPeriodic) setEditingPeriodic({...editingPeriodic, brand: e.target.value});
+                    else setEditingPeriodicDetails({...editingPeriodicDetails, brand: e.target.value});
+                  }}
+                />
+              </div>
+              <div className="form-group-v2">
+                <label>Model</label>
+                <input 
+                  type="text" 
+                  placeholder="Örn: WindFree 2024"
+                  value={editingPeriodic?.model || editingPeriodicDetails?.model || ''}
+                  onChange={(e) => {
+                    if(editingPeriodic) setEditingPeriodic({...editingPeriodic, model: e.target.value});
+                    else setEditingPeriodicDetails({...editingPeriodicDetails, model: e.target.value});
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group-v2">
+              <label>Yedek Parça Numarası / SKU</label>
+              <input 
+                type="text" 
+                placeholder="Örn: FILTER-V1-99"
+                value={editingPeriodic?.partNo || editingPeriodicDetails?.partNo || ''}
+                onChange={(e) => {
+                  if(editingPeriodic) setEditingPeriodic({...editingPeriodic, partNo: e.target.value});
+                  else setEditingPeriodicDetails({...editingPeriodicDetails, partNo: e.target.value});
+                }}
+              />
+            </div>
+
+            <div className="form-row-v2">
+              <div className="form-group-v2">
+                <label>Periyot (Gün)</label>
+                <input 
+                  type="number" 
+                  value={editingPeriodic?.intervalDays || editingPeriodicDetails?.intervalDays || 30}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if(editingPeriodic) setEditingPeriodic({...editingPeriodic, intervalDays: val});
+                    else setEditingPeriodicDetails({...editingPeriodicDetails, intervalDays: val});
+                  }}
+                />
+              </div>
+              <div className="form-group-v2">
+                <label>Kalan Gün</label>
+                <input 
+                  type="number" 
+                  value={(() => {
+                    const data = editingPeriodic || editingPeriodicDetails;
+                    if(!data.lastDate) return data.intervalDays || 30;
+                    const diff = Math.round((new Date() - new Date(data.lastDate)) / 864e5);
+                    return Math.max(0, (data.intervalDays || 30) - diff);
+                  })()}
+                  onChange={(e) => {
+                    const remain = Number(e.target.value);
+                    const data = editingPeriodic || editingPeriodicDetails;
+                    const interval = data.intervalDays || 30;
+                    const diff = interval - remain;
+                    const newLastDate = new Date(new Date() - diff * 864e5).toISOString().split('T')[0];
+                    
+                    if(editingPeriodic) setEditingPeriodic({...editingPeriodic, lastDate: newLastDate});
+                    else setEditingPeriodicDetails({...editingPeriodicDetails, lastDate: newLastDate});
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group-v2">
+              <label>Emoji</label>
+              <input 
+                type="text" 
+                value={editingPeriodic?.icon || editingPeriodicDetails?.icon || '🔧'}
+                onChange={(e) => {
+                  if(editingPeriodic) setEditingPeriodic({...editingPeriodic, icon: e.target.value});
+                  else setEditingPeriodicDetails({...editingPeriodicDetails, icon: e.target.value});
+                }}
+              />
+            </div>
+            <button className="save-btn-v2" onClick={() => {
+              const data = editingPeriodic || editingPeriodicDetails;
+              if(!data.name) return toast.error('Lütfen isim girin');
+              
+              if(editingPeriodicDetails) {
+                updatePeriodicBakim(data.id, data);
+              } else {
+                addPeriodicBakim(data);
+              }
+              setEditingPeriodic(null);
+              setEditingPeriodicDetails(null);
+            }}>Bilgileri Kaydet</button>
+          </div>
+        )}
+      </ActionSheet>
+
+      {/* ActionSheet for One-time Maintenance/Repair */}
+      <ActionSheet
+        isOpen={!!editingOnarim}
+        onClose={() => setEditingOnarim(null)}
+        title="Yeni Bakım & Onarım Görevi"
+      >
+        {editingOnarim && (
+          <div className="edit-form-v2">
+            <div className="form-group-v2">
+              <label>Yapılacak İşlem / Alınacak Parça</label>
+              <textarea 
+                className="form-group-v2 input"
+                style={{ padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--brd)', background: '#f8fafc', fontSize: '14px', fontWeight: '600', outline: 'none', minHeight: '80px', fontFamily: 'inherit' }}
+                placeholder="Örn: Mutfak musluğu contası değişecek"
+                value={editingOnarim.task}
+                onChange={(e) => setEditingOnarim({...editingOnarim, task: e.target.value})}
+              />
+            </div>
+            <button className="save-btn-v2" onClick={() => {
+              if(!editingOnarim.task) return toast.error('Lütfen görev açıklaması girin');
+              const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+              addOnarimItem(editingOnarim.task, userKey);
+              setEditingOnarim(null);
+            }}>Listeye Ekle</button>
+          </div>
+        )}
+      </ActionSheet>
 
       <ConfirmModal 
         isOpen={showConfirm.open}
@@ -1006,6 +1314,8 @@ export default function Ev() {
         }}
         onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
       />
+
+
     </AnimatedPage>
   );
 }

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Bell, Shield, Moon, LogOut, Trophy, ChevronRight, History, Download, X, Save, VolumeX, BellRing, Trash2 } from 'lucide-react';
+import { User, Bell, Shield, Moon, LogOut, Trophy, ChevronRight, History, Download, X, Save, VolumeX, BellRing, Trash2, Archive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
@@ -147,6 +147,14 @@ export default function Ayarlar() {
         </div>
       </div>
 
+      <div className="settings-group">
+        <h4>Arşiv & Geçmiş</h4>
+        <button className="history-btn glass" onClick={() => navigate('/kayitlar')}>
+          <Archive size={18} />
+          <span>Sistem Kayıtları</span>
+          <ChevronRight size={18} />
+        </button>
+      </div>
 
       <div className="settings-group">
         <h4>Sistem Geçmişi</h4>

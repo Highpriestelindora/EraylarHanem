@@ -148,6 +148,7 @@ export default function Sosyal() {
 
       {deletingHistoryId && (
         <ConfirmModal 
+          isOpen={true}
           title="Aktiviteyi Sil"
           message="Bu geçmiş aktiviteyi silmek istediğine emin misin? Bu işlem geri alınamaz."
           onConfirm={() => {
@@ -766,6 +767,7 @@ function HaftaTab({ sosyal, onAdd }) {
 
       {deletingId && (
         <ConfirmModal 
+          isOpen={true}
           title="Aktiviteyi Sil"
           message="Bu aktiviteyi silmek istediğine emin misin? Bu işlem geri alınamaz."
           onConfirm={() => {
@@ -1268,20 +1270,20 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
                       </div>
                       {a.yorum && <div className="gcc-comment-box"><p>"{a.yorum}"</p></div>}
                       
-                      <div className="gcc-actions" style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                      <div className="gcc-actions" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                         <button 
                           className="tl-btn edit" 
                           onClick={(e) => { e.stopPropagation(); onEdit(a); }}
-                          style={{ flex: 1, height: '36px', borderRadius: '12px', background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--social)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', fontWeight: '800' }}
+                          style={{ flex: 1, height: '30px', borderRadius: '10px', background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--social)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}
                         >
-                          <Activity size={14} /> Düzenle
+                          <Activity size={12} /> Düzenle
                         </button>
                         <button 
                           className="tl-btn delete" 
                           onClick={(e) => { e.stopPropagation(); onDelete(a.id); }}
-                          style={{ flex: 1, height: '36px', borderRadius: '12px', background: '#fff5f5', border: '1px solid #fed7d7', color: '#c53030', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', fontWeight: '800' }}
+                          style={{ flex: 1, height: '30px', borderRadius: '10px', background: '#fff5f5', border: '1px solid #fed7d7', color: '#c53030', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}
                         >
-                          <Trash2 size={14} /> Sil
+                          <Trash2 size={12} /> Sil
                         </button>
                       </div>
                     </div>

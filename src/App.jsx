@@ -25,6 +25,7 @@ import Ev from './pages/Ev';
 import Pet from './pages/Pet';
 import Aracim from './pages/Aracim';
 import Tatil from './pages/Tatil';
+import Kayitlar from './pages/Kayitlar';
 import Achievements from './pages/Achievements';
 import Guvenlik from './pages/Guvenlik';
 
@@ -60,6 +61,7 @@ function AnimatedRoutes() {
           <Route path="tatil" element={<Tatil />} />
           <Route path="basarilar" element={<Achievements />} />
           <Route path="guvenlik" element={<Guvenlik />} />
+          <Route path="kayitlar" element={<Kayitlar />} />
         </Route>
       </Routes>
     </AnimatePresence>

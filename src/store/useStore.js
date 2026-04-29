@@ -142,7 +142,7 @@ const DEFAULT_STATE = {
   },
   // ── Global System ──────────────────────────────────
   system: {
-    version: '2.29.1',
+    version: '2.31.0',
     globalScore: 85,
     onboardingComplete: false,
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
@@ -164,7 +164,7 @@ const DEFAULT_STATE = {
   },
   hedefler: [],        
   sosyal: {
-    aktiviteler: INITIAL_SOCIAL || [],   
+    aktiviteler: INITIAL_SOCIAL.aktiviteler || [],   
     rutinler: [
       { id: 'r1', aktivite: 'Spor Salonu', kisi: 'Görkem', vakit: 'sabah', gunler: ['Pzt', 'Çar', 'Cum'], saati: '08:00', ucret: 0 },
       { id: 'r2', aktivite: 'Haftalık Temizlik', kisi: 'İkisi', vakit: 'öğle', gunler: ['Cmt'], saati: '11:00', ucret: 0 }
@@ -212,22 +212,17 @@ const DEFAULT_STATE = {
       { id: 3, name: 'Doğalgaz', provider: 'İGDAŞ', amount: 1250, dueDate: '2026-04-15', status: 'Ödendi', autoPay: false, icon: '🔥' }
     ],
     bakimlar: [
-      { id: 'kombi', name: 'Kombi Bakımı', lastDate: '2025-11-01', intervalDays: 365, icon: '🔥' },
-      { id: 'klima', name: 'Klima Temizliği', lastDate: '2025-06-15', intervalDays: 180, icon: '❄️' },
-      { id: 'klima-filtre', name: 'Klima Filtresi', lastDate: new Date().toISOString().split('T')[0], intervalDays: 30, icon: '💨' },
-      { id: 'hava-temizleme', name: 'Hava Temizleme', lastDate: new Date().toISOString().split('T')[0], intervalDays: 90, icon: '🍃' },
-      { id: 'aritma', name: 'Su Arıtma Filtre', lastDate: '2026-01-10', intervalDays: 180, icon: '💧' }
+      { id: 'klima', name: 'Klima Temizliği', lastDate: '2025-06-15', intervalDays: 180, icon: '❄️', brand: '', model: '', partNo: '' },
+      { id: 'hava-filtre', name: 'Hava Filtresi Temizliği', lastDate: new Date().toISOString().split('T')[0], intervalDays: 90, icon: '🍃', brand: '', model: '', partNo: '' }
     ],
     demirbaslar: [
       { id: 1, name: 'Buzdolabı', brand: 'Samsung', warrantyDate: '2027-05-10', photo: null },
       { id: 2, name: 'Çamaşır Mak.', brand: 'LG', warrantyDate: '2026-12-15', photo: null }
     ],
-    tamirListesi: [
-      { id: 1, task: 'Mutfak Musluğu Sızıntı', priority: 'High', status: 'Pending' }
-    ],
-    bakimListesi: [
-      { id: 1, task: 'Bahçe Sulama Sistemi Kontrolü', priority: 'Normal', status: 'Pending' }
-    ],
+    tamirListesi: [], // Deprecated: use onarimListesi
+    bakimListesi: [],  // Deprecated: use onarimListesi
+    onarimListesi: [], // { id, task, status, createdBy, createdAt, completedBy, completedAt, clearedBy, clearedAt, isArchived }
+    onarimLog: [], // Detailed history logs if needed
     ustaRehberi: [
       { id: 1, name: 'Tesisatçı Ahmet Usta', phone: '0555 123 4567', category: 'Tesisat', rating: 5 }
     ],
@@ -278,6 +273,19 @@ const DEFAULT_STATE = {
         { id: 1, item: "Ağrı Kesici", buyDate: "2026-01-10", expDate: "2027-01-10" },
         { id: 2, item: "Sargı Bezi", buyDate: "2025-05-15", expDate: "2028-05-15" }
       ]
+    },
+    tracking: {
+      home: { lat: 36.8841, lng: 30.7056, radius: 100 },
+      work: { lat: 36.8969, lng: 30.7133, radius: 200 },
+      routine: {
+        workStart: '09:00',
+        workEnd: '18:00',
+        sleepStart: '23:30',
+        sleepEnd: '07:30'
+      },
+      weeklyHabits: {}, // { "Mon-09": { home: 2, work: 15, other: 1 }, ... }
+      lastCheck: null, 
+      logs: [] 
     },
     personalSafe: {
       locked: true,
@@ -2078,7 +2086,7 @@ const useStore = create(
       cancelSocialActivity: (id) => {
         const state = get();
         const aktList3 = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
-        const yeniAktiviteler = aktList3.filter(a => a.id !== id);
+        const yeniAktiviteler = aktList3.filter(a => String(a.id) !== String(id));
         set({ sosyal: { ...state.sosyal, aktiviteler: yeniAktiviteler } });
         get().saveToSupabase();
       },
@@ -2110,7 +2118,15 @@ const useStore = create(
       deleteSocialPoolItem: (id) => {
         const state = get();
         const currentHavuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
-        set({ sosyal: { ...state.sosyal, havuz: currentHavuz.filter(i => i.id !== id) } });
+        const currentPoolItems = Array.isArray(state.sosyal.poolItems) ? state.sosyal.poolItems : [];
+        
+        set({ 
+          sosyal: { 
+            ...state.sosyal, 
+            havuz: currentHavuz.filter(i => String(i.id) !== String(id)),
+            poolItems: currentPoolItems.filter(i => String(i.id) !== String(id))
+          } 
+        });
         get().saveToSupabase();
       },
 
@@ -2133,7 +2149,7 @@ const useStore = create(
       deleteSocialRoutinePackage: (id) => {
         const state = get();
         const currentPkgs = Array.isArray(state.sosyal.routinePackages) ? state.sosyal.routinePackages : [];
-        set({ sosyal: { ...state.sosyal, routinePackages: currentPkgs.filter(p => p.id !== id) } });
+        set({ sosyal: { ...state.sosyal, routinePackages: currentPkgs.filter(p => String(p.id) !== String(id)) } });
         get().saveToSupabase();
       },
 
@@ -2215,12 +2231,6 @@ const useStore = create(
         toast.success(`${fatura.name} faturası ödendi! 💸`);
       },
 
-      addRepairItem: (item) => {
-        const state = get();
-        const newItem = { id: Date.now(), status: 'Pending', ...item };
-        set({ ev: { ...state.ev, tamirListesi: [newItem, ...state.ev.tamirListesi] } });
-        get().saveToSupabase();
-      },
 
       addTasinmaz: (item) => {
         const state = get();
@@ -2258,13 +2268,73 @@ const useStore = create(
         toast.success('Taşınmaz kaydı silindi.');
       },
 
-      addBakimItem: (item) => {
-        const state = get();
-        const newItem = { id: Date.now(), status: 'Pending', ...item };
-        set({ ev: { ...state.ev, bakimListesi: [newItem, ...(state.ev.bakimListesi || [])] } });
+      addOnarimItem: (task, userKey) => {
+        const currentEv = get().ev || {};
+        const newItem = {
+          id: Date.now().toString(),
+          task,
+          status: 'Pending',
+          createdBy: userKey || 'gorkem',
+          createdAt: new Date().toISOString(),
+          completedBy: null,
+          completedAt: null,
+          clearedBy: null,
+          clearedAt: null,
+          isArchived: false
+        };
+        
+        const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
+        const newList = [newItem, ...currentList];
+        
+        set({ ev: { ...currentEv, onarimListesi: newList } });
+        get().saveToSupabase();
+        toast.success(`"${task}" listeye eklendi! 📋`);
+      },
+
+      toggleOnarimItem: (id, userKey) => {
+        const currentEv = get().ev || {};
+        const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
+        
+        const newList = currentList.map(item => {
+          if (item.id === id) {
+            const isCompleting = item.status !== 'Completed';
+            return {
+              ...item,
+              status: isCompleting ? 'Completed' : 'Pending',
+              completedBy: isCompleting ? userKey : null,
+              completedAt: isCompleting ? new Date().toISOString() : null
+            };
+          }
+          return item;
+        });
+        
+        set({ ev: { ...currentEv, onarimListesi: newList } });
         get().saveToSupabase();
       },
 
+      clearCompletedOnarimItems: (userKey) => {
+        const state = get();
+        const currentEv = state.ev || {};
+        const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
+
+        const newList = currentList.map(item => {
+          if (item.status === 'Completed' && !item.isArchived) {
+            return {
+              ...item,
+              isArchived: true,
+              clearedBy: userKey,
+              clearedAt: new Date().toISOString()
+            };
+          }
+          return item;
+        });
+        
+        set({ ev: { ...currentEv, onarimListesi: newList } });
+        get().saveToSupabase();
+        toast.success('Tamamlanan görevler arşivlendi! ✨');
+      },
+
+      // Legacy support for toggleHomeTask if needed elsewhere
       toggleHomeTask: (listType, id) => {
         const state = get();
         const list = state.ev[listType].map(item => 
@@ -2288,26 +2358,156 @@ const useStore = create(
       },
 
       addPeriodicBakim: (item) => {
-        const state = get();
-        const newItem = { id: Date.now().toString(), lastDate: new Date().toISOString().split('T')[0], ...item };
-        set({ ev: { ...state.ev, bakimlar: [...state.ev.bakimlar, newItem] } });
+        const currentEv = get().ev || {};
+        const currentBakimlar = Array.isArray(currentEv.bakimlar) ? currentEv.bakimlar : [];
+        const newItem = { 
+          id: Date.now().toString(), 
+          lastDate: new Date().toISOString().split('T')[0], 
+          ...item 
+        };
+        
+        set({ ev: { ...currentEv, bakimlar: [...currentBakimlar, newItem] } });
         get().saveToSupabase();
+        toast.success('Yeni periyodik bakım eklendi! 🔄');
+      },
+
+      updatePeriodicBakim: (id, updates) => {
+        const currentEv = get().ev || {};
+        const currentBakimlar = Array.isArray(currentEv.bakimlar) ? currentEv.bakimlar : [];
+        
+        const updated = currentBakimlar.map(b => 
+          b.id === id ? { ...b, ...updates } : b
+        );
+        
+        set({ ev: { ...currentEv, bakimlar: updated } });
+        get().saveToSupabase();
+        toast.success('Bakım bilgileri güncellendi! 💾');
       },
 
       resetPeriodicBakim: (id) => {
-        const state = get();
-        const updated = state.ev.bakimlar.map(b => 
+        const currentEv = get().ev || {};
+        const currentBakimlar = Array.isArray(currentEv.bakimlar) ? currentEv.bakimlar : [];
+        
+        const updated = currentBakimlar.map(b => 
           b.id === id ? { ...b, lastDate: new Date().toISOString().split('T')[0] } : b
         );
-        set({ ev: { ...state.ev, bakimlar: updated } });
+        
+        set({ ev: { ...currentEv, bakimlar: updated } });
         get().saveToSupabase();
         toast.success('Bakım zamanlayıcısı sıfırlandı! 🕒');
       },
 
       deletePeriodicBakim: (id) => {
+        const currentEv = get().ev || {};
+        const currentBakimlar = Array.isArray(currentEv.bakimlar) ? currentEv.bakimlar : [];
+        const updated = currentBakimlar.filter(b => b.id !== id);
+        
+        set({ ev: { ...currentEv, bakimlar: updated } });
+        get().saveToSupabase();
+        toast.success('Bakım kaydı silindi.');
+      },
+
+      deleteOnarimItem: (id) => {
+        const currentEv = get().ev || {};
+        const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
+        const updated = currentList.filter(item => item.id !== id);
+        set({ ev: { ...currentEv, onarimListesi: updated } });
+        get().saveToSupabase();
+        toast.success('Onarım kaydı arşivden silindi.');
+      },
+
+      deleteAlisverisItem: (id, listKey) => {
+        const currentMutfak = get().mutfak || {};
+        const currentList = Array.isArray(currentMutfak.alisveris?.[listKey]) ? currentMutfak.alisveris[listKey] : [];
+        const updated = currentList.filter(item => item.id !== id);
+        set({ mutfak: { ...currentMutfak, alisveris: { ...currentMutfak.alisveris, [listKey]: updated } } });
+        get().saveToSupabase();
+        toast.success('Alışveriş kaydı silindi.');
+      },
+
+      deleteVaccineHistory: (petName, vaccineName, hDate) => {
+        const currentPet = get().pet || {};
+        const currentVaccines = Array.isArray(currentPet.vaccines?.[petName]) ? currentPet.vaccines[petName] : [];
+        
+        const updated = currentVaccines.map(v => {
+          if (v.n === vaccineName) {
+            return { ...v, h: (v.h || []).filter(date => date !== hDate) };
+          }
+          return v;
+        });
+
+        set({ pet: { ...currentPet, vaccines: { ...currentPet.vaccines, [petName]: updated } } });
+        get().saveToSupabase();
+        toast.success('Aşı geçmişi silindi.');
+      },
+
+      // ── Yaşam & Tracking Actions ────────────────────────
+      updateLocationSettings: (type, coords) => {
+        const currentEv = get().ev || {};
+        const currentTracking = currentEv.tracking || {};
+        set({ ev: { ...currentEv, tracking: { ...currentTracking, [type]: { ...currentTracking[type], ...coords } } } });
+        get().saveToSupabase();
+        toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi.`);
+      },
+
+      logTimeSlice: (type, minutes = 15) => {
         const state = get();
-        const updated = state.ev.bakimlar.filter(b => b.id !== id);
-        set({ ev: { ...state.ev, bakimlar: updated } });
+        const currentEv = state.ev || {};
+        const tracking = currentEv.tracking || { logs: [] };
+        const now = Date.now();
+        const today = new Date().toISOString().split('T')[0];
+
+        let updatedLogs = [...(tracking.logs || [])];
+
+        // Smart Gap Filling: Eğer son kayıt ile şimdiki kayıt aynı yerse ve arada boşluk varsa doldur
+        if (tracking.lastCheck && tracking.lastCheck.type === type) {
+          const gapMs = now - tracking.lastCheck.timestamp;
+          const gapMinutes = Math.floor(gapMs / (60 * 1000));
+          
+          if (gapMinutes > 15 && gapMinutes < 720) { // En fazla 12 saatlik boşluğu doldur
+            const sliceCount = Math.floor(gapMinutes / 15);
+            for (let i = 1; i <= sliceCount; i++) {
+              updatedLogs.unshift({ 
+                date: new Date(tracking.lastCheck.timestamp + (i * 15 * 60 * 1000)).toISOString().split('T')[0],
+                type, 
+                durationMinutes: 15, 
+                timestamp: tracking.lastCheck.timestamp + (i * 15 * 60 * 1000)
+              });
+            }
+          }
+        }
+
+        const newLog = { date: today, type, durationMinutes: minutes, timestamp: now };
+        updatedLogs = [newLog, ...updatedLogs].slice(0, 2000);
+        
+        // Haftalık alışkanlık haritasını güncelle (Öğrenme)
+        const dateObj = new Date(now);
+        const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dateObj.getDay()];
+        const hour = dateObj.getHours().toString().padStart(2, '0');
+        const habitKey = `${day}-${hour}`;
+        
+        const currentHabits = tracking.weeklyHabits || {};
+        const slot = currentHabits[habitKey] || { home: 0, work: 0, other: 0 };
+        slot[type] = (slot[type] || 0) + 1;
+        
+        set({ 
+          ev: { 
+            ...currentEv, 
+            tracking: { 
+              ...tracking, 
+              logs: updatedLogs, 
+              lastCheck: { type, timestamp: now },
+              weeklyHabits: { ...currentHabits, [habitKey]: slot }
+            } 
+          } 
+        });
+        get().saveToSupabase();
+      },
+
+      updateTrackingRoutine: (updates) => {
+        const currentEv = get().ev || {};
+        const tracking = currentEv.tracking || {};
+        set({ ev: { ...currentEv, tracking: { ...tracking, routine: { ...(tracking.routine || {}), ...updates } } } });
         get().saveToSupabase();
       },
 

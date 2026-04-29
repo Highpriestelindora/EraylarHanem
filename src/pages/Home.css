@@ -1,8 +1,11 @@
 .home-premium-container {
   min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
   background: linear-gradient(180deg, #F5F3FF 0%, #FFFFFF 100%) !important;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 
@@ -29,6 +32,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .phb-avatar {
@@ -107,12 +112,20 @@
   font-family: 'Fraunces', serif;
 }
 
+.phb-text {
+  min-width: 0;
+  flex: 1;
+}
+
 .phb-text p {
   color: rgba(255, 255, 255, 0.9);
   margin: 4px 0 0;
   font-size: 13px;
-  max-width: 220px;
+  max-width: 100%;
   line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .phb-actions {
@@ -196,6 +209,10 @@
   color: #6d28d9;
   font-weight: 800;
   font-size: 15px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  flex: 1;
 }
 
 /* 2-Column Module Grid - Matching Screenshot */
@@ -206,7 +223,23 @@
   padding: 25px 20px;
 }
 
-@media (max-width: 360px) {
+@media (max-width: 380px) {
+  .premium-module-grid {
+    padding: 20px 15px;
+    gap: 12px;
+  }
+  
+  .ai-section-premium {
+    padding: 15px 15px 0;
+  }
+
+  .premium-header-banner {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+}
+
+@media (max-width: 340px) {
   .premium-module-grid {
     grid-template-columns: 1fr;
   }
@@ -230,6 +263,7 @@
   cursor: pointer;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+  min-width: 0; /* Critical for grid stability */
 }
 
 .premium-module-card:active {
@@ -271,6 +305,8 @@
 
 .home-scroll-area {
   flex: 1;
+  width: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   background: #FDFBFF;

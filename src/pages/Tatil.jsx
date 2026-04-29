@@ -246,15 +246,8 @@ export default function Tatil() {
     let currentTrips = [...(tatil.trips || [])];
     let changed = false;
 
-    // 1. Ensure Viyana exists (as a template/legacy requirement)
-    const hasVienna = currentTrips.some(t => t.id === 't_vienna' || t.title.includes('Viyana'));
-    if (!hasVienna) {
-      const viennaTemplate = INITIAL_TRIPS.find(t => t.id === 't_vienna');
-      if (viennaTemplate) {
-        currentTrips.push({ ...viennaTemplate, travelers: 'ikimiz' });
-        changed = true;
-      }
-    }
+    // 1. Ensure critical data structures exist if needed, but DO NOT re-add deleted templates like Viyana
+    // removed legacy enforcement code that was re-adding deleted trips
     
     // 2. Data Integrity Check
     const fixedTrips = currentTrips.map(t => {
@@ -528,11 +521,7 @@ function AnilarTab({ tatil, onSelectTrip }) {
       return t;
     });
     
-    INITIAL_TRIPS.forEach(it => {
-      if (!merged.some(t => t.id === it.id || (t.title === it.title && t.startDate === it.startDate))) {
-        merged.push(it);
-      }
-    });
+    return merged;
     return merged;
   }, [tatil.trips]);
 
