@@ -28,6 +28,8 @@ import Tatil from './pages/Tatil';
 import Kayitlar from './pages/Kayitlar';
 import Achievements from './pages/Achievements';
 import Guvenlik from './pages/Guvenlik';
+import PersonalityTest from './pages/PersonalityTest';
+import PersonalityHub from './pages/PersonalityHub';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -62,6 +64,8 @@ function AnimatedRoutes() {
           <Route path="basarilar" element={<Achievements />} />
           <Route path="guvenlik" element={<Guvenlik />} />
           <Route path="kayitlar" element={<Kayitlar />} />
+          <Route path="yekta-test" element={<PersonalityTest />} />
+          <Route path="personality-hub" element={<PersonalityHub />} />
         </Route>
       </Routes>
     </AnimatePresence>

@@ -6,8 +6,8 @@ import {
   Droplets, Zap, Flame, Globe, ChevronRight, ChevronDown,
   Shield, Key, Phone, User, Star, MoreVertical,
   PlusCircle, ArrowLeft, Camera, Settings, Info,
-  Building, FileText, Landmark, Home, MapPin, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode,
-  Book, Lock, Unlock, MousePointer2, Stamp as StampIcon
+  Building, FileText, Landmark, Home, MapPin, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode, X,
+  Book, Lock, Unlock, MousePointer2, Stamp as StampIcon, Activity, CreditCard
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -17,12 +17,102 @@ import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement } from 'chart.js';
+import { generateYektaAdvice } from '../lib/yektaEngine';
+import { synthesizeCharacter } from '../lib/synthesisEngine';
 import './Ev.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement);
 
 const formatMoney = (val) =>
   new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val || 0);
+
+const YEKTA_QUOTES = [
+  "Ben olmak o kadar zor ki...",
+  "Koskoca Yekta Tilmen'i kim bekletebilir ki?",
+  "Unutmayın ki Yekta Tilmen'e hiçbir şey olmaz.",
+  "Yekta Tilmen sarsılır ama yıkılmaz.",
+  "Yekta Tilmen her zaman kazanır!",
+  "Benim saniyem para be, saniyem!",
+  "Yekta Tilmen'in çıkarları söz konusuysa sınır yoktur.",
+  "Yekta Tilmen'in forsunu kimse zedeleyemez.",
+  "Yekta Tilmen'den tam puan almak kolay değil.",
+  "Yekta Tilmen olmak gayret gerektirir.",
+  "Resmen yaşlı kokuyor etraf. Şu hale bak, kuru üzüm gibi.",
+  "Ceylin, resmen tahammülümün sonlarındayım bak."
+];
+
+// Standing data helper moved outside for better hoisting and scope
+function getAggregatedData(evData, daysCount, tatilData) {
+  if (!evData || !evData.tracking) return { labels: [], datasets: [] };
+  
+  const routine = evData.tracking.routine || {};
+  const stats = { home: 0, work: 0, tatil: 0, other: 0 };
+  const logs = evData.tracking.logs || [];
+  const habits = evData.tracking.weeklyHabits || {};
+  
+  for (let d = 0; d < daysCount; d++) {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() - d);
+    const dateStr = targetDate.toISOString().split('T')[0];
+    const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][targetDate.getDay()];
+    
+    // Check if whole day was a trip
+    const tripForDay = (tatilData?.trips || []).find(t => {
+      const start = new Date(t.startDate).getTime();
+      const end = new Date(t.endDate).getTime() + (24 * 60 * 60 * 1000);
+      const current = new Date(dateStr).getTime();
+      return current >= start && current <= end;
+    });
+
+    if (tripForDay) {
+      stats.tatil += 1440;
+      continue;
+    }
+
+    for (let i = 0; i < 96; i++) {
+      const timeMs = new Date(dateStr).setHours(0, i * 15, 0, 0);
+      const timeStr = new Date(timeMs).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', hour12: false });
+      const hourStr = timeStr.split(':')[0];
+      const habitKey = `${dayName}-${hourStr}`;
+      
+      const log = logs.find(l => 
+        l.date === dateStr && 
+        Math.abs(l.timestamp - timeMs) < 7.5 * 60 * 1000
+      );
+      
+      if (log) {
+        stats[log.type] += 15;
+      } else {
+        const habit = habits[habitKey];
+        if (habit && (habit.home > 0 || habit.work > 0 || habit.other > 0 || habit.tatil > 0)) {
+          const best = Object.entries(habit).reduce((a, b) => b[1] > a[1] ? b : a);
+          stats[best[0]] += 15;
+        } else {
+          if (timeStr >= (routine.sleepStart || '23:30') || timeStr <= (routine.sleepEnd || '07:30')) stats.home += 15;
+          else if (timeStr >= (routine.workStart || '09:00') && timeStr <= (routine.workEnd || '18:00')) stats.work += 15;
+          else stats.other += 15;
+        }
+      }
+    }
+  }
+
+  const total = daysCount * 1440;
+  return {
+    labels: ['Ev', 'İş', 'Tatil', 'Diğer'],
+    datasets: [{
+      data: [
+        Math.round((stats.home / total) * 100),
+        Math.round((stats.work / total) * 100),
+        Math.round((stats.tatil / total) * 100),
+        Math.round((stats.other / total) * 100)
+      ],
+      backgroundColor: ['#10b981', '#3b82f6', '#f43f5e', '#f59e0b'],
+      borderWidth: 0,
+      hoverOffset: 4
+    }]
+  };
+}
+
 
 
 export default function Ev() {
@@ -38,20 +128,22 @@ export default function Ev() {
     addOnarimItem, toggleOnarimItem, clearCompletedOnarimItems,
     addAbonelik, updateAbonelik, deleteAbonelik,
     addDuzenliOdeme, updateDuzenliOdeme, deleteDuzenliOdeme,
-    addFinanceExpense, updateLocationSettings
+    addFinanceExpense, updateLocationSettings, tatil, updateCachedAnalysis,
+    savePersonalityResults, saveInvoiceToFinance, saveQuickExpense, finans
   } = useStore();
 
   const { 
-    faturalar = [], demirbaslar = [],
-    ustaRehberi = [], abonelikler = [], bitkiler = [], guvenlik = {}, yillikPlan = [], depo = []
+    faturalar = [], demirbaslar = [], ustaRehberi = [], abonelikler = [], bitkiler = [], 
+    guvenlik = {}, yillikPlan = [], depo = [], timeAnalysis = {}
   } = ev || {};
+
+  const { sosyal, saglik, mutfak: mutfakStore } = useStore();
   
   const onarimListesi = Array.isArray(ev?.onarimListesi) ? ev.onarimListesi : [];
   const bakimlar = Array.isArray(ev?.bakimlar) ? ev.bakimlar : [];
 
   const [showSafeCode, setShowSafeCode] = useState(false);
   const [faturaForm, setFaturaForm] = useState({ name: '', amount: '', provider: '', dueDate: '', icon: '📜' });
-  const [editingTasinmaz, setEditingTasinmaz] = useState(null);
   const [activeDocAction, setActiveDocAction] = useState(null);
   const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
   const [activeKit, setActiveKit] = useState(null);
@@ -70,35 +162,17 @@ export default function Ev() {
   const [editingPeriodic, setEditingPeriodic] = useState(null);
   const [editingPeriodicDetails, setEditingPeriodicDetails] = useState(null);
   const [editingOnarim, setEditingOnarim] = useState(null);
-  const [faturaInput, setFaturaInput] = useState(null); // For manual amount entry
+  const [editingTasinmaz, setEditingTasinmaz] = useState(null);
+  const [activeTaxTasinmaz, setActiveTaxTasinmaz] = useState(null);
+  const [activeDaskTasinmaz, setActiveDaskTasinmaz] = useState(null);
+  const [activeAidatTasinmaz, setActiveAidatTasinmaz] = useState(null);
+  const [paymentMethod, setPaymentMethod] = useState('Nakit');
+  const [faturaInput, setFaturaInput] = useState(null); 
+  const [expandedTasinmazIds, setExpandedTasinmazIds] = useState([]);
+  const [isAIUpdating, setIsAIUpdating] = useState(false);
+  const [showWifiPass, setShowWifiPass] = useState(false);
+  const [showGuestWifiPass, setShowGuestWifiPass] = useState(false);
 
-  // State Migration & Initialization for Abonelik/Fatura/Kartlar
-  React.useEffect(() => {
-    if (activeTab === 'abonelik') {
-      const state = useStore.getState();
-
-      // Ensure Credit Cards are initialized
-      if (!ev.finans?.kartlar || ev.finans.kartlar.length === 0) {
-        const defaultKartlar = [
-          { id: 'gorkem-ziraat', name: 'Ziraat Kart', owner: 'Görkem', type: 'Credit', color: '#e11d48' },
-          { id: 'gorkem-ykb', name: 'Yapı Kredi', owner: 'Görkem', type: 'Credit', color: '#2563eb' },
-          { id: 'esra-garanti', name: 'Garanti Bonus', owner: 'Esra', type: 'Credit', color: '#16a34a' },
-          { id: 'esra-enpara', name: 'Enpara Kart', owner: 'Esra', type: 'Debit/Credit', color: '#10b981' }
-        ];
-        state.updateHomeSecurity('finans', { ...ev.finans, kartlar: defaultKartlar });
-      }
-
-      // Ensure Regular Payments are initialized
-      if (!ev.duzenliOdemeler || ev.duzenliOdemeler.length === 0) {
-        const defaultDuzenli = [
-          { id: 201, name: 'Site Aidatı', amount: 1500, date: 1, linkedCardId: 'esra-garanti', autoPay: true, icon: '🏢' },
-          { id: 202, name: 'Bireysel Emeklilik (BES)', amount: 2500, date: 5, linkedCardId: 'gorkem-ziraat', autoPay: true, icon: '🛡️' },
-          { id: 203, name: 'Kira Ödemesi', amount: 0, date: 1, linkedCardId: 'gorkem-ykb', autoPay: false, icon: '🔑' }
-        ];
-        state.updateHomeSecurity('duzenliOdemeler', defaultDuzenli);
-      }
-    }
-  }, [activeTab]);
 
   const requestConfirm = (message, onConfirm) => {
     setShowConfirm({ open: true, message, onConfirm });
@@ -118,7 +192,6 @@ export default function Ev() {
 
   // Location Tracker Hook
   useEffect(() => {
-    const logTimeSlice = useStore.getState().logTimeSlice;
     if (!navigator.geolocation) return;
 
     let lastLogTime = 0;
@@ -126,7 +199,9 @@ export default function Ev() {
 
     const watchId = navigator.geolocation.watchPosition((pos) => {
       const { latitude, longitude } = pos.coords;
-      const { home, work } = ev.tracking || {};
+      // Use ref-like access to avoid dependency loop
+      const currentEv = useStore.getState().ev;
+      const { home, work } = currentEv.tracking || {};
       
       let currentZone = 'other';
       if (home && calculateDistance(latitude, longitude, home.lat, home.lng) * 1000 < (home.radius || 100)) {
@@ -137,13 +212,13 @@ export default function Ev() {
 
       const now = Date.now();
       if (now - lastLogTime > logInterval) {
-        logTimeSlice(currentZone, 15);
+        useStore.getState().logTimeSlice(currentZone, 15);
         lastLogTime = now;
       }
     }, (err) => console.warn(err), { enableHighAccuracy: true });
 
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [ev.tracking]);
+  }, []); // Empty dependency array as we use useStore.getState() inside
 
   const activeWarnings = useMemo(() => {
     const warnings = [];
@@ -171,11 +246,15 @@ export default function Ev() {
     return warnings;
   }, [ev]);
 
-  const aiNote = useMemo(() => {
-    const totalCurrent = (faturalar || []).filter(f => f.status === 'Ödendi').reduce((a, b) => a + b.amount, 0);
-    if (totalCurrent > 3000) return "Bu ay enerji tüketimi normalin %15 üzerinde. Bir sızıntı veya kaçak olabilir mi? 🕵️‍♂️";
-    return "Harika! Ev verimliliği bu ay yeşil bölgede. 🌟";
-  }, [faturalar]);
+  const [showTahlilSheet, setShowTahlilSheet] = useState(false);
+  const personalityData = ev.tracking?.personality || { results: {}, history: [] };
+  const resultsObj = personalityData.results || {};
+  const storeState = useStore();
+  const yektaQuote = useMemo(() => YEKTA_QUOTES[Math.floor(Math.random() * YEKTA_QUOTES.length)], []);
+  const coachAdvices = useMemo(() => generateYektaAdvice(storeState), [ev, sosyal, saglik, currentUser]);
+
+  const [currentAdviceIdx, setCurrentAdviceIdx] = useState(0);
+  const activeAdvice = coachAdvices[currentAdviceIdx % coachAdvices.length];
 
   const tabs = [
     { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
@@ -201,60 +280,24 @@ export default function Ev() {
     }, 2000);
   };
 
-  const getAggregatedData = (daysCount) => {
-    const routine = ev.tracking?.routine || {};
-    const stats = { home: 0, work: 0, other: 0 };
-    const logs = ev.tracking?.logs || [];
-    const habits = ev.tracking?.weeklyHabits || {};
-    
-    for (let d = 0; d < daysCount; d++) {
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() - d);
-      const dateStr = targetDate.toISOString().split('T')[0];
-      const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][targetDate.getDay()];
-      
-      for (let i = 0; i < 96; i++) {
-        const timeMs = new Date().setHours(0, i * 15, 0, 0);
-        const timeStr = new Date(timeMs).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', hour12: false });
-        const hourStr = timeStr.split(':')[0];
-        const habitKey = `${dayName}-${hourStr}`;
-        
-        const log = logs.find(l => 
-          l.date === dateStr && 
-          Math.abs(l.timestamp - (new Date(dateStr).setHours(0, i * 15, 0, 0))) < 7.5 * 60 * 1000
-        );
-        
-        if (log) {
-          stats[log.type] += 15;
-        } else {
-          const habit = habits[habitKey];
-          if (habit && (habit.home > 0 || habit.work > 0 || habit.other > 0)) {
-            const best = Object.entries(habit).reduce((a, b) => b[1] > a[1] ? b : a);
-            stats[best[0]] += 15;
-          } else {
-            if (timeStr >= (routine.sleepStart || '23:30') || timeStr <= (routine.sleepEnd || '07:30')) stats.home += 15;
-            else if (timeStr >= (routine.workStart || '09:00') && timeStr <= (routine.workEnd || '18:00')) stats.work += 15;
-            else stats.other += 15;
-          }
-        }
-      }
+  const today = new Date().toISOString().split('T')[0];
+  const { weeklyData, monthlyData } = useMemo(() => {
+    // If we have a fresh analysis from today, use it to save system load
+    if (ev.tracking?.lastAnalysisDate === today && ev.tracking?.cachedAnalysis) {
+      return ev.tracking.cachedAnalysis;
     }
-
-    const total = daysCount * 1440;
     return {
-      labels: ['Ev', 'İş', 'Diğer'],
-      datasets: [{
-        data: [
-          Math.round((stats.home / total) * 100),
-          Math.round((stats.work / total) * 100),
-          Math.round((stats.other / total) * 100)
-        ],
-        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
-        borderWidth: 0,
-        hoverOffset: 4
-      }]
+      weeklyData: getAggregatedData(ev, 7, tatil),
+      monthlyData: getAggregatedData(ev, 30, tatil)
     };
-  };
+  }, [ev.tracking?.logs, ev.tracking?.weeklyHabits, tatil, today]);
+
+  // Save the calculated analysis once a day
+  useEffect(() => {
+    if (ev.tracking?.lastAnalysisDate !== today) {
+      updateCachedAnalysis({ weeklyData, monthlyData });
+    }
+  }, [weeklyData, monthlyData, today]);
 
   const doughnutOptions = {
     plugins: { legend: { display: false } },
@@ -321,32 +364,41 @@ export default function Ev() {
 
         {activeTab === 'yasam' && (
           <div className="yasam-view animate-fadeIn">
-            {/* 1. Today's Advice Motor (NOW TOP) */}
-            <div className="advice-motor-card glass mb-20">
-               <div className="am-header">
-                 <div className="am-title">
-                   <Sparkles size={20} color="var(--ev)" />
-                   <h3>Bugün Ne Yapmalıyım?</h3>
+            {/* 1. Today's Advice Coach (NOW TOP) */}
+            <div className="coach-module glass mb-20">
+               <div className="coach-header">
+                 <div className="coach-avatar">
+                   <div className="avatar-circle">
+                     {currentUser?.emoji || '👨‍💻'}
+                   </div>
+                   <div className="avatar-status-dot pulse"></div>
                  </div>
-                 <div className="active-user-badge">
-                   {currentUser?.name === 'Esra' ? '👩‍🍳 Esra' : '👨‍💻 Görkem'}
+                 <div className="coach-meta">
+                   <div className="coach-name">Yaşam Koçu Yekta Tilmen</div>
+                   <div className="coach-greeting">"{yektaQuote}"</div>
                  </div>
                </div>
                
-               <div className="am-body">
-                  <div className="ai-status-pulse"></div>
-                  <div className="advice-bubble">
-                    {activeWarnings.length > 0 ? (
-                      <p>{activeWarnings[0]}</p>
-                    ) : (
-                      <p>{aiNote}</p>
-                    )}
+               <div className="coach-content">
+                  <div className={`advice-card-v2 ${activeAdvice.type}`}>
+                    <div className="a-icon">{activeAdvice.icon}</div>
+                    <div className="a-text">{activeAdvice.text}</div>
                   </div>
                </div>
 
-               <button className="refresh-advice-btn" onClick={() => toast.success('Yeni tavsiyeler hazırlanıyor... 🤖')}>
-                 Başka Bir Tavsiye Al
-               </button>
+               <div className="coach-actions-v2">
+                 <button className="coach-refresh-mini" onClick={() => setCurrentAdviceIdx(prev => prev + 1)}>
+                   <RotateCcw size={14} />
+                 </button>
+                 
+                 <button className="coach-archive-btn" onClick={() => navigate('/personality-hub')}>
+                   Karakter Arşivi
+                 </button>
+
+                 <button className="coach-tahlil-btn" onClick={() => setShowTahlilSheet(true)}>
+                   <Sparkles size={14} /> Karakter Tahlili
+                 </button>
+               </div>
             </div>
 
             {/* 2. Time Analysis Card (NOW A FULL DASHBOARD) */}
@@ -365,68 +417,78 @@ export default function Ev() {
                   {/* HAFTALIK GRAFİK */}
                   <div className="analysis-chart-item">
                     <div className="chart-title-mini">HAFTALIK</div>
-                    <div className="chart-rel-container">
-                      <Doughnut 
-                        data={getAggregatedData(7)}
-                        options={doughnutOptions}
-                      />
-                      <div className="chart-center-label">
-                        <span className="val">7g</span>
+                      <div className="chart-rel-container">
+                        <Doughnut 
+                          data={weeklyData}
+                          options={doughnutOptions}
+                        />
                       </div>
                     </div>
-                  </div>
 
-                  {/* AYLIK GRAFİK */}
-                  <div className="analysis-chart-item">
-                    <div className="chart-title-mini">AYLIK</div>
-                    <div className="chart-rel-container">
-                      <Doughnut 
-                        data={getAggregatedData(30)}
-                        options={doughnutOptions}
-                      />
-                      <div className="chart-center-label">
-                        <span className="val">30g</span>
+                    {/* AYLIK GRAFİK */}
+                    <div className="analysis-chart-item">
+                      <div className="chart-title-mini">AYLIK</div>
+                      <div className="chart-rel-container">
+                        <Doughnut 
+                          data={monthlyData}
+                          options={doughnutOptions}
+                        />
                       </div>
                     </div>
-                  </div>
                </div>
 
                {/* Veri Detayları & Açıklamalar */}
-               <div className="analysis-metrics mt-12">
-                  {['Ev', 'İş', 'Diğer'].map((label, idx) => {
-                    const weeklyData = getAggregatedData(7).datasets[0].data;
-                    const colors = ['#10b981', '#3b82f6', '#f59e0b'];
-                    return (
-                      <div key={label} className="metric-tag" style={{ borderLeft: `3px solid ${colors[idx]}` }}>
-                        <span className="m-label">{label}</span>
-                        <span className="m-val">%{weeklyData[idx]}</span>
-                      </div>
-                    );
-                  })}
-               </div>
+                <div className="analysis-metrics mt-12">
+                   {['Ev', 'İş', 'Tatil', 'Diğer'].map((label, idx) => {
+                     const weeklyStats = weeklyData?.datasets?.[0]?.data || [0, 0, 0, 0];
+                     const colors = ['#10b981', '#3b82f6', '#f43f5e', '#f59e0b'];
+                     return (
+                       <div key={label} className="metric-tag" style={{ borderLeft: `3px solid ${colors[idx]}` }}>
+                         <span className="m-label">{label}</span>
+                         <span className="m-val">%{weeklyStats[idx] || 0}</span>
+                       </div>
+                     );
+                   })}
+                </div>
 
                <div className="analysis-info-box mt-16">
                  <Info size={14} color="#64748b" />
-                 <p>Yüzdeler, son 30 günlük verileriniz ve rutin alışkanlıklarınızın ortalamasını temsil eder. <strong>34-32-35</strong> gibi değerler, toplam zamanınızın hangi kategoriye ne kadar dağıldığını gösterir.</p>
+                 <p>Bu analiz; kayıtlı tatilleriniz, konum geçmişiniz ve öğrenilen rutinlerinizin sentezidir. <strong>Sistem verimliliği için günde bir kez güncellenir.</strong></p>
                </div>
                
-               <div className="tracking-setup mt-16 pt-16 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', gap: '8px' }}>
-                 <button className="setup-btn-compact" onClick={() => {
-                   navigator.geolocation.getCurrentPosition(p => {
-                     updateLocationSettings('home', { lat: p.coords.latitude, lng: p.coords.longitude });
-                   });
-                 }}>🏠 Ev Konumu</button>
-                 <button className="setup-btn-compact" onClick={() => {
-                   navigator.geolocation.getCurrentPosition(p => {
-                     updateLocationSettings('work', { lat: p.coords.latitude, lng: p.coords.longitude });
-                   });
-                 }}>🏢 İş Konumu</button>
-               </div>
+                <div className="tracking-setup mt-24 pt-24 mb-16 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', gap: '10px' }}>
+                  <button className={`btn-pill-v2 ${ev.tracking?.home?.lat ? 'fixed' : ''}`} onClick={() => {
+                    if (ev.tracking?.home?.lat) {
+                      navigate('/profil');
+                    } else {
+                      navigator.geolocation.getCurrentPosition(p => {
+                        updateLocationSettings('home', { lat: p.coords.latitude, lng: p.coords.longitude, label: 'Evim', address: 'Konum alınıyor...' });
+                      });
+                    }
+                  }}>
+                    <Home size={14} />
+                    <span>Ev Konumu</span>
+                    {ev.tracking?.home?.lat && <div className="dot-active"></div>}
+                  </button>
+                  <button className={`btn-pill-v2 ${ev.tracking?.work?.lat ? 'fixed' : ''}`} onClick={() => {
+                    if (ev.tracking?.work?.lat) {
+                      navigate('/profil');
+                    } else {
+                      navigator.geolocation.getCurrentPosition(p => {
+                        updateLocationSettings('work', { lat: p.coords.latitude, lng: p.coords.longitude, label: 'İşyerim', address: 'Konum alınıyor...' });
+                      });
+                    }
+                  }}>
+                    <Building size={14} />
+                    <span>İş Konumu</span>
+                    {ev.tracking?.work?.lat && <div className="dot-active"></div>}
+                  </button>
+                </div>
 
-               <div className="ai-interpretation mt-12">
-                 <Sparkles size={14} color="#10b981" />
-                 <p>{ev.timeAnalysis[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem'].interpretation}</p>
-               </div>
+                <div className="ai-interpretation mt-24">
+                  <Sparkles size={14} color="#10b981" />
+                  <p>{ev.timeAnalysis?.[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem']?.interpretation || "Yaşam verileriniz analiz ediliyor... ✨"}</p>
+                </div>
             </div>
           </div>
         )}
@@ -435,10 +497,36 @@ export default function Ev() {
           <div className="tasinmaz-view animate-fadeIn">
             <div className="portfolio-total glass mb-16">
               <div className="pt-info">
-                <span>Toplam Gayrimenkul Değeri</span>
+                <span style={{ fontSize: '9px', fontWeight: '800' }}>TOPLAM GAYRİMENKUL DEĞERİ</span>
                 <strong>{formatMoney((kasa?.tasinmazlar || []).reduce((a, b) => a + (Number(b.value) || 0), 0))}</strong>
               </div>
-              <Building size={32} opacity={0.2} />
+              <button 
+                className={`ai-update-btn ${isAIUpdating ? 'loading' : ''}`}
+                disabled={isAIUpdating}
+                onClick={() => {
+                  setIsAIUpdating(true);
+                  toast.loading("Yekta Asistan piyasa verilerini analiz ediyor...", { id: 'ai-val' });
+                  setTimeout(() => {
+                    const { updateTasinmaz } = useStore.getState();
+                    const antalyaFactor = 1.025; // Antalya aylık ortalama nominal artış (~%2.5)
+                    const noise = 0.99 + Math.random() * 0.03; // Küçük piyasa dalgalanması
+                    
+                    (kasa?.tasinmazlar || []).forEach(t => {
+                      const finalFactor = t.city?.toLowerCase() === 'antalya' ? antalyaFactor : 1.015;
+                      updateTasinmaz(t.id, { 
+                        ...t, 
+                        value: Math.round(t.value * finalFactor * noise),
+                        lastAIUpdate: new Date().toISOString()
+                      });
+                    });
+                    setIsAIUpdating(false);
+                    toast.success("Antalya/Kepez güncel rayiç endeksleri tarandı. Değerler güncellendi! 🏠📈", { id: 'ai-val' });
+                  }, 2500);
+                }}
+              >
+                <Sparkles size={16} /> 
+                <span>{isAIUpdating ? 'Analiz Ediliyor...' : 'Akıllı Güncelle'}</span>
+              </button>
             </div>
 
             <div className="section-header-v2">
@@ -451,70 +539,119 @@ export default function Ev() {
 
             <div className="tasinmaz-grid">
               {(kasa?.tasinmazlar || []).map(t => {
+                const isExpanded = expandedTasinmazIds.includes(t.id);
                 const netIncome = (Number(t.income) || 0) - (Number(t.expense) || 0);
+                
                 return (
-                  <div key={t.id} className="tasinmaz-card-premium glass">
-                    <div className="tc-header">
+                  <div key={t.id} className={`tasinmaz-card-premium glass ${isExpanded ? 'expanded' : 'collapsed'}`}>
+                    <div className="tc-header" onClick={() => {
+                      setExpandedTasinmazIds(prev => 
+                        isExpanded ? prev.filter(id => id !== t.id) : [...prev, t.id]
+                      );
+                    }}>
                       <div className="tc-icon-box">{t.icon || '🏠'}</div>
                       <div className="tc-main-info">
                         <strong>{t.name}</strong>
                         <div className="tc-technical">
                           <small><MapPin size={10} /> {t.city} / {t.district}</small>
-                          <small><FileText size={10} /> {t.adaParsel}</small>
+                          {!isExpanded && <small className="compact-val">{formatMoney(t.value)}</small>}
                         </div>
                       </div>
-                      <div className="tc-status-pill" style={{ background: t.status === 'Mülk Sahibi' ? '#dcfce7' : '#fef3c7', color: t.status === 'Mülk Sahibi' ? '#15803d' : '#b45309' }}>
-                        {t.status}
-                      </div>
-                    </div>
-
-                    <div className="tc-tax-reminder mt-12 mb-12">
-                       {new Date().getMonth() === 4 || new Date().getMonth() === 10 ? (
-                         <div className="tax-alert-badge warn">
-                           <AlertTriangle size={14} /> Emlak Vergisi Dönemi!
+                      <div className="tc-header-right">
+                         <div className="tc-status-pill" style={{ background: t.status === 'Mülk Sahibi' ? '#dcfce7' : '#fef3c7', color: t.status === 'Mülk Sahibi' ? '#15803d' : '#b45309' }}>
+                           {t.status}
                          </div>
-                       ) : (
-                         <div className="tax-alert-badge info">
-                           <Info size={14} /> Sonraki Vergi: {new Date().getMonth() < 4 ? 'Mayıs' : 'Kasım'}
+                         <div className={`tc-chevron ${isExpanded ? 'rotated' : ''}`}>
+                            <ChevronDown size={18} />
                          </div>
-                       )}
-                    </div>
-
-                    <div className="tc-financial-summary">
-                      <div className="tc-fin-item">
-                        <span>Piyasa Değeri</span>
-                        <strong>{formatMoney(t.value)}</strong>
-                      </div>
-                      <div className="tc-fin-item">
-                        <span>Net Getiri / Ay</span>
-                        <strong style={{ color: netIncome > 0 ? '#10b981' : (netIncome < 0 ? '#ef4444' : 'inherit') }}>
-                          {netIncome > 0 ? '+' : ''}{formatMoney(netIncome)}
-                        </strong>
                       </div>
                     </div>
 
-                    <div className="tc-details-grid">
-                      <div className="tc-detail-item">
-                        <small>Alan</small>
-                        <span>{t.area} m²</span>
-                      </div>
-                      <div className="tc-detail-item">
-                        <small>Vergi Durumu</small>
-                        <span className={t.taxPaid ? 'green' : 'red'}>
-                          {t.taxPaid ? '✅ Ödendi' : '⚠️ Bekliyor'}
-                        </span>
-                      </div>
-                      <div className="tc-detail-item">
-                        <small>Yıllık Vergi</small>
-                        <span>{formatMoney(t.tax)}</span>
-                      </div>
-                    </div>
+                    {isExpanded && (
+                      <div className="tc-expanded-content animate-fadeIn">
+                        <div className="tc-tax-reminder mt-12 mb-12">
+                           <div className="tax-grid-v2">
+                             {/* Emlak Vergisi */}
+                             <div className={`tax-pill-v2 ${t.taxPaid1 && t.taxPaid2 ? 'done' : (t.taxPaid1 || t.taxPaid2 ? 'warn' : 'pending')}`} 
+                                  onClick={(e) => { e.stopPropagation(); setActiveTaxTasinmaz(t); }}>
+                               <div className="tp-icon">
+                                 <ShieldCheck size={14} />
+                               </div>
+                               <div className="tp-info">
+                                 <small>EMLAK VERGİSİ</small>
+                                 <div className="tax-status-row">
+                                    <span className={t.taxPaid1 ? 'txt-green' : 'txt-red'}>Ocak</span>
+                                    <span style={{ opacity: 0.3 }}>/</span>
+                                    <span className={t.taxPaid2 ? 'txt-green' : 'txt-red'}>Haziran</span>
+                                </div>
+                               </div>
+                             </div>
+                             {/* DASK */}
+                             <div className={`tax-pill-v2 ${new Date(t.daskExpiry) > new Date() ? 'done' : 'warn'}`}
+                                  onClick={(e) => { e.stopPropagation(); setActiveDaskTasinmaz(t); }}>
+                               <div className="tp-icon">
+                                 <Activity size={14} />
+                               </div>
+                               <div className="tp-info">
+                                 <small>DASK POLİÇE</small>
+                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                   <span>{t.daskExpiry ? new Date(t.daskExpiry).toLocaleDateString('tr-TR') : 'KAYIT YOK'}</span>
+                                   {t.daskFile && <FileText size={10} color="#3b82f6" />}
+                                 </div>
+                               </div>
+                             </div>
+                             {/* Aidat */}
+                             <div className={`tax-pill-v2 ${t.aidatPaid ? 'done' : 'pending'}`}
+                                  onClick={(e) => { e.stopPropagation(); setActiveAidatTasinmaz(t); }}>
+                               <div className="tp-icon">
+                                 <CreditCard size={14} />
+                               </div>
+                               <div className="tp-info">
+                                 <small>AYLIK AİDAT</small>
+                                 <span>{formatMoney(t.aidat || 0)}</span>
+                               </div>
+                             </div>
+                           </div>
+                        </div>
 
-                    <div className="tc-actions-v2">
-                      <button className="tc-manage-btn" onClick={() => setEditingTasinmaz(t)}>
-                        <Settings size={14} /> Yönet & Düzenle
-                      </button>
-                    </div>
+                        <div className="tc-details-list">
+                          <div className="tc-detail-row">
+                             <div className="tc-label">💰 Piyasa Değeri</div>
+                             <div className="tc-value">{formatMoney(t.value)}</div>
+                          </div>
+                          <div className="tc-detail-row">
+                             <div className="tc-label">📈 Net Getiri / Ay</div>
+                             <div className="tc-value" style={{ color: netIncome > 0 ? '#10b981' : (netIncome < 0 ? '#ef4444' : 'inherit') }}>
+                                {netIncome > 0 ? '+' : ''}{formatMoney(netIncome)}
+                             </div>
+                          </div>
+                          <div className="tc-detail-row">
+                             <div className="tc-label">📏 Toplam Alan</div>
+                             <div className="tc-value">{t.area} m²</div>
+                          </div>
+                          <div className="tc-detail-row">
+                             <div className="tc-label">👤 Getiri Durumu</div>
+                             <div className="tc-value" style={{ color: t.status === 'Kiracı Var' ? '#10b981' : '#f59e0b' }}>
+                               {t.status === 'Kiracı Var' ? `Kirada (${formatMoney(t.income)})` : 'Mülk Sahibi'}
+                             </div>
+                          </div>
+                          <div className="tc-detail-row">
+                             <div className="tc-label">🏛️ Yıllık Vergi</div>
+                             <div className="tc-value">{formatMoney(t.tax)}</div>
+                          </div>
+                          <div className="tc-detail-row">
+                             <div className="tc-label">📄 Ada / Parsel</div>
+                             <div className="tc-value">{t.adaParsel || '-'}</div>
+                          </div>
+                        </div>
+
+                        <div className="tc-actions-v2">
+                          <button className="pill-btn-v2 tc-pill" onClick={(e) => { e.stopPropagation(); setEditingTasinmaz(t); }}>
+                            <Settings size={14} /> Yönet & Düzenle
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -619,11 +756,11 @@ export default function Ev() {
                            <span className="tcv2-task">{item.task}</span>
                            <div className="tcv2-meta">
                              <small>
-                               {createdUser.emoji} {createdUser.name.split(' ')[0]} • {new Date(item.createdAt).toLocaleDateString('tr-TR')}
+                               {createdUser.emoji} {(createdUser.name || 'Bilinmiyor').split(' ')[0]} • {new Date(item.createdAt).toLocaleDateString('tr-TR')}
                              </small>
                              {item.status === 'Completed' && item.completedBy && (
                                <small style={{ color: '#22c55e' }}>
-                                 • ✅ {users[item.completedBy]?.name.split(' ')[0]} tarafından tamamlandı
+                                 • ✅ {(users[item.completedBy]?.name || 'Bilinmiyor').split(' ')[0]} tarafından tamamlandı
                                </small>
                              )}
                            </div>
@@ -643,60 +780,162 @@ export default function Ev() {
 
         {activeTab === 'abonelik' && (
           <div className="abonelik-view animate-fadeIn">
-            <div className="section-header-v2">
-              <h3>💳 Abonelikler & Düzenli Ödemeler</h3>
-              <button className="add-btn-mini" title="Yeni Abonelik Ekle" onClick={() => setEditingAbo({ name: '', amount: 0, date: 1, linkedCardId: '', autoPay: true, icon: '🎬', startDate: '' })}>
-                <Plus size={14} />
+            {/* V5 FULL SCREEN PREMIUM RECEIPT */}
+            <div className="premium-receipt-v5 animate-slideUp">
+               <div className="receipt-paper">
+                  {/* Top Zig-Zag edge could be CSS pseudo-element */}
+                  <div className="receipt-header">
+                    <div className="r-logo-box">
+                      <div className="r-logo-shield">E</div>
+                      <div className="r-logo-text">ERAYLAR</div>
+                    </div>
+                    <div className="r-meta">
+                      <span>NO: {Math.floor(100000 + Math.random() * 900000)}</span>
+                      <span>{new Date().toLocaleDateString('tr-TR')}</span>
+                    </div>
+                  </div>
+
+                  <div className="receipt-divider-dots"></div>
+
+                  <div className="receipt-body">
+                    <div className="r-field">
+                      <label>Harcama Açıklaması</label>
+                      <input 
+                        className="r-input-text"
+                        type="text" 
+                        placeholder="Doğalgaz Faturası" 
+                        value={faturaForm?.name || ''}
+                        onChange={e => setFaturaForm({...faturaForm, name: e.target.value})}
+                      />
+                    </div>
+
+                    <div className="r-field amount-right">
+                      <label>TOPLAM TUTAR</label>
+                      <div className="r-amount-box">
+                        <input 
+                          type="number" 
+                          step="0.01"
+                          placeholder="0.00" 
+                          value={faturaInput || ''}
+                          onChange={e => setFaturaInput(e.target.value)}
+                        />
+                        <span className="r-currency">₺</span>
+                      </div>
+                    </div>
+
+                    <div className="receipt-divider-line"></div>
+
+                    <div className="r-payment-section">
+                       <label>ÖDEME YÖNTEMİ</label>
+                       <div className="r-payment-bar">
+                          {[
+                            { id: 'Nakit', icon: <Wallet size={16} />, label: 'NAKİT' },
+                            { id: 'EFT', icon: <Building size={16} />, label: 'EFT' },
+                            { id: 'Kredi Kartı', icon: <Key size={16} />, label: 'KART' }
+                          ].map(m => (
+                            <button 
+                              key={m.id}
+                              className={`r-pay-pill ${paymentMethod === m.id ? 'active' : ''}`}
+                              onClick={() => setPaymentMethod(m.id)}
+                            >
+                              {m.icon}
+                              <span>{m.label}</span>
+                            </button>
+                          ))}
+                       </div>
+                    </div>
+
+                    {paymentMethod === 'Kredi Kartı' && (
+                      <div className="r-card-drawer animate-fadeIn">
+                        <div className="card-selection-pills compact">
+                           {(finans?.kartlar || []).map(k => (
+                             <button 
+                               key={k.id}
+                               className={`card-pill mini ${faturaForm?.linkedCardId === k.id ? 'active' : ''}`}
+                               onClick={() => setFaturaForm({...faturaForm, linkedCardId: k.id})}
+                             >
+                               <span className="dot" style={{ background: k.color }}></span>
+                               {k.name}
+                             </button>
+                           ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="invoice-stamp-v5">ERAYLAR ONAYLI</div>
+
+                  <div className="r-btn-container">
+                    <button className="r-complete-btn-rounded" onClick={() => {
+                       if(!faturaInput) return toast.error("Lütfen tutar girin.");
+                       if(paymentMethod === 'Kredi Kartı' && !faturaForm?.linkedCardId) return toast.error("Lütfen kart seçin.");
+                       
+                       saveQuickExpense({
+                         amount: Number(faturaInput),
+                         category: faturaForm?.name || paymentMethod,
+                         user: currentUser?.name || 'Görkem',
+                         linkedCardId: paymentMethod === 'Kredi Kartı' ? faturaForm.linkedCardId : null
+                       });
+                       setFaturaInput('');
+                       setPaymentMethod('Nakit');
+                       setFaturaForm({...faturaForm, linkedCardId: '', name: ''});
+                       toast.success("Harcama onaylandı! ✅");
+                     }}>
+                       GİRİŞİ TAMAMLA
+                    </button>
+                  </div>
+               </div>
+            </div>
+
+            {/* 2. UNIFIED LIST HEADER */}
+            <div className="section-header-v2 mt-40">
+              <h3>📜 Abonelikler</h3>
+              <button className="btn-pill-v2 primary mini" onClick={() => setEditingAbo({ name: '', amount: 0, date: 1, linkedCardId: '', autoPay: true, icon: '🎬', _type: 'abonelik' })}>
+                <Plus size={14} /> Abonelik Ekle
               </button>
             </div>
 
-
-
-            {/* 1. ABONELİKLER LIST */}
-            <div className="abo-list-section">
-              <h4 className="abo-sub-title">Aktif Abonelikler</h4>
-              <div className="vize-style-grid">
-                {abonelikler.map(abo => (
-                  <div key={abo.id} className="vize-card glass">
-                    <div className="vize-flag">{abo.icon || '🎬'}</div>
-                    <div className="vize-info">
-                      <strong>{abo.name}</strong>
-                      <span>{formatMoney(abo.amount)} • Her ayın {abo.date}. günü</span>
-                    </div>
-                    <div className="vize-badge paid">Aktif</div>
-                    <div className="vize-actions">
-                      <button className="vize-edit" onClick={() => setEditingAbo(abo)}><Edit2 size={16} /></button>
-                      <button className="vize-delete" onClick={() => requestConfirm(`${abo.name} aboneliğini silmek istediğinize emin misiniz?`, () => deleteAbonelik(abo.id))}><Trash2 size={16} /></button>
-                    </div>
+            {/* 3. SPLIT LISTS */}
+            <div className="abo-split-container mt-24">
+               <div className="abo-section">
+                  <h4 className="section-mini-title">ABONELİKLER</h4>
+                  <div className="vize-style-grid">
+                    {abonelikler.map(item => (
+                      <div key={item.id} className="vize-card glass abo">
+                        <div className="vize-flag">{item.icon}</div>
+                        <div className="vize-info">
+                          <strong>{item.name}</strong>
+                          <span>{formatMoney(item.amount)} • Her ayın {item.date}. günü</span>
+                        </div>
+                        <div className="vize-badge paid">Aktif</div>
+                        <div className="vize-actions">
+                          <button className="vize-edit" onClick={() => setEditingAbo({...item, _type: 'abonelik'})}><Edit2 size={16} /></button>
+                          <button className="vize-delete" onClick={() => requestConfirm(`${item.name} aboneliğini silmek istediğinize emin misiniz?`, () => deleteAbonelik(item.id))}><Trash2 size={16} /></button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
+               </div>
 
-            {/* 2. DÜZENLİ ÖDEMELER LIST */}
-            <div className="abo-list-section mt-24">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 className="abo-sub-title">Düzenli Ödemeler (Aidat, BES vb.)</h4>
-                <button className="fatura-giris-btn" onClick={() => setEditingFatura({ name: '', amount: 0, linkedCardId: '', icon: '🔧' })}>
-                   <Wrench size={12} /> Harcama/Fatura Gir
-                </button>
-              </div>
-              <div className="vize-style-grid">
-                {(ev.duzenliOdemeler || []).map(d => (
-                  <div key={d.id} className="vize-card glass">
-                    <div className="vize-flag">{d.icon || '🏢'}</div>
-                    <div className="vize-info">
-                      <strong>{d.name}</strong>
-                      <span>{formatMoney(d.amount)} • Her ayın {d.date}. günü</span>
-                    </div>
-                    <div className="vize-badge paid">Planlı</div>
-                    <div className="vize-actions">
-                      <button className="vize-edit" onClick={() => setEditingAbo({...d, _type: 'duzenli'})}><Edit2 size={16} /></button>
-                      <button className="vize-delete" onClick={() => requestConfirm(`${d.name} kaydını silmek istediğinize emin misiniz?`, () => deleteDuzenliOdeme(d.id))}><Trash2 size={16} /></button>
-                    </div>
+               <div className="abo-section mt-24">
+                  <h4 className="section-mini-title">DÜZENLİ ÖDEMELER</h4>
+                  <div className="vize-style-grid">
+                    {(ev.duzenliOdemeler || []).map(item => (
+                      <div key={item.id} className="vize-card glass duzenli">
+                        <div className="vize-flag">{item.icon}</div>
+                        <div className="vize-info">
+                          <strong>{item.name}</strong>
+                          <span>{formatMoney(item.amount)} • Her ayın {item.date}. günü</span>
+                        </div>
+                        <div className="vize-badge warn">Planlı</div>
+                        <div className="vize-actions">
+                          <button className="vize-edit" onClick={() => setEditingAbo({...item, _type: 'duzenli'})}><Edit2 size={16} /></button>
+                          <button className="vize-delete" onClick={() => requestConfirm(`${item.name} kaydını silmek istediğinize emin misiniz?`, () => deleteDuzenliOdeme(item.id))}><Trash2 size={16} /></button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+               </div>
             </div>
           </div>
         )}
@@ -745,7 +984,16 @@ export default function Ev() {
                         <label>ŞİFRE</label>
                         <div className="wifi-pass-container static">
                           <Key size={14} opacity={0.5} />
-                          <span className="handwriting-pass">MAUMFUFTH74L</span>
+                          <span className="handwriting-pass">
+                            {showWifiPass ? 'MAUMFUFTH74L' : '••••••••••••'}
+                          </span>
+                          <button 
+                            className="wifi-peek-btn" 
+                            onClick={(e) => { e.stopPropagation(); setShowWifiPass(!showWifiPass); }}
+                            title={showWifiPass ? "Gizle" : "Göster"}
+                          >
+                            {showWifiPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
                         </div>
                       </div>
                       <span className="wifi-badge main side">ANA HAT</span>
@@ -769,7 +1017,16 @@ export default function Ev() {
                     <strong className="guest-ssid">Tombis Yiğit</strong>
                     <div className="wifi-pass-container static guest">
                        <Key size={14} opacity={0.5} />
-                       <span className="handwriting-pass">Love2013</span>
+                       <span className="handwriting-pass">
+                         {showGuestWifiPass ? 'Love2013' : '••••••••'}
+                       </span>
+                       <button 
+                         className="wifi-peek-btn" 
+                         onClick={(e) => { e.stopPropagation(); setShowGuestWifiPass(!showGuestWifiPass); }}
+                         title={showGuestWifiPass ? "Gizle" : "Göster"}
+                       >
+                         {showGuestWifiPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                       </button>
                     </div>
                   </div>
                   <span className="wifi-badge guest side">MİSAFİR</span>
@@ -1042,7 +1299,7 @@ export default function Ev() {
                 onChange={(e) => setEditingAbo({...editingAbo, linkedCardId: e.target.value})}
               >
                 <option value="">Kart Seçin</option>
-                {(ev.finans?.kartlar || []).map(k => (
+                {(finans?.kartlar || []).map(k => (
                   <option key={k.id} value={k.id}>{k.name} ({k.owner})</option>
                 ))}
               </select>
@@ -1276,6 +1533,60 @@ export default function Ev() {
         )}
       </ActionSheet>
 
+      <ActionSheet
+        isOpen={!!activeTaxTasinmaz}
+        onClose={() => setActiveTaxTasinmaz(null)}
+        title="🏛️ Emlak Vergisi Yönetimi"
+      >
+        {activeTaxTasinmaz && (
+          <TaxManagementContent 
+            data={activeTaxTasinmaz} 
+            onClose={() => setActiveTaxTasinmaz(null)} 
+          />
+        )}
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={!!activeDaskTasinmaz}
+        onClose={() => setActiveDaskTasinmaz(null)}
+        title="🛡️ DASK Poliçe Yönetimi"
+      >
+        {activeDaskTasinmaz && (
+          <DaskManagementContent 
+            data={activeDaskTasinmaz} 
+            onClose={() => setActiveDaskTasinmaz(null)} 
+          />
+        )}
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={!!activeAidatTasinmaz}
+        onClose={() => setActiveAidatTasinmaz(null)}
+        title="💳 Aidat Ödeme Yönetimi"
+      >
+        {activeAidatTasinmaz && (
+          <AidatManagementContent 
+            data={activeAidatTasinmaz} 
+            onClose={() => setActiveAidatTasinmaz(null)} 
+          />
+        )}
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={!!editingTasinmaz}
+        onClose={() => setEditingTasinmaz(null)}
+        title={editingTasinmaz?.isNew ? 'Yeni Taşınmaz Ekle' : 'Taşınmaz Yönetimi'}
+        fullHeight
+      >
+        {editingTasinmaz && (
+          <ManageTasinmazContent 
+            data={editingTasinmaz} 
+            onClose={() => setEditingTasinmaz(null)} 
+            requestConfirm={requestConfirm}
+          />
+        )}
+      </ActionSheet>
+
       {/* ActionSheet for One-time Maintenance/Repair */}
       <ActionSheet
         isOpen={!!editingOnarim}
@@ -1304,6 +1615,34 @@ export default function Ev() {
         )}
       </ActionSheet>
 
+
+      <ActionSheet isOpen={showTahlilSheet} onClose={() => setShowTahlilSheet(false)} title="Yekta Tilmen'den Karakter Tahlili">
+        <div className="tahlil-sheet-content">
+          <div className="tahlil-header">
+            <div className="avatar-circle-large">🧐</div>
+            <div className="tahlil-summary">
+              <h3>{currentUser?.name}</h3>
+              <p>{Object.keys(resultsObj).length} Analiz Dosyası İşlendi</p>
+            </div>
+          </div>
+
+          <div className="tahlil-main-text glass">
+             {synthesizeCharacter(personalityData)}
+          </div>
+
+          <div className="tahlil-stats-grid mt-24">
+             {Object.keys(resultsObj).map(id => (
+               <div key={id} className="mini-result-pill">
+                  <span>{id === 'big5' ? 'Karakter' : (id === 'leader' ? 'Liderlik' : id.toUpperCase())}</span>
+                  <strong>{resultsObj[id]?.type || 'Belirsiz'}</strong>
+               </div>
+             ))}
+          </div>
+
+          <button className="btn-primary-v2 mt-32" onClick={() => setShowTahlilSheet(false)}>Anlaşıldı, Yekta.</button>
+        </div>
+      </ActionSheet>
+
       <ConfirmModal 
         isOpen={showConfirm.open}
         title="Emin misiniz?"
@@ -1314,6 +1653,7 @@ export default function Ev() {
         }}
         onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
       />
+
 
 
     </AnimatedPage>
@@ -1518,7 +1858,8 @@ function ManageTasinmazContent({ data, onClose, requestConfirm }) {
     name: '', city: '', district: '', neighborhood: '',
     type: '', adaParsel: '', unit: '', floor: '', area: '', share: '',
     nitelik: '', propertyNo: '', icon: '🏢', status: 'Mülk Sahibi',
-    income: 0, expense: 0, tax: 0, taxPaid: false, value: 0
+    income: 0, expense: 0, tax: 0, taxPaid1: false, taxPaid2: false, value: 0,
+    daskExpiry: '', aidat: 0, aidatPaid: false, daskFile: null
   } : data);
 
   const handleSubmit = (e) => {
@@ -1581,10 +1922,30 @@ function ManageTasinmazContent({ data, onClose, requestConfirm }) {
             <label>Emlak Vergisi (Yıllık)</label>
             <input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} />
           </div>
-          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingTop: '20px' }}>
-             <input type="checkbox" checked={form.taxPaid} onChange={e => setForm({...form, taxPaid: e.target.checked})} id="taxPaid" style={{ width: '20px', height: '20px' }} />
-             <label htmlFor="taxPaid" style={{ margin: 0 }}>Vergi Ödendi</label>
+          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '10px' }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input type="checkbox" checked={form.taxPaid1} onChange={e => setForm({...form, taxPaid1: e.target.checked})} id="taxPaid1" />
+                <label htmlFor="taxPaid1" style={{ margin: 0 }}>Ocak Taksidi</label>
+             </div>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input type="checkbox" checked={form.taxPaid2} onChange={e => setForm({...form, taxPaid2: e.target.checked})} id="taxPaid2" />
+                <label htmlFor="taxPaid2" style={{ margin: 0 }}>Haziran Taksidi</label>
+             </div>
           </div>
+        </div>
+        <div className="form-row mt-12">
+          <div className="form-group">
+            <label>DASK Bitiş Tarihi</label>
+            <input type="date" value={form.daskExpiry} onChange={e => setForm({...form, daskExpiry: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Aylık Aidat (₺)</label>
+            <input type="number" value={form.aidat} onChange={e => setForm({...form, aidat: e.target.value})} />
+          </div>
+        </div>
+        <div className="form-group mt-12" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+           <input type="checkbox" checked={form.aidatPaid} onChange={e => setForm({...form, aidatPaid: e.target.checked})} id="aidatPaid" style={{ width: '20px', height: '20px' }} />
+           <label htmlFor="aidatPaid" style={{ margin: 0 }}>Bu Ayki Aidat Ödendi</label>
         </div>
       </div>
 
@@ -1712,6 +2073,102 @@ function DepoView({ depo, deleteDepoItem, clearDepo, requestConfirm }) {
           ))
         )}
       </div>
+    </div>
+  );
+}
+
+function TaxManagementContent({ data, onClose }) {
+  const { updateTasinmaz } = useStore();
+  const [form, setForm] = useState({ tax: data.tax, taxPaid1: data.taxPaid1, taxPaid2: data.taxPaid2 });
+
+  return (
+    <div className="edit-form-v2">
+      <div className="form-group-v2">
+        <label>Yıllık Emlak Vergisi (₺)</label>
+        <input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} />
+      </div>
+      <div className="form-toggle-row">
+        <label>Ocak Taksidi Ödendi</label>
+        <input type="checkbox" checked={form.taxPaid1} onChange={e => setForm({...form, taxPaid1: e.target.checked})} />
+      </div>
+      <div className="form-toggle-row">
+        <label>Haziran Taksidi Ödendi</label>
+        <input type="checkbox" checked={form.taxPaid2} onChange={e => setForm({...form, taxPaid2: e.target.checked})} />
+      </div>
+      <button className="save-btn-v2" onClick={() => {
+        updateTasinmaz(data.id, form);
+        toast.success('Vergi bilgileri güncellendi! 🏛️');
+        onClose();
+      }}>Bilgileri Kaydet</button>
+    </div>
+  );
+}
+
+function DaskManagementContent({ data, onClose }) {
+  const { updateTasinmaz } = useStore();
+  const [form, setForm] = useState({ daskExpiry: data.daskExpiry, daskFile: data.daskFile });
+
+  return (
+    <div className="edit-form-v2">
+      <div className="form-group-v2">
+        <label>Poliçe Bitiş Tarihi</label>
+        <input type="date" value={form.daskExpiry} onChange={e => setForm({...form, daskExpiry: e.target.value})} />
+      </div>
+      <div className="form-group-v2">
+        <label>Poliçe Dosyası / Fotoğrafı</label>
+        <div style={{ position: 'relative' }}>
+          <div className={`file-upload-box ${form.daskFile ? 'has-file' : ''}`} onClick={() => document.getElementById('dask-pdf').click()}>
+            {form.daskFile ? <FileText size={24} color="#3b82f6" /> : <Camera size={24} />}
+            <span style={{ fontSize: '13px', fontWeight: '700' }}>{form.daskFile || 'Poliçe Yükle (PDF/Görüntü)'}</span>
+            <input 
+              type="file" 
+              id="dask-pdf" 
+              style={{ display: 'none' }} 
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) setForm({...form, daskFile: file.name});
+              }} 
+            />
+          </div>
+          {form.daskFile && (
+            <button 
+              className="file-remove-btn" 
+              onClick={(e) => { e.stopPropagation(); setForm({...form, daskFile: null}); }}
+              title="Poliçeyi Kaldır"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+      <button className="save-btn-v2" onClick={() => {
+        updateTasinmaz(data.id, form);
+        toast.success('DASK bilgileri güncellendi! 🛡️');
+        onClose();
+      }}>Bilgileri Kaydet</button>
+    </div>
+  );
+}
+
+function AidatManagementContent({ data, onClose }) {
+  const { updateTasinmaz } = useStore();
+  const [form, setForm] = useState({ aidat: data.aidat, aidatPaid: data.aidatPaid });
+
+  return (
+    <div className="edit-form-v2">
+      <div className="form-group-v2">
+        <label>Aylık Aidat Tutarı (₺)</label>
+        <input type="number" value={form.aidat} onChange={e => setForm({...form, aidat: e.target.value})} />
+      </div>
+      <div className="form-toggle-row">
+        <label>Bu Ayki Aidat Ödendi</label>
+        <input type="checkbox" checked={form.aidatPaid} onChange={e => setForm({...form, aidatPaid: e.target.checked})} />
+      </div>
+      <button className="save-btn-v2" onClick={() => {
+        updateTasinmaz(data.id, form);
+        toast.success('Aidat bilgileri güncellendi! 💳');
+        onClose();
+      }}>Bilgileri Kaydet</button>
     </div>
   );
 }

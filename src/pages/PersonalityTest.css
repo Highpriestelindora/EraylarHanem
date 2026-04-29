@@ -1,0 +1,144 @@
+.p-test-page {
+  background: #f8fafc;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.p-test-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: white;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.p-test-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--txt);
+}
+
+.p-test-content {
+  flex: 1;
+  padding: 24px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.q-card {
+  width: 100%;
+  max-width: 500px;
+}
+
+.step-info {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ev);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.q-text {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.2;
+  color: var(--txt);
+  margin-bottom: 40px;
+}
+
+.options-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opt-btn {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--txt);
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.opt-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.opt-btn:active {
+  transform: scale(0.97);
+  background: #f1f5f9;
+}
+
+.p-test-footer {
+  padding: 20px;
+  background: white;
+}
+
+.p-progress-bg {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.p-progress-fill {
+  height: 100%;
+  background: var(--ev);
+}
+
+.finishing-state {
+  text-align: center;
+  max-width: 400px;
+}
+
+.finishing-state h2 {
+  font-size: 20px;
+  font-weight: 900;
+  margin: 20px 0 10px;
+}
+
+.finishing-state p {
+  font-size: 14px;
+  color: var(--txt-light);
+  line-height: 1.6;
+}
+
+.loading-line {
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loading-line-fill {
+  height: 100%;
+  background: var(--ev);
+}
+
+.lottie-placeholder {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}

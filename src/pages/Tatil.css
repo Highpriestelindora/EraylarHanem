@@ -1274,10 +1274,116 @@
 }
 
 /* Live Tracker UI */
-.live-tracker-container {
-  padding: 10px;
-  background: #f8fafc;
+.live-.tatil-container {
+  min-height: 100vh;
+  background: #fdf2f8;
+  padding-bottom: 100px;
+}
+
+/* ALBUM STYLES */
+.premium-album-trigger-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
   border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(255,255,255,0.4));
+  box-shadow: 0 8px 32px rgba(219, 39, 119, 0.1);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-album-trigger-btn:active {
+  transform: scale(0.97);
+}
+
+.pat-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.pat-icons {
+  font-size: 24px;
+  letter-spacing: -4px;
+}
+
+.pat-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.pat-text strong {
+  font-size: 16px;
+  color: #1e293b;
+}
+
+.pat-text span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.seyahat-albumu-container {
+  padding: 20px;
+}
+
+.album-intro {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.as-user-header {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-left: 5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.as-user-header.gorkem { color: #0ea5e9; }
+.as-user-header.esra { color: #db2777; }
+
+.as-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.as-photo-card {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+}
+
+.as-photo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.as-empty {
+  font-size: 20px;
+  opacity: 0.2;
+}
+
+.album-footer {
+  text-align: center;
+  font-style: italic;
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .tracker-iframe {
@@ -5450,3 +5556,146 @@
 .star-btn { background: none; border: none; padding: 4px; cursor: pointer; color: #cbd5e1; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
 .star-btn:hover { transform: scale(1.2); color: #fbbf24; }
 .star-btn.active { color: #fbbf24; filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.4)); }
+
+/* --- SEYAHAT ALBÜMÜ PREMIUM STYLES --- */
+.premium-album-trigger-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.5));
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.08);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin: 15px 0;
+}
+
+.premium-album-trigger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(99, 102, 241, 0.12);
+  background: white;
+}
+
+.premium-album-trigger-btn:active {
+  transform: scale(0.96);
+}
+
+.pat-content {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.pat-icons {
+  font-size: 28px;
+  letter-spacing: -6px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.pat-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.pat-text strong {
+  font-size: 17px;
+  color: #1e293b;
+  letter-spacing: -0.3px;
+}
+
+.pat-text span {
+  font-size: 12.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.seyahat-albumu-container {
+  padding: 24px;
+  background: #fdf2f8;
+  min-height: 100%;
+}
+
+.album-intro {
+  text-align: center;
+  margin-bottom: 32px;
+  color: #64748b;
+  font-size: 14.5px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.as-user-header {
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.as-user-header.gorkem { 
+  color: #0369a1; 
+  background: #e0f2fe;
+}
+.as-user-header.esra { 
+  color: #be185d; 
+  background: #fce7f3;
+}
+
+.as-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.as-photo-card {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid white;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.as-photo-card:hover {
+  transform: scale(1.05) rotate(1deg);
+  z-index: 2;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+}
+
+.as-photo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.as-empty {
+  font-size: 24px;
+  opacity: 0.2;
+}
+
+.album-footer {
+  text-align: center;
+  padding: 40px 0;
+  opacity: 0.7;
+}
+
+.album-footer p {
+  font-style: italic;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+}

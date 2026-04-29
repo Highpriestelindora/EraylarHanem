@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield, LogOut, Trophy, ChevronRight, X, Save, CreditCard, Award, Fingerprint, Mail, Phone, MapPin, Calendar } from 'lucide-react';
+import { User, Shield, LogOut, Trophy, ChevronRight, X, Save, CreditCard, Award, Fingerprint, Mail, Phone, MapPin, Calendar, Home, Building, Navigation } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
@@ -12,8 +12,9 @@ export default function Profil() {
   const navigate = useNavigate();
   const { currentUser, setCurrentUser, users, updateUser } = useStore();
   const [isEditing, setIsEditing] = useState(false);
+  const { ev, updateLocationSettings } = useStore();
+  const [editingLocation, setEditingLocation] = useState(null); // 'home' or 'work'
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { ev } = useStore();
   
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
@@ -40,6 +41,12 @@ export default function Profil() {
   const confirmAndLogout = () => {
     setCurrentUser(null);
     navigate('/');
+  };
+
+  const handleSaveLocation = (type, data) => {
+    updateLocationSettings(type, data);
+    setEditingLocation(null);
+    toast.success('Konum güncellendi! 📍');
   };
 
 
@@ -123,6 +130,28 @@ export default function Profil() {
             <span className="setting-desc">Tüm aile içi kazanımların</span>
           </div>
           <Award size={18} className="chevron" />
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <h4>Konumlarım & Takip</h4>
+        
+        <div className="setting-item clickable" onClick={() => setEditingLocation('home')}>
+          <div className="setting-icon" style={{ background: '#ecfdf5', color: '#10b981' }}><Home size={20} /></div>
+          <div className="setting-content">
+            <span className="setting-title">Ev Konumu</span>
+            <span className="setting-desc">{ev.tracking?.home?.label || 'Belirlenmedi'} • {ev.tracking?.home?.address || 'Adres yok'}</span>
+          </div>
+          <ChevronRight size={18} className="chevron" />
+        </div>
+
+        <div className="setting-item clickable" onClick={() => setEditingLocation('work')}>
+          <div className="setting-icon" style={{ background: '#eff6ff', color: '#3b82f6' }}><Building size={20} /></div>
+          <div className="setting-content">
+            <span className="setting-title">İş Konumu</span>
+            <span className="setting-desc">{ev.tracking?.work?.label || 'Belirlenmedi'} • {ev.tracking?.work?.address || 'Adres yok'}</span>
+          </div>
+          <ChevronRight size={18} className="chevron" />
         </div>
       </div>
 
@@ -236,6 +265,84 @@ export default function Profil() {
 
             <button className="btn-primary" onClick={handleSaveProfile} style={{ marginTop: '20px', width: '100%', background: 'var(--txt)', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Save size={18} style={{ marginRight: '8px' }} /> KİMLİĞİ GÜNCELLE
+            </button>
+          </div>
+        </div>
+      )}
+
+      {editingLocation && (
+        <div className="modal-overlay" onClick={() => setEditingLocation(null)}>
+          <div className="modal-content profile-edit-modal glass" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{editingLocation === 'home' ? 'Ev' : 'İş'} Konumunu Düzenle</h3>
+              <button onClick={() => setEditingLocation(null)}><X /></button>
+            </div>
+            
+            <div className="form-group">
+              <label><Fingerprint size={14} /> Konum Etiketi</label>
+              <input 
+                type="text" 
+                defaultValue={ev.tracking?.[editingLocation]?.label || ''} 
+                id="loc-label"
+                placeholder="Örn: Kuzey Evim"
+              />
+            </div>
+
+            <div className="form-group">
+              <label><MapPin size={14} /> Adres</label>
+              <textarea 
+                defaultValue={ev.tracking?.[editingLocation]?.address || ''} 
+                id="loc-address"
+                placeholder="Açık adres giriniz..."
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', minHeight: '80px', background: '#f8fafc', font: 'inherit' }}
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Enlem (Lat)</label>
+                <input 
+                  type="text" 
+                  defaultValue={ev.tracking?.[editingLocation]?.lat || ''} 
+                  id="loc-lat"
+                />
+              </div>
+              <div className="form-group">
+                <label>Boylam (Lng)</label>
+                <input 
+                  type="text" 
+                  defaultValue={ev.tracking?.[editingLocation]?.lng || ''} 
+                  id="loc-lng"
+                />
+              </div>
+            </div>
+
+            <button 
+              className="btn-primary" 
+              onClick={() => {
+                const label = document.getElementById('loc-label').value;
+                const address = document.getElementById('loc-address').value;
+                const lat = parseFloat(document.getElementById('loc-lat').value);
+                const lng = parseFloat(document.getElementById('loc-lng').value);
+                handleSaveLocation(editingLocation, { label, address, lat, lng });
+              }} 
+              style={{ marginTop: '20px', width: '100%', background: '#10b981', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Save size={18} style={{ marginRight: '8px' }} /> KONUMU KAYDET
+            </button>
+
+            <button 
+              className="btn-secondary" 
+              onClick={() => {
+                navigator.geolocation.getCurrentPosition(p => {
+                  document.getElementById('loc-lat').value = p.coords.latitude;
+                  document.getElementById('loc-lng').value = p.coords.longitude;
+                  toast.success('Mevcut konum alındı! 📡');
+                });
+              }}
+              style={{ marginTop: '10px', width: '100%', background: '#f8fafc', color: 'var(--txt)', border: '1px solid var(--brd)', padding: '12px', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              <Navigation size={16} /> MEVCUT KONUMU AL
             </button>
           </div>
         </div>

@@ -275,14 +275,17 @@ const DEFAULT_STATE = {
       ]
     },
     tracking: {
-      home: { lat: 36.8841, lng: 30.7056, radius: 100 },
-      work: { lat: 36.8969, lng: 30.7133, radius: 200 },
+      home: { lat: 36.8841, lng: 30.7056, radius: 100, label: 'Evim', address: 'Kepez/Antalya' },
+      work: { lat: 36.8969, lng: 30.7133, radius: 200, label: 'İşyerim', address: 'Muratpaşa/Antalya' },
+      lastAnalysisDate: null,
+      cachedAnalysis: null,
       routine: {
         workStart: '09:00',
         workEnd: '18:00',
         sleepStart: '23:30',
         sleepEnd: '07:30'
       },
+      personality: { type: null, traits: {}, lastTestDate: null },
       weeklyHabits: {}, // { "Mon-09": { home: 2, work: 15, other: 1 }, ... }
       lastCheck: null, 
       logs: [] 
@@ -365,8 +368,19 @@ async function fetchFromSupabase() {
   }
 }
 
+let lastSaveTime = 0;
+let saveTimeout = null;
+
 async function pushToSupabase(appData) {
   try {
+    const now = Date.now();
+    // Prevent saving too frequently (min 2 seconds between saves)
+    if (now - lastSaveTime < 2000) {
+      console.log('⏳ Save throttled, waiting for next window...');
+      return;
+    }
+    
+    lastSaveTime = now;
     console.log('📤 Pushing to Supabase...', { size: JSON.stringify(appData).length });
     const { error, status, statusText } = await supabase
       .from('eraylar_store')
@@ -407,15 +421,16 @@ function extractAppData(state, forPersist = false) {
     tatil:     state.tatil,
     achievements: state.achievements,
     logs:      state.logs,
+    system:    state.system,
   };
 
-  // If for localStorage (5MB limit), strip heavy photos
+  // If for localStorage (5MB limit), we MUST strip heavy photos to avoid errors.
+  // BUT: We only do this if forPersist is true (meaning it's headed for LocalStorage).
   if (forPersist && data.tatil?.trips) {
     data.tatil = {
       ...data.tatil,
       trips: data.tatil.trips.map(t => ({
         ...t,
-        photos: [], // Omit photos from local storage
         evaluations: t.evaluations ? Object.fromEntries(
           Object.entries(t.evaluations).map(([user, ev]) => [user, { ...ev, photos: [] }])
         ) : t.evaluations
@@ -437,6 +452,12 @@ const useStore = create(
       settings: DEFAULT_SETTINGS,
       syncing: false,
       isOnline: true,
+      isSaving: false,
+      system: {
+        clientId: Math.random().toString(36).substring(7),
+        lastUpdatedBy: null,
+        isCloudReady: false
+      },
 
       addLog: (action, detail) => {
         const state = get();
@@ -645,6 +666,7 @@ const useStore = create(
             tatil:     { ...DEFAULT_STATE.tatil, ...remote.tatil },
             achievements: remote.achievements || DEFAULT_STATE.achievements,
             logs:      remote.logs || DEFAULT_STATE.logs,
+            system:    { ...get().system, isCloudReady: true },
             isOnline:  true
           });
         } else {
@@ -686,7 +708,20 @@ const useStore = create(
               }
             }
 
-            set({ ...newData });
+            const state = get();
+            if (state.isSaving) return;
+            
+            // 1. Ignore updates from ourselves
+            if (newData.system?.lastUpdatedBy === state.system.clientId) return;
+
+            // 2. Only update if data is actually different
+            const currentDataStr = JSON.stringify(extractAppData(state));
+            const newDataStr = JSON.stringify(newData);
+            
+            if (currentDataStr !== newDataStr) {
+              console.log('🔄 Remote data changed by another client, updating local state...');
+              set({ ...newData });
+            }
           })
           .subscribe();
         
@@ -694,12 +729,34 @@ const useStore = create(
       },
 
       saveToSupabase: async () => {
-        try {
-          await pushToSupabase(extractAppData(get()));
-          set({ isOnline: true });
-        } catch (err) {
-          set({ isOnline: false });
-        }
+        if (saveTimeout) clearTimeout(saveTimeout);
+        
+        saveTimeout = setTimeout(async () => {
+          if (get().isSaving) return;
+          
+          try {
+            set({ isSaving: true });
+            const state = get();
+            
+            // CRITICAL PROTECTION: Never save to cloud if we haven't loaded from cloud yet.
+            // This prevents LocalStorage (which might have missing data) from overwriting Supabase.
+            if (!state.system.isCloudReady) {
+              console.warn('⚠️ Cloud data not ready. Skipping save to prevent photo loss.');
+              set({ isSaving: false });
+              return;
+            }
+
+            const dataToPush = extractAppData(state);
+            dataToPush.system = { ...dataToPush.system, lastUpdatedBy: state.system.clientId };
+            
+            await pushToSupabase(dataToPush);
+            set({ isOnline: true, isSaving: false });
+          } catch (err) {
+            set({ isSaving: false });
+            set({ isOnline: false });
+          }
+          saveTimeout = null;
+        }, 1000); // 1 second debounce
       },
 
       // ── Eraylar Finans Actions ───────────────────────────
@@ -966,6 +1023,22 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      updateLocationSettings: (type, coords) => {
+        const state = get();
+        const currentTracking = state.ev.tracking || {};
+        set({ 
+          ev: { 
+            ...state.ev, 
+            tracking: { 
+              ...currentTracking, 
+              [type]: { ...(currentTracking[type] || {}), ...coords } 
+            } 
+          } 
+        });
+        get().saveToSupabase();
+        toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi! 📍`);
+      },
+
       updateAbonelik: (id, updates) => {
         const state = get();
         const updated = state.ev.abonelikler.map(a => a.id === id ? { ...a, ...updates } : a);
@@ -976,6 +1049,70 @@ const useStore = create(
       deleteAbonelik: (id) => {
         const state = get();
         set({ ev: { ...state.ev, abonelikler: state.ev.abonelikler.filter(a => a.id !== id) } });
+        get().saveToSupabase();
+      },
+
+      saveQuickExpense: (data) => {
+        const state = get();
+        const { amount, category, user } = data;
+        const today = new Date().toISOString();
+
+        const newHarcama = {
+          id: `q-${Date.now()}`,
+          title: category || 'Hızlı Harcama',
+          amount: Number(amount),
+          category: category || 'Diğer',
+          date: today.split('T')[0],
+          payer: user,
+          confirmed: true,
+          source: 'Hızlı Giriş'
+        };
+
+        const yeniBakiyeler = { ...state.kasa.bakiyeler };
+        const payerKey = (user || 'ortak').toLowerCase();
+        if (yeniBakiyeler[payerKey] !== undefined) {
+          yeniBakiyeler[payerKey] -= Number(amount);
+        }
+
+        set({ 
+          finans: {
+            ...state.finans,
+            harcamalar: [newHarcama, ...(state.finans.harcamalar || [])]
+          },
+          kasa: { ...state.kasa, bakiyeler: yeniBakiyeler }
+        });
+
+        get().addLog('Finans', `${user} tarafından ${amount}₺ hızlı harcama girişi yapıldı.`);
+        get().saveToSupabase();
+      },
+
+      saveInvoiceToFinance: (data) => {
+        const state = get();
+        const currentEv = state.ev || {};
+        const { name, amount, date, linkedCardId, type, user } = data;
+        const today = new Date().toISOString();
+
+        const newItem = { 
+          id: Date.now(), 
+          name, 
+          amount: Number(amount), 
+          date: Number(date), 
+          linkedCardId, 
+          icon: type === 'abonelik' ? '🎬' : '🏢',
+          autoPay: true,
+          createdBy: user,
+          createdAt: today
+        };
+
+        const updatedEv = { ...currentEv };
+        if (type === 'abonelik') {
+          updatedEv.abonelikler = [...(currentEv.abonelikler || []), newItem];
+        } else {
+          updatedEv.duzenliOdemeler = [...(currentEv.duzenliOdemeler || []), newItem];
+        }
+
+        set({ ev: updatedEv });
+        get().addLog('Sistem', `${user} tarafından yeni ${type === 'abonelik' ? 'abonelik' : 'ödemek'} kaydı oluşturuldu: ${name}`);
         get().saveToSupabase();
       },
 
@@ -2240,32 +2377,123 @@ const useStore = create(
           tax: 0, 
           income: 0,
           expense: 0,
+          aidat: 0,
           icon: '🏠', 
           status: 'Mülk Sahibi', 
-          taxPaid: false, 
+          taxPaid1: false, 
+          taxPaid2: false,
+          daskExpiry: '',
+          daskFile: null,
           lastUpdate: new Date().toISOString().split('T')[0],
           ...item 
         };
-        set({ kasa: { ...state.kasa, tasinmazlar: [...state.kasa.tasinmazlar, newItem] } });
+        
+        // Auto-sync with Finance
+        let updatedDuzenli = [...(state.ev.duzenliOdemeler || [])];
+        if (newItem.aidat > 0) {
+          updatedDuzenli.push({
+            id: `tasinmaz-aidat-${newItem.id}`,
+            name: `${newItem.name} Aidatı`,
+            amount: Number(newItem.aidat),
+            date: 1,
+            linkedCardId: '',
+            autoPay: false,
+            icon: '🏢',
+            isTasinmazSync: true
+          });
+        }
+
+        let updatedRekurans = [...(state.finans.rekurans || [])];
+        if (newItem.income > 0 && newItem.status === 'Kiracı Var') {
+          updatedRekurans.push({
+            id: `tasinmaz-kira-${newItem.id}`,
+            title: `${newItem.name} Kirası`,
+            amount: Number(newItem.income),
+            category: 'Kira Geliri',
+            date: new Date().toISOString().split('T')[0],
+            icon: '💰',
+            owner: 'ortak',
+            paid: false,
+            isTasinmazSync: true
+          });
+        }
+
+        set({ 
+          kasa: { ...state.kasa, tasinmazlar: [...state.kasa.tasinmazlar, newItem] },
+          ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
+          finans: { ...state.finans, rekurans: updatedRekurans }
+        });
         get().saveToSupabase();
-        toast.success('Yeni taşınmaz portföye eklendi! 🏗️');
+        toast.success('Yeni taşınmaz portföye eklendi ve finansal takibe alındı! 🏗️');
       },
 
       updateTasinmaz: (id, updates) => {
         const state = get();
-        const updated = state.kasa.tasinmazlar.map(t => 
+        const tasinmaz = state.kasa.tasinmazlar.find(t => t.id === id);
+        if (!tasinmaz) return;
+
+        const updatedTasinmazlar = state.kasa.tasinmazlar.map(t => 
           t.id === id ? { ...t, ...updates, lastUpdate: new Date().toISOString().split('T')[0] } : t
         );
-        set({ kasa: { ...state.kasa, tasinmazlar: updated } });
+
+        // Sync with Finance (Aidat)
+        let updatedDuzenli = (state.ev.duzenliOdemeler || []).filter(d => d.id !== `tasinmaz-aidat-${id}`);
+        const finalAidat = updates.aidat !== undefined ? updates.aidat : tasinmaz.aidat;
+        const finalName = updates.name !== undefined ? updates.name : tasinmaz.name;
+        
+        if (Number(finalAidat) > 0) {
+          updatedDuzenli.push({
+            id: `tasinmaz-aidat-${id}`,
+            name: `${finalName} Aidatı`,
+            amount: Number(finalAidat),
+            date: 1,
+            linkedCardId: '',
+            autoPay: false,
+            icon: '🏢',
+            isTasinmazSync: true
+          });
+        }
+
+        // Sync with Finance (Kira)
+        let updatedRekurans = (state.finans.rekurans || []).filter(r => r.id !== `tasinmaz-kira-${id}`);
+        const finalIncome = updates.income !== undefined ? updates.income : tasinmaz.income;
+        const finalStatus = updates.status !== undefined ? updates.status : tasinmaz.status;
+
+        if (Number(finalIncome) > 0 && finalStatus === 'Kiracı Var') {
+          updatedRekurans.push({
+            id: `tasinmaz-kira-${id}`,
+            title: `${finalName} Kirası`,
+            amount: Number(finalIncome),
+            category: 'Kira Geliri',
+            date: new Date().toISOString().split('T')[0],
+            icon: '💰',
+            owner: 'ortak',
+            paid: false,
+            isTasinmazSync: true
+          });
+        }
+
+        set({ 
+          kasa: { ...state.kasa, tasinmazlar: updatedTasinmazlar },
+          ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
+          finans: { ...state.finans, rekurans: updatedRekurans }
+        });
         get().saveToSupabase();
       },
 
       deleteTasinmaz: (id) => {
         const state = get();
-        const updated = state.kasa.tasinmazlar.filter(t => t.id !== id);
-        set({ kasa: { ...state.kasa, tasinmazlar: updated } });
+        const updatedTasinmazlar = state.kasa.tasinmazlar.filter(t => t.id !== id);
+        const updatedDuzenli = (state.ev.duzenliOdemeler || []).filter(d => d.id !== `tasinmaz-aidat-${id}`);
+        const updatedRekurans = (state.finans.rekurans || []).filter(r => r.id !== `tasinmaz-kira-${id}`);
+
+        set({ 
+          kasa: { ...state.kasa, tasinmazlar: updatedTasinmazlar },
+          ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
+          finans: { ...state.finans, rekurans: updatedRekurans }
+        });
         get().saveToSupabase();
-        toast.success('Taşınmaz kaydı silindi.');
+        toast.success('Taşınmaz kaydı ve ilgili finansal takipçiler silindi.');
       },
 
       addOnarimItem: (task, userKey) => {
@@ -2442,10 +2670,18 @@ const useStore = create(
       },
 
       // ── Yaşam & Tracking Actions ────────────────────────
-      updateLocationSettings: (type, coords) => {
+      updateLocationSettings: (type, updates) => {
         const currentEv = get().ev || {};
         const currentTracking = currentEv.tracking || {};
-        set({ ev: { ...currentEv, tracking: { ...currentTracking, [type]: { ...currentTracking[type], ...coords } } } });
+        set({ 
+          ev: { 
+            ...currentEv, 
+            tracking: { 
+              ...currentTracking, 
+              [type]: { ...currentTracking[type], ...updates } 
+            } 
+          } 
+        });
         get().saveToSupabase();
         toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi.`);
       },
@@ -2457,19 +2693,33 @@ const useStore = create(
         const now = Date.now();
         const today = new Date().toISOString().split('T')[0];
 
+        // Perform once every 15 mins unless type changed
+        if (tracking.lastCheck && (now - tracking.lastCheck.timestamp < 15 * 60 * 1000) && tracking.lastCheck.type === type) {
+          return;
+        }
+
         let updatedLogs = [...(tracking.logs || [])];
 
-        // Smart Gap Filling: Eğer son kayıt ile şimdiki kayıt aynı yerse ve arada boşluk varsa doldur
-        if (tracking.lastCheck && tracking.lastCheck.type === type) {
+        // Check if we are on a trip
+        const isOnTrip = (state.tatil?.trips || []).some(t => {
+          const start = new Date(t.startDate).getTime();
+          const end = new Date(t.endDate).getTime() + (24 * 60 * 60 * 1000);
+          return now >= start && now <= end;
+        });
+
+        const effectiveType = isOnTrip ? 'tatil' : type;
+
+        // Smart Gap Filling: Up to 12 hours
+        if (tracking.lastCheck && tracking.lastCheck.type === effectiveType) {
           const gapMs = now - tracking.lastCheck.timestamp;
           const gapMinutes = Math.floor(gapMs / (60 * 1000));
           
-          if (gapMinutes > 15 && gapMinutes < 720) { // En fazla 12 saatlik boşluğu doldur
+          if (gapMinutes > 15 && gapMinutes < 720) {
             const sliceCount = Math.floor(gapMinutes / 15);
             for (let i = 1; i <= sliceCount; i++) {
               updatedLogs.unshift({ 
                 date: new Date(tracking.lastCheck.timestamp + (i * 15 * 60 * 1000)).toISOString().split('T')[0],
-                type, 
+                type: effectiveType, 
                 durationMinutes: 15, 
                 timestamp: tracking.lastCheck.timestamp + (i * 15 * 60 * 1000)
               });
@@ -2477,18 +2727,17 @@ const useStore = create(
           }
         }
 
-        const newLog = { date: today, type, durationMinutes: minutes, timestamp: now };
+        const newLog = { date: today, type: effectiveType, durationMinutes: minutes, timestamp: now };
         updatedLogs = [newLog, ...updatedLogs].slice(0, 2000);
         
-        // Haftalık alışkanlık haritasını güncelle (Öğrenme)
         const dateObj = new Date(now);
         const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dateObj.getDay()];
         const hour = dateObj.getHours().toString().padStart(2, '0');
         const habitKey = `${day}-${hour}`;
         
         const currentHabits = tracking.weeklyHabits || {};
-        const slot = currentHabits[habitKey] || { home: 0, work: 0, other: 0 };
-        slot[type] = (slot[type] || 0) + 1;
+        const slot = currentHabits[habitKey] || { home: 0, work: 0, other: 0, tatil: 0 };
+        slot[effectiveType] = (slot[effectiveType] || 0) + 1;
         
         set({ 
           ev: { 
@@ -2496,8 +2745,65 @@ const useStore = create(
             tracking: { 
               ...tracking, 
               logs: updatedLogs, 
-              lastCheck: { type, timestamp: now },
+              lastCheck: { type: effectiveType, timestamp: now },
               weeklyHabits: { ...currentHabits, [habitKey]: slot }
+            } 
+          } 
+        });
+        get().saveToSupabase();
+      },
+
+      updateCachedAnalysis: (analysisData) => {
+        const currentEv = get().ev || {};
+        const tracking = currentEv.tracking || {};
+        const today = new Date().toISOString().split('T')[0];
+        set({ 
+          ev: { 
+            ...currentEv, 
+            tracking: { 
+              ...tracking, 
+              cachedAnalysis: analysisData, 
+              lastAnalysisDate: today 
+            } 
+          } 
+        });
+        get().saveToSupabase();
+      },
+
+      savePersonalityResults: (testId, traits) => {
+        const currentEv = get().ev || {};
+        const tracking = currentEv.tracking || {};
+        const personality = tracking.personality || { results: {}, history: [] };
+        const today = new Date().toISOString();
+        
+        // Context-aware type determination
+        let type = "Gelişmekte Olan";
+        if (testId === 'big5') {
+          if (traits.extraversion > 3.5) type = "Sosyal Keşifçi";
+          else if (traits.conscientiousness > 4) type = "Planlı Stratejist";
+          else if (traits.openness > 4) type = "Yaratıcı Vizyoner";
+          else if (traits.agreeableness > 4) type = "Uyumlu Arabulucu";
+        } else if (testId === 'leader') {
+          if (traits.authority > 4) type = "Otoriter Karar Verici";
+          else if (traits.vision > 4) type = "Stratejik Vizyoner";
+        } else if (testId === 'eq') {
+          if (traits.empathy > 4) type = "Empati Ustası";
+        }
+
+        const newResults = { 
+          ...personality.results, 
+          [testId]: { traits, type, date: today } 
+        };
+
+        const newHistoryItem = { testId, traits, type, date: today };
+        const newHistory = [newHistoryItem, ...(personality.history || [])].slice(0, 50);
+
+        set({ 
+          ev: { 
+            ...currentEv, 
+            tracking: { 
+              ...tracking, 
+              personality: { results: newResults, history: newHistory, lastUpdated: today }
             } 
           } 
         });

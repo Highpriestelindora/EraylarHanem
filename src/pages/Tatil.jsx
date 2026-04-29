@@ -230,6 +230,17 @@ export default function Tatil() {
   const [viewPdf, setViewPdf] = useState(null);
   const [showMap, setShowMap] = useState(false);
   const [mapTarget, setMapTarget] = useState({ name: '', address: '' });
+  const [showAlbum, setShowAlbum] = useState(false);
+  const [albumTrip, setAlbumTrip] = useState(null);
+
+  useEffect(() => {
+    const handleOpenAlbum = (e) => {
+      setAlbumTrip(e.detail);
+      setShowAlbum(true);
+    };
+    window.addEventListener('open-trip-album', handleOpenAlbum);
+    return () => window.removeEventListener('open-trip-album', handleOpenAlbum);
+  }, []);
 
   // Sync selected trip with store if it changes
   useEffect(() => {
@@ -422,6 +433,15 @@ export default function Tatil() {
       </ActionSheet>
 
       <ActionSheet
+        isOpen={showAlbum}
+        onClose={() => setShowAlbum(false)}
+        title={`📸 ${albumTrip?.city} Albümü`}
+        fullHeight
+      >
+        {albumTrip && <SeyahatAlbumu trip={albumTrip} />}
+      </ActionSheet>
+
+      <ActionSheet
         isOpen={!!viewPdf}
         onClose={() => setViewPdf(null)}
         title="📄 Belge Görüntüleyici"
@@ -605,21 +625,18 @@ function AnilarTab({ tatil, onSelectTrip }) {
 function MemoryCard({ trip, onClick }) {
   const [imgError, setImgError] = useState(false);
   const randomCover = useMemo(() => {
-    // Collect all unique photos from evaluations and main array
     const gPhotos = trip.evaluations?.gorkem?.photos || [];
     const ePhotos = trip.evaluations?.esra?.photos || [];
-    const mainPhotos = trip.photos || [];
     
-    const all = [...gPhotos, ...ePhotos, ...mainPhotos].filter(p => !!p && typeof p === 'string' && p.length > 0);
+    const all = [...gPhotos, ...ePhotos].filter(p => !!p && typeof p === 'string' && p.length > 0);
     const unique = Array.from(new Set(all));
     
     if (unique.length > 0) {
-      const idx = Math.floor(Math.random() * unique.length);
-      return unique[idx];
+      return unique[0]; // Just use the first one as cover
     }
 
     return null;
-  }, [trip.photos, trip.evaluations]);
+  }, [trip.evaluations]);
 
   return (
     <div className="memory-card-cute glass" onClick={onClick}>
@@ -1788,84 +1805,22 @@ function MemoryDetailView({ trip, onEditEval }) {
         </div>
       )}
 
-      <div className="memory-photos-section">
-        <div className="ms-header">
-           <div className="header-with-rating">
-              <h3>En Sevdiğimiz Kareler</h3>
-              <div className="user-mini-ratings">
-                {gEval?.star > 0 && <div className="um-badge gorkem">G: {gEval.star}★</div>}
-                {eEval?.star > 0 && <div className="um-badge esra">E: {eEval.star}★</div>}
-              </div>
-           </div>
+      <button 
+        className="premium-album-trigger-btn glass mt-15 mb-15"
+        onClick={() => {
+           // This will be handled by a new state in TripDetailContent
+           window.dispatchEvent(new CustomEvent('open-trip-album', { detail: trip }));
+        }}
+      >
+        <div className="pat-content">
+          <div className="pat-icons">📸✨🎞️</div>
+          <div className="pat-text">
+            <strong>Seyahat Albümü</strong>
+            <span>{uniquePhotos.length} Hatıra Fotoğrafı</span>
+          </div>
         </div>
-        <div className="m-photo-grid-premium">
-          {isJoint ? (
-            <>
-              <div className="user-photo-row">
-                <div className="user-indicator">👨🏻‍💻 Görkem {gEval?.star > 0 && <span className="u-star">{gEval.star}★</span>}</div>
-                <div className="photo-slots">
-                  {[0, 1, 2].map(i => {
-                    const imgId = `g-${i}`;
-                    const img = gEval?.photos?.[i] || uniquePhotos[i];
-                    const isBroken = brokenImgs[imgId];
-                    return (
-                      <div key={i} className="m-photo-slot glass" onClick={() => onEditEval('gorkem')}>
-                        {img && !isBroken ? (
-                          <img src={img} alt="Görkem" onError={() => handleImgError(imgId)} />
-                        ) : (
-                          <Plus size={20} opacity={0.3} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="user-photo-row mt-10">
-                <div className="user-indicator">👩 Esra {eEval?.star > 0 && <span className="u-star">{eEval.star}★</span>}</div>
-                <div className="photo-slots">
-                  {[0, 1, 2].map(i => {
-                    const imgId = `e-${i}`;
-                    const img = eEval?.photos?.[i] || uniquePhotos[i + 3];
-                    const isBroken = brokenImgs[imgId];
-                    return (
-                      <div key={i} className="m-photo-slot glass" onClick={() => onEditEval('esra')}>
-                        {img && !isBroken ? (
-                          <img src={img} alt="Esra" onError={() => handleImgError(imgId)} />
-                        ) : (
-                          <Plus size={20} opacity={0.3} />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="user-photo-row">
-              <div className="user-indicator">
-                {trip.travelers === 'gorkem' ? '👨🏻‍💻 Görkem' : '👩 Esra'}
-                {trip.evaluations?.[trip.travelers]?.star > 0 && <span className="u-star">{trip.evaluations[trip.travelers].star}★</span>}
-              </div>
-              <div className="photo-slots solo">
-                {[0, 1, 2, 3, 4, 5].map(i => {
-                  const imgId = `s-${i}`;
-                  const img = uniquePhotos[i];
-                  const isBroken = brokenImgs[imgId];
-                  return (
-                    <div key={i} className="m-photo-slot glass" onClick={() => onEditEval(trip.travelers)}>
-                      {img && !isBroken ? (
-                        <img src={img} alt="Maceramız" onError={() => handleImgError(imgId)} />
-                      ) : (
-                        <Plus size={20} opacity={0.3} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+        <ChevronRight size={18} opacity={0.5} />
+      </button>
 
       <div className="evaluations-display mt-20">
         <div className="ms-header">
@@ -1896,6 +1851,52 @@ function MemoryDetailView({ trip, onEditEval }) {
             <p>{eEval?.note || 'Not bırakılmamış.'}</p>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SeyahatAlbumu({ trip }) {
+  const gPhotos = trip.evaluations?.gorkem?.photos || [];
+  const ePhotos = trip.evaluations?.esra?.photos || [];
+  const isJoint = trip.travelers === 'ikimiz';
+
+  return (
+    <div className="seyahat-albumu-container animate-fadeIn">
+      <div className="album-intro">
+        <p>Bu seyahatin en özel anlarından seçilen {gPhotos.length + ePhotos.length} kare.</p>
+      </div>
+
+      <div className="album-sections">
+        {(isJoint || trip.travelers === 'gorkem') && (
+          <div className="album-section-v2">
+            <div className="as-user-header gorkem">👨🏻‍💻 Görkem'in Favorileri</div>
+            <div className="as-photo-grid">
+               {[0, 1, 2].map(i => (
+                 <div key={i} className="as-photo-card glass">
+                    {gPhotos[i] ? <img src={gPhotos[i]} alt="Görkem" /> : <div className="as-empty">📸</div>}
+                 </div>
+               ))}
+            </div>
+          </div>
+        )}
+
+        {(isJoint || trip.travelers === 'esra') && (
+          <div className="album-section-v2 mt-20">
+            <div className="as-user-header esra">👩 Esra'nın Favorileri</div>
+            <div className="as-photo-grid">
+               {[0, 1, 2].map(i => (
+                 <div key={i} className="as-photo-card glass">
+                    {ePhotos[i] ? <img src={ePhotos[i]} alt="Esra" /> : <div className="as-empty">📸</div>}
+                 </div>
+               ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="album-footer mt-30">
+        <p>Anılar paylaştıkça çoğalır... ❤️</p>
       </div>
     </div>
   );
