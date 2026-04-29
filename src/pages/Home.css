@@ -51,16 +51,30 @@
   right: -2px;
   width: 10px;
   height: 10px;
-  background: #10b981;
   border: 2px solid white;
   border-radius: 50%;
+}
+
+.supabase-status-dot.online {
+  background: #10b981;
   animation: pulse-green 2s infinite;
+}
+
+.supabase-status-dot.offline {
+  background: #ef4444;
+  animation: pulse-red 2s infinite;
 }
 
 @keyframes pulse-green {
   0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
   70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
   100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 .pet-link {
@@ -187,9 +201,20 @@
 /* 2-Column Module Grid - Matching Screenshot */
 .premium-module-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 15px;
   padding: 25px 20px;
+}
+
+@media (max-width: 360px) {
+  .premium-module-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .premium-module-card {
+    aspect-ratio: auto;
+    padding: 20px 15px;
+  }
 }
 
 .premium-module-card {

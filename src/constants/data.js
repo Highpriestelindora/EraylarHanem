@@ -3490,14 +3490,12 @@ export const INITIAL_TRIPS = [
   {
     id:'t1',title:'Marsilya',country:'Fransa',city:'Marsilya',startDate:'2023-02-03',endDate:'2023-02-07',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:true,status:'tamamlandi',notes:'İlk yurt dışı gezimiz ❤️',
     accommodation: { hotel: 'New Hotel Le Quai - Vieux Port', address: 'Vieux Port, Marsilya, Fransa' },
-    evaluations: { gorkem: { star: 10, note: 'Harikaydı!' }, esra: { star: 10, note: 'Unutulmaz...' } },
-    photos: ['https://images.unsplash.com/photo-1503917988258-f87a78e3c995', 'https://images.unsplash.com/photo-1555881400-74d7acaacd8b']
+    evaluations: { gorkem: { star: 10, note: 'Harikaydı!' }, esra: { star: 10, note: 'Unutulmaz...' } }
   },
   {
     id:'t2',title:'Londra',country:'İngiltere',city:'Londra',startDate:'2024-02-02',endDate:'2024-02-08',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:false,status:'tamamlandi',notes:'',
     accommodation: { hotel: 'AirBnb', address: 'Piccadilly Circus, Londra' },
-    evaluations: { gorkem: { star: 9, note: 'Yağmurluydu ama güzeldi.' }, esra: { star: 10, note: 'Müzeler harikaydı.' } },
-    photos: ['https://images.unsplash.com/photo-1513635269975-59663e0ac1ad']
+    evaluations: { gorkem: { star: 9, note: 'Yağmurluydu ama güzeldi.' }, esra: { star: 10, note: 'Müzeler harikaydı.' } }
   },
   {
     id:'t_saraybosna',title:'Saraybosna & Kotor',country:'Bosna Hersek',city:'Saraybosna',startDate:'2024-09-19',endDate:'2024-09-24',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:false,status:'tamamlandi',notes:'Balkanlar turu!',

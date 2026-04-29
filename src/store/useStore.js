@@ -28,8 +28,10 @@ const DEFAULT_STATE = {
       { id: 2, name: 'Araç Kredisi', total: 400000, remaining: 120000, monthly: 8500, due_day: 5, type: 'kredi' }
     ],
     kartlar: [
-      { id: 1, name: 'Bonus Platinum', limit: 150000, balance: 45000, cutoff_day: 25, owner: 'gorkem', color: '#1e293b' },
-      { id: 2, name: 'Axess Free', limit: 80000, balance: 12000, cutoff_day: 10, owner: 'esra', color: '#7c3aed' }
+      { id: 'gorkem-ziraat', name: 'Ziraat Kart', limit: 150000, balance: 0, cutoff_day: 25, owner: 'gorkem', color: '#e11d48' }, // Red for Ziraat
+      { id: 'gorkem-ykb', name: 'Yapı Kredi', limit: 120000, balance: 0, cutoff_day: 15, owner: 'gorkem', color: '#1d4ed8' }, // Blue for YKB
+      { id: 'esra-garanti', name: 'Garanti Bonus', limit: 100000, balance: 0, cutoff_day: 10, owner: 'esra', color: '#15803d' }, // Green for Garanti
+      { id: 'esra-enpara', name: 'Enpara Kart', limit: 60000, balance: 0, cutoff_day: 5, owner: 'esra', color: '#5b21b6' } // Purple for Enpara
     ],
     rekurans: [
       { id: 1, title: 'Netflix', amount: 229, category: 'Abonelik', date: '2026-04-25', icon: '📺', owner: 'ortak', paid: false },
@@ -143,6 +145,7 @@ const DEFAULT_STATE = {
     version: '2.29.1',
     globalScore: 85,
     onboardingComplete: false,
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     notifications: [],
     achievements: [
       { id: 'saving_king', title: 'Tasarruf Kralı', earned: true, icon: '👑' },
@@ -228,10 +231,19 @@ const DEFAULT_STATE = {
     ustaRehberi: [
       { id: 1, name: 'Tesisatçı Ahmet Usta', phone: '0555 123 4567', category: 'Tesisat', rating: 5 }
     ],
+    duzenliOdemeler: [
+      { id: 201, name: 'Site Aidatı', amount: 1500, date: 1, linkedCardId: 'esra-garanti', autoPay: true, icon: '🏢' },
+      { id: 202, name: 'Bireysel Emeklilik (BES)', amount: 2500, date: 5, linkedCardId: 'gorkem-ziraat', autoPay: true, icon: '🛡️' },
+      { id: 203, name: 'Kira Ödemesi', amount: 0, date: 1, linkedCardId: 'gorkem-ykb', autoPay: false, icon: '🔑' },
+      { id: 204, name: 'İnternet', provider: 'Superonline', amount: 399, date: 25, linkedCardId: 'gorkem-ykb', autoPay: true, icon: '🌐', customerNo: '554433', contractEndDate: '2025-10-15' },
+      { id: 205, name: 'Digiturk', provider: 'Bein Media', amount: 249, date: 3, linkedCardId: 'gorkem-ziraat', autoPay: true, icon: '⚽', customerNo: '100223344' }
+    ],
     abonelikler: [
-      { id: 1, name: 'Netflix', amount: 189, date: '2026-04-15' },
-      { id: 2, name: 'YouTube Prem.', amount: 59, date: '2026-04-10' },
-      { id: 3, name: 'Gemini Advanced', amount: 719, date: '2026-04-27' }
+      { id: 101, name: 'Netflix', amount: 229, date: 15, linkedCardId: 'esra-enpara', autoPay: true, icon: '🎬', startDate: '2021-05-20' },
+      { id: 102, name: 'YouTube Prem.', amount: 59, date: 10, linkedCardId: 'esra-enpara', autoPay: true, icon: '📺', startDate: '2022-03-15' },
+      { id: 103, name: 'Gemini Advanced', amount: 719, date: 27, linkedCardId: 'gorkem-ziraat', autoPay: true, icon: '🧠', startDate: '2024-02-01' },
+      { id: 104, name: 'Spotify Family', amount: 99, date: 22, linkedCardId: 'esra-garanti', autoPay: true, icon: '🎵' },
+      { id: 105, name: 'Amazon Prime', amount: 39, date: 12, linkedCardId: 'gorkem-ykb', autoPay: true, icon: '📦' }
     ],
     bitkiler: [
       { id: 1, name: 'Salon Çiçeği', lastWatered: '2026-04-22', interval: 3 }
@@ -269,7 +281,14 @@ const DEFAULT_STATE = {
     },
     personalSafe: {
       locked: true,
-      notes: ""
+      activePageIndex: 0,
+      pages: [
+        { notes: "", stamps: [] },
+        { notes: "", stamps: [] },
+        { notes: "", stamps: [] },
+        { notes: "", stamps: [] },
+        { notes: "", stamps: [] }
+      ]
     }
   },
   pet: {
@@ -899,6 +918,59 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      addDuzenliOdeme: (data) => {
+        const state = get();
+        const newItem = { ...data, id: Date.now() };
+        set({ ev: { ...state.ev, duzenliOdemeler: [...(state.ev.duzenliOdemeler || []), newItem] } });
+        get().saveToSupabase();
+      },
+      updateDuzenliOdeme: (id, updates) => {
+        const state = get();
+        const updated = state.ev.duzenliOdemeler.map(i => i.id === id ? { ...i, ...updates } : i);
+        set({ ev: { ...state.ev, duzenliOdemeler: updated } });
+        get().saveToSupabase();
+      },
+      deleteDuzenliOdeme: (id) => {
+        const state = get();
+        set({ ev: { ...state.ev, duzenliOdemeler: state.ev.duzenliOdemeler.filter(i => i.id !== id) } });
+        get().saveToSupabase();
+      },
+      addFinanceExpense: (expense) => {
+        const state = get();
+        const newExpense = { ...expense, id: Date.now(), timestamp: new Date().toISOString() };
+        const currentHarcamalar = state.ev.finans?.harcamalar || [];
+        set({ 
+          ev: { 
+            ...state.ev, 
+            finans: { 
+              ...state.ev.finans, 
+              harcamalar: [...currentHarcamalar, newExpense] 
+            } 
+          } 
+        });
+        get().saveToSupabase();
+      },
+
+      addAbonelik: (abo) => {
+        const state = get();
+        const newAbo = { ...abo, id: Date.now() };
+        set({ ev: { ...state.ev, abonelikler: [...state.ev.abonelikler, newAbo] } });
+        get().saveToSupabase();
+      },
+
+      updateAbonelik: (id, updates) => {
+        const state = get();
+        const updated = state.ev.abonelikler.map(a => a.id === id ? { ...a, ...updates } : a);
+        set({ ev: { ...state.ev, abonelikler: updated } });
+        get().saveToSupabase();
+      },
+
+      deleteAbonelik: (id) => {
+        const state = get();
+        set({ ev: { ...state.ev, abonelikler: state.ev.abonelikler.filter(a => a.id !== id) } });
+        get().saveToSupabase();
+      },
+
       unlockSafe: (pass) => {
         const state = get();
         if (pass === state.ev.guvenlik.safePassword) {
@@ -915,8 +987,50 @@ const useStore = create(
 
       updatePersonalSafeNote: (note) => {
         const state = get();
-        set({ ev: { ...state.ev, personalSafe: { ...state.ev.personalSafe, notes: note } } });
+        const safe = state.ev.personalSafe || {};
+        const activeIdx = safe.activePageIndex || 0;
+        let pages = Array.isArray(safe.pages) ? [...safe.pages] : [
+          { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }
+        ];
+        
+        pages[activeIdx] = { ...pages[activeIdx], notes: note };
+        
+        set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
         get().saveToSupabase();
+      },
+
+      addPersonalSafeStamp: (stamp) => {
+        const state = get();
+        const safe = state.ev.personalSafe || {};
+        const activeIdx = safe.activePageIndex || 0;
+        let pages = Array.isArray(safe.pages) ? [...safe.pages] : [
+          { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }
+        ];
+        
+        const currentStamps = pages[activeIdx].stamps || [];
+        pages[activeIdx] = { ...pages[activeIdx], stamps: [...currentStamps, stamp] };
+        
+        set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
+        get().saveToSupabase();
+      },
+
+      clearPersonalSafeStamps: () => {
+        const state = get();
+        const safe = state.ev.personalSafe || {};
+        const activeIdx = safe.activePageIndex || 0;
+        let pages = Array.isArray(safe.pages) ? [...safe.pages] : [
+          { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }
+        ];
+        
+        pages[activeIdx] = { ...pages[activeIdx], stamps: [] };
+        
+        set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
+        get().saveToSupabase();
+      },
+
+      setPersonalSafePage: (idx) => {
+        const state = get();
+        set({ ev: { ...state.ev, personalSafe: { ...state.ev.personalSafe, activePageIndex: idx } } });
       },
 
       resetAllCriticalStocks: async () => {
@@ -1036,7 +1150,8 @@ const useStore = create(
 
       deleteTrip: (tripId) => {
         const state = get();
-        const updatedTrips = state.tatil.trips.filter(t => t.id !== tripId);
+        // Convert to string to ensure matching if coming from different sources
+        const updatedTrips = state.tatil.trips.filter(t => String(t.id) !== String(tripId));
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().addLog('Tatil Silindi', 'Bir tatil planı silindi. 🗑️');
         get().saveToSupabase();
@@ -1078,23 +1193,37 @@ const useStore = create(
       },
 
       completeTripEvaluation: (tripId, person, evalData) => {
-      const state = get();
-      const updatedTrips = state.tatil.trips.map(t => {
-        if (t.id === tripId) {
-          const newEvals = { ...t.evaluations, [person]: evalData };
-          // Logic for auto-completion
-          let newStatus = t.status;
-          if (t.travelers === 'ikimiz') {
-            if (newEvals.gorkem && newEvals.esra) newStatus = 'completed';
-          } else {
-            newStatus = 'completed';
+        const state = get();
+        const updatedTrips = state.tatil.trips.map(t => {
+          if (String(t.id) === String(tripId)) {
+            const newEvals = { ...t.evaluations, [person]: evalData };
+            let newStatus = t.status;
+            
+            // Auto-completion logic
+            if (t.travelers === 'ikimiz') {
+              if (newEvals.gorkem && newEvals.esra) newStatus = 'completed';
+            } else {
+              newStatus = 'completed';
+            }
+
+            // Sync photos to main trip object if available
+            const allGalleryPhotos = [];
+            if (newEvals.gorkem?.photos) newEvals.gorkem.photos.forEach(p => { if(p) allGalleryPhotos.push(p); });
+            if (newEvals.esra?.photos) newEvals.esra.photos.forEach(p => { if(p) allGalleryPhotos.push(p); });
+
+            return { 
+              ...t, 
+              evaluations: newEvals, 
+              status: newStatus,
+              photos: allGalleryPhotos.length > 0 ? allGalleryPhotos.slice(0, 6) : t.photos
+            };
           }
-          return { ...t, evaluations: newEvals, status: newStatus };
-        }
-        return t;
-      });
-      set({ tatil: { ...state.tatil, trips: updatedTrips } });
-    },
+          return t;
+        });
+        set({ tatil: { ...state.tatil, trips: updatedTrips } });
+        get().addLog('Seyahat Değerlendirmesi', `${person} seyahati değerlendirdi.`);
+        get().saveToSupabase();
+      },
 
     syncValizToDepo: (itemText, category) => {
       const state = get();
@@ -1126,24 +1255,7 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      completeTripEvaluation: (tripId, person, evaluation) => {
-        const state = get();
-        const updatedTrips = state.tatil.trips.map(t => {
-          if (t.id === tripId) {
-            const newEvals = { ...t.evaluations, [person]: evaluation };
-            let newStatus = t.status;
-            // Both must evaluate to complete
-            if (newEvals.gorkem && newEvals.esra) {
-              newStatus = 'tamamlandi';
-            }
-            return { ...t, evaluations: newEvals, status: newStatus };
-          }
-          return t;
-        });
-        set({ tatil: { ...state.tatil, trips: updatedTrips } });
-        get().addLog('Seyahat Değerlendirmesi', `${person} seyahati değerlendirdi.`);
-        get().saveToSupabase();
-      },
+
 
       toggleTripChecklist: (tripId, itemId) => {
         const state = get();
@@ -2603,14 +2715,12 @@ const useStore = create(
         get().addLog('Hedef Tamamlandı', `🌟 Tebrikler! "${goal.title}" hedefine ulaşıldı!`);
         get().saveToSupabase();
       },
-
-      // ── Tatil Actions ──────────────────────────────────
-      deleteTrip: (id) => {
-        const state = get();
-        const updatedTrips = state.tatil.trips.filter(t => t.id !== id);
-        set({ tatil: { ...state.tatil, trips: updatedTrips } });
-        get().saveToSupabase();
+      
+      setOnlineStatus: (status) => {
+        set(state => ({ system: { ...state.system, isOnline: status } }));
       },
+
+
 
       // ── Depo v3.5 Foundation (Phase 1) ────────────────
       addDepoItem: (itemData) => {
@@ -2965,19 +3075,28 @@ const useStore = create(
         if (merged.saglik && !Array.isArray(merged.saglik.randevular)) merged.saglik.randevular = [];
         if (merged.tatil) {
           if (!Array.isArray(merged.tatil.trips)) merged.tatil.trips = [];
-          // Migration for new trip structure (departure/return)
+          
+          // Protection & Migration
           merged.tatil.trips = merged.tatil.trips.map(t => {
+            const initialT = initialState.tatil?.trips?.find(it => it.id === t.id);
+            
+            // Protect photos/evaluations from being reset to mock data if they exist in persisted state
+            const photos = (t.photos && t.photos.length > 0 && !t.photos[0].includes('unsplash')) ? t.photos : (initialT?.photos || []);
+            const evaluations = t.evaluations || initialT?.evaluations || {};
+
             const hasNewStructure = t.transportation && t.transportation.departure;
             if (!hasNewStructure) {
               return {
                 ...t,
+                photos,
+                evaluations,
                 transportation: { 
                   departure: { flightNo: t.transportation?.flightNo || '', airline: t.transportation?.airline || '', pnr: t.transportation?.pnr || '', time: t.transportation?.time || '', status: 'Planlandı' },
                   return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
                 }
               };
             }
-            return t;
+            return { ...t, photos, evaluations };
           });
 
           // Specially update Viyana trip if it's the one from the screenshot
@@ -3004,6 +3123,10 @@ const useStore = create(
 
 if (typeof window !== 'undefined') {
   window.useStore = useStore;
+  
+  // Connectivity Listeners
+  window.addEventListener('online', () => useStore.getState().setOnlineStatus(true));
+  window.addEventListener('offline', () => useStore.getState().setOnlineStatus(false));
 }
 
 export default useStore;

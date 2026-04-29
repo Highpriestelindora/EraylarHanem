@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "index.md",
+                "file": "entities/ev_ve_yasam.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "index"
+              "title": "ev_ve_yasam"
             }
           }
         ]
@@ -44,7 +44,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "Dosya Gezgini"
+              "title": "Files"
             }
           },
           {
@@ -174,19 +174,20 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Hızlı geçişi aç": false,
-      "graph:Grafik görünümünü aç": false,
-      "canvas:Yeni tuval oluşturun": false,
-      "daily-notes:Bugünün Notunu Aç": false,
-      "templates:Şablon ekle": false,
-      "command-palette:Komut paletini aç": false,
-      "bases:Yeni taban oluştur": false
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
     }
   },
   "active": "604643cf77e47817",
   "lastOpenFiles": [
-    "entities/tatil.md",
+    "log.md",
     "index.md",
+    "entities/tatil.md",
     "entities/ev_ve_yasam.md",
     "entities/finans_ve_kasa.md",
     "entities/aracim.md",
@@ -199,7 +200,6 @@
     "raw/legacy/Index.md",
     "entities/mutfak_modulu.md",
     "concepts/merkezi_state_yonetimi.md",
-    "log.md",
     "concepts/senkronizasyon_stratejisi.md",
     "entities/sosyal_ve_etkinlikler.md",
     "entities/saglik.md",

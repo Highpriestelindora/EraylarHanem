@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Lightbulb, Wrench, ShieldCheck, 
-  CheckCircle2, Plus, Trash2, 
+  CheckCircle2, Plus, Trash2, Edit2, 
   AlertTriangle, DollarSign, Calendar, Sparkles, Clock,
   Droplets, Zap, Flame, Globe, ChevronRight, ChevronDown,
   Shield, Key, Phone, User, Star, MoreVertical,
   PlusCircle, ArrowLeft, Camera, Settings, Info,
   Building, FileText, Landmark, Home, MapPin, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode,
-  Book, Lock, Unlock
+  Book, Lock, Unlock, MousePointer2, Stamp as StampIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -30,11 +30,14 @@ export default function Ev() {
   const [showWifiMain, setShowWifiMain] = useState(false);
   const navigate = useNavigate();
   const { 
-    ev, kasa, users, currentUser, setCurrentUser, addFatura, addRepairItem, addBakimItem, 
+    ev, kasa, users, currentUser, setCurrentUser, addRepairItem, addBakimItem, 
     toggleHomeTask, deleteHomeTask, updateHomeSecurity, 
     updateTasinmaz, addTasinmaz, deleteTasinmaz,
     addPeriodicBakim, resetPeriodicBakim, deletePeriodicBakim,
-    deleteDepoItem, clearDepo
+    deleteDepoItem, clearDepo,
+    addAbonelik, updateAbonelik, deleteAbonelik,
+    addDuzenliOdeme, updateDuzenliOdeme, deleteDuzenliOdeme,
+    addFinanceExpense
   } = useStore();
 
   const { 
@@ -51,7 +54,44 @@ export default function Ev() {
   const [showMainPass, setShowMainPass] = useState(false);
   const [safeInput, setSafeInput] = useState('');
   const [safeError, setSafeError] = useState(false);
-  const { unlockSafe, lockSafe } = useStore();
+  const { 
+    unlockSafe, lockSafe, addPersonalSafeStamp, clearPersonalSafeStamps,
+    setPersonalSafePage, updatePersonalSafeNote 
+  } = useStore();
+  const notebookRef = React.useRef(null);
+  const [isStamping, setIsStamping] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [editingAbo, setEditingAbo] = useState(null);
+  const [editingFatura, setEditingFatura] = useState(null);
+  const [faturaInput, setFaturaInput] = useState(null); // For manual amount entry
+
+  // State Migration & Initialization for Abonelik/Fatura/Kartlar
+  React.useEffect(() => {
+    if (activeTab === 'abonelik') {
+      const state = useStore.getState();
+
+      // Ensure Credit Cards are initialized
+      if (!ev.finans?.kartlar || ev.finans.kartlar.length === 0) {
+        const defaultKartlar = [
+          { id: 'gorkem-ziraat', name: 'Ziraat Kart', owner: 'Görkem', type: 'Credit', color: '#e11d48' },
+          { id: 'gorkem-ykb', name: 'Yapı Kredi', owner: 'Görkem', type: 'Credit', color: '#2563eb' },
+          { id: 'esra-garanti', name: 'Garanti Bonus', owner: 'Esra', type: 'Credit', color: '#16a34a' },
+          { id: 'esra-enpara', name: 'Enpara Kart', owner: 'Esra', type: 'Debit/Credit', color: '#7c3aed' }
+        ];
+        state.updateHomeSecurity('finans', { ...ev.finans, kartlar: defaultKartlar });
+      }
+
+      // Ensure Regular Payments are initialized
+      if (!ev.duzenliOdemeler || ev.duzenliOdemeler.length === 0) {
+        const defaultDuzenli = [
+          { id: 201, name: 'Site Aidatı', amount: 1500, date: 1, linkedCardId: 'esra-garanti', autoPay: true, icon: '🏢' },
+          { id: 202, name: 'Bireysel Emeklilik (BES)', amount: 2500, date: 5, linkedCardId: 'gorkem-ziraat', autoPay: true, icon: '🛡️' },
+          { id: 203, name: 'Kira Ödemesi', amount: 0, date: 1, linkedCardId: 'gorkem-ykb', autoPay: false, icon: '🔑' }
+        ];
+        state.updateHomeSecurity('duzenliOdemeler', defaultDuzenli);
+      }
+    }
+  }, [activeTab]);
 
   const requestConfirm = (message, onConfirm) => {
     setShowConfirm({ open: true, message, onConfirm });
@@ -458,58 +498,58 @@ export default function Ev() {
           <div className="abonelik-view animate-fadeIn">
             <div className="section-header-v2">
               <h3>💳 Abonelikler & Düzenli Ödemeler</h3>
-              <button className="add-btn-mini" onClick={() => {
-                const name = prompt('Abonelik/Fatura Adı:');
-                if(name) toast.success('Yeni ödeme eklendi!');
-              }}><Plus size={14} /></button>
+              <button className="add-btn-mini" title="Yeni Abonelik Ekle" onClick={() => setEditingAbo({ name: '', amount: 0, date: 1, linkedCardId: '', autoPay: true, icon: '🎬', startDate: '' })}>
+                <Plus size={14} />
+              </button>
             </div>
 
-            {/* Monthly Total Summary */}
-            <div className="monthly-bill-summary glass mt-12 mb-24">
-               <div className="mbs-info">
-                 <span>Aylık Sabit Giderler</span>
-                 <strong>{formatMoney([...faturalar, ...abonelikler].reduce((a, b) => a + (Number(b.amount) || 0), 0))}</strong>
-               </div>
-               <div className="mbs-stats">
-                 <div className="mbs-stat-item">
-                   <small>Ödenen</small>
-                   <strong style={{ color: '#10b981' }}>{formatMoney(faturalar.filter(f => f.status === 'Ödendi').reduce((a, b) => a + (Number(b.amount) || 0), 0))}</strong>
-                 </div>
-                 <div className="mbs-stat-item">
-                   <small>Bekleyen</small>
-                   <strong style={{ color: '#ef4444' }}>{formatMoney(faturalar.filter(f => f.status !== 'Ödendi').reduce((a, b) => a + (Number(b.amount) || 0), 0))}</strong>
-                 </div>
-               </div>
+
+
+            {/* 1. ABONELİKLER LIST */}
+            <div className="abo-list-section">
+              <h4 className="abo-sub-title">Aktif Abonelikler</h4>
+              <div className="vize-style-grid">
+                {abonelikler.map(abo => (
+                  <div key={abo.id} className="vize-card glass">
+                    <div className="vize-flag">{abo.icon || '🎬'}</div>
+                    <div className="vize-info">
+                      <strong>{abo.name}</strong>
+                      <span>{formatMoney(abo.amount)} • Her ayın {abo.date}. günü</span>
+                    </div>
+                    <div className="vize-badge paid">Aktif</div>
+                    <div className="vize-actions">
+                      <button className="vize-edit" onClick={() => setEditingAbo(abo)}><Edit2 size={16} /></button>
+                      <button className="vize-delete" onClick={() => requestConfirm(`${abo.name} aboneliğini silmek istediğinize emin misiniz?`, () => deleteAbonelik(abo.id))}><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="bills-grid-v3">
-              {[...faturalar, ...abonelikler].map(bill => (
-                <div key={bill.id} className={`bill-card-v3 glass ${bill.status === 'Ödendi' ? 'paid' : ''}`}>
-                  <div className="bc-top">
-                    <div className="bc-icon">{bill.icon || (bill.name?.includes('Netflix') ? '🎬' : '💳')}</div>
-                    <div className="bc-info">
-                      <strong>{bill.name}</strong>
-                      <small>{bill.provider || 'Abonelik'}</small>
+            {/* 2. DÜZENLİ ÖDEMELER LIST */}
+            <div className="abo-list-section mt-24">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h4 className="abo-sub-title">Düzenli Ödemeler (Aidat, BES vb.)</h4>
+                <button className="fatura-giris-btn" onClick={() => setEditingFatura({ name: '', amount: 0, linkedCardId: '', icon: '🔧' })}>
+                   <Wrench size={14} /> Harcama/Fatura Gir
+                </button>
+              </div>
+              <div className="vize-style-grid">
+                {(ev.duzenliOdemeler || []).map(d => (
+                  <div key={d.id} className="vize-card glass">
+                    <div className="vize-flag">{d.icon || '🏢'}</div>
+                    <div className="vize-info">
+                      <strong>{d.name}</strong>
+                      <span>{formatMoney(d.amount)} • Her ayın {d.date}. günü</span>
                     </div>
-                    <div className="bc-amount">{formatMoney(bill.amount)}</div>
-                  </div>
-                  <div className="bc-bottom">
-                    <div className="bc-due">
-                      <Calendar size={12} />
-                      <span>{bill.dueDate || bill.date || 'Belirsiz'}</span>
+                    <div className="vize-badge paid">Planlı</div>
+                    <div className="vize-actions">
+                      <button className="vize-edit" onClick={() => setEditingAbo({...d, _type: 'duzenli'})}><Edit2 size={16} /></button>
+                      <button className="vize-delete" onClick={() => requestConfirm(`${d.name} kaydını silmek istediğinize emin misiniz?`, () => deleteDuzenliOdeme(d.id))}><Trash2 size={16} /></button>
                     </div>
-                    {bill.status === 'Ödendi' ? (
-                      <div className="bc-paid-badge"><CheckCircle2 size={12} /> Ödendi</div>
-                    ) : (
-                      <button className="bc-pay-btn" onClick={() => {
-                        requestConfirm(`${bill.name} ödemesini onaylıyor musunuz? Finansa aktarılacak.`, () => {
-                          toast.success('Ödeme tamamlandı ve Finans modülüne işlendi! 💸');
-                        });
-                      }}>Şimdi Öde</button>
-                    )}
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -649,30 +689,148 @@ export default function Ev() {
                         <p>Erişim kodunu giriniz</p>
                       </div>
                     </div>
-                  ) : (
-                    <div className="vs-notebook-paper animate-fadeIn">
-                      <div className="notebook-header">
-                         <span className="notebook-date">{new Date().toLocaleDateString('tr-TR')}</span>
+                  ) : (() => {
+                    const safe = ev.personalSafe || {};
+                    const activeIdx = safe.activePageIndex || 0;
+                    const pages = Array.isArray(safe.pages) ? safe.pages : [];
+                    const activePage = pages[activeIdx] || { notes: '', stamps: [] };
+                    
+                    return (
+                    <div 
+                      ref={notebookRef}
+                      className={`vs-notebook-paper animate-fadeIn ${isStamping ? 'stamping-mode' : ''}`}
+                      onMouseMove={(e) => {
+                        if (!isStamping || !notebookRef.current) return;
+                        const rect = notebookRef.current.getBoundingClientRect();
+                        setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                      }}
+                      onClick={(e) => {
+                        if (!isStamping || !notebookRef.current) return;
+                        const rect = notebookRef.current.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const y = e.clientY - rect.top;
+                        
+                        const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+                        const userSeal = users[userKey]?.seal || { icon: 'E', color: '#7c3aed' };
+                        
+                        addPersonalSafeStamp({ x, y, ...userSeal });
+                        setIsStamping(false);
+                        toast.success('Mühür vuruldu! 🖋️');
+                      }}
+                    >
+                      {/* Stamp Home Base */}
+                      <div 
+                        className={`stamp-home-base ${isStamping ? 'empty' : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsStamping(true);
+                        }}
+                        title="Mührü Al"
+                      >
+                        {!isStamping && (
+                          <div className="vintage-stamp-handle" style={{ transform: 'scale(0.8)' }}>
+                            <div className="handle-top" />
+                            <div className="handle-body" />
+                            <div className="handle-base" />
+                          </div>
+                        )}
+                        <div className="base-shadow" />
                       </div>
+
+                      <div className="notebook-header" style={{ display: 'flex', justifyContent: 'center', position: 'relative', marginBottom: '10px' }}>
+                         <div className="notebook-pagination">
+                            <button onClick={(e) => { e.stopPropagation(); if(activeIdx > 0) setPersonalSafePage(activeIdx - 1); }} disabled={activeIdx === 0}>‹</button>
+                            <span>Sayfa {activeIdx + 1} / 5</span>
+                            <button onClick={(e) => { e.stopPropagation(); if(activeIdx < 4) setPersonalSafePage(activeIdx + 1); }} disabled={activeIdx === 4}>›</button>
+                         </div>
+                         
+                         <button 
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             requestConfirm('Bu sayfanın mühürlerini temizlemek istediğinize emin misiniz?', clearPersonalSafeStamps);
+                           }}
+                           className="notebook-clear-btn"
+                         >Temizle</button>
+
+                         <span className="notebook-date-v2">{new Date().toLocaleDateString('tr-TR')}</span>
+                      </div>
+                      
                       <textarea 
                         className="notebook-textarea"
-                        placeholder="Eski sandıktan çıkan hatıralar gibi..."
-                        defaultValue={ev.personalSafe?.notes || ''}
+                        placeholder="Yazmaya başlayın..."
+                        value={activePage.notes || ''}
+                        onChange={(e) => updatePersonalSafeNote(e.target.value)}
                         spellCheck="false"
                       />
-                      <div className="notebook-footer">
-                         <div className="vintage-stamp">
-                            <span className="stamp-text">ERAYLAR</span>
-                            <span className="stamp-sub">RESMİ MÜHÜR</span>
-                         </div>
-                         <div className="personal-signature">Eraylar Hanem</div>
-                      </div>
+
+                      {/* Render Placed Stamps */}
+                      {(activePage.stamps || []).map((s, idx) => {
+                        const isEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(s.icon);
+                        return (
+                          <div 
+                            key={idx} 
+                            className="placed-seal-stamp animate-popIn"
+                            style={{ 
+                              position: 'absolute', 
+                              left: s.x, 
+                              top: s.y, 
+                              transform: 'translate(-50%, -50%) rotate(-15deg)',
+                              color: s.color,
+                              pointerEvents: 'none',
+                              opacity: 0.8
+                            }}
+                          >
+                            <div style={{ 
+                              width: '60px', 
+                              height: '60px', 
+                              borderRadius: '50%', 
+                              border: `2px double ${s.color}`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: `${s.color}08`
+                            }}>
+                              <span style={{ 
+                                fontFamily: isEmoji ? 'inherit' : '"Great Vibes", cursive', 
+                                fontSize: isEmoji ? '24px' : (s.icon.length > 3 ? '14px' : '28px'),
+                                fontWeight: 'bold'
+                              }}>
+                                {s.icon}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {/* Floating Stamping Tool */}
+                      {isStamping && (
+                        <div 
+                          className="floating-stamp-tool"
+                          style={{ 
+                            position: 'absolute', 
+                            left: mousePos.x, 
+                            top: mousePos.y, 
+                            transform: 'translate(-50%, -100%)',
+                            pointerEvents: 'none',
+                            zIndex: 100
+                          }}
+                        >
+                          <div className="vintage-stamp-handle">
+                            <div className="handle-top" />
+                            <div className="handle-body" />
+                            <div className="handle-base" />
+                          </div>
+                        </div>
+                      )}
+
+
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
-             </div>
-          </div>
-        )}
+              </div>
+            </div>
+          )}
 
       </div>
       <ActionSheet
@@ -690,6 +848,153 @@ export default function Ev() {
           />
         )}
       </ActionSheet>
+
+      {/* ActionSheet for Subscription Edit */}
+      <ActionSheet
+        isOpen={!!editingAbo}
+        onClose={() => setEditingAbo(null)}
+        title={editingAbo?.id ? 'Abonelik Düzenle' : 'Yeni Abonelik'}
+      >
+        {editingAbo && (
+          <div className="edit-form-v2">
+            <div className="form-group-v2">
+              <label>Abonelik Adı</label>
+              <input 
+                type="text" 
+                value={editingAbo.name} 
+                onChange={(e) => setEditingAbo({...editingAbo, name: e.target.value})}
+                placeholder="Örn: Netflix"
+              />
+            </div>
+            <div className="form-row-v2">
+              <div className="form-group-v2">
+                <label>Aylık Tutar</label>
+                <input 
+                  type="number" 
+                  value={editingAbo.amount} 
+                  onChange={(e) => setEditingAbo({...editingAbo, amount: Number(e.target.value)})}
+                />
+              </div>
+              <div className="form-group-v2">
+                <label>Ödeme Günü</label>
+                <input 
+                  type="number" 
+                  min="1" max="31"
+                  value={editingAbo.date} 
+                  onChange={(e) => setEditingAbo({...editingAbo, date: Number(e.target.value)})}
+                />
+              </div>
+            </div>
+            <div className="form-group-v2">
+              <label>Ödeme Yöntemi (Kredi Kartı)</label>
+              <select 
+                value={editingAbo.linkedCardId} 
+                onChange={(e) => setEditingAbo({...editingAbo, linkedCardId: e.target.value})}
+              >
+                <option value="">Kart Seçin</option>
+                {(ev.finans?.kartlar || []).map(k => (
+                  <option key={k.id} value={k.id}>{k.name} ({k.owner})</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group-v2">
+              <label>İlk Abonelik Tarihi</label>
+              <input 
+                type="date" 
+                value={editingAbo.startDate || ''} 
+                onChange={(e) => setEditingAbo({...editingAbo, startDate: e.target.value})}
+              />
+            </div>
+            <div className="form-toggle-row">
+              <label>Otomatik Ödeme Talimatı</label>
+              <input 
+                type="checkbox" 
+                checked={editingAbo.autoPay} 
+                onChange={(e) => setEditingAbo({...editingAbo, autoPay: e.target.checked})}
+              />
+            </div>
+            <button className="save-btn-v2" onClick={() => {
+              if (editingAbo._type === 'duzenli') {
+                if (editingAbo.id) updateDuzenliOdeme(editingAbo.id, editingAbo);
+                else addDuzenliOdeme(editingAbo);
+              } else {
+                if (editingAbo.id) updateAbonelik(editingAbo.id, editingAbo);
+                else addAbonelik(editingAbo);
+              }
+              setEditingAbo(null);
+              toast.success('Kaydedildi!');
+            }}>Kaydet</button>
+          </div>
+        )}
+      </ActionSheet>
+
+      {/* ActionSheet for Quick Expense Entry (Fatura Girişi) */}
+      <ActionSheet
+        isOpen={!!editingFatura}
+        onClose={() => setEditingFatura(null)}
+        title="Harcama / Fatura Kaydı"
+      >
+        {editingFatura && (
+          <div className="edit-form-v2">
+            <div className="fatura-entry-hint" style={{ marginBottom: '15px', fontSize: '13px', opacity: 0.7 }}>
+              Buraya girdiğiniz harcamalar (Tamir, Bakım vb.) doğrudan <strong>Finans</strong> modülüne işlenir.
+            </div>
+            <div className="form-group-v2">
+              <label>Harcama Adı</label>
+              <input 
+                type="text" 
+                placeholder="Örn: Kombi Tamiri"
+                value={editingFatura.name} 
+                onChange={(e) => setEditingFatura({...editingFatura, name: e.target.value})}
+              />
+            </div>
+            <div className="form-group-v2">
+              <label>Tutar (TL)</label>
+              <input 
+                type="number" 
+                placeholder="0.00"
+                value={editingFatura.amount} 
+                onChange={(e) => setEditingFatura({...editingFatura, amount: Number(e.target.value)})}
+              />
+            </div>
+            <div className="form-group-v2">
+              <label>Ödeme Yöntemi</label>
+              <select 
+                value={editingFatura.linkedCardId} 
+                onChange={(e) => setEditingFatura({...editingFatura, linkedCardId: e.target.value})}
+              >
+                <option value="">Seçiniz</option>
+                <optgroup label="Cüzdan & Nakit">
+                  <option value="nakit">💵 Nakit</option>
+                  <option value="havale">💸 EFT / Havale</option>
+                </optgroup>
+                <optgroup label="Kredi Kartları">
+                  {(ev.finans?.kartlar || []).map(k => (
+                    <option key={k.id} value={k.id}>{k.name} ({k.owner})</option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+            <button className="save-btn-v2" onClick={() => {
+              if(!editingFatura.name || !editingFatura.amount) return toast.error('Lütfen isim ve tutar girin');
+              addFinanceExpense(editingFatura);
+              toast.success(`${editingFatura.name} harcaması Finans modülüne işlendi! 💸`);
+              setEditingFatura(null);
+            }}>Finansa İşle</button>
+          </div>
+        )}
+      </ActionSheet>
+
+      <ConfirmModal 
+        isOpen={showConfirm.open}
+        title="Emin misiniz?"
+        message={showConfirm.message}
+        onConfirm={() => {
+          showConfirm.onConfirm();
+          setShowConfirm({ ...showConfirm, open: false });
+        }}
+        onCancel={() => setShowConfirm({ ...showConfirm, open: false })}
+      />
 
       <ConfirmModal 
         isOpen={showConfirm.open}

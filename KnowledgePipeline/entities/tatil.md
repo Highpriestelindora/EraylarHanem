@@ -2,8 +2,9 @@
 type: entity
 tags: [module, travel, planning]
 source: [[sources/codebase]]
-date: 2026-04-27
+date: 2026-04-28
 status: stable
+version: 2.30.0
 ---
 
 # Entity: Tatil Modülü
@@ -13,20 +14,19 @@ Seyahat rehberi, gezi planlama, bütçe takibi, resmi döküman yönetimi ve ort
 ## Özellikler
 - **Tatiller:** Planlanan, kesinleşen ve devam eden seyahatlerin listelendiği, uçuş ve konaklama detaylarının tutulduğu bölüm.
 - **Anılar:** Geçmiş gezilerin detayları, fotoğrafları ve kullanıcı bazlı (Görkem/Esra) değerlendirmeleri.
-- **Harita:** Ortak keşiflerin dünya haritası üzerinde gösterildiği ve istatistiklerin (ülke/şehir/gün) tutulduğu sayfa.
+    - **Bireysel Maceralar:** Kullanıcı seçimine göre solo seyahatlerin listelendiği filtreli görünüm.
+    - **Fotoğraf Kalıcılığı:** Fotoğraflar sadece Supabase'de saklanır, `localStorage` limitlerini korumak için yerel depolama sırasında temizlenir.
+- **Harita:** Ortak keşiflerin dünya haritası üzerinde gösterildiği ve istatistiklerin tutulduğu sayfa.
+    - **Floating HUD Filters:** Harita üzerinde Esra/Ortak/Görkem seyahatlerini dinamik filtreleyen yüzer kontrol paneli.
+    - **visitedData Mantığı:** İstatistikler seyahat bazlı değil, benzersiz yer (unique countries) bazlı hesaplanır. Farklı zamanlarda gidilen aynı ülkeler tek sayılır.
+    - **Pet Toggle Stats:** Esra/Görkem kartlarına tıklandığında "miyav/hav hav" ses efektli ve min-height korumalı görsel geri bildirim.
 - **Hayaller (Wishlist):** 
-    - **Keşif Kahini:** Rastgele seyahat önerileri sunan akıllı algoritma.
-    - **Kategori Filtreleme:** Macera, Doğa, Kültür vb. kategorilerde emojili ve optimize edilmiş keşif dünyası.
+    - **Keşif Kahini:** Wikipedia REST API (Türkçe öncelikli) entegrasyonu ile destinasyonlar hakkında canlı tarihçe ve görseller sunan akıllı rehber.
 - **Pasaport ve Vize:**
-    - **Vize & Pasaport Uyumluluk Asistanı:** Seyahat tarihlerine göre vize geçerliliğini ve pasaportun "6 ay kuralı"na (dönüşten sonra 6 ay geçerlilik) uygunluğunu otomatik denetleyen sistem.
-    - **Otomatik Bölge Tespiti:** Gidilecek şehre/ülkeye göre (Örn: Viyana) vize gereksinimini (Schengen vb.) otomatik belirler.
-- **Premium Seyahat Rehberi:** Wikipedia REST API entegrasyonu ile destinasyonlar hakkında canlı tarihçe, özet ve yüksek kaliteli hero görseller sunan etkileşimli rehber sistemi.
-- **Biliyor muydunuz? & Mutlaka Yap:** Her lokasyon için küratörlü ilginç bilgiler ve aktivite önerileri.
-
-## Tasarım Prensipleri
-- **iOS Öncelikli & Nazik Tasarım:** Aile uygulaması estetiğine uygun, çok küçük ve zarif fontlar (10-12px), pastel renk paletleri ve yoğun emoji kullanımı.
-- **Etkileşim:** "Keşif Kahini" gibi bölümlerde yüksek mikro-animasyon ve kullanıcı geri bildirimi.
+    - **Vize & Pasaport Uyumluluk Asistanı:** 6 ay kuralı denetimi ve otomatik vize gereksinim tespiti.
 
 ## Teknik Detaylar
-- **Depolama Stratejisi:** `extractAppData` fonksiyonu, `localStorage` limitini aşmamak için yerel depolama sırasında tatil fotoğraflarını temizler; fotoğraflar sadece Supabase üzerinde tutulur.
-- **Vize Mantığı:** `Tatil.jsx` içinde merkezi bir ülke-vize eşleştirme listesi üzerinden dinamik sorgulama yapılır.
+- **Status Döngüsü:** `planned → upcoming (7 gün kala) → ongoing (başlangıç günü) → completed`.
+- **Zustand Store:** `tatil` anahtarı altında `eraylar_store` tablosuna senkronize edilir.
+- **Görsel Optimizasyon:** 700px width, 0.5 JPEG kalite ile fotoğraf sıkıştırma.
+- **Kritik Classlar:** `.map-traveler-pill-container.floating-hud`, `.scrollable-history`, `.hss-column`.

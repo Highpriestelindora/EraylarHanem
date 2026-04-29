@@ -26,6 +26,7 @@ import Pet from './pages/Pet';
 import Aracim from './pages/Aracim';
 import Tatil from './pages/Tatil';
 import Achievements from './pages/Achievements';
+import Guvenlik from './pages/Guvenlik';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -58,6 +59,7 @@ function AnimatedRoutes() {
           <Route path="aracim" element={<Aracim />} />
           <Route path="tatil" element={<Tatil />} />
           <Route path="basarilar" element={<Achievements />} />
+          <Route path="guvenlik" element={<Guvenlik />} />
         </Route>
       </Routes>
     </AnimatePresence>

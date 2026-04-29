@@ -59,7 +59,8 @@ export default function Sosyal() {
     { id: 'hafta', emoji: '📅', label: 'Plan' },
     { id: 'rutin', emoji: '🔁', label: 'Rutin' },
     { id: 'havuz', emoji: '💡', label: 'Fikirler' },
-    { id: 'ist', emoji: '🌆', label: 'İstanbul' }
+    { id: 'ist', emoji: '🌆', label: 'İstanbul' },
+    { id: 'gecmis', emoji: '📜', label: 'Geçmiş' }
   ];
 
   const [showEditHistory, setShowEditHistory] = useState(null);
@@ -103,6 +104,7 @@ export default function Sosyal() {
         {activeTab === 'rutin' && <RutinTab sosyal={sosyal} onAdd={() => setShowAddRutin(true)} />}
         {activeTab === 'havuz' && <HavuzTab sosyal={sosyal} onAdd={() => setShowAddFikir(true)} />}
         {activeTab === 'ist' && <IstTab onAdd={(date, data) => setShowAddActivity({ date, prefilledData: data })} />}
+        {activeTab === 'gecmis' && <GecmisTab sosyal={sosyal} onEdit={setShowEditHistory} onDelete={setDeletingHistoryId} />}
       </div>
 
       <ActionSheet
@@ -1246,7 +1248,7 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
                   <div className="gcc-main">
                     <span className="gcc-emoji">{a.emoji || '🎭'}</span>
                     <div className="gcc-info">
-                      <span className="gcc-title">{a.baslik}</span>
+                      <span className="gcc-title">{a.baslik || a.title || 'İsimsiz Aktivite'}</span>
                       <div className="gcc-sub-row">
                         <span className="gcc-date">{new Date(a.doneDate || a.tarih).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })}</span>
                         <span className="gcc-cost-tag">₺{a.harcama || 0}</span>

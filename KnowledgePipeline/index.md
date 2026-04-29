@@ -28,4 +28,4 @@ Bu sayfa tüm wiki içeriğinin ana haritasıdır.
 - [[sources/legacy_docs|Legacy Documentation (v1.0.0)]]
 
 ---
-*Son Güncelleme: 2026-04-27*
+*Son Güncelleme: 2026-04-28*

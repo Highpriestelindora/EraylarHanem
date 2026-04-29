@@ -25,6 +25,8 @@ const Home = () => {
     selectedVehicleId
   } = useStore();
 
+  const isOnline = system?.isOnline ?? true;
+
   const activeVehicle = useMemo(() => 
     garaj?.find(v => v.id === selectedVehicleId) || garaj?.[0], 
     [garaj, selectedVehicleId]
@@ -197,7 +199,7 @@ const Home = () => {
         <div className="phb-content">
           <div className="phb-user-area">
             <div className="phb-avatar" onClick={() => navigate('/profil')}>
-              <span className="supabase-status-dot"></span>
+              <span className={`supabase-status-dot ${isOnline ? 'online' : 'offline'}`}></span>
               👨‍💻
             </div>
             <div className="phb-text">
