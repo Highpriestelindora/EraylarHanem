@@ -5682,9 +5682,57 @@
   object-fit: cover;
 }
 
+
+.as-photo-card.editable {
+  cursor: pointer;
+}
+
+.as-photo-card.editable:hover {
+  border-color: #6366f1;
+}
+
+.as-photo-card {
+  position: relative;
+}
+
+.photo-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ef4444;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.photo-remove-btn:hover {
+  transform: scale(1.1);
+  background: white;
+}
+
 .as-empty {
-  font-size: 24px;
-  opacity: 0.2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.as-empty span {
+  opacity: 0.5;
 }
 
 .album-footer {

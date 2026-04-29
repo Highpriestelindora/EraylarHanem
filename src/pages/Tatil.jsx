@@ -1857,14 +1857,103 @@ function MemoryDetailView({ trip, onEditEval }) {
 }
 
 function SeyahatAlbumu({ trip }) {
-  const gPhotos = trip.evaluations?.gorkem?.photos || [];
-  const ePhotos = trip.evaluations?.esra?.photos || [];
+  const { currentUser, updateTrip } = useStore();
+  const gPhotos = trip.evaluations?.gorkem?.photos || [null, null, null];
+  const ePhotos = trip.evaluations?.esra?.photos || [null, null, null];
   const isJoint = trip.travelers === 'ikimiz';
+  const activeUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
+
+  const compressImage = (base64Str) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = base64Str;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 700;
+        let width = img.width;
+        let height = img.height;
+        if (width > MAX_WIDTH) {
+          height *= MAX_WIDTH / width;
+          width = MAX_WIDTH;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', 0.5));
+      };
+      img.onerror = (e) => reject(e);
+    });
+  };
+
+  const handlePhotoUpload = (slotUser, index) => {
+    if (activeUser !== slotUser) return toast.error("Sadece kendi favorilerini ekleyebilirsin! 🛑");
+    
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          try {
+            const compressed = await compressImage(event.target.result);
+            const currentEval = trip.evaluations?.[slotUser] || { star: 0, note: '', photos: [null, null, null] };
+            const newPhotos = Array.isArray(currentEval.photos) ? [...currentEval.photos] : [null, null, null];
+            
+            // Ensure array length
+            while(newPhotos.length < 3) newPhotos.push(null);
+            newPhotos[index] = compressed;
+
+            const updates = {
+              evaluations: {
+                ...trip.evaluations,
+                [slotUser]: { ...currentEval, photos: newPhotos }
+              }
+            };
+
+            // Also update global trip.photos for legacy/preview support if both evaluations exist
+            const allGallery = [];
+            const gP = updates.evaluations.gorkem?.photos || [];
+            const eP = updates.evaluations.esra?.photos || [];
+            [...gP, ...eP].forEach(p => { if(p) allGallery.push(p); });
+            updates.photos = allGallery.slice(0, 6);
+
+            updateTrip(trip.id, updates);
+            toast.success("Fotoğraf eklendi! ✨");
+          } catch (err) {
+            toast.error("Hata oluştu.");
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
+  };
+
+  const removePhoto = (slotUser, index) => {
+    if (activeUser !== slotUser) return;
+    const currentEval = trip.evaluations?.[slotUser];
+    if (!currentEval) return;
+
+    const newPhotos = [...currentEval.photos];
+    newPhotos[index] = null;
+
+    const updates = {
+      evaluations: {
+        ...trip.evaluations,
+        [slotUser]: { ...currentEval, photos: newPhotos }
+      }
+    };
+    updateTrip(trip.id, updates);
+    toast.success("Fotoğraf kaldırıldı.");
+  };
 
   return (
     <div className="seyahat-albumu-container animate-fadeIn">
       <div className="album-intro">
-        <p>Bu seyahatin en özel anlarından seçilen {gPhotos.length + ePhotos.length} kare.</p>
+        <p>Seyahatin en özel anlarından seçilen {gPhotos.filter(p => !!p).length + ePhotos.filter(p => !!p).length} kare.</p>
       </div>
 
       <div className="album-sections">
@@ -1873,8 +1962,22 @@ function SeyahatAlbumu({ trip }) {
             <div className="as-user-header gorkem">👨🏻‍💻 Görkem'in Favorileri</div>
             <div className="as-photo-grid">
                {[0, 1, 2].map(i => (
-                 <div key={i} className="as-photo-card glass">
-                    {gPhotos[i] ? <img src={gPhotos[i]} alt="Görkem" /> : <div className="as-empty">📸</div>}
+                 <div key={i} className={`as-photo-card glass ${activeUser === 'gorkem' ? 'editable' : ''}`} onClick={() => handlePhotoUpload('gorkem', i)}>
+                    {gPhotos[i] ? (
+                      <>
+                        <img src={gPhotos[i]} alt="Görkem" />
+                        {activeUser === 'gorkem' && (
+                          <button className="photo-remove-btn" onClick={(e) => { e.stopPropagation(); removePhoto('gorkem', i); }}>
+                            <X size={12} />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="as-empty">
+                        <PlusCircle size={24} opacity={0.3} />
+                        {activeUser === 'gorkem' && <span>Ekle</span>}
+                      </div>
+                    )}
                  </div>
                ))}
             </div>
@@ -1886,8 +1989,22 @@ function SeyahatAlbumu({ trip }) {
             <div className="as-user-header esra">👩 Esra'nın Favorileri</div>
             <div className="as-photo-grid">
                {[0, 1, 2].map(i => (
-                 <div key={i} className="as-photo-card glass">
-                    {ePhotos[i] ? <img src={ePhotos[i]} alt="Esra" /> : <div className="as-empty">📸</div>}
+                 <div key={i} className={`as-photo-card glass ${activeUser === 'esra' ? 'editable' : ''}`} onClick={() => handlePhotoUpload('esra', i)}>
+                    {ePhotos[i] ? (
+                      <>
+                        <img src={ePhotos[i]} alt="Esra" />
+                        {activeUser === 'esra' && (
+                          <button className="photo-remove-btn" onClick={(e) => { e.stopPropagation(); removePhoto('esra', i); }}>
+                            <X size={12} />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="as-empty">
+                        <PlusCircle size={24} opacity={0.3} />
+                        {activeUser === 'esra' && <span>Ekle</span>}
+                      </div>
+                    )}
                  </div>
                ))}
             </div>
@@ -1896,7 +2013,7 @@ function SeyahatAlbumu({ trip }) {
       </div>
 
       <div className="album-footer mt-30">
-        <p>Anılar paylaştıkça çoğalır... ❤️</p>
+        <p>Karelere dokunarak anılarını ekleyebilirsin... ❤️</p>
       </div>
     </div>
   );
