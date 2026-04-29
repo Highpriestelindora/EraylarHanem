@@ -17,7 +17,7 @@
   color: white;
   position: relative;
   box-shadow: 0 10px 25px rgba(46, 16, 101, 0.12);
-  margin-bottom: -22px;
+  margin-bottom: -10px;
   z-index: 10;
 }
 
@@ -37,8 +37,8 @@
 }
 
 .phb-avatar {
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   background: #fff;
   border-radius: 12px;
   display: flex;
@@ -102,14 +102,23 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .phb-brand h2 {
   color: #fff;
   margin: 0;
-  font-size: 20px;
+  font-size: 17px;
   font-family: 'Fraunces', serif;
+  white-space: nowrap;
+}
+
+.phb-header-pets {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 2px;
+  font-size: 16px;
 }
 
 .phb-text {
@@ -145,7 +154,7 @@
 
 /* AI Assistant Section - Compact */
 .ai-section-premium {
-  padding: 20px 20px 0;
+  padding: 30px 20px 0;
 }
 
 .ai-header-row {

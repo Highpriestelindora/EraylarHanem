@@ -125,7 +125,7 @@ const Home = () => {
     // Fallback/General
     const funFallbacks = [
       "Bugün her şey yolunda, keyfine bak! 💖",
-      "Esra bugün 'bunu nereye koysak' demiyor, tadını çıkar! 😂",
+      "Waffle bugün çok enerjik! 🐶",
       "Waffle'ın maması azalıyor olabilir mi? 🐶",
       "Mayıs'ın kumunu kontrol ettin mi? 🐈",
       "Bugün Eraylar için muhteşem bir gün olsun! 🌟",
@@ -206,11 +206,11 @@ const Home = () => {
               <div className="phb-brand">
                 <img src={logo} alt="Logo" className="phb-logo-img" />
                 <h2>Eraylar Hanem</h2>
+                <div className="phb-header-pets">
+                  <span className="pet-link" onClick={() => handlePetClick('waffle')}>🐶</span> 
+                  <span className="pet-link" onClick={() => handlePetClick('mayis')}>🐈</span>
+                </div>
               </div>
-              <p>Esra yine 'bunu nereye koysak' diye düşünüyor. 🤔 
-                <span className="pet-link" onClick={() => handlePetClick('waffle')}>🐶</span> 
-                <span className="pet-link" onClick={() => handlePetClick('mayis')}>🐈</span>
-              </p>
             </div>
           </div>
           <div className="phb-actions">
