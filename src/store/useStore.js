@@ -795,9 +795,12 @@ const useStore = create(
             isOnline:  true
           });
         } else {
-          set({ isOnline: false });
         }
         set({ syncing: false });
+        
+        // FAZ 9: JSON verisi yüklendikten sonra yeni SQL tablolarını üzerine yaz/kontrol et
+        get().getBuAyHarcamalar();
+        get().checkAutoKapanis();
       },
 
       subscribed: false,

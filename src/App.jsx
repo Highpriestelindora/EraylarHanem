@@ -79,8 +79,6 @@ function App() {
   // Uygulama açılışında Supabase'den veri çek ve Realtime başlat
   useEffect(() => {
     initSync();
-    getBuAyHarcamalar(); // Bu ayın harcamalarını finans_harcamalar tablosundan çek
-    checkAutoKapanis(); // FAZ 9: Otomatik geçmiş ay arşivi kapanışı kontrolü
     notificationService.requestPermission();
   }, []);
 
