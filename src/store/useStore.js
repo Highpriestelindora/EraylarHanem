@@ -1075,7 +1075,6 @@ const useStore = create(
             toplam_kart: 0,
             toplam_nakit: 0,
             kategori_ozet: {},
-            kart_ozet: {},
           });
           return;
         }
@@ -1103,7 +1102,6 @@ const useStore = create(
           toplam_kart: toplamKart,
           toplam_nakit: toplamNakit,
           kategori_ozet: kategoriOzet,
-          kart_ozet: kartOzet,
         });
 
         toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);

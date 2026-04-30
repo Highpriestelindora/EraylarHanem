@@ -69,18 +69,19 @@ function AnimatedRoutes() {
 
 function App() {
   const [loading, setLoading] = React.useState(true);
-  const { initSync, currentUser, getBuAyHarcamalar, checkAutoKapanis } = useStore();
-
   // Uygulama açılışında Supabase'den veri çek ve Realtime başlat
+  const initSync = useStore(state => state.initSync);
+  const currentUser = useStore(state => state.currentUser);
+  
   useEffect(() => {
     initSync();
     notificationService.requestPermission();
-  }, [initSync]); // initSync bağımlılık olarak eklendi
+  }, [initSync]); 
 
   return (
     <ErrorBoundary>
       <AnimatePresence>
-        {loading && <SplashScreen finishLoading={() => setLoading(false)} />}
+        {loading && <SplashScreen key="splash" finishLoading={() => setLoading(false)} />}
       </AnimatePresence>
       
       <BrowserRouter>
@@ -104,7 +105,7 @@ function App() {
             },
           }}
         />
-        <AnimatedRoutes />
+        {!loading && <AnimatedRoutes />}
       </BrowserRouter>
     </ErrorBoundary>
   );

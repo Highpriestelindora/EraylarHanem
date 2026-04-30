@@ -23,20 +23,19 @@ const SplashScreen = ({ finishLoading }) => {
     let step = 0;
     const interval = setInterval(() => {
       step += 1;
-      if (step < jokes.length - 1) {
+      if (step < jokes.length) {
         setJokeIndex(step);
       } else {
-        setJokeIndex(jokes.length - 1);
         clearInterval(interval);
-        setTimeout(finishLoading, 1000);
+        setTimeout(finishLoading, 500);
       }
-    }, 1500);
+    }, 1200); // 1.2s * 6 = 7.2s + 0.5s = 7.7s total
     
     return () => {
       clearInterval(interval);
       document.body.style.setProperty('background-color', originalBg);
     };
-  }, [finishLoading]);
+  }, [finishLoading, jokes.length]);
 
   return (
     <motion.div 
@@ -111,10 +110,30 @@ const SplashScreen = ({ finishLoading }) => {
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: '100%' }}
-          transition={{ duration: 9, ease: "linear" }}
+          transition={{ duration: 7.5, ease: "linear" }}
           style={{ height: '100%', background: 'white', boxShadow: '0 0 10px white' }}
         />
       </div>
+
+      <AnimatePresence>
+        {jokeIndex === jokes.length - 1 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{
+              position: 'absolute',
+              bottom: '120px',
+              color: 'white',
+              fontSize: '18px',
+              fontWeight: 900,
+              letterSpacing: '1px',
+              textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+            }}
+          >
+            HOŞ GELDİNİZ
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div style={{
         position: 'absolute',
@@ -168,18 +187,6 @@ const SplashScreen = ({ finishLoading }) => {
         }}>
           SİSTEM STABİLİZE EDİLDİ · GÖRKEM & ESRA © 2026
         </span>
-      </div>
-
-      <div style={{
-        marginTop: '20px',
-        color: 'white',
-        fontSize: '18px',
-        fontWeight: 900,
-        letterSpacing: '1px',
-        opacity: 0.9,
-        textShadow: '0 2px 10px rgba(0,0,0,0.2)'
-      }}>
-        HOŞ GELDİNİZ
       </div>
     </motion.div>
   );
