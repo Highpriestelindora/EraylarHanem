@@ -381,75 +381,79 @@ function HaftaTab({ sosyal, onAdd }) {
 
     const monthActivitiesOnly = monthItems.filter(e => !e.isNote);
 
-    if (monthActivitiesOnly.length < 2) {
-      let poolMap = new Map();
-      
-      // 1. Mandatory Routines (High Weight)
-      (sosyal.rutinler || []).forEach(r => {
-        poolMap.set(r.baslik, { ...r, type: 'rutin', emoji: '🏋️', weight: 10 });
+    let poolMap = new Map();
+    
+    // 1. Mandatory Routines (High Weight)
+    (sosyal.rutinler || []).forEach(r => {
+      const title = r.baslik || r.title;
+      poolMap.set(title, { ...r, baslik: title, title: title, type: 'rutin', emoji: '🏋️', weight: 10 });
+    });
+    
+    // 2. Ideas Pool (Base weight)
+    (sosyal.havuz || []).forEach(h => {
+      const title = h.title || h.baslik;
+      const existing = poolMap.get(title);
+      poolMap.set(title, { 
+        ...h, 
+        baslik: title,
+        title: title,
+        emoji: h.icon || h.emoji || '💡',
+        type: 'fikir', 
+        weight: (existing?.weight || 0) + (h.count ? Math.min(h.count, 10) : 5) 
       });
-      
-      // 2. Ideas Pool (Base weight)
-      (sosyal.havuz || []).forEach(h => {
-        const existing = poolMap.get(h.baslik);
-        poolMap.set(h.baslik, { 
-          ...h, 
-          type: 'fikir', 
-          weight: (existing?.weight || 0) + (h.count ? Math.min(h.count, 10) : 5) 
+    });
+    
+    // 3. Smart Family Checks
+    if (vehicle?.muayene?.next) {
+      poolMap.set('Araç Muayene Kontrolü', { baslik: 'Araç Muayene Kontrolü', emoji: '🚗', tur: 'disari', type: 'system', weight: 8 });
+    }
+    poolMap.set('Mutfak Stoklarını Güncelle', { baslik: 'Mutfak Stoklarını Güncelle', emoji: '🛒', tur: 'evde', type: 'system', weight: 8 });
+
+    // 4. Frequent Past Activities (Additional boost to existing or add new)
+    const counts = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi).reduce((acc, curr) => {
+      const title = curr.baslik || curr.title;
+      acc[title] = (acc[title] || 0) + 1;
+      return acc;
+    }, {});
+    
+    Object.keys(counts).forEach(title => {
+      const count = counts[title];
+      const existing = poolMap.get(title);
+      if (existing) {
+        existing.weight += count;
+      } else {
+        const original = (sosyal.aktiviteler || []).find(oa => (oa.baslik === title) || (oa.title === title));
+        poolMap.set(title, { 
+          baslik: title, 
+          emoji: original?.emoji || original?.icon || '🎭', 
+          tur: original?.tur || 'disari', 
+          type: 'gecmis', 
+          weight: count 
         });
-      });
-      
-      // 3. Smart Family Checks
-      if (vehicle?.muayene?.next) {
-        poolMap.set('Araç Muayene Kontrolü', { baslik: 'Araç Muayene Kontrolü', emoji: '🚗', tur: 'disari', type: 'system', weight: 8 });
       }
-      poolMap.set('Mutfak Stoklarını Güncelle', { baslik: 'Mutfak Stoklarını Güncelle', emoji: '🛒', tur: 'evde', type: 'system', weight: 8 });
+    });
 
-      // 4. Frequent Past Activities (Additional boost to existing or add new)
-      const counts = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi).reduce((acc, curr) => {
-        acc[curr.baslik] = (acc[curr.baslik] || 0) + 1;
-        return acc;
-      }, {});
+    const pool = Array.from(poolMap.values());
+
+    if (pool.length > 0) {
+      const plannedTitles = monthActivitiesOnly.map(a => a.title || a.baslik);
+      let available = pool.filter(p => !plannedTitles.includes(p.baslik));
+      if (available.length === 0) available = pool; // Fallback
+
+      // Weighted Random Selection
+      const totalWeight = available.reduce((sum, item) => sum + (item.weight || 1), 0);
+      let randomNum = Math.random() * totalWeight;
+      let selected = available[0];
       
-      Object.keys(counts).forEach(baslik => {
-        const count = counts[baslik];
-        const existing = poolMap.get(baslik);
-        if (existing) {
-          existing.weight += count;
-        } else {
-          const original = (sosyal.aktiviteler || []).find(oa => oa.baslik === baslik);
-          poolMap.set(baslik, { 
-            baslik, 
-            emoji: original?.emoji || '🎭', 
-            tur: original?.tur || 'disari', 
-            type: 'gecmis', 
-            weight: count 
-          });
+      for (let item of available) {
+        randomNum -= (item.weight || 1);
+        if (randomNum <= 0) {
+          selected = item;
+          break;
         }
-      });
-
-      const pool = Array.from(poolMap.values());
-
-      if (pool.length > 0) {
-        const plannedTitles = monthActivitiesOnly.map(a => a.title || a.baslik);
-        let available = pool.filter(p => !plannedTitles.includes(p.baslik));
-        if (available.length === 0) available = pool; // Fallback
-
-        // Weighted Random Selection
-        const totalWeight = available.reduce((sum, item) => sum + (item.weight || 1), 0);
-        let randomNum = Math.random() * totalWeight;
-        let selected = available[0];
-        
-        for (let item of available) {
-          randomNum -= (item.weight || 1);
-          if (randomNum <= 0) {
-            selected = item;
-            break;
-          }
-        }
-        
-        setRecommendedIdea(selected);
       }
+      
+      setRecommendedIdea(selected);
     } else {
       setRecommendedIdea(null);
     }
@@ -546,6 +550,31 @@ function HaftaTab({ sosyal, onAdd }) {
 
           return (
             <>
+              {/* ASİSTAN ÖNERİSİ (Her zaman en üstte) */}
+              {recommendedIdea && (
+                <div className="recommendation-ghost glass animate-pulse-slow" style={{ marginBottom: '15px' }}>
+                  <div className="rg-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Sparkles size={10} color="#f59e0b" />
+                      <span className="rg-tag">ASİSTAN ÖNERİSİ</span>
+                    </div>
+                    <button className="rg-refresh" onClick={refreshRecommendation} title="Farklı Bir Öneri">
+                      <RotateCcw size={12} />
+                    </button>
+                  </div>
+                  <div className="rg-body">
+                    <div className="rg-emoji">{recommendedIdea.emoji}</div>
+                    <div className="rg-info">
+                      <strong>{recommendedIdea.baslik}</strong>
+                      <span>{recommendedIdea.type === 'system' ? 'Akıllı Aile Asistanı Hatırlatması' : 'Sık tercih ettiğiniz veya havuzdaki bir fikir'}</span>
+                    </div>
+                    <button className="rg-add" onClick={() => onAdd()} title="Bu Ay İçin Planla">
+                      <Plus size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* ANA AKTİVİTELER */}
               {monthActivities.length > 0 && (() => {
                 const groupedActivities = [];
@@ -598,31 +627,6 @@ function HaftaTab({ sosyal, onAdd }) {
                   </div>
                 );
               })()}
-
-              {/* ASİSTAN ÖNERİSİ (Aktivite sayısı azsa) */}
-              {recommendedIdea && (
-                <div className="recommendation-ghost glass animate-pulse-slow" style={{ marginBottom: '20px' }}>
-                  <div className="rg-header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Sparkles size={10} color="#f59e0b" />
-                      <span className="rg-tag">ASİSTAN ÖNERİSİ</span>
-                    </div>
-                    <button className="rg-refresh" onClick={refreshRecommendation} title="Farklı Bir Öneri">
-                      <RotateCcw size={12} />
-                    </button>
-                  </div>
-                  <div className="rg-body">
-                    <div className="rg-emoji">{recommendedIdea.emoji}</div>
-                    <div className="rg-info">
-                      <strong>{recommendedIdea.baslik}</strong>
-                      <span>{recommendedIdea.type === 'system' ? 'Akıllı Aile Asistanı Hatırlatması' : 'Sık tercih ettiğiniz veya havuzdaki bir fikir'}</span>
-                    </div>
-                    <button className="rg-add" onClick={() => onAdd()} title="Bu Ay İçin Planla">
-                      <Plus size={16} />
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* NOTLAR LİSTESİ (Kompakt - Geçmiş tabı stili) */}
               {monthNotes.length > 0 && (
