@@ -37,52 +37,53 @@ const Home = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showMoodCheck, setShowMoodCheck] = useState(false);
 
+  const getSmartInsights = () => {
+    const store = useStore.getState();
+    const insights = [];
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+
+    // Mutfak
+    const lowStock = [
+      ...(store.mutfak.buzdolabi || []),
+      ...(store.mutfak.kiler || []),
+      ...(store.mutfak.dondurucu || [])
+    ].filter(i => i.cr <= i.mn && i.cr > 0);
+    if (lowStock.length > 0) insights.push(`Mutfakta ${lowStock[0].n} azalmış, listeye ekleyelim mi? 🛒`);
+
+    // Sağlık
+    const todayApp = (store.saglik.randevular || []).find(r => r.tarih === today);
+    if (todayApp) insights.push(`Bugün ${todayApp.kisi} için ${todayApp.doktor} randevusu var! 🏥`);
+
+    // Garaj
+    const vehicle = store.garaj?.find(v => v.id === store.selectedVehicleId) || store.garaj?.[0];
+    if (vehicle) {
+      const docs = vehicle.documents || [];
+      const expiringDoc = docs.find(d => {
+        const diff = (new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24);
+        return diff >= 0 && diff <= 30;
+      });
+      if (expiringDoc) insights.push(`${vehicle.model} aracının ${expiringDoc.name} süresi dolmak üzere! 🚗`);
+    }
+
+    const funFallbacks = [
+      "Bugün her şey yolunda, keyfine bak! 💖",
+      "Waffle bugün çok enerjik! 🐶",
+      "Eraylar Hanem %100 sevgiyle yüklendi. 🌟",
+      "Birlikte geçirdiğiniz her an çok değerli... ✨"
+    ];
+    return [...insights, ...funFallbacks];
+  };
+
   // Initial AI analysis
   useEffect(() => {
-    const store = useStore.getState();
-    const getSmartInsights = () => {
-      const insights = [];
-      const today = new Date().toISOString().split('T')[0];
-      const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
-
-      // Mutfak
-      const lowStock = [
-        ...(store.mutfak.buzdolabi || []),
-        ...(store.mutfak.kiler || []),
-        ...(store.mutfak.dondurucu || [])
-      ].filter(i => i.cr <= i.mn && i.cr > 0);
-      if (lowStock.length > 0) insights.push(`Mutfakta ${lowStock[0].n} azalmış, listeye ekleyelim mi? 🛒`);
-
-      // Sağlık
-      const todayApp = (store.saglik.randevular || []).find(r => r.tarih === today);
-      if (todayApp) insights.push(`Bugün ${todayApp.kisi} için ${todayApp.doktor} randevusu var! 🏥`);
-
-      // Garaj
-      const vehicle = store.garaj?.find(v => v.id === store.selectedVehicleId) || store.garaj?.[0];
-      if (vehicle) {
-        const docs = vehicle.documents || [];
-        const expiringDoc = docs.find(d => {
-          const diff = (new Date(d.dueDate) - new Date()) / (1000 * 60 * 60 * 24);
-          return diff >= 0 && diff <= 30;
-        });
-        if (expiringDoc) insights.push(`${vehicle.model} aracının ${expiringDoc.name} süresi dolmak üzere! 🚗`);
-      }
-
-      const funFallbacks = [
-        "Bugün her şey yolunda, keyfine bak! 💖",
-        "Waffle bugün çok enerjik! 🐶",
-        "Eraylar Hanem %100 sevgiyle yüklendi. 🌟",
-        "Birlikte geçirdiğiniz her an çok değerli... ✨"
-      ];
-      return [...insights, ...funFallbacks];
-    };
-
     setAiMessage(getSmartInsights()[0]);
   }, []);
 
   const refreshAiMessage = () => {
     setIsRefreshing(true);
     setTimeout(() => {
+      setAiMessage(getSmartInsights()[0]);
       setIsRefreshing(false);
       toast.success('Asistan verileri analiz etti ✨', { 
         style: { borderRadius: '12px', background: '#2E1065', color: '#fff' },
