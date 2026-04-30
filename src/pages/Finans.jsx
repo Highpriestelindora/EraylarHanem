@@ -296,7 +296,6 @@ function KrediTab({ finans, prv }) {
           </div>
         );
       })}
-      })}
 
       <KartYonetimModal isOpen={showKartModal} onClose={() => setShowKartModal(false)} finans={finans} updateFinansData={updateFinansData} />
       <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
