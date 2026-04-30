@@ -547,31 +547,57 @@ function HaftaTab({ sosyal, onAdd }) {
           return (
             <>
               {/* ANA AKTİVİTELER */}
-              {monthActivities.length > 0 && (
-                <div className="section-group">
-                  {monthActivities.map((a, idx) => (
-                    <div key={idx} className={`tl-content glass ${a.originalItem?.tamamlandi ? 'completed' : ''}`} style={{ marginBottom: '10px' }}>
-                      <div className="a-emoji">{a.icon}</div>
-                      <div className="a-info">
-                        <strong>{a.title}</strong>
-                        <span>{new Date(a.date).toLocaleDateString('tr-TR')}</span>
-                      </div>
-                      {a.type === 'social' && (
-                        <div className="tl-actions">
-                          {!a.originalItem.tamamlandi && (
-                            <button className="tl-btn done prominent" onClick={() => setCompleteModal(a.originalItem)}>
-                              <CheckCircle2 size={18} />
-                            </button>
-                          )}
-                          <button className="tl-btn cancel" onClick={() => setDeletingId(a.originalItem.id)}>
-                            <Trash2 size={16} />
-                          </button>
+              {monthActivities.length > 0 && (() => {
+                const groupedActivities = [];
+                const map = new Map();
+                
+                monthActivities.forEach(a => {
+                  const key = `${a.title}-${a.type}`;
+                  if (!map.has(key)) {
+                    map.set(key, { ...a, dates: [a.date], originalItems: [a.originalItem] });
+                  } else {
+                    const existing = map.get(key);
+                    existing.dates.push(a.date);
+                    existing.originalItems.push(a.originalItem);
+                  }
+                });
+                
+                map.forEach(group => {
+                  group.dates.sort((d1, d2) => new Date(d1) - new Date(d2));
+                  const firstDate = new Date(group.dates[0]).toLocaleDateString('tr-TR');
+                  const lastDate = new Date(group.dates[group.dates.length - 1]).toLocaleDateString('tr-TR');
+                  group.dateDisplay = group.dates.length > 1 ? `${firstDate} - ${lastDate}` : firstDate;
+                  groupedActivities.push(group);
+                });
+                
+                groupedActivities.sort((g1, g2) => new Date(g1.dates[0]) - new Date(g2.dates[0]));
+
+                return (
+                  <div className="section-group">
+                    {groupedActivities.map((a, idx) => (
+                      <div key={idx} className={`tl-content glass ${a.originalItem?.tamamlandi ? 'completed' : ''}`} style={{ marginBottom: '10px' }}>
+                        <div className="a-emoji">{a.icon}</div>
+                        <div className="a-info">
+                          <strong>{a.title}</strong>
+                          <span>{a.dateDisplay}</span>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                        {a.type === 'social' && (
+                          <div className="tl-actions">
+                            {!a.originalItem.tamamlandi && (
+                              <button className="tl-btn done prominent" onClick={() => setCompleteModal(a.originalItem)}>
+                                <CheckCircle2 size={18} />
+                              </button>
+                            )}
+                            <button className="tl-btn cancel" onClick={() => setDeletingId(a.originalItem.id)}>
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* ASİSTAN ÖNERİSİ (Aktivite sayısı azsa) */}
               {recommendedIdea && (
