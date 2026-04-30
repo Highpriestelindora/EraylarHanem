@@ -468,36 +468,37 @@ export default function Finans() {
 
   return (
     <AnimatedPage className="finans-container">
-      <header className="finans-header">
-        <div className="fh-top">
-          <div className="fh-title">
-            <span className="fh-emoji">💰</span>
-            <div>
+      <header className="module-header glass" style={{ background: 'var(--finans)' }}>
+        <div className="header-top">
+          <div className="header-title">
+            <span className="header-emoji animate-float">💰</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
               <h1>Eraylar Finans</h1>
               <p>Akıllı Harcama Yönetimi</p>
             </div>
           </div>
-          <div className="fh-actions">
-            <button className="fh-icon-btn" onClick={togglePrivacyMode}>
-              {prv ? <EyeOff size={18} /> : <Eye size={18} />}
+          <div className="header-actions">
+            <button className="icon-btn" onClick={togglePrivacyMode} title="Gizlilik Modu">
+              {prv ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
-            <button className="fh-icon-btn" onClick={() => navigate('/')}>
-              <ArrowLeft size={18} />
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menü">
+              <ArrowLeft size={20} />
             </button>
           </div>
         </div>
 
-        <nav className="finans-tab-nav">
+        <nav className="tab-nav" style={{ paddingBottom: '0', overflowX: 'auto', flexWrap: 'nowrap' }}>
           {TABS.map(t => (
             <button
               key={t.id}
-              className={`f-tab-btn ${activeTab === t.id ? 'active' : ''}`}
+              className={`tab-btn ${activeTab === t.id ? 'active' : ''}`}
               onClick={() => setActiveTab(t.id)}
+              style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <span>{t.icon}</span>
               <span>{t.label}</span>
               {t.id === 'onay' && pool.length > 0 && (
-                <span className="f-tab-badge">{pool.length}</span>
+                <span style={{ background: '#f87171', color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '8px', fontWeight: 'bold' }}>{pool.length}</span>
               )}
             </button>
           ))}
