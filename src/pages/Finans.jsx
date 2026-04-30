@@ -497,9 +497,6 @@ export default function Finans() {
             >
               <span>{t.icon}</span>
               <span>{t.label}</span>
-              {t.id === 'onay' && pool.length > 0 && (
-                <span style={{ background: '#f87171', color: 'white', fontSize: '10px', padding: '2px 6px', borderRadius: '8px', fontWeight: 'bold' }}>{pool.length}</span>
-              )}
             </button>
           ))}
         </nav>
