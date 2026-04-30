@@ -192,7 +192,7 @@ function KrediTab({ finans, prv }) {
   const kartlar = finans?.kartlar || [];
   const borclar = finans?.borclar || [];
   const kartMutabakat = finans?.kartMutabakat || {};
-  const { gercekKartBorcuGir, payLoanInstallment, updateFinansData } = useStore();
+  const { gercekKartBorcuGir, payLoanInstallment, updateFinansData, payCreditCard } = useStore();
 
   const [inputMap, setInputMap] = useState({});
   const [expandedKart, setExpandedKart] = useState(null);
@@ -256,14 +256,51 @@ function KrediTab({ finans, prv }) {
                 <div className="kmc-input-row">
                   <input
                     type="number"
-                    placeholder="Gerçek borcu gir (₺)"
+                    placeholder="Ekstre Borcunu Gir (₺)"
                     value={inputMap[kart.id] || ''}
                     onChange={e => setInputMap(p => ({ ...p, [kart.id]: e.target.value }))}
+                    style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                   />
-                  <button className="kmc-kaydet-btn" onClick={() => handleGercekGir(kart.id)}>
+                  <button className="kmc-kaydet-btn" onClick={() => handleGercekGir(kart.id)} style={{ padding: '8px 16px', background: '#334155', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
                     <Check size={16} /> Kaydet
                   </button>
                 </div>
+
+                {mut.gercek > 0 && !mut.paid && (
+                  <div className="kmc-payment-actions" style={{ marginTop: '16px', borderTop: '1px dashed #cbd5e1', paddingTop: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <div style={{ fontSize: '14px' }}>
+                        <div style={{ opacity: 0.7 }}>Asgari (%{kart.min_pct || 20})</div>
+                        <strong style={{ color: '#ef4444' }}>{fmt(mut.gercek * (kart.min_pct || 20) / 100, prv)}</strong>
+                      </div>
+                      <div style={{ textAlign: 'right', fontSize: '14px' }}>
+                        <div style={{ opacity: 0.7 }}>Dönem Borcu</div>
+                        <strong style={{ color: '#10b981' }}>{fmt(mut.gercek, prv)}</strong>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        style={{ flex: 1, padding: '10px', borderRadius: '50px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', fontWeight: 'bold', cursor: 'pointer' }}
+                        onClick={() => payCreditCard(kart.id, mut.gercek * (kart.min_pct || 20) / 100, 'min')}
+                      >
+                        ASGARİ ÖDE
+                      </button>
+                      <button 
+                        style={{ flex: 1, padding: '10px', borderRadius: '50px', background: 'var(--finans, #10b981)', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
+                        onClick={() => payCreditCard(kart.id, mut.gercek, 'full')}
+                      >
+                        TAMAMINI ÖDE
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {mut.paid && (
+                  <div style={{ marginTop: '16px', padding: '10px', background: '#f0fdf4', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: '#166534' }}>
+                    <Check size={18} />
+                    <span>Bu ayın ödemesi yapıldı ({mut.paymentType === 'full' ? 'Tam' : 'Asgari'})</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -548,14 +585,22 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
   if (!isOpen) return null;
   const kartlar = finans?.kartlar || [];
 
-  const [yeniKart, setYeniKart] = useState({ id: '', name: '', limit: '', cutoff_day: '', owner: 'ortak', color: '#6366f1' });
+  const [yeniKart, setYeniKart] = useState({ id: '', name: '', limit: '', cutoff_day: '', due_day_offset: 10, min_pct: 20, owner: 'ortak', color: '#6366f1' });
 
   const handleEkle = () => {
     if (!yeniKart.name || !yeniKart.limit || !yeniKart.cutoff_day) return toast.error('Eksik alanları doldurun!');
     const kartId = yeniKart.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-    const newKartlar = [...kartlar, { ...yeniKart, id: kartId, limit: Number(yeniKart.limit), cutoff_day: Number(yeniKart.cutoff_day), balance: 0 }];
+    const newKartlar = [...kartlar, { 
+      ...yeniKart, 
+      id: kartId, 
+      limit: Number(yeniKart.limit), 
+      cutoff_day: Number(yeniKart.cutoff_day), 
+      due_day_offset: Number(yeniKart.due_day_offset),
+      min_pct: Number(yeniKart.min_pct),
+      balance: 0 
+    }];
     updateFinansData('kartlar', newKartlar);
-    setYeniKart({ id: '', name: '', limit: '', cutoff_day: '', owner: 'ortak', color: '#6366f1' });
+    setYeniKart({ id: '', name: '', limit: '', cutoff_day: '', due_day_offset: 10, min_pct: 20, owner: 'ortak', color: '#6366f1' });
     toast.success('Kart eklendi!');
   };
 
@@ -577,7 +622,9 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
             <div key={k.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b' }}>
               <div>
                 <strong>{k.name}</strong>
-                <div style={{ fontSize: '12px', opacity: 0.8 }}>Limit: ₺{k.limit} · Kesim: {k.cutoff_day}</div>
+                <div style={{ fontSize: '12px', opacity: 0.8 }}>
+                  Limit: ₺{k.limit} · Kesim: {k.cutoff_day} · Asgari: %{k.min_pct}
+                </div>
               </div>
               <button className="icon-btn" style={{ color: '#ef4444' }} onClick={() => handleSil(k.id)}><Trash2 size={16} /></button>
             </div>
@@ -586,10 +633,17 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
           <div className="glass" style={{ padding: '16px', marginTop: '20px', color: '#1e293b' }}>
             <h4 style={{ margin: '0 0 12px 0' }}>Yeni Kart Ekle</h4>
             <input type="text" placeholder="Kart Adı" value={yeniKart.name} onChange={e => setYeniKart({...yeniKart, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+            
             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
               <input type="number" placeholder="Limit (₺)" value={yeniKart.limit} onChange={e => setYeniKart({...yeniKart, limit: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
               <input type="number" placeholder="Kesim Günü" value={yeniKart.cutoff_day} onChange={e => setYeniKart({...yeniKart, cutoff_day: e.target.value})} style={{ width: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
             </div>
+
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <input type="number" placeholder="Ödeme Günü (+Gün)" value={yeniKart.due_day_offset} onChange={e => setYeniKart({...yeniKart, due_day_offset: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+              <input type="number" placeholder="Asgari (%)" value={yeniKart.min_pct} onChange={e => setYeniKart({...yeniKart, min_pct: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+            </div>
+
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               <select value={yeniKart.owner} onChange={e => setYeniKart({...yeniKart, owner: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }}>
                 <option value="ortak">Ortak</option>

@@ -35,10 +35,10 @@ const DEFAULT_STATE = {
       { id: 2, name: 'Araç Kredisi', total: 400000, remaining: 120000, monthly: 8500, due_day: 5, type: 'kredi' }
     ],
     kartlar: [
-      { id: 'gorkem-ziraat', name: 'Ziraat Kart', limit: 150000, balance: 0, cutoff_day: 25, owner: 'gorkem', color: '#e11d48' },
-      { id: 'gorkem-ykb', name: 'Yapı Kredi', limit: 120000, balance: 0, cutoff_day: 15, owner: 'gorkem', color: '#1d4ed8' },
-      { id: 'esra-garanti', name: 'Garanti Bonus', limit: 100000, balance: 0, cutoff_day: 10, owner: 'esra', color: '#15803d' },
-      { id: 'esra-enpara', name: 'Enpara Kart', limit: 60000, balance: 0, cutoff_day: 5, owner: 'esra', color: '#5b21b6' }
+      { id: 'gorkem-ziraat', name: 'Ziraat Kart', limit: 150000, balance: 0, cutoff_day: 25, due_day_offset: 10, min_pct: 20, owner: 'gorkem', color: '#e11d48' },
+      { id: 'gorkem-ykb', name: 'Yapı Kredi', limit: 120000, balance: 0, cutoff_day: 15, due_day_offset: 10, min_pct: 20, owner: 'gorkem', color: '#1d4ed8' },
+      { id: 'esra-garanti', name: 'Garanti Bonus', limit: 100000, balance: 0, cutoff_day: 10, due_day_offset: 10, min_pct: 20, owner: 'esra', color: '#15803d' },
+      { id: 'esra-enpara', name: 'Enpara Kart', limit: 60000, balance: 0, cutoff_day: 5, due_day_offset: 10, min_pct: 20, owner: 'esra', color: '#5b21b6' }
     ],
     rekurans: [
       { id: 1, title: 'Netflix', amount: 229, category: 'Abonelik', date: '2026-04-25', icon: '📺', owner: 'ortak', paid: false },
