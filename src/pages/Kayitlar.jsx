@@ -97,17 +97,33 @@ export default function Kayitlar() {
       });
     });
 
-    // 4. İlaç Takibi (Individual Logs)
+    // 4. İlaç Takibi (Aggregated)
     const medLogs = saglik?.logs || [];
+    const medGroups = {};
     medLogs.forEach(log => {
+      const key = `${log.ad}-${log.kisi}`; // Use name instead of medId to support legacy logs
+      if (!medGroups[key]) medGroups[key] = [];
+      medGroups[key].push(log);
+    });
+
+    Object.values(medGroups).forEach(groupLogs => {
+      const sorted = [...groupLogs].sort((a, b) => a.id - b.id);
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      const count = sorted.length;
+      
+      const d1 = new Date(first.id);
+      const d2 = new Date(last.id);
+      const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+
       records.push({
-        id: `med-${log.id}`,
+        id: `med-agg-${first.id}`,
         category: 'İlaç Takibi',
         icon: <HeartIcon size={18} />,
-        title: `${log.ad} (${log.slot === 'morning' ? 'Sabah' : log.slot === 'afternoon' ? 'Öğle' : 'Akşam'})`,
-        date: log.id, // timestamp
+        title: `${first.ad} (${diffDays} Günlük Takip / Toplam ${count} Doz)`,
+        date: last.id, // Timestamp of the very last dose taken
         type: 'medicine',
-        user: log.kisi,
+        user: first.kisi,
         onDelete: () => toast.error('Tıbbi geçmiş kayıtları değiştirilemez.')
       });
     });

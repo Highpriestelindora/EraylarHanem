@@ -49,13 +49,27 @@ const MedicineTab = () => {
       });
     }
 
-    // Check for missed doses
+    // Check for missed and pending doses
     const missedList = [];
+    const pendingList = [];
+    const currentHour = new Date().getHours();
+    
+    let currentSlot = 'none';
+    if (currentHour >= 6 && currentHour < 12) currentSlot = 'morning';
+    else if (currentHour >= 12 && currentHour < 18) currentSlot = 'afternoon';
+    else if (currentHour >= 18 && currentHour < 23) currentSlot = 'evening';
+
     medicines.forEach(m => {
       if (m.schedule) {
+        // Check missed
         if (getSlotStatus(m.id, 'morning', m.schedule.morning) === 'missed') missedList.push(`${m.ad} (Sabah)`);
         if (getSlotStatus(m.id, 'afternoon', m.schedule.afternoon) === 'missed') missedList.push(`${m.ad} (Öğle)`);
         if (getSlotStatus(m.id, 'evening', m.schedule.evening) === 'missed') missedList.push(`${m.ad} (Akşam)`);
+        
+        // Check pending for current active slot
+        if (currentSlot !== 'none' && getSlotStatus(m.id, currentSlot, m.schedule[currentSlot]) === 'pending') {
+          pendingList.push(m.ad);
+        }
       }
     });
 
@@ -65,11 +79,22 @@ const MedicineTab = () => {
         icon: <AlertCircle size={16} />,
         text: `Dikkat! ${missedList.slice(0, 2).join(', ')}${missedList.length > 2 ? '...' : ''} dozu unutulmuş görünüyor!`
       });
-    } else if (medicines.length > 0) {
+    }
+    
+    if (pendingList.length > 0) {
+      const timeNames = { morning: 'Sabah', afternoon: 'Öğle', evening: 'Akşam' };
+      insights.push({
+        type: 'info',
+        icon: <Bell size={16} />,
+        text: `Hatırlatma: Bugünkü ${timeNames[currentSlot]} ilaçların (${pendingList.slice(0, 2).join(', ')}${pendingList.length > 2 ? '...' : ''}) seni bekliyor!`
+      });
+    }
+
+    if (missedList.length === 0 && pendingList.length === 0 && medicines.length > 0) {
       insights.push({
         type: 'success',
         icon: <CheckCircle size={16} />,
-        text: "Harika! Bugün tüm ilaçlar zamanında alındı. Düzenin mükemmel."
+        text: "Harika! Şu an için tüm ilaçlar zamanında alındı. Düzenin mükemmel."
       });
     }
 
