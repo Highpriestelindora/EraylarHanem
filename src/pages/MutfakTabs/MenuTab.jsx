@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   ArrowRight, AlertCircle, Search, Plus, Trash2, 
   UtensilsCrossed, Truck, Star, Clock, ChevronLeft, 
-  ChevronRight, Calendar, CheckCircle2, Dices, Eye, X, ShoppingCart
+  ChevronRight, Calendar, CheckCircle2, Dices, Eye, X, ShoppingCart, RotateCcw
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
@@ -69,9 +69,12 @@ export default function MenuTab() {
   const available = getAvailableRecipes();
 
   const getRecipeStatusColor = (name) => {
+    return '#10b981'; // All recipes are now a calm green as requested
+  };
+
+  const getRecipeStatus = (name) => {
     const r = available.find(x => x.n === name);
-    if (!r) return 'inherit';
-    return r.status === 'ready' ? '#10b981' : r.status === 'frozen' ? '#3b82f6' : '#ef4444';
+    return r ? r.status : null;
   };
 
   const updateWeek = (dir) => setWeekOffset(prev => prev + dir);
@@ -146,15 +149,31 @@ export default function MenuTab() {
   return (
     <div className="menu-tab">
       <div className="week-nav glass">
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {weekOffset !== 0 && <button className="today-btn-small" onClick={() => setWeekOffset(0)}>BU HAFTA</button>}
-        </div>
+        <button 
+          className="nav-arrow" 
+          onClick={() => setWeekOffset(0)} 
+          title="Bu Haftaya Dön"
+          style={{ 
+            visibility: weekOffset === 0 ? 'hidden' : 'visible',
+            color: '#ef4444',
+            borderColor: 'rgba(239, 68, 68, 0.2)',
+            background: 'rgba(239, 68, 68, 0.05)'
+          }}
+        >
+          <RotateCcw size={16} />
+        </button>
+
         <button className="nav-arrow" onClick={() => setWeekOffset(prev => prev - 1)}><ChevronLeft size={20}/></button>
+        
         <div className="week-info" onClick={() => setWeekOffset(0)} style={{ cursor: 'pointer', position: 'relative' }}>
           <strong>Haftalık Plan</strong>
           <small>{currentDays[0].dayNum}.{currentDays[0].month} - {currentDays[6].dayNum}.{currentDays[6].month}</small>
         </div>
+
         <button className="nav-arrow" onClick={() => setWeekOffset(prev => prev + 1)}><ChevronRight size={20}/></button>
+        
+        {/* Spacer for perfect centering */}
+        <div style={{ width: '30px' }}></div>
       </div>
 
       <div className="menu-grid">
@@ -191,13 +210,15 @@ export default function MenuTab() {
 
               <div className={`meal-cell-container ${k.dis ? 'dis' : ''} ${k.sp ? 'sp' : ''}`}>
                 <div className="meal-content-split">
-                  <div className={`dish-zone ana ${k.main ? 'filled' : 'empty'}`} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'ana' }); setSelectedCategory('kahvalti'); }}>
+                  <div className={`dish-zone ana ${k.main ? 'filled' : 'empty'}`} style={{ position: 'relative' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'ana' }); setSelectedCategory('kahvalti'); }}>
+                    {getRecipeStatus(k.main) === 'missing' && <div className="missing-dot" />}
                     {k.dis ? <div className="status-label out">Dışarıda</div> : k.sp ? <div className="status-label del">Sipariş</div> : (
                       k.main ? <span className="dish-name" style={{ color: getRecipeStatusColor(k.main) }}>{k.main}</span> : <div className="dish-placeholder"><Plus size={12}/> Ana</div>
                     )}
                   </div>
                   {!k.dis && !k.sp && (
-                    <div className={`dish-zone yan ${k.side ? 'filled' : 'empty'}`} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'yan' }); setSelectedCategory('kahvalti'); }}>
+                    <div className={`dish-zone yan ${k.side ? 'filled' : 'empty'}`} style={{ position: 'relative' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'yan' }); setSelectedCategory('kahvalti'); }}>
+                      {getRecipeStatus(k.side) === 'missing' && <div className="missing-dot" />}
                       {k.side ? <small className="dish-name-side" style={{ color: getRecipeStatusColor(k.side) }}>{k.side}</small> : <div className="dish-placeholder-side"><Plus size={10}/> Yan</div>}
                     </div>
                   )}
@@ -206,13 +227,15 @@ export default function MenuTab() {
 
               <div className={`meal-cell-container ${a.dis ? 'dis' : ''} ${a.sp ? 'sp' : ''}`}>
                 <div className="meal-content-split">
-                  <div className={`dish-zone ana ${a.main ? 'filled' : 'empty'}`} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'ana' }); setSelectedCategory('hepsi'); }}>
+                  <div className={`dish-zone ana ${a.main ? 'filled' : 'empty'}`} style={{ position: 'relative' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'ana' }); setSelectedCategory('hepsi'); }}>
+                    {getRecipeStatus(a.main) === 'missing' && <div className="missing-dot" />}
                     {a.dis ? <div className="status-label out">Dışarıda</div> : a.sp ? <div className="status-label del">Sipariş</div> : (
                       a.main ? <span className="dish-name" style={{ color: getRecipeStatusColor(a.main) }}>{a.main}</span> : <div className="dish-placeholder"><Plus size={12}/> Ana</div>
                     )}
                   </div>
                   {!a.dis && !a.sp && (
-                    <div className={`dish-zone yan ${a.side ? 'filled' : 'empty'}`} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'yan' }); setSelectedCategory('hepsi'); }}>
+                    <div className={`dish-zone yan ${a.side ? 'filled' : 'empty'}`} style={{ position: 'relative' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'yan' }); setSelectedCategory('hepsi'); }}>
+                      {getRecipeStatus(a.side) === 'missing' && <div className="missing-dot" />}
                       {a.side ? <small className="dish-name-side" style={{ color: getRecipeStatusColor(a.side) }}>{a.side}</small> : <div className="dish-placeholder-side"><Plus size={10}/> Yan</div>}
                     </div>
                   )}
@@ -430,7 +453,7 @@ export default function MenuTab() {
         .week-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 15px; border-radius: 16px; margin-bottom: 8px; position: relative; }
         .nav-arrow { background: none; border: 1px solid var(--brd); color: var(--txt); width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .today-btn-small { background: white; border: 1px solid var(--mutfak); color: var(--mutfak); font-size: 6px; font-weight: 900; padding: 1px 4px; border-radius: 4px; cursor: pointer; text-transform: uppercase; line-height: 1; }
-        .week-info { text-align: center; line-height: 1.1; }
+        .week-info { flex: 1; text-align: center; line-height: 1.1; }
         .week-info strong { display: block; font-size: 12px; }
         .week-info small { color: var(--mutfak); font-weight: bold; font-size: 9px; }
         
@@ -446,7 +469,9 @@ export default function MenuTab() {
 
         .meal-cell-container { display: flex; align-items: center; justify-content: center; padding: 5px; border-right: 1px solid var(--brd); }
         .meal-content-split { width: 100%; display: flex; flex-direction: column; gap: 4px; }
-        .dish-zone { flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 12px; min-height: 32px; transition: all 0.2s; cursor: pointer; }
+        .dish-zone { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 12px; min-height: 32px; transition: all 0.2s; cursor: pointer; }
+        .missing-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 6px rgba(239, 68, 68, 0.6); z-index: 2; animation: dot-pulse 2s infinite; }
+        @keyframes dot-pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
         .dish-zone.empty { border: 1px dashed var(--brd); background: rgba(0,0,0,0.01); }
         .dish-zone.empty:hover { background: var(--mutfak-light); border-color: var(--mutfak); }
         .dish-name { font-size: 12px; font-weight: 800; text-align: center; }
@@ -548,11 +573,30 @@ export default function MenuTab() {
         .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 2px; border-radius: 16px; background: rgba(248, 250, 252, 0.5); border: 1px solid rgba(0,0,0,0.03); color: #64748b; font-size: 8px; font-weight: 800; }
         .smart-pill.complete { background: #f0fdf4; border-color: #10b981; color: #10b981; }
 
-        .smart-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 2px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); background: white; color: var(--txt); font-size: 8px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
-        .smart-btn:active { transform: scale(0.95); }
-        .smart-btn.lucky { border-color: rgba(139, 92, 246, 0.2); color: #8b5cf6; background: #f5f3ff; }
-        .smart-btn.shop { border-color: rgba(236, 72, 153, 0.2); color: #ec4899; background: #fdf2f8; }
-        .smart-btn span[style*="font-size: 24px"] { font-size: 14px !important; }
+        .smart-btn { 
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          justify-content: center; 
+          gap: 1px; 
+          padding: 8px 4px; 
+          border-radius: 18px; 
+          border: 1px solid rgba(0,0,0,0.05); 
+          background: white; 
+          color: var(--txt); 
+          font-family: 'Fraunces', serif;
+          font-size: 11px; 
+          font-weight: 800; 
+          letter-spacing: -0.1px;
+          cursor: pointer; 
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+          box-shadow: 0 4px 12px rgba(0,0,0,0.02); 
+          -webkit-tap-highlight-color: transparent;
+        }
+        .smart-btn:active { transform: scale(0.95); opacity: 0.8; }
+        .smart-btn.lucky { border-color: rgba(139, 92, 246, 0.15); color: #7c3aed; background: linear-gradient(135deg, #ffffff, #f5f3ff); }
+        .smart-btn.shop { border-color: rgba(236, 72, 153, 0.15); color: #db2777; background: linear-gradient(135deg, #ffffff, #fdf2f8); }
+        .smart-btn span[style*="font-size: 24px"] { font-size: 18px !important; margin-bottom: 2px; }
 
         .period-btn { width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--brd); background: white; font-size: 13px; font-weight: 800; color: var(--txt); cursor: pointer; transition: all 0.2s; text-align: left; }
         .period-btn:hover { background: var(--bg); border-color: var(--mutfak); color: var(--mutfak); }

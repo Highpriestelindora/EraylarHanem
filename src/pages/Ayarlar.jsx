@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { User, Bell, Shield, Moon, LogOut, Trophy, ChevronRight, History, Download, X, Save, VolumeX, BellRing, Trash2, Archive } from 'lucide-react';
+import { User as UserIcon, Bell, Shield, Moon, LogOut, Trophy, ChevronRight, History as HistoryIcon, Download, X, Save, VolumeX, BellRing, Trash2, Archive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
@@ -159,7 +158,7 @@ export default function Ayarlar() {
       <div className="settings-group">
         <h4>Sistem Geçmişi</h4>
         <button className="history-btn glass" onClick={() => setShowLogsModal(true)}>
-          <History size={18} />
+          <HistoryIcon size={20} />
           <span>İşlem Geçmişini Gör</span>
           <ChevronRight size={18} />
         </button>
@@ -195,7 +194,7 @@ export default function Ayarlar() {
           <div className="modal-overlay" onClick={() => setShowLogsModal(false)}>
             <div className="modal-content logs-modal glass animate-pop" onClick={e => e.stopPropagation()}>
               <header className="modal-header">
-                <h3>📜 İşlem Geçmişi</h3>
+                <h3><HistoryIcon size={20} /> Sistem Hareketleri</h3>
                 <button className="close-btn" onClick={() => setShowLogsModal(false)}><X size={20} /></button>
               </header>
               <div className="logs-mini-list">

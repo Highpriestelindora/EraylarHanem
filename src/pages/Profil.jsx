@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield, LogOut, Trophy, ChevronRight, X, Save, CreditCard, Award, Fingerprint, Mail, Phone, MapPin, Calendar, Home, Building, Navigation } from 'lucide-react';
+import { User as UserIcon, Shield, LogOut, Trophy, ChevronRight, X, Save, CreditCard, Award, Fingerprint, Mail, Phone, MapPin, Calendar as CalendarIcon, Home, Building, Navigation } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
@@ -197,7 +197,7 @@ export default function Profil() {
             </div>
             
             <div className="form-group">
-              <label><User size={14} /> Ad Soyad</label>
+              <label><UserIcon size={14} /> Ad Soyad</label>
               <input 
                 type="text" 
                 value={formData.name} 
@@ -228,7 +228,7 @@ export default function Profil() {
 
             <div className="form-row">
               <div className="form-group">
-                <label><Calendar size={14} /> Doğum Tarihi</label>
+                <label><CalendarIcon size={14} /> Doğum Tarihi</label>
                 <input 
                   type="text" 
                   value={formData.birthDate} 

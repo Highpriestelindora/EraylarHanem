@@ -548,14 +548,14 @@ function AnilarTab({ tatil, onSelectTrip }) {
   const allPast = trips.filter(t => {
     const status = calculateTripStatus(t.startDate, t.endDate);
     return status === 'completed';
-  });
+  }).sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
 
   const jointPast = allPast.filter(t => t.travelers === 'ikimiz');
   const individualPast = allPast.filter(t => {
     if (t.travelers === 'ikimiz') return false;
     if (individualFilter === 'all') return true;
     return t.travelers === individualFilter;
-  }).sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+  });
 
   return (
     <div className="tab-pane animate-fadeIn">
@@ -678,9 +678,9 @@ function TripCard({ trip, onClick, onEdit }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <strong>{trip.title || trip.city}</strong>
           {trip.derivedStatus === 'active' ? (
-            <div className="ongoing-badge-mini">🔵 devam ediyor</div>
+            <div className="ongoing-badge-mini" title="Devam ediyor">⏱️</div>
           ) : (
-            trip.isConfirmed && <div className="confirmed-badge-mini">✅ kesinleşti</div>
+            trip.isConfirmed && <div className="confirmed-badge-mini" title="Kesinleşti">✅</div>
           )}
         </div>
         <span>{trip.startDate} · {trip.tripType === 'is' ? '💼 İş' : '🏖️ Tatil'}</span>
@@ -868,6 +868,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
   const [weatherForecast, setWeatherForecast] = useState([]);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [reviewUser, setReviewUser] = useState(null);
   const derivedStatus = calculateTripStatus(trip.startDate, trip.endDate);
   const isCompleted = derivedStatus === 'completed';
   const [activeSubTab, setActiveSubTab] = useState(isCompleted ? 'details' : 'valiz');
@@ -1008,8 +1009,19 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
       >
         <TripReviewPanel 
             trip={trip} 
+            initialUser={reviewUser}
             onComplete={(person, evalData) => {
-                const newEvals = { ...trip.evaluations, [person]: evalData };
+                let existingEval = trip.evaluations?.[person];
+                if (typeof existingEval === 'number') {
+                    existingEval = { star: existingEval, note: '', photos: [] };
+                } else if (!existingEval) {
+                    existingEval = {};
+                }
+
+                const newEvals = { 
+                  ...trip.evaluations, 
+                  [person]: { ...existingEval, ...evalData } 
+                };
                 const updates = { evaluations: newEvals };
                 
                 // If it's a joint trip and both done, or solo and done
@@ -1018,26 +1030,11 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
 
                 if (isFinished) {
                     updates.status = 'completed';
-                    
-                    // Always re-calculate trip.photos from BOTH evaluations for the gallery
-                    const allGalleryPhotos = [];
-                    const gPhotos = newEvals.gorkem?.photos || [];
-                    const ePhotos = newEvals.esra?.photos || [];
-                    
-                    // Fill from gorkem first, then esra
-                    gPhotos.forEach(p => { if(p) allGalleryPhotos.push(p); });
-                    ePhotos.forEach(p => { if(p) allGalleryPhotos.push(p); });
-                    
-                    updates.photos = allGalleryPhotos.slice(0, 6);
-                    
-                    handleUpdateTrip(updates);
-                    toast.success('Seyahat tamamlandı ve anılara eklendi! 📖');
-                    setShowReview(false);
-                    onClose();
-                } else {
-                    handleUpdateTrip(updates);
-                    toast.success(`${person === 'gorkem' ? 'Görkem' : 'Esra'} değerlendirdi. Diğer kişinin de tamamlaması bekleniyor. ⏳`);
                 }
+                
+                handleUpdateTrip(updates);
+                toast.success('Değerlendirme kaydedildi! ✨');
+                setShowReview(false);
             }}
         />
       </ActionSheet>
@@ -1075,6 +1072,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
                <MemoryDetailView 
                  trip={trip} 
                  onEditEval={(user) => {
+                    setReviewUser(user);
                     setShowReview(true);
                  }} 
                />
@@ -1761,6 +1759,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
 }
 
 function MemoryDetailView({ trip, onEditEval }) {
+  const { currentUser } = useStore();
   const gEval = trip.evaluations?.gorkem;
   const eEval = trip.evaluations?.esra;
   const [brokenImgs, setBrokenImgs] = useState({});
@@ -1770,8 +1769,7 @@ function MemoryDetailView({ trip, onEditEval }) {
   
   const allAvailablePhotos = [
     ...(gEval?.photos || []),
-    ...(eEval?.photos || []),
-    ...(trip.photos || [])
+    ...(eEval?.photos || [])
   ].filter(p => !!p && typeof p === 'string' && p.length > 0);
 
   const uniquePhotos = Array.from(new Set(allAvailablePhotos));
@@ -1824,7 +1822,13 @@ function MemoryDetailView({ trip, onEditEval }) {
 
       <div className="evaluations-display mt-20">
         <div className="ms-header">
-          <Edit3 size={16} color="#8B5CF6" />
+          <button 
+            className="ms-edit-icon-btn" 
+            onClick={() => onEditEval(currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem')}
+            title="Değerlendirmemi Düzenle"
+          >
+            <Edit3 size={18} color="#8B5CF6" />
+          </button>
           <h3>Değerlendirmelerimiz</h3>
         </div>
         <div className="eval-grid-premium">
@@ -1835,7 +1839,6 @@ function MemoryDetailView({ trip, onEditEval }) {
                 {gEval?.star ? renderStars(gEval.star) : 'Puan Yok'}
                 {gEval?.star > 0 && <strong className="ml-5">{gEval.star}</strong>}
               </div>
-              <button className="ec-edit-btn" onClick={() => onEditEval('gorkem')}><Edit3 size={12} /></button>
             </div>
             <p>{gEval?.note || 'Not bırakılmamış.'}</p>
           </div>
@@ -1846,7 +1849,6 @@ function MemoryDetailView({ trip, onEditEval }) {
                 {eEval?.star ? renderStars(eEval.star) : 'Puan Yok'}
                 {eEval?.star > 0 && <strong className="ml-5">{eEval.star}</strong>}
               </div>
-              <button className="ec-edit-btn" onClick={() => onEditEval('esra')}><Edit3 size={12} /></button>
             </div>
             <p>{eEval?.note || 'Not bırakılmamış.'}</p>
           </div>
@@ -1871,7 +1873,7 @@ function SeyahatAlbumu({ trip }) {
       img.src = base64Str;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800; // Slightly larger for better detail
+        const MAX_WIDTH = 500; // Aggressive compression for Single Source of Truth
         let width = img.width;
         let height = img.height;
         
@@ -1889,7 +1891,7 @@ function SeyahatAlbumu({ trip }) {
         ctx.imageSmoothingQuality = 'high';
         
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.45)); // Slightly lower quality for better speed/size balance
+        resolve(canvas.toDataURL('image/jpeg', 0.40)); // 0.40 quality for smaller footprint
       };
       img.onerror = (e) => reject(e);
     });
@@ -1929,12 +1931,6 @@ function SeyahatAlbumu({ trip }) {
                 [slotUser]: { ...currentEval, photos: newPhotos }
               }
             };
-
-            const allGallery = [];
-            const gP = updates.evaluations.gorkem?.photos || [];
-            const eP = updates.evaluations.esra?.photos || [];
-            [...gP, ...eP].forEach(p => { if(p) allGallery.push(p); });
-            updates.photos = allGallery.slice(0, 6);
 
             await updateTrip(trip.id, updates);
             toast.success("Fotoğraf eklendi! ✨");
@@ -2050,96 +2046,26 @@ function SeyahatAlbumu({ trip }) {
   );
 }
 
-function TripReviewPanel({ trip, onComplete }) {
+function TripReviewPanel({ trip, onComplete, initialUser }) {
   const { currentUser } = useStore();
   const isJoint = trip.travelers === 'ikimiz';
-  const activeUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
+  const activeUser = initialUser || (currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem');
   
-   const [uploadingSlots, setUploadingSlots] = useState({});
   const [evalData, setEvalData] = useState({ 
     star: trip.evaluations?.[activeUser]?.star ?? (typeof trip.evaluations?.[activeUser] === 'number' ? trip.evaluations[activeUser] : 0), 
-    note: trip.evaluations?.[activeUser]?.note || '', 
-    photos: (trip.evaluations?.[activeUser]?.photos && trip.evaluations[activeUser].photos.length > 0) 
-      ? [...trip.evaluations[activeUser].photos] 
-      : [null, null, null]
+    note: trip.evaluations?.[activeUser]?.note || ''
   });
 
   // Sync state if initialUser changes
   useEffect(() => {
     setEvalData({ 
       star: trip.evaluations?.[activeUser]?.star ?? (typeof trip.evaluations?.[activeUser] === 'number' ? trip.evaluations[activeUser] : 0), 
-      note: trip.evaluations?.[activeUser]?.note || '', 
-      photos: (trip.evaluations?.[activeUser]?.photos && trip.evaluations[activeUser].photos.length > 0) 
-        ? [...trip.evaluations[activeUser].photos] 
-        : [null, null, null]
+      note: trip.evaluations?.[activeUser]?.note || ''
     });
   }, [activeUser, trip.id]);
 
   const handleSubmit = () => {
-    toast.success('Değerlendirme başarıyla kaydedildi! ✨');
     onComplete(activeUser, evalData);
-  };
-
-   const compressImage = (base64Str) => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.src = base64Str;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800;
-        let width = img.width;
-        let height = img.height;
-        if (width > MAX_WIDTH) {
-          height = (height * MAX_WIDTH) / width;
-          width = MAX_WIDTH;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d', { alpha: false });
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.45));
-      };
-      img.onerror = (e) => reject(e);
-    });
-  };
-
-   const handlePhotoClick = (index) => {
-    if (uploadingSlots[index]) return;
-
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        if (file.size > 10 * 1024 * 1024) {
-          return toast.error("Dosya çok büyük (Max 10MB).");
-        }
-
-        setUploadingSlots(prev => ({ ...prev, [index]: true }));
-
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          try {
-            const compressed = await compressImage(event.target.result);
-            const newPhotos = [...evalData.photos];
-            newPhotos[index] = compressed;
-            setEvalData({ ...evalData, photos: newPhotos });
-            toast.success("Fotoğraf işlendi! ✨");
-          } catch (err) {
-            console.error('Compression error:', err);
-            toast.error('Fotoğraf işlenirken hata oluştu.');
-          } finally {
-            setUploadingSlots(prev => ({ ...prev, [index]: false }));
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-    input.click();
   };
 
   return (
@@ -2150,11 +2076,18 @@ function TripReviewPanel({ trip, onComplete }) {
 
       <div className="review-form-box glass">
         <div className="rfb-section">
-          <h4>🌟 Puanın (1-10)</h4>
+          <div className="rfb-header-flex">
+            <h4>🌟 Puanın (1-10)</h4>
+            <span className="rfb-score-badge">{evalData.star || 0} / 10</span>
+          </div>
           <div className="star-rating-row">
             {[1,2,3,4,5,6,7,8,9,10].map(s => (
-              <button key={s} className={evalData.star >= s ? 'active' : ''} onClick={() => setEvalData({...evalData, star: s})}>
-                <Star size={18} fill={evalData.star >= s ? 'gold' : 'none'} stroke={evalData.star >= s ? 'gold' : 'white'} />
+              <button 
+                key={s} 
+                className={`star-btn ${evalData.star >= s ? 'active' : ''}`} 
+                onClick={() => setEvalData({...evalData, star: s})}
+              >
+                <Star size={22} fill={evalData.star >= s ? '#FBBF24' : 'none'} stroke={evalData.star >= s ? '#FBBF24' : '#CBD5E1'} />
               </button>
             ))}
           </div>
@@ -2168,27 +2101,6 @@ function TripReviewPanel({ trip, onComplete }) {
             onChange={e => setEvalData({...evalData, note: e.target.value})}
             className="review-textarea"
           />
-        </div>
-
-         <div className="rfb-section mt-20">
-          <h4>📸 Favori 3 Karen</h4>
-          <div className="review-photo-grid">
-            {[0, 1, 2].map(i => (
-              <div key={i} className={`rp-slot glass ${uploadingSlots[i] ? 'loading' : ''}`} onClick={() => handlePhotoClick(i)}>
-                {uploadingSlots[i] && (
-                  <div className="spinner-premium-container">
-                    <div className="spinner-premium" />
-                    <span>İşleniyor...</span>
-                  </div>
-                )}
-                {evalData.photos[i] ? (
-                  <img src={evalData.photos[i]} alt="Upload" />
-                ) : !uploadingSlots[i] && (
-                  <PlusCircle size={20} opacity={0.5} />
-                )}
-              </div>
-            ))}
-          </div>
         </div>
         
         <button className="submit-btn-premium tatil mt-20" onClick={handleSubmit}>

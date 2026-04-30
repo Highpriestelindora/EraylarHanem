@@ -137,7 +137,9 @@ const DEFAULT_STATE = {
       { id: 1, kisi: 'Görkem', tur: 'Tansiyon', deger: '12/8', tarih: '2026-04-20' },
       { id: 2, kisi: 'Esra', tur: 'Ateş', deger: '36.5', tarih: '2026-04-25' }
     ],
-    moods: [],       
+    moods: [],
+    sleep: [],
+    sleepGoals: { gorkem: 6, esra: 9 },       
     logs: []
   },
   // ── Global System ──────────────────────────────────
@@ -424,16 +426,12 @@ function extractAppData(state, forPersist = false) {
     system:    state.system,
   };
 
-  // If for localStorage (5MB limit), we MUST strip heavy photos to avoid errors.
-  // BUT: We only do this if forPersist is true (meaning it's headed for LocalStorage).
   if (forPersist && data.tatil?.trips) {
     data.tatil = {
       ...data.tatil,
       trips: data.tatil.trips.map(t => ({
         ...t,
-        evaluations: t.evaluations ? Object.fromEntries(
-          Object.entries(t.evaluations).map(([user, ev]) => [user, { ...ev, photos: [] }])
-        ) : t.evaluations
+        evaluations: t.evaluations // No longer stripping photos to preserve them as Single Source of Truth
       }))
     };
   }
@@ -3586,16 +3584,12 @@ const useStore = create(
           // Protection & Migration
           merged.tatil.trips = merged.tatil.trips.map(t => {
             const initialT = initialState.tatil?.trips?.find(it => it.id === t.id);
-            
-            // Protect photos/evaluations from being reset to mock data if they exist in persisted state
-            const photos = (t.photos && t.photos.length > 0 && !t.photos[0].includes('unsplash')) ? t.photos : (initialT?.photos || []);
             const evaluations = t.evaluations || initialT?.evaluations || {};
 
             const hasNewStructure = t.transportation && t.transportation.departure;
             if (!hasNewStructure) {
               return {
                 ...t,
-                photos,
                 evaluations,
                 transportation: { 
                   departure: { flightNo: t.transportation?.flightNo || '', airline: t.transportation?.airline || '', pnr: t.transportation?.pnr || '', time: t.transportation?.time || '', status: 'Planlandı' },
@@ -3603,7 +3597,7 @@ const useStore = create(
                 }
               };
             }
-            return { ...t, photos, evaluations };
+            return { ...t, evaluations };
           });
 
           // Specially update Viyana trip if it's the one from the screenshot

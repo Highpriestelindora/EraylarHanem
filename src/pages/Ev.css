@@ -560,19 +560,19 @@
 
 .coach-archive-btn, .coach-tahlil-btn {
   flex: 1;
-  height: 34px;
-  border-radius: 10px;
-  font-size: 9px;
-  font-weight: 700;
+  height: 38px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid rgba(255,255,255,0.05);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  letter-spacing: -0.01em;
+  text-transform: none;
 }
 
 .coach-archive-btn {
@@ -924,6 +924,12 @@
 }
 
 .btn-pill-v2:active { transform: scale(0.96); }
+
+.btn-pill-v2.narrow {
+  flex: initial;
+  width: auto;
+  padding: 8px 16px;
+}
 
 .btn-pill-v2.fixed {
   border-color: #10b981;

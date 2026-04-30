@@ -1,16 +1,58 @@
 import React, { useState } from 'react';
-import { Pill, Trash2, Plus, X, Bell, Package, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Pill, Trash2, Plus, Bell, History as HistoryIcon, Clock, Package, AlertCircle } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 import ActionSheet from '../../components/ActionSheet';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, ShoppingCart, Activity, CheckCircle } from 'lucide-react';
 
 const MedicineTab = () => {
   const { saglik, setModuleData, takeMedicine } = useStore();
+  const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ kisi: 'Görkem', ad: '', dozaj: '', sıklık: 'Günde 1', stok: 30, minStok: 5 });
 
   const medicines = saglik.ilaclar || [];
+  const logs = saglik.logs || [];
+
+  // Filter logs for TODAY only
+  const todayStart = new Date().setHours(0,0,0,0);
+  const todayLogs = logs.filter(l => l.id >= todayStart);
+
+  const calculateSmartInsights = () => {
+    const insights = [];
+    const lowStockMeds = medicines.filter(m => m.stok <= m.minStok);
+    
+    if (lowStockMeds.length > 0) {
+      insights.push({
+        type: 'warning',
+        icon: <ShoppingCart size={16} />,
+        text: `${lowStockMeds.map(m => m.ad).join(', ')} stoğu azalıyor. Yeni sipariş vermeyi unutma!`
+      });
+    }
+
+    const takenTodayIds = todayLogs.map(l => l.medId);
+    const missedMeds = medicines.filter(m => !takenTodayIds.includes(m.id) && m.sıklık !== 'İhtiyaç Halinde');
+
+    if (missedMeds.length > 0) {
+      insights.push({
+        type: 'info',
+        icon: <Activity size={16} />,
+        text: `Bugün henüz ${missedMeds.map(m => m.ad).join(', ')} içilmedi. İhmal etmeyelim.`
+      });
+    } else if (medicines.length > 0) {
+      insights.push({
+        type: 'success',
+        icon: <CheckCircle size={16} />,
+        text: "Harika! Bugün tüm ilaçlar zamanında alındı. Düzenin mükemmel."
+      });
+    }
+
+    return insights;
+  };
+
+  const smartInsights = calculateSmartInsights();
 
   const handleAdd = () => {
     if (!form.ad) {
@@ -32,10 +74,49 @@ const MedicineTab = () => {
 
   return (
     <div className="tab-view animate-fadeIn">
+      {/* Smart Medicine Dashboard */}
+      <div className="smart-med-dashboard glass mb-20 animate-fadeIn">
+        <div className="smd-header">
+           <div className="smd-title">
+             <Sparkles size={20} color="#10B981" />
+             <span>Akıllı İlaç Asistanı</span>
+           </div>
+           <div className="smd-stats">
+              <div className="smd-stat-item">
+                 <strong>{todayLogs.length}</strong>
+                 <span>Alınan</span>
+              </div>
+              <div className="smd-stat-item">
+                 <strong>{medicines.length}</strong>
+                 <span>Aktif</span>
+              </div>
+           </div>
+        </div>
+        
+        <div className="smd-insights">
+          {smartInsights.length > 0 ? (
+            smartInsights.map((ins, idx) => (
+              <motion.div 
+                key={idx} 
+                className={`smd-insight-card ${ins.type}`}
+                initial={{ x: -10, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                {ins.icon}
+                <p>{ins.text}</p>
+              </motion.div>
+            ))
+          ) : (
+            <p className="smd-empty">Henüz bir analiz verisi yok. İlaçlarını ekleyerek başlayabilirsin.</p>
+          )}
+        </div>
+      </div>
+
       <div className="section-header-premium" style={{ marginBottom: '20px' }}>
-         <h3 style={{ fontSize: '18px', fontWeight: '900' }}>💊 Aktif İlaçlar</h3>
+         <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#1e293b' }}>💊 Aktif İlaçlar</h3>
          <button className="add-pill-btn" onClick={() => setModalOpen(true)}>
-            <Plus size={18} /> Ekle
+            <Plus size={16} /> Ekle
          </button>
       </div>
 
@@ -88,20 +169,23 @@ const MedicineTab = () => {
         )}
       </div>
 
-      {(saglik.logs || []).length > 0 && (
+      {todayLogs.length > 0 && (
         <div className="med-history-section-premium mt-30">
           <h4 className="section-title-premium">
-            <Bell size={18} color="var(--saglik)" />
+            <Bell size={18} color="#10B981" />
             <span>Bugün Alınanlar</span>
           </h4>
           <div className="history-timeline-premium">
-            {saglik.logs.map((log, idx) => (
+            {todayLogs.map((log, idx) => (
               <div key={log.id} className="history-item-v2 glass">
                 <span className="hi-time">{log.dt}</span>
                 <span className="hi-text"><strong>{log.kisi}</strong>, {log.ad} içti.</span>
               </div>
             ))}
           </div>
+          <button className="view-archive-btn mt-12" onClick={() => navigate('/kayitlar')}>
+            <HistoryIcon size={14} /> Tüm Geçmişi ve Arşivi Gör
+          </button>
         </div>
       )}
 

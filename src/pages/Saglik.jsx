@@ -11,6 +11,7 @@ import AppointmentTab from './saglik/AppointmentTab';
 import MedicineTab from './saglik/MedicineTab';
 import MeasurementTab from './saglik/MeasurementTab';
 import MoodTab from './saglik/MoodTab';
+import SleepTab from './saglik/SleepTab';
 
 export default function Saglik() {
   const [activeTab, setActiveTab] = useState('randevu');
@@ -23,7 +24,8 @@ export default function Saglik() {
     { id: 'randevu', label: 'Randevu', emoji: '📅' },
     { id: 'ilac', label: 'İlaç', emoji: '💊' },
     { id: 'olcum', label: 'Ölçüm', emoji: '🌡️' },
-    { id: 'mood', label: 'Ruh Hali', emoji: '🎭' }
+    { id: 'mood', label: 'Wellness', emoji: '🎭' },
+    { id: 'sleep', label: 'Uyku', emoji: '😴' }
   ];
 
   return (
@@ -66,6 +68,7 @@ export default function Saglik() {
         {activeTab === 'ilac' && <MedicineTab />}
         {activeTab === 'olcum' && <MeasurementTab />}
         {activeTab === 'mood' && <MoodTab />}
+        {activeTab === 'sleep' && <SleepTab />}
       </div>
 
       <ActionSheet

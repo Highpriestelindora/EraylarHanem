@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Send, Heart, User, Briefcase, Users, Activity, Sparkles, HelpCircle } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,31 +27,53 @@ export default function MoodTab() {
   const [selectedMood, setSelectedMood] = useState(null);
   const [selectedKat, setSelectedKat] = useState('Genel');
   const [note, setNote] = useState('');
-  const [selectedUser, setSelectedUser] = useState(currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra');
+  const [visibleDays, setVisibleDays] = useState(5);
 
   const handleShare = () => {
     if (!selectedMood) {
       toast.error('Önce bir ruh hali seçmelisin! ✨');
       return;
     }
-    addMood(selectedUser, selectedMood, note, selectedKat);
+    const userName = currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
+    addMood(userName, selectedMood, note, selectedKat);
     setSelectedMood(null);
     setSelectedKat('Genel');
     setNote('');
-    toast.success('Ruh halin paylaşıldı! 🎭');
+    toast.success('Wellness kaydı paylaşıldı! 🎭');
   };
 
   const moods = saglik?.moods || [];
 
+  const groupedMoods = useMemo(() => {
+    const groups = {};
+    // Sort all moods by date descending first
+    const sortedMoods = [...moods].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    sortedMoods.forEach(m => {
+      const d = new Date(m.date);
+      const today = new Date();
+      let dateKey;
+      
+      const isToday = d.toDateString() === today.toDateString();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const isYesterday = d.toDateString() === yesterday.toDateString();
+
+      if (isToday) dateKey = 'Bugün';
+      else if (isYesterday) dateKey = 'Dün';
+      else dateKey = d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+      
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(m);
+    });
+    return Object.entries(groups);
+  }, [moods]);
+
   return (
     <div className="mood-tab animate-fadeIn">
-      <div className="mood-input-card glass" style={{ padding: '20px', borderRadius: '24px' }}>
-        <div className="section-header" style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '900' }}>🎭 Ruh Halini Paylaş</h3>
-          <div className="user-toggle-premium">
-             <button className={selectedUser === 'gorkem' ? 'active' : ''} onClick={() => setSelectedUser('gorkem')}>🧔</button>
-             <button className={selectedUser === 'esra' ? 'active' : ''} onClick={() => setSelectedUser('esra')}>👩‍🦰</button>
-          </div>
+      <div className="mood-input-card glass" style={{ padding: '16px', borderRadius: '24px' }}>
+        <div className="section-header" style={{ marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#1e293b' }}>🎭 Wellness Paylaş</h3>
         </div>
 
         <div className="mood-grid-premium">
@@ -69,17 +91,16 @@ export default function MoodTab() {
           ))}
         </div>
 
-        <div className="reason-section" style={{ marginTop: '25px' }}>
-          <label style={{ fontSize: '13px', fontWeight: '800', opacity: 0.6, marginBottom: '10px', display: 'block' }}>Neden böyle hissediyorum?</label>
-          <div className="reason-grid">
+        <div className="reason-section" style={{ marginTop: '20px' }}>
+          <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6, marginBottom: '8px', display: 'block' }}>Neden?</label>
+          <div className="reason-scroll-row">
             {KATEGORILER.map(k => (
               <button 
                 key={k.id} 
-                className={`reason-tag ${selectedKat === k.id ? 'active' : ''}`}
+                className={`reason-tag-mini ${selectedKat === k.id ? 'active' : ''}`}
                 onClick={() => setSelectedKat(k.id)}
               >
-                {k.icon}
-                <span>{k.id}</span>
+                {k.id}
               </button>
             ))}
           </div>
@@ -107,36 +128,56 @@ export default function MoodTab() {
           <span>Haftalık Wellness Takibi</span>
         </div>
         
-        {moods.length === 0 ? (
+        {groupedMoods.length === 0 ? (
           <div className="empty-state-v2">
              <p>Henüz ruh hali paylaşılmamış. Günün ilk paylaşımını yapmaya ne dersin?</p>
           </div>
         ) : (
-          <div className="mood-timeline">
-            {moods.map((m, idx) => (
-              <motion.div 
-                key={m.id} 
-                className="mood-card-v2 glass"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
-              >
-                <div className="mc-left">
-                  <div className="mc-emoji-box" style={{ background: m.mood.color }}>{m.mood.emoji}</div>
-                  <div className="mc-info">
-                    <div className="mc-top">
-                       <strong>{m.user === 'gorkem' ? 'Görkem' : 'Esra'}</strong>
-                       <span className="mc-kat-tag">{m.kategori}</span>
-                    </div>
-                    <p>{m.mood.label} hissediyor</p>
-                    {m.note && <span className="mc-note">"{m.note}"</span>}
-                  </div>
+          <div className="mood-timeline-v3">
+            {groupedMoods.slice(0, visibleDays).map(([date, items], gIdx) => (
+              <div key={date} className="mood-day-group">
+                <div className="day-header">
+                  <span className="dh-line"></span>
+                  <span className="dh-text">{date}</span>
+                  <span className="dh-line"></span>
                 </div>
-                <div className="mc-right">
-                  <span className="mc-time">{new Date(m.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                <div className="day-items">
+                  {items.map((m, idx) => (
+                    <motion.div 
+                      key={m.id} 
+                      className="mood-compact-card glass"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                    >
+                      <div className="mcc-left">
+                        <div className="mcc-emoji" style={{ background: m.mood.color }}>{m.mood.emoji}</div>
+                        <div className="mcc-content">
+                          <div className="mcc-top">
+                            <span className="mcc-user">{m.user === 'gorkem' ? 'Görkem' : 'Esra'}</span>
+                            <span className="mcc-status">{m.mood.label}</span>
+                          </div>
+                          {m.note && <p className="mcc-note">"{m.note}"</p>}
+                        </div>
+                      </div>
+                      <div className="mcc-right">
+                         <span className="mcc-time">{new Date(m.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</span>
+                         <span className="mcc-kat">{m.kategori}</span>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-              </motion.div>
+              </div>
             ))}
+
+            {groupedMoods.length > visibleDays && (
+              <button 
+                className="btn-load-more glass mt-10" 
+                onClick={() => setVisibleDays(prev => prev + 5)}
+              >
+                Daha Eski Kayıtları Yükle ({groupedMoods.length - visibleDays} gün daha)
+              </button>
+            )}
           </div>
         )}
       </div>

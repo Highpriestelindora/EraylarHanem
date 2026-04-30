@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  Car, Fuel, Wrench, History, Plus, Gauge, ArrowUpRight, 
+  Car, Fuel, Wrench, History as HistoryIcon, Plus, Gauge, ArrowUpRight, 
   Shield, Landmark, AlertCircle, Sparkles, Home, Camera,
   MapPin, Phone, FileText, Settings, ArrowLeft, MoreVertical,
   ChevronRight, Droplets, Trash2, Check, Warehouse, Edit3
@@ -113,7 +113,7 @@ export default function Aracim() {
           </div>
           <div className="header-actions">
             <button className="icon-btn" onClick={() => setShowGarageModal(true)} title="Garaj">
-              <History size={20} />
+              <HistoryIcon size={20} />
             </button>
             <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
               <ArrowLeft size={20} />

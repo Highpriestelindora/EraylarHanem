@@ -1,104 +1,149 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
-  History, Archive, ChevronRight, Wrench, 
-  ShoppingCart, DollarSign, Heart, Search, 
-  Filter, Calendar, User, Clock, Trash2, ShieldCheck,
-  CheckCircle2
+  History as HistoryIcon, 
+  Archive as ArchiveIcon, 
+  ChevronRight as ChevronRightIcon, 
+  Wrench as WrenchIcon, 
+  ShoppingCart as ShoppingCartIcon, 
+  DollarSign as DollarSignIcon, 
+  Heart as HeartIcon, 
+  Search as SearchIcon, 
+  Filter as FilterIcon, 
+  Calendar as CalendarIcon, 
+  User as UserIcon, 
+  Clock as ClockIcon, 
+  Trash2 as Trash2Icon, 
+  ShieldCheck as ShieldCheckIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import toast from 'react-hot-toast';
 import './Kayitlar.css';
 
 export default function Kayitlar() {
   const navigate = useNavigate();
-  const { ev, mutfak, pet, finans, users, deleteOnarimItem, deleteAlisverisItem, deleteVaccineHistory } = useStore();
+  const { ev, mutfak, pet, users, saglik, deleteOnarimItem, deleteAlisverisItem, deleteVaccineHistory } = useStore();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 1. Ev Bakımı Arşivi
-  const archivedOnarim = (ev.onarimListesi || [])
-    .filter(item => item.isArchived)
-    .map(item => ({
-      ...item,
-      category: 'Ev Bakımı',
-      icon: <Wrench size={18} />,
-      title: item.task,
-      date: item.clearedAt || item.completedAt || item.createdAt,
-      type: 'maintenance',
-      onDelete: () => deleteOnarimItem(item.id)
-    }));
+  // Helpers to safely get date objects
+  const safeDate = (d) => {
+    if (!d) return new Date(0);
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? new Date(0) : date;
+  };
 
-  // 2. Alışveriş Geçmişi (Tamamlananlar)
-  const shoppingLists = ['gorkem', 'esra', 'ev'];
-  const archivedAlisveris = [];
-  shoppingLists.forEach(listKey => {
-    (mutfak.alisveris?.[listKey] || []).filter(i => i.done).forEach(item => {
-      archivedAlisveris.push({
+  const getCatColor = (cat) => {
+    switch(cat) {
+      case 'Ev Bakımı': return '#f5f3ff';
+      case 'Alışveriş': return '#ecfdf5';
+      case 'İlaç Takibi': return '#fff1f2';
+      case 'Pet Sağlık': return '#fffbeb';
+      default: return '#f8fafc';
+    }
+  };
+
+  const allRecords = useMemo(() => {
+    const records = [];
+
+    // 1. Ev Bakımı
+    (ev.onarimListesi || []).filter(item => item.isArchived).forEach(item => {
+      records.push({
         ...item,
-        category: 'Alışveriş',
-        icon: <ShoppingCart size={18} />,
-        title: `${item.nm} (Alındı)`,
-        date: item.doneDate || item.dt,
-        type: 'shopping',
-        listKey,
-        onDelete: () => deleteAlisverisItem(item.id, listKey)
+        category: 'Ev Bakımı',
+        icon: <WrenchIcon size={18} />,
+        title: item.task,
+        date: item.clearedAt || item.completedAt || item.createdAt,
+        type: 'maintenance',
+        onDelete: () => deleteOnarimItem(item.id)
       });
     });
-  });
 
-  // 3. Pet Aşı Geçmişi
-  const archivedPet = [];
-  Object.entries(pet.vaccines || {}).forEach(([petName, vaccines]) => {
-    vaccines.forEach(v => {
-      (v.h || []).forEach(hDate => {
-        // hDate is DD.MM.YYYY string, convert to ISO for sorting
-        const [d, m, y] = hDate.split('.');
-        const isoDate = `${y}-${m}-${d}`;
-        archivedPet.push({
-          id: `${petName}-${v.n}-${hDate}`,
-          category: 'Pet Sağlık',
-          icon: <ShieldCheck size={18} />,
-          title: `${petName.charAt(0).toUpperCase() + petName.slice(1)}: ${v.n} Aşısı`,
-          date: isoDate,
-          type: 'pet',
-          petName,
-          vaccineName: v.n,
-          originalDate: hDate,
-          onDelete: () => deleteVaccineHistory(petName, v.n, hDate)
+    // 2. Alışveriş
+    const shoppingLists = ['gorkem', 'esra', 'ev'];
+    shoppingLists.forEach(listKey => {
+      (mutfak.alisveris?.[listKey] || []).filter(i => i.done).forEach(item => {
+        records.push({
+          ...item,
+          category: 'Alışveriş',
+          icon: <ShoppingCartIcon size={18} />,
+          title: `${item.nm} (Alındı)`,
+          date: item.doneDate || item.dt,
+          type: 'shopping',
+          onDelete: () => deleteAlisverisItem(item.id, listKey)
         });
       });
     });
-  });
 
-  // Combine and sort
-  const allRecords = [...archivedOnarim, ...archivedAlisveris, ...archivedPet]
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+    // 3. Pet Sağlık
+    Object.entries(pet.vaccines || {}).forEach(([petName, vaccines]) => {
+      vaccines.forEach(v => {
+        (v.h || []).forEach(hDate => {
+          const [d, m, y] = (hDate || "").split('.');
+          const isoDate = y && m && d ? `${y}-${m}-${d}` : null;
+          records.push({
+            id: `pet-${petName}-${v.n}-${hDate}`,
+            category: 'Pet Sağlık',
+            icon: <ShieldCheckIcon size={18} />,
+            title: `${petName}: ${v.n} Aşısı`,
+            date: isoDate,
+            type: 'pet',
+            user: petName,
+            onDelete: () => deleteVaccineHistory(petName, v.n, hDate)
+          });
+        });
+      });
+    });
+
+    // 4. İlaç Takibi (Aggregated)
+    const medLogs = saglik?.logs || [];
+    const medGroups = {};
+    medLogs.forEach(log => {
+      const key = `${log.medId}-${log.kisi}`;
+      if (!medGroups[key]) medGroups[key] = [];
+      medGroups[key].push(log);
+    });
+
+    Object.values(medGroups).forEach(groupLogs => {
+      const sorted = [...groupLogs].sort((a, b) => a.id - b.id);
+      const first = sorted[0];
+      const last = sorted[sorted.length - 1];
+      const count = sorted.length;
+      
+      const d1 = new Date(first.id);
+      const d2 = new Date(last.id);
+      const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+
+      records.push({
+        id: `med-agg-${first.id}`,
+        category: 'İlaç Takibi',
+        icon: <HeartIcon size={18} />,
+        title: `${first.ad} (${diffDays} Gün / ${count} Doz)`,
+        date: last.id,
+        type: 'medicine',
+        user: first.kisi,
+        onDelete: () => toast.error('Tıbbi kayıtlar silinemez.')
+      });
+    });
+
+    return records.sort((a, b) => safeDate(b.date) - safeDate(a.date));
+  }, [ev, mutfak, pet, saglik]);
 
   const filteredRecords = allRecords.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          item.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTab = activeTab === 'all' || 
-                      (activeTab === 'maintenance' && item.type === 'maintenance') ||
-                      (activeTab === 'shopping' && item.type === 'shopping') ||
-                      (activeTab === 'pet' && item.type === 'pet');
+    const matchesTab = activeTab === 'all' || activeTab === item.type;
     return matchesSearch && matchesTab;
   });
-
-  const categories = [
-    { id: 'all', label: 'Tümü', icon: <Archive size={16} /> },
-    { id: 'maintenance', label: 'Ev Bakımı', icon: <Wrench size={16} /> },
-    { id: 'shopping', label: 'Alışveriş', icon: <ShoppingCart size={16} /> },
-    { id: 'pet', label: 'Pet Sağlık', icon: <Heart size={16} /> }
-  ];
 
   return (
     <AnimatedPage className="kayitlar-container">
       <header className="kayitlar-header glass">
         <div className="kh-top">
           <button className="back-btn" onClick={() => navigate('/ayarlar')}>
-            <History size={20} />
+            <HistoryIcon size={20} />
           </button>
           <div className="kh-titles">
             <h1>Sistem Kayıtları</h1>
@@ -108,7 +153,7 @@ export default function Kayitlar() {
 
         <div className="kh-filters">
           <div className="search-bar-v2">
-            <Search size={18} />
+            <SearchIcon size={18} />
             <input 
               type="text" 
               placeholder="Kayıtlarda ara..." 
@@ -117,7 +162,13 @@ export default function Kayitlar() {
             />
           </div>
           <div className="tabs-scroll-v2">
-            {categories.map(cat => (
+            {[
+              { id: 'all', label: 'Tümü', icon: <ArchiveIcon size={16} /> },
+              { id: 'maintenance', label: 'Ev Bakımı', icon: <WrenchIcon size={16} /> },
+              { id: 'shopping', label: 'Alışveriş', icon: <ShoppingCartIcon size={16} /> },
+              { id: 'medicine', label: 'İlaç Takibi', icon: <HeartIcon size={16} /> },
+              { id: 'pet', label: 'Pet Sağlık', icon: <HeartIcon size={16} /> }
+            ].map(cat => (
               <button 
                 key={cat.id}
                 className={`tab-btn-v2 ${activeTab === cat.id ? 'active' : ''}`}
@@ -134,8 +185,8 @@ export default function Kayitlar() {
       <div className="records-list">
         {filteredRecords.length > 0 ? (
           filteredRecords.map((item, idx) => {
-            const userKey = item.user?.toLowerCase() || item.createdBy || item.completedBy;
-            const userData = users[userKey] || { name: item.user || 'Sistem', emoji: '⚙️' };
+            const userKey = item.user?.toLowerCase() || 'sistem';
+            const userData = (users && users[userKey]) || { name: item.user || 'Sistem', emoji: '⚙️' };
             
             return (
               <div key={item.id || idx} className="record-card glass animate-fadeIn" style={{ animationDelay: `${idx * 0.05}s` }}>
@@ -148,7 +199,7 @@ export default function Kayitlar() {
                     }
                   }}
                 >
-                  <Trash2 size={14} />
+                  <Trash2Icon size={14} />
                 </button>
                 <div className="rc-icon" style={{ background: getCatColor(item.category) }}>
                   {item.icon}
@@ -157,41 +208,32 @@ export default function Kayitlar() {
                   <div className="rc-header">
                     <span className="rc-cat">{item.category}</span>
                     <span className="rc-date">
-                      <Calendar size={10} /> {new Date(item.date).toLocaleDateString('tr-TR')}
+                      <CalendarIcon size={10} /> {safeDate(item.date).toLocaleDateString('tr-TR')}
                     </span>
                   </div>
                   <strong className="rc-title">{item.title}</strong>
                   <div className="rc-footer">
                     <div className="rc-user">
                       <span>{userData.emoji}</span>
-                      <small>{userData.name.split(' ')[0]}</small>
+                      <small>{userData.name?.split(' ')[0] || 'Sistem'}</small>
                     </div>
                     <div className="rc-time">
-                      <Clock size={10} />
-                      <small>{new Date(item.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
+                      <ClockIcon size={10} />
+                      <small>{safeDate(item.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
                     </div>
                   </div>
                 </div>
-                <ChevronRight size={18} className="rc-chevron" />
+                <ChevronRightIcon size={18} className="rc-chevron" />
               </div>
             );
           })
         ) : (
           <div className="empty-records">
-            <Archive size={48} opacity={0.1} />
+            <ArchiveIcon size={48} opacity={0.1} />
             <p>Aranılan kriterlere uygun kayıt bulunamadı.</p>
           </div>
         )}
       </div>
     </AnimatedPage>
   );
-}
-
-function getCatColor(cat) {
-  switch(cat) {
-    case 'Ev Bakımı': return '#f5f3ff';
-    case 'Alışveriş': return '#ecfdf5';
-    case 'Pet Sağlık': return '#fff1f2';
-    default: return '#f8fafc';
-  }
 }

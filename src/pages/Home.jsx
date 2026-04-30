@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   X, RefreshCcw, Search, Settings, 
-  ChevronRight, Sparkles
+  ChevronRight, Sparkles, History as HistoryIcon
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
@@ -351,7 +351,7 @@ const Home = () => {
           <div className="modal-overlay" onClick={() => setShowLogs(false)}>
             <div className="logs-modal-v2 glass animate-slideUp" onClick={e => e.stopPropagation()}>
                <div className="modal-header logs-header">
-                 <h3><History size={20} /> Sistem Hareketleri</h3>
+                 <h3><HistoryIcon size={20} /> Sistem Hareketleri</h3>
                  <button className="modal-close-btn" onClick={() => setShowLogs(false)}><X size={20} /></button>
                </div>
                <div className="logs-list-premium">

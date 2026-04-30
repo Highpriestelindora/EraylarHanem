@@ -10,7 +10,9 @@ const MeasurementTab = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ kisi: 'Görkem', tur: 'Kilo', deger: '', tarih: new Date().toISOString().split('T')[0] });
 
-  const measurements = saglik.olcumler || [];
+  const measurements = useMemo(() => {
+    return [...(saglik.olcumler || [])].sort((a, b) => b.id - a.id);
+  }, [saglik.olcumler]);
 
   const handleAdd = () => {
     if (!form.deger) {

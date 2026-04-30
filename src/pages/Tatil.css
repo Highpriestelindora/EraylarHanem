@@ -1940,9 +1940,39 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: all 0.2s;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.02);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.tc-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tc-edit-btn {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  color: #8B5CF6;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.3);
+  transition: all 0.2s;
+}
+
+.tc-edit-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+}
+
+.tc-edit-btn:active {
+  transform: scale(0.95);
 }
 
 .trip-card-cute:active {
@@ -2530,29 +2560,80 @@
 .m-photo-placeholder { opacity: 0.3; }
 
 /* Review Panel */
+.review-panel-premium {
+  color: #1e293b;
+}
+.rfb-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.rfb-score-badge {
+  background: #FBBF24;
+  color: #78350F;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);
+}
+
 .star-rating-row {
   display: flex;
   justify-content: space-between;
   padding: 10px 0;
 }
 
-.star-rating-row button {
+.star-btn {
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 5px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.star-btn:hover {
+  transform: scale(1.2);
+}
+
+.star-btn.active {
+  transform: scale(1.1);
 }
 
 .review-textarea {
   width: 100%;
-  height: 100px;
-  background: var(--bg);
-  border: 1px solid var(--brd);
-  border-radius: 15px;
-  padding: 15px;
-  font-size: 14px;
-  font-weight: 600;
+  height: 140px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1e293b;
   outline: none;
+  resize: none;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+
+.review-textarea::placeholder {
+  color: #94a3b8;
+}
+
+.review-active-user-badge {
+  color: #475569;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.rfb-section h4 {
+  color: #1e293b;
+  font-weight: 700;
 }
 
 /* Solo Trips */
@@ -3051,14 +3132,7 @@
 }
 
 .confirmed-badge-mini {
-  font-size: 8px;
-  font-weight: 800;
-  color: #059669;
-  background: #ecfdf5;
-  padding: 2px 8px;
-  border-radius: 100px;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  letter-spacing: 0.2px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -3068,14 +3142,7 @@
 }
 
 .ongoing-badge-mini {
-  font-size: 8px;
-  font-weight: 800;
-  color: #1d4ed8;
-  background: #eff6ff;
-  padding: 2px 8px;
-  border-radius: 100px;
-  border: 1px solid rgba(29, 78, 216, 0.2);
-  letter-spacing: 0.2px;
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -3419,6 +3486,20 @@
 .eval-card-v2.gorkem { border-left: 3px solid #3B82F6; }
 .eval-card-v2.esra { border-left: 3px solid #EC4899; }
 
+.ms-edit-icon-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s;
+}
+
+.ms-edit-icon-btn:hover {
+  transform: scale(1.2) rotate(-10deg);
+}
+
 .ec-header {
   display: flex;
   align-items: center;
@@ -3428,13 +3509,33 @@
 }
 
 .ec-edit-btn {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  border-radius: 6px;
-  padding: 4px 8px;
-  color: white;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+  padding: 4px 10px;
+  color: #8B5CF6;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.ec-edit-btn:hover {
+  background: rgba(139, 92, 246, 0.25);
+  transform: translateY(-1px);
+}
+
+.ec-edit-btn.esra {
+  color: #EC4899;
+  background: rgba(236, 72, 153, 0.15);
+  border-color: rgba(236, 72, 153, 0.2);
+}
+
+.ec-edit-btn.esra:hover {
+  background: rgba(236, 72, 153, 0.25);
 }
 
 .eval-note {

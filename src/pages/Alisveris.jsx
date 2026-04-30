@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   ShoppingBag, Plus, Trash2, CheckCircle2, Link as LinkIcon, 
   ExternalLink, Clock, X, Edit, Search, TrendingUp, Star,
-  Store, ShoppingCart, Heart, History, Info, ArrowLeft, RotateCcw, ChevronRight,
+  Store, ShoppingCart, Heart, History as HistoryIcon, Info, ArrowLeft, RotateCcw, ChevronRight,
   Sparkles, Zap, Package, Laptop, Dumbbell, Watch, Shirt, Scissors,
   Smile, Palette, Heart as HeartIcon, Gem, Briefcase, Camera, Edit3
 } from 'lucide-react';

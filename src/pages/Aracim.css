@@ -460,3 +460,33 @@
 .submit-btn-premium.red:hover {
   box-shadow: 0 15px 30px rgba(239, 68, 68, 0.35);
 }
+/* Pill Button for Garage */
+.add-vehicle-btn-premium {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 50px; /* Pill shape */
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: var(--txt);
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.add-vehicle-btn-premium:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+}
+
+.add-vehicle-btn-premium:active {
+  transform: scale(0.97);
+  background: #f1f5f9;
+}

@@ -365,7 +365,7 @@ export default function Ev() {
         {activeTab === 'yasam' && (
           <div className="yasam-view animate-fadeIn">
             {/* 1. Today's Advice Coach (NOW TOP) */}
-            <div className="coach-module glass mb-20">
+            <div className="coach-module glass mb-32">
                <div className="coach-header">
                  <div className="coach-avatar">
                    <div className="avatar-circle">
@@ -402,7 +402,7 @@ export default function Ev() {
             </div>
 
             {/* 2. Time Analysis Card (NOW A FULL DASHBOARD) */}
-            <div className="time-analysis-module glass mb-20">
+            <div className="time-analysis-module glass mb-32">
                <div className="section-header-v2">
                  <div style={{ display: 'flex', flexDirection: 'column' }}>
                    <h3>📊 Yaşam Dengesi Analizi</h3>
@@ -451,12 +451,12 @@ export default function Ev() {
                    })}
                 </div>
 
-               <div className="analysis-info-box mt-16">
+               <div className="analysis-info-box mt-24">
                  <Info size={14} color="#64748b" />
-                 <p>Bu analiz; kayıtlı tatilleriniz, konum geçmişiniz ve öğrenilen rutinlerinizin sentezidir. <strong>Sistem verimliliği için günde bir kez güncellenir.</strong></p>
+                 <p>Bu sistem; tatil rotalarınızı, ev/iş konumlarınızdaki sürenizi ve günlük rutinlerinizi yapay zeka ile sentezleyerek yaşam dengenizi takip eder.</p>
                </div>
                
-                <div className="tracking-setup mt-24 pt-24 mb-16 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', gap: '10px' }}>
+                <div className="tracking-setup mt-32 pt-24 mb-24 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', gap: '16px' }}>
                   <button className={`btn-pill-v2 ${ev.tracking?.home?.lat ? 'fixed' : ''}`} onClick={() => {
                     if (ev.tracking?.home?.lat) {
                       navigate('/profil');
@@ -485,7 +485,7 @@ export default function Ev() {
                   </button>
                 </div>
 
-                <div className="ai-interpretation mt-24">
+                <div className="ai-interpretation mt-32">
                   <Sparkles size={14} color="#10b981" />
                   <p>{ev.timeAnalysis?.[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem']?.interpretation || "Yaşam verileriniz analiz ediliyor... ✨"}</p>
                 </div>
@@ -495,7 +495,7 @@ export default function Ev() {
 
         {activeTab === 'tasinmaz' && (
           <div className="tasinmaz-view animate-fadeIn">
-            <div className="portfolio-total glass mb-16">
+            <div className="portfolio-total glass mb-24">
               <div className="pt-info">
                 <span style={{ fontSize: '9px', fontWeight: '800' }}>TOPLAM GAYRİMENKUL DEĞERİ</span>
                 <strong>{formatMoney((kasa?.tasinmazlar || []).reduce((a, b) => a + (Number(b.value) || 0), 0))}</strong>
@@ -505,22 +505,49 @@ export default function Ev() {
                 disabled={isAIUpdating}
                 onClick={() => {
                   setIsAIUpdating(true);
-                  toast.loading("Yekta Asistan piyasa verilerini analiz ediyor...", { id: 'ai-val' });
+                  toast.loading("Yekta Asistan bölge rayiçlerini ve endeksleri tarıyor...", { id: 'ai-val' });
+                  
                   setTimeout(() => {
                     const { updateTasinmaz } = useStore.getState();
-                    const antalyaFactor = 1.025; // Antalya aylık ortalama nominal artış (~%2.5)
-                    const noise = 0.99 + Math.random() * 0.03; // Küçük piyasa dalgalanması
+                    const now = new Date();
+                    const tasinmazlar = kasa?.tasinmazlar || [];
                     
-                    (kasa?.tasinmazlar || []).forEach(t => {
-                      const finalFactor = t.city?.toLowerCase() === 'antalya' ? antalyaFactor : 1.015;
+                    let updatedCount = 0;
+                    tasinmazlar.forEach(t => {
+                      const lastUpdate = t.lastAIUpdate ? new Date(t.lastAIUpdate) : null;
+                      const diffDays = lastUpdate ? Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24)) : 0;
+                      
+                      // Eğer bugün zaten güncellendiyse fiyat artışı yapma (sadece tarama simülasyonu)
+                      if (diffDays <= 0 && lastUpdate) {
+                        return; 
+                      }
+
+                      // Akıllı Artış Oranları (Yıllık bazda günlük hesaplama)
+                      // Antalya: %40 yıllık, Diğerleri: %25 yıllık varsayıyoruz
+                      const annualRate = t.city?.toLowerCase() === 'antalya' ? 0.40 : 0.25;
+                      const dailyRate = annualRate / 365;
+                      
+                      // Eğer ilk güncelleme ise veya 0 gün geçmişse küçük bir 'ilk tarama' primi ver (%0.1)
+                      const effectiveDays = diffDays > 0 ? diffDays : 0.1;
+                      const growthFactor = 1 + (dailyRate * effectiveDays);
+                      const noise = 0.998 + Math.random() * 0.004; // Gerçekçi piyasa gürültüsü
+                      
+                      const newValue = Math.round(t.value * growthFactor * noise);
+                      
                       updateTasinmaz(t.id, { 
                         ...t, 
-                        value: Math.round(t.value * finalFactor * noise),
-                        lastAIUpdate: new Date().toISOString()
+                        value: newValue,
+                        lastAIUpdate: now.toISOString()
                       });
+                      updatedCount++;
                     });
+
                     setIsAIUpdating(false);
-                    toast.success("Antalya/Kepez güncel rayiç endeksleri tarandı. Değerler güncellendi! 🏠📈", { id: 'ai-val' });
+                    if (updatedCount > 0) {
+                      toast.success(`Rayiç bedelleri güncellendi! ${updatedCount} taşınmazın değeri piyasa verilerine göre revize edildi. 🏠📈`, { id: 'ai-val' });
+                    } else {
+                      toast.success("Tüm verileriniz güncel. Bölgesel endekslerde bugün için yeni bir değişim saptanmadı. ✨", { id: 'ai-val' });
+                    }
                   }, 2500);
                 }}
               >
@@ -890,8 +917,8 @@ export default function Ev() {
             {/* 2. UNIFIED LIST HEADER */}
             <div className="section-header-v2 mt-40">
               <h3>📜 Abonelikler</h3>
-              <button className="btn-pill-v2 primary mini" onClick={() => setEditingAbo({ name: '', amount: 0, date: 1, linkedCardId: '', autoPay: true, icon: '🎬', _type: 'abonelik' })}>
-                <Plus size={14} /> Abonelik Ekle
+              <button className="btn-pill-v2 primary mini narrow" onClick={() => setEditingAbo({ name: '', amount: 0, date: 1, linkedCardId: '', autoPay: true, icon: '🎬', _type: 'abonelik' })}>
+                <Plus size={14} /> Abonelik
               </button>
             </div>
 
