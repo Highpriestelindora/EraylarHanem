@@ -1859,7 +1859,7 @@ function MemoryDetailView({ trip, onEditEval }) {
 }
 
 function SeyahatAlbumu({ trip }) {
-  const { currentUser, updateTrip } = useStore();
+  const { currentUser, updateTrip, uploadTripPhoto } = useStore();
   const gPhotos = trip.evaluations?.gorkem?.photos || [null, null, null];
   const ePhotos = trip.evaluations?.esra?.photos || [null, null, null];
   const isJoint = trip.travelers === 'ikimiz';
@@ -1918,12 +1918,21 @@ function SeyahatAlbumu({ trip }) {
         const reader = new FileReader();
         reader.onload = async (event) => {
           try {
-            const compressed = await compressImage(event.target.result);
+            const compressedBase64 = await compressImage(event.target.result);
+            
+            // Convert Base64 to Blob for cloud storage upload
+            const response = await fetch(compressedBase64);
+            const blob = await response.blob();
+            const fileToUpload = new File([blob], `trip_photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+
+            // Upload to Supabase Storage
+            const publicUrl = await uploadTripPhoto(fileToUpload);
+
             const currentEval = trip.evaluations?.[slotUser] || { star: 0, note: '', photos: [null, null, null] };
             const newPhotos = Array.isArray(currentEval.photos) ? [...currentEval.photos] : [null, null, null];
             
             while(newPhotos.length < 3) newPhotos.push(null);
-            newPhotos[index] = compressed;
+            newPhotos[index] = publicUrl; // Save the Cloud URL, not the Base64!
 
             const updates = {
               evaluations: {
@@ -1933,7 +1942,7 @@ function SeyahatAlbumu({ trip }) {
             };
 
             await updateTrip(trip.id, updates);
-            toast.success("Fotoğraf eklendi! ✨");
+            toast.success("Fotoğraf buluta yüklendi! ☁️✨");
           } catch (err) {
             console.error(err);
             toast.error("Hata oluştu.");

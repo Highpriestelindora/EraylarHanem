@@ -21,17 +21,24 @@ import toast from 'react-hot-toast';
 
 const DEFAULT_STATE = {
   finans: {
-    harcamalar: [], // { id, title, amount, category, date, payer, confirmed, receipt }
-    approvalPool: [], // { id, title, amount, category, date, source }
+    harcamalar: [], // Geriye dönük uyumluluk için korunuyor (cache)
+    approvalPool: [], // Diğer modüllerden gelen, onay bekleyen harcamalar
+    buAyHarcamalar: [], // Bu ayın Supabase'den çekilen harcamaları (UI cache)
+    kartMutabakat: {
+      'gorkem-ziraat': { beklenen: 0, gercek: null, ay: null },
+      'gorkem-ykb':    { beklenen: 0, gercek: null, ay: null },
+      'esra-garanti':  { beklenen: 0, gercek: null, ay: null },
+      'esra-enpara':   { beklenen: 0, gercek: null, ay: null },
+    },
     borclar: [
       { id: 1, name: 'Konut Kredisi', total: 1200000, remaining: 850000, monthly: 15400, due_day: 15, type: 'kredi' },
       { id: 2, name: 'Araç Kredisi', total: 400000, remaining: 120000, monthly: 8500, due_day: 5, type: 'kredi' }
     ],
     kartlar: [
-      { id: 'gorkem-ziraat', name: 'Ziraat Kart', limit: 150000, balance: 0, cutoff_day: 25, owner: 'gorkem', color: '#e11d48' }, // Red for Ziraat
-      { id: 'gorkem-ykb', name: 'Yapı Kredi', limit: 120000, balance: 0, cutoff_day: 15, owner: 'gorkem', color: '#1d4ed8' }, // Blue for YKB
-      { id: 'esra-garanti', name: 'Garanti Bonus', limit: 100000, balance: 0, cutoff_day: 10, owner: 'esra', color: '#15803d' }, // Green for Garanti
-      { id: 'esra-enpara', name: 'Enpara Kart', limit: 60000, balance: 0, cutoff_day: 5, owner: 'esra', color: '#5b21b6' } // Purple for Enpara
+      { id: 'gorkem-ziraat', name: 'Ziraat Kart', limit: 150000, balance: 0, cutoff_day: 25, owner: 'gorkem', color: '#e11d48' },
+      { id: 'gorkem-ykb', name: 'Yapı Kredi', limit: 120000, balance: 0, cutoff_day: 15, owner: 'gorkem', color: '#1d4ed8' },
+      { id: 'esra-garanti', name: 'Garanti Bonus', limit: 100000, balance: 0, cutoff_day: 10, owner: 'esra', color: '#15803d' },
+      { id: 'esra-enpara', name: 'Enpara Kart', limit: 60000, balance: 0, cutoff_day: 5, owner: 'esra', color: '#5b21b6' }
     ],
     rekurans: [
       { id: 1, title: 'Netflix', amount: 229, category: 'Abonelik', date: '2026-04-25', icon: '📺', owner: 'ortak', paid: false },
@@ -406,6 +413,115 @@ async function pushToSupabase(appData) {
   }
 }
 
+// ── Finans Supabase Helpers ──────────────────────────────────
+const FAMILY_ID = 'eraylar-family-shared-id';
+
+async function pushHarcamaToSupabase(harcama) {
+  try {
+    const { error } = await supabase
+      .from('finans_harcamalar')
+      .insert({
+        family_id: FAMILY_ID,
+        tarih: harcama.tarih,
+        baslik: harcama.baslik,
+        tutar: Number(harcama.tutar),
+        kategori: harcama.kategori || 'Diğer',
+        kart_id: harcama.kart_id || null,
+        odenme_turu: harcama.odenme_turu || 'kart',
+        kayit_eden: harcama.kayit_eden || 'Sistem',
+        kaynak: harcama.kaynak || 'Manuel',
+        durum: 'onaylı',
+        notlar: harcama.notlar || null,
+      });
+    if (error) throw error;
+  } catch (err) {
+    console.error('❌ finans_harcamalar push error:', err);
+    throw err;
+  }
+}
+
+async function fetchBuAyHarcamalar() {
+  try {
+    const buAy = new Date().toISOString().slice(0, 7);
+    const { data, error } = await supabase
+      .from('finans_harcamalar')
+      .select('*')
+      .eq('family_id', FAMILY_ID)
+      .eq('ay', buAy)
+      .order('tarih', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchBuAyHarcamalar error:', err);
+    return [];
+  }
+}
+
+async function fetchGecmisAyFromSupabase(ay) {
+  try {
+    const { data, error } = await supabase
+      .from('finans_harcamalar')
+      .select('*')
+      .eq('family_id', FAMILY_ID)
+      .eq('ay', ay)
+      .order('tarih', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchGecmisAy error:', err);
+    return [];
+  }
+}
+
+async function fetchArsivFromSupabase(limit = 12) {
+  try {
+    const { data, error } = await supabase
+      .from('finans_arsiv')
+      .select('*')
+      .eq('family_id', FAMILY_ID)
+      .order('ay', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchArsiv error:', err);
+    return [];
+  }
+}
+
+async function upsertKartMutabakat(kart_id, ay, beklenen, gercek) {
+  try {
+    const { error } = await supabase
+      .from('finans_kart_mutabakat')
+      .upsert({
+        family_id: FAMILY_ID,
+        kart_id,
+        ay,
+        beklenen_borc: beklenen,
+        gercek_borc: gercek,
+      }, { onConflict: 'family_id,kart_id,ay' });
+    if (error) throw error;
+  } catch (err) {
+    console.error('❌ upsertKartMutabakat error:', err);
+  }
+}
+
+async function upsertArsiv(ay, ozet) {
+  try {
+    const { error } = await supabase
+      .from('finans_arsiv')
+      .upsert({
+        family_id: FAMILY_ID,
+        ay,
+        ...ozet,
+      }, { onConflict: 'family_id,ay' });
+    if (error) throw error;
+  } catch (err) {
+    console.error('❌ upsertArsiv error:', err);
+  }
+}
+// ─────────────────────────────────────────────────────────────
+
 function extractAppData(state, forPersist = false) {
   const data = {
     finans:    state.finans,
@@ -431,7 +547,16 @@ function extractAppData(state, forPersist = false) {
       ...data.tatil,
       trips: data.tatil.trips.map(t => ({
         ...t,
-        evaluations: t.evaluations // No longer stripping photos to preserve them as Single Source of Truth
+        // Strip base64 photos from persistence to keep JSON small
+        // Only keep URLs (strings starting with http)
+        evaluations: t.evaluations ? Object.keys(t.evaluations).reduce((acc, user) => {
+          const userEval = t.evaluations[user];
+          acc[user] = {
+            ...userEval,
+            photos: userEval.photos ? userEval.photos.filter(p => !p || p.startsWith('http')) : []
+          };
+          return acc;
+        }, {}) : t.evaluations
       }))
     };
   }
@@ -797,6 +922,178 @@ const useStore = create(
         get().saveToSupabase();
         toast.success('Harcama onaylandı! ✅');
       },
+
+      // ── Finans v2.0 Aksiyonları ──────────────────────────
+
+      // Doğrudan Supabase'e yazar (hızlı ödeme + rekurans işleme için)
+      addHarcama: async (data) => {
+        const state = get();
+        const buAy = new Date().toISOString().slice(0, 7);
+        const harcama = {
+          tarih: data.tarih || new Date().toISOString().split('T')[0],
+          baslik: data.baslik || data.title || 'Harcama',
+          tutar: Number(data.tutar || data.amount || 0),
+          kategori: data.kategori || data.category || 'Diğer',
+          kart_id: data.kart_id || data.kartId || null,
+          odenme_turu: data.odenme_turu || (data.kart_id ? 'kart' : 'nakit'),
+          kayit_eden: data.kayit_eden || state.currentUser?.name || 'Sistem',
+          kaynak: data.kaynak || data.source || 'Manuel',
+          notlar: data.notlar || null,
+        };
+
+        // Supabase'e yaz
+        await pushHarcamaToSupabase(harcama);
+
+        // UI cache'ini güncelle
+        const yeniBuAy = [{ ...harcama, id: Date.now(), ay: buAy }, ...state.finans.buAyHarcamalar];
+
+        // Kart beklenen borcunu güncelle
+        let yeniMutabakat = { ...state.finans.kartMutabakat };
+        if (harcama.kart_id && yeniMutabakat[harcama.kart_id]) {
+          const mevcutBeklenen = yeniMutabakat[harcama.kart_id].beklenen || 0;
+          yeniMutabakat[harcama.kart_id] = {
+            ...yeniMutabakat[harcama.kart_id],
+            beklenen: mevcutBeklenen + harcama.tutar,
+            ay: buAy,
+          };
+          // Supabase'deki mutabakat kaydını güncelle
+          upsertKartMutabakat(
+            harcama.kart_id,
+            buAy,
+            yeniMutabakat[harcama.kart_id].beklenen,
+            yeniMutabakat[harcama.kart_id].gercek
+          );
+        }
+
+        set({
+          finans: {
+            ...state.finans,
+            buAyHarcamalar: yeniBuAy,
+            kartMutabakat: yeniMutabakat,
+          }
+        });
+      },
+
+      // Onay havuzundan alıp Supabase'e yazar
+      onaylaHarcama: async (poolId, kartId) => {
+        const state = get();
+        const item = state.finans.approvalPool.find(i => i.id === poolId);
+        if (!item) return;
+
+        await get().addHarcama({
+          ...item,
+          kart_id: kartId,
+          odenme_turu: kartId ? 'kart' : 'nakit',
+          kaynak: item.source || 'Onay Havuzu',
+        });
+
+        const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
+        set({ finans: { ...get().finans, approvalPool: updatedPool } });
+        get().addLog('Harcama Onaylandı (v2)', `${item.title}: ${item.amount}₺`);
+        get().saveToSupabase();
+        toast.success('Harcama onaylandı ve kaydedildi! ✅');
+      },
+
+      // Onay havuzundan siler
+      reddetHarcama: (poolId) => {
+        const state = get();
+        const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
+        set({ finans: { ...state.finans, approvalPool: updatedPool } });
+        get().saveToSupabase();
+        toast.success('Harcama reddedildi.');
+      },
+
+      // Banka ekstresinden gerçek borcu girer
+      gercekKartBorcuGir: async (kartId, tutar, ay) => {
+        const state = get();
+        const hedefAy = ay || new Date().toISOString().slice(0, 7);
+        const beklenen = state.finans.kartMutabakat[kartId]?.beklenen || 0;
+
+        await upsertKartMutabakat(kartId, hedefAy, beklenen, Number(tutar));
+
+        const yeniMutabakat = {
+          ...state.finans.kartMutabakat,
+          [kartId]: {
+            ...state.finans.kartMutabakat[kartId],
+            gercek: Number(tutar),
+            ay: hedefAy,
+          },
+        };
+        set({ finans: { ...state.finans, kartMutabakat: yeniMutabakat } });
+        get().saveToSupabase();
+        toast.success('Gerçek borç kaydedildi! 💳');
+      },
+
+      // Bu ayın harcamalarını Supabase'den çeker
+      getBuAyHarcamalar: async () => {
+        const data = await fetchBuAyHarcamalar();
+        const state = get();
+
+        // Kart mutabakatını da yeniden hesapla
+        const yeniMutabakat = { ...state.finans.kartMutabakat };
+        const buAy = new Date().toISOString().slice(0, 7);
+        Object.keys(yeniMutabakat).forEach(k => {
+          yeniMutabakat[k] = { ...yeniMutabakat[k], beklenen: 0, ay: buAy };
+        });
+        data.forEach(h => {
+          if (h.kart_id && yeniMutabakat[h.kart_id]) {
+            yeniMutabakat[h.kart_id].beklenen += Number(h.tutar);
+          }
+        });
+
+        set({ finans: { ...state.finans, buAyHarcamalar: data, kartMutabakat: yeniMutabakat } });
+      },
+
+      // Geçmiş bir ayın harcamalarını Supabase'den çeker (lazy)
+      getGecmisAy: async (ay) => {
+        return await fetchGecmisAyFromSupabase(ay);
+      },
+
+      // Geçmiş arşivi çeker
+      getFinansArsiv: async (limit = 12) => {
+        return await fetchArsivFromSupabase(limit);
+      },
+
+      // Ayı kapatır: özet oluşturur ve finans_arsiv'e yazar
+      ayKapat: async (ay) => {
+        const hedefAy = ay || new Date().toISOString().slice(0, 7);
+        const harcamalar = await fetchGecmisAyFromSupabase(hedefAy);
+
+        if (harcamalar.length === 0) {
+          toast.error('Bu ay için harcama kaydı bulunamadı.');
+          return;
+        }
+
+        const toplamHarcama = harcamalar.reduce((s, h) => s + Number(h.tutar), 0);
+        const toplamKart = harcamalar.filter(h => h.odenme_turu === 'kart').reduce((s, h) => s + Number(h.tutar), 0);
+        const toplamNakit = harcamalar.filter(h => h.odenme_turu === 'nakit').reduce((s, h) => s + Number(h.tutar), 0);
+
+        // Kategori dağılımı
+        const kategoriOzet = {};
+        harcamalar.forEach(h => {
+          kategoriOzet[h.kategori] = (kategoriOzet[h.kategori] || 0) + Number(h.tutar);
+        });
+
+        // Kart dağılımı
+        const kartOzet = {};
+        harcamalar.forEach(h => {
+          if (h.kart_id) {
+            kartOzet[h.kart_id] = (kartOzet[h.kart_id] || 0) + Number(h.tutar);
+          }
+        });
+
+        await upsertArsiv(hedefAy, {
+          toplam_harcama: toplamHarcama,
+          toplam_kart: toplamKart,
+          toplam_nakit: toplamNakit,
+          kategori_ozet: kategoriOzet,
+          kart_ozet: kartOzet,
+        });
+
+        toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);
+      },
+
+      // ─────────────────────────────────────────────────────
 
       rejectExpense: (poolId) => {
         const state = get();
@@ -1401,6 +1698,29 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      uploadTripPhoto: async (file) => {
+        try {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `trip_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+          const filePath = `${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from('eraylar-storage')
+            .upload(filePath, file);
+
+          if (uploadError) throw uploadError;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('eraylar-storage')
+            .getPublicUrl(filePath);
+
+          return publicUrl;
+        } catch (err) {
+          console.error('Upload error:', err);
+          throw err;
+        }
+      },
+
 
 
       toggleTripChecklist: (tripId, itemId) => {
@@ -1904,7 +2224,7 @@ const useStore = create(
         // Sohbet keeps only 12 for the board view
         const yeniSohbet = [newNote, ...state.mutfak.sohbet].slice(0, 12);
         // History keeps everything (up to 500)
-        const yeniHistory = [newNote, ...(state.mutfak.history || [])].slice(0, 500);
+        const yeniHistory = [newNote, ...(state.mutfak.history || [])].slice(0, 100);
         
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, history: yeniHistory } });
         get().saveToSupabase();
