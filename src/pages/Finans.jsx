@@ -34,10 +34,16 @@ const KART_GRADIENTS = {
 function OzetTab({ finans, prv }) {
   const pool = finans?.approvalPool || [];
   const borclar = finans?.borclar || [];
+  const kartlar = finans?.kartlar || [];
   const kartMutabakat = finans?.kartMutabakat || {};
   const buAyHarcamalar = finans?.buAyHarcamalar || [];
 
-  const toplamBeklenen = Object.values(kartMutabakat).reduce((s, k) => s + (k.beklenen || 0), 0);
+  // Sadece mevcut kartların beklenen borçlarını topla
+  const toplamBeklenen = kartlar.reduce((s, kart) => {
+    const mut = kartMutabakat[kart.id] || {};
+    return s + (mut.beklenen || 0);
+  }, 0);
+
   const toplamHarcama = buAyHarcamalar.reduce((s, h) => s + Number(h.tutar || 0), 0);
   const toplamKredi = borclar.reduce((s, b) => s + (b.monthly || 0), 0);
   const ayTahmini = toplamBeklenen + toplamKredi;
@@ -58,7 +64,7 @@ function OzetTab({ finans, prv }) {
         <div className="ozet-card glass">
           <small>KART BEKLENEN</small>
           <h2 style={{ color: '#f59e0b' }}>{fmt(toplamBeklenen, prv)}</h2>
-          <span className="ozet-sub">4 kart toplam</span>
+          <span className="ozet-sub">{kartlar.length} kart toplam</span>
         </div>
       </div>
 
