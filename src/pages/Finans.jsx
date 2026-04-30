@@ -569,9 +569,9 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
   return (
     <div className="modal-overlay">
       <div className="modal-content animate-scaleIn">
-        <div className="modal-header">
-          <h3>Kart Yönetimi</h3>
-          <button className="icon-btn" onClick={onClose}><X size={20}/></button>
+        <div className="modal-header" style={{ color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0 }}>Kart Yönetimi</h3>
+          <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.05)', color: '#334155', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20}/></button>
         </div>
         <div className="modal-body">
           {kartlar.map(k => (
@@ -599,7 +599,7 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
               </select>
               <input type="color" value={yeniKart.color} onChange={e => setYeniKart({...yeniKart, color: e.target.value})} style={{ width: '50px', height: '36px', border: 'none', borderRadius: '8px', cursor: 'pointer' }} />
             </div>
-            <button className="btn-primary" style={{ width: '100%' }} onClick={handleEkle}>Ekle</button>
+            <button style={{ width: '100%', borderRadius: '50px', padding: '12px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }} onClick={handleEkle}>Ekle</button>
           </div>
         </div>
       </div>
@@ -638,9 +638,9 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
   return (
     <div className="modal-overlay">
       <div className="modal-content animate-scaleIn">
-        <div className="modal-header">
-          <h3>Borç/Kredi Yönetimi</h3>
-          <button className="icon-btn" onClick={onClose}><X size={20}/></button>
+        <div className="modal-header" style={{ color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0 }}>Borç/Kredi Yönetimi</h3>
+          <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.05)', color: '#334155', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20}/></button>
         </div>
         <div className="modal-body">
           {borclar.map(b => (
@@ -664,7 +664,7 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
               <input type="number" placeholder="Aylık Taksit" value={yeniBorc.monthly} onChange={e => setYeniBorc({...yeniBorc, monthly: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
               <input type="number" placeholder="Ödeme Günü" value={yeniBorc.due_day} onChange={e => setYeniBorc({...yeniBorc, due_day: e.target.value})} style={{ width: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
             </div>
-            <button className="btn-primary" style={{ width: '100%' }} onClick={handleEkle}>Ekle</button>
+            <button style={{ width: '100%', borderRadius: '50px', padding: '12px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }} onClick={handleEkle}>Ekle</button>
           </div>
         </div>
       </div>
