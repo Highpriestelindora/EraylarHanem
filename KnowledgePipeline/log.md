@@ -9,3 +9,4 @@
 ## [2026-04-27] upgrade | Tatil Modülü: "Keşif Kahini" ve "Vize & Pasaport Uyumluluk Asistanı" (6 ay kuralı + Otomatik Ülke Tespiti) devreye alındı.
 ## [2026-04-28] upgrade | Tatil Modülü: v2.30.0 — Harita HUD filtreleri, unique country istatistikleri ve bireysel macera filtreleme devreye alındı.
 ## [2026-04-28] upgrade | Ev Modülü: v3.0 — 5-tab navigasyon (Yaşam, Bakım, Abonelik, Taşınmaz, Güvenlik) ve Depo v3.5 envanter sistemi kuruldu.
+## [2026-05-01] upgrade | v2.32.0 "Aristotle" — Finans Hub Entegrasyonu: Ev modülündeki aboneliklerin Finans'a bağlanması, Araç Piyasa Değeri takibi ve Kasa servet yönetimi stabilizasyonu tamamlandı. 
