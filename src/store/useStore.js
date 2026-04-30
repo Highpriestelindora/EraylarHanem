@@ -130,8 +130,8 @@ const DEFAULT_STATE = {
       { id: 2, kisi: 'Görkem', doktor: 'Göz Hastalıkları', tarih: '2026-05-15', saat: '10:30', not: 'Numara ölçümü', rekurans: 'Yıllık' }
     ],
     ilaclar: [
-      { id: 1, kisi: 'Esra', ad: 'Magnesium', dozaj: '1 Adet', siklik: 'Her Gece', stok: 20, minStok: 5 },
-      { id: 2, kisi: 'Görkem', ad: 'Vitamin D', dozaj: '10 Damla', siklik: 'Her Sabah', stok: 15, minStok: 5 }
+      { id: 1, kisi: 'Esra', ad: 'Magnesium', dozaj: '1 Adet', siklik: 'Günde 1', stok: 20, minStok: 5, schedule: { morning: 0, afternoon: 0, evening: 1 } },
+      { id: 2, kisi: 'Görkem', ad: 'Vitamin D', dozaj: '10 Damla', siklik: 'Günde 1', stok: 15, minStok: 5, schedule: { morning: 1, afternoon: 0, evening: 0 } }
     ],
     olcumler: [
       { id: 1, kisi: 'Görkem', tur: 'Tansiyon', deger: '12/8', tarih: '2026-04-20' },
@@ -519,7 +519,7 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      takeMedicine: (medId) => {
+      takeMedicine: (medId, slot = 'morning') => {
         const state = get();
         const meds = [...state.saglik.ilaclar];
         const idx = meds.findIndex(m => m.id === medId);
@@ -534,9 +534,11 @@ const useStore = create(
           medId: med.id, 
           ad: med.ad, 
           kisi: med.kisi, 
+          slot: slot,
+          date: new Date().toISOString().split('T')[0],
           dt: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) 
         };
-        const updatedLogs = [log, ...(state.saglik.logs || [])].slice(0, 50);
+        const updatedLogs = [log, ...(state.saglik.logs || [])].slice(0, 100);
 
         set({ saglik: { ...state.saglik, ilaclar: meds, logs: updatedLogs } });
         
