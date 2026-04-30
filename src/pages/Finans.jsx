@@ -211,7 +211,7 @@ function KrediTab({ finans, prv }) {
     <div className="f-tab-content animate-fadeIn">
       <div className="ozet-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>💳 Kart Mutabakatı</span>
-        <button className="icon-btn" onClick={() => setShowKartModal(true)}><Settings size={16} /></button>
+        <button className="icon-btn" onClick={() => setShowKartModal(true)} style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}><Settings size={16} /></button>
       </div>
       <p className="kredi-hint">Ay sonunda gerçek banka borcunu gir, sistem farkı gösterir.</p>
 
@@ -273,7 +273,7 @@ function KrediTab({ finans, prv }) {
 
       <div className="ozet-section-title" style={{ marginTop: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>🏦 Krediler</span>
-        <button className="icon-btn" onClick={() => setShowBorcModal(true)}><Settings size={16} /></button>
+        <button className="icon-btn" onClick={() => setShowBorcModal(true)} style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}><Settings size={16} /></button>
       </div>
       {borclar.map(loan => {
         const perc = ((loan.total - loan.remaining) / loan.total) * 100;
@@ -576,24 +576,24 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
         </div>
         <div className="modal-body">
           {kartlar.map(k => (
-            <div key={k.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={k.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b' }}>
               <div>
                 <strong>{k.name}</strong>
-                <div style={{ fontSize: '12px', opacity: 0.7 }}>Limit: ₺{k.limit} · Kesim: {k.cutoff_day}</div>
+                <div style={{ fontSize: '12px', opacity: 0.8 }}>Limit: ₺{k.limit} · Kesim: {k.cutoff_day}</div>
               </div>
-              <button className="icon-btn" onClick={() => handleSil(k.id)}><Trash2 size={16} color="#ef4444" /></button>
+              <button className="icon-btn" style={{ color: '#ef4444' }} onClick={() => handleSil(k.id)}><Trash2 size={16} /></button>
             </div>
           ))}
 
-          <div className="glass" style={{ padding: '16px', marginTop: '20px' }}>
+          <div className="glass" style={{ padding: '16px', marginTop: '20px', color: '#1e293b' }}>
             <h4 style={{ margin: '0 0 12px 0' }}>Yeni Kart Ekle</h4>
-            <input type="text" placeholder="Kart Adı" value={yeniKart.name} onChange={e => setYeniKart({...yeniKart, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            <input type="text" placeholder="Kart Adı" value={yeniKart.name} onChange={e => setYeniKart({...yeniKart, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <input type="number" placeholder="Limit (₺)" value={yeniKart.limit} onChange={e => setYeniKart({...yeniKart, limit: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
-              <input type="number" placeholder="Kesim Günü" value={yeniKart.cutoff_day} onChange={e => setYeniKart({...yeniKart, cutoff_day: e.target.value})} style={{ width: '100px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <input type="number" placeholder="Limit (₺)" value={yeniKart.limit} onChange={e => setYeniKart({...yeniKart, limit: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+              <input type="number" placeholder="Kesim Günü" value={yeniKart.cutoff_day} onChange={e => setYeniKart({...yeniKart, cutoff_day: e.target.value})} style={{ width: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
             </div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-              <select value={yeniKart.owner} onChange={e => setYeniKart({...yeniKart, owner: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }}>
+              <select value={yeniKart.owner} onChange={e => setYeniKart({...yeniKart, owner: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }}>
                 <option value="ortak">Ortak</option>
                 <option value="gorkem">Görkem</option>
                 <option value="esra">Esra</option>
@@ -645,25 +645,25 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
         </div>
         <div className="modal-body">
           {borclar.map(b => (
-            <div key={b.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div key={b.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b' }}>
               <div>
                 <strong>{b.name}</strong>
-                <div style={{ fontSize: '12px', opacity: 0.7 }}>Aylık: ₺{b.monthly} · Kalan: ₺{b.remaining}</div>
+                <div style={{ fontSize: '12px', opacity: 0.8 }}>Aylık: ₺{b.monthly} · Kalan: ₺{b.remaining}</div>
               </div>
-              <button className="icon-btn" onClick={() => handleSil(b.id)}><Trash2 size={16} color="#ef4444" /></button>
+              <button className="icon-btn" style={{ color: '#ef4444' }} onClick={() => handleSil(b.id)}><Trash2 size={16} /></button>
             </div>
           ))}
 
-          <div className="glass" style={{ padding: '16px', marginTop: '20px' }}>
+          <div className="glass" style={{ padding: '16px', marginTop: '20px', color: '#1e293b' }}>
             <h4 style={{ margin: '0 0 12px 0' }}>Yeni Kredi Ekle</h4>
-            <input type="text" placeholder="Borç/Kredi Adı" value={yeniBorc.name} onChange={e => setYeniBorc({...yeniBorc, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            <input type="text" placeholder="Borç/Kredi Adı" value={yeniBorc.name} onChange={e => setYeniBorc({...yeniBorc, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <input type="number" placeholder="Toplam Tutar" value={yeniBorc.total} onChange={e => setYeniBorc({...yeniBorc, total: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
-              <input type="number" placeholder="Kalan Tutar" value={yeniBorc.remaining} onChange={e => setYeniBorc({...yeniBorc, remaining: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <input type="number" placeholder="Toplam Tutar" value={yeniBorc.total} onChange={e => setYeniBorc({...yeniBorc, total: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+              <input type="number" placeholder="Kalan Tutar" value={yeniBorc.remaining} onChange={e => setYeniBorc({...yeniBorc, remaining: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
             </div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-              <input type="number" placeholder="Aylık Taksit" value={yeniBorc.monthly} onChange={e => setYeniBorc({...yeniBorc, monthly: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
-              <input type="number" placeholder="Ödeme Günü" value={yeniBorc.due_day} onChange={e => setYeniBorc({...yeniBorc, due_day: e.target.value})} style={{ width: '100px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <input type="number" placeholder="Aylık Taksit" value={yeniBorc.monthly} onChange={e => setYeniBorc({...yeniBorc, monthly: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+              <input type="number" placeholder="Ödeme Günü" value={yeniBorc.due_day} onChange={e => setYeniBorc({...yeniBorc, due_day: e.target.value})} style={{ width: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
             </div>
             <button className="btn-primary" style={{ width: '100%' }} onClick={handleEkle}>Ekle</button>
           </div>
