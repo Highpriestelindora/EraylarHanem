@@ -725,7 +725,8 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
         setLoadingLoc(false);
         onClose();
         toast.success('Not kaydedildi (Konum alınamadı).');
-      }
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   };
 

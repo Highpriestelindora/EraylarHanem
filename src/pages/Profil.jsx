@@ -338,7 +338,7 @@ export default function Profil() {
                   document.getElementById('loc-lat').value = p.coords.latitude;
                   document.getElementById('loc-lng').value = p.coords.longitude;
                   toast.success('Mevcut konum alındı! 📡');
-                });
+                }, () => toast.error('Konum alınamadı.'), { enableHighAccuracy: false, timeout: 5000 });
               }}
               style={{ marginTop: '10px', width: '100%', background: '#f8fafc', color: 'var(--txt)', border: '1px solid var(--brd)', padding: '12px', borderRadius: '16px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >

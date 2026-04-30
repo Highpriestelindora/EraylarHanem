@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import { Calendar, Pill, Activity, Plus, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -15,6 +15,7 @@ import SleepTab from './saglik/SleepTab';
 
 export default function Saglik() {
   const [activeTab, setActiveTab] = useState('randevu');
+  const [isPending, startTransition] = useTransition();
   const [showAddExpense, setShowAddExpense] = useState(false);
   const { saglik, addExpense } = useStore();
 
@@ -54,7 +55,12 @@ export default function Saglik() {
             <button
               key={tab.id}
               className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                startTransition(() => {
+                  setActiveTab(tab.id);
+                });
+              }}
+              style={{ opacity: isPending && activeTab !== tab.id ? 0.7 : 1 }}
             >
               <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
               <span>{tab.label}</span>

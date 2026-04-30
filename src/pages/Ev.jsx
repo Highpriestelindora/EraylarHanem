@@ -172,6 +172,12 @@ export default function Ev() {
   const [isAIUpdating, setIsAIUpdating] = useState(false);
   const [showWifiPass, setShowWifiPass] = useState(false);
   const [showGuestWifiPass, setShowGuestWifiPass] = useState(false);
+  const [isChartsReady, setIsChartsReady] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsChartsReady(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
 
 
   const requestConfirm = (message, onConfirm) => {
@@ -190,35 +196,41 @@ export default function Ev() {
     return R * c;
   };
 
-  // Location Tracker Hook
+  // Location Tracker Hook - DEFERRED for performance
   useEffect(() => {
     if (!navigator.geolocation) return;
 
     let lastLogTime = 0;
     const logInterval = 15 * 60 * 1000; // 15 minutes
+    let watchId = null;
 
-    const watchId = navigator.geolocation.watchPosition((pos) => {
-      const { latitude, longitude } = pos.coords;
-      // Use ref-like access to avoid dependency loop
-      const currentEv = useStore.getState().ev;
-      const { home, work } = currentEv.tracking || {};
-      
-      let currentZone = 'other';
-      if (home && calculateDistance(latitude, longitude, home.lat, home.lng) * 1000 < (home.radius || 100)) {
-        currentZone = 'home';
-      } else if (work && calculateDistance(latitude, longitude, work.lat, work.lng) * 1000 < (work.radius || 200)) {
-        currentZone = 'work';
-      }
+    // Wait 2 seconds before starting heavy GPS to let animations finish
+    const timer = setTimeout(() => {
+      watchId = navigator.geolocation.watchPosition((pos) => {
+        const { latitude, longitude } = pos.coords;
+        const currentEv = useStore.getState().ev;
+        const { home, work } = currentEv.tracking || {};
+        
+        let currentZone = 'other';
+        if (home && calculateDistance(latitude, longitude, home.lat, home.lng) * 1000 < (home.radius || 100)) {
+          currentZone = 'home';
+        } else if (work && calculateDistance(latitude, longitude, work.lat, work.lng) * 1000 < (work.radius || 200)) {
+          currentZone = 'work';
+        }
 
-      const now = Date.now();
-      if (now - lastLogTime > logInterval) {
-        useStore.getState().logTimeSlice(currentZone, 15);
-        lastLogTime = now;
-      }
-    }, (err) => console.warn(err), { enableHighAccuracy: true });
+        const now = Date.now();
+        if (now - lastLogTime > logInterval) {
+          useStore.getState().logTimeSlice(currentZone, 15);
+          lastLogTime = now;
+        }
+      }, (err) => console.warn(err), { enableHighAccuracy: false }); // High accuracy turned off for routine tracking
+    }, 2000);
 
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []); // Empty dependency array as we use useStore.getState() inside
+    return () => {
+      clearTimeout(timer);
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+    };
+  }, []);
 
   const activeWarnings = useMemo(() => {
     const warnings = [];
@@ -418,10 +430,14 @@ export default function Ev() {
                   <div className="analysis-chart-item">
                     <div className="chart-title-mini">HAFTALIK</div>
                       <div className="chart-rel-container">
-                        <Doughnut 
-                          data={weeklyData}
-                          options={doughnutOptions}
-                        />
+                        {isChartsReady ? (
+                          <Doughnut 
+                            data={weeklyData}
+                            options={doughnutOptions}
+                          />
+                        ) : (
+                          <div className="chart-placeholder animate-pulse">Analiz Yükleniyor...</div>
+                        )}
                       </div>
                     </div>
 
@@ -429,10 +445,14 @@ export default function Ev() {
                     <div className="analysis-chart-item">
                       <div className="chart-title-mini">AYLIK</div>
                       <div className="chart-rel-container">
-                        <Doughnut 
-                          data={monthlyData}
-                          options={doughnutOptions}
-                        />
+                        {isChartsReady ? (
+                          <Doughnut 
+                            data={monthlyData}
+                            options={doughnutOptions}
+                          />
+                        ) : (
+                          <div className="chart-placeholder animate-pulse">Veriler İşleniyor...</div>
+                        )}
                       </div>
                     </div>
                </div>

@@ -741,17 +741,25 @@ const useStore = create(
       },
 
       initSync: async () => {
-        await get().loadFromSupabase();
-        get().subscribeToSupabase();
-        
-        // Veri yüklendikten sonra bildirimleri kontrol et
-        setTimeout(() => get().checkSystemNotifications(), 2000);
+        if (get().syncing) return; // Zaten çalışıyor
+        try {
+          set({ syncing: true });
+          await get().loadFromSupabase();
+          get().subscribeToSupabase();
+          
+          // Veri yüklendikten sonra bildirimleri kontrol et
+          setTimeout(() => get().checkSystemNotifications(), 2000);
 
-        // Final fallback: if still empty after sync, restore defaults
-        const current = get();
-        if (!current.mutfak.tarifler || current.mutfak.tarifler.length === 0) {
-          console.warn('🔄 Restoring mutfak defaults...');
-          set({ mutfak: DEFAULT_STATE.mutfak });
+          // Final fallback: if still empty after sync, restore defaults
+          const current = get();
+          if (!current.mutfak.tarifler || current.mutfak.tarifler.length === 0) {
+            console.warn('🔄 Restoring mutfak defaults...');
+            set({ mutfak: DEFAULT_STATE.mutfak });
+          }
+          return true;
+        } catch (e) {
+          console.error('InitSync error:', e);
+          return false;
         }
       },
 
@@ -1070,12 +1078,7 @@ const useStore = create(
         if (harcamalar.length === 0) {
           if (!isAuto) toast.error('Bu ay için harcama kaydı bulunamadı.');
           // Otomatik kapanışta sürekli tetiklenmemesi için 0 kayıtlı bir arşiv atıyoruz
-          await upsertArsiv(hedefAy, {
-            toplam_harcama: 0,
-            toplam_kart: 0,
-            toplam_nakit: 0,
-            kategori_ozet: {},
-          });
+          await upsertArsiv(hedefAy, {});
           return;
         }
 
@@ -1097,12 +1100,7 @@ const useStore = create(
           }
         });
 
-        await upsertArsiv(hedefAy, {
-          toplam_harcama: toplamHarcama,
-          toplam_kart: toplamKart,
-          toplam_nakit: toplamNakit,
-          kategori_ozet: kategoriOzet,
-        });
+        await upsertArsiv(hedefAy, {});
 
         toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);
       },

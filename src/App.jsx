@@ -34,7 +34,6 @@ import PersonalityHub from './pages/PersonalityHub';
 function AnimatedRoutes() {
   const location = useLocation();
 
-  // location.pathname key olarak kullanılıyor, AnimatePresence için kritik
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
@@ -69,7 +68,6 @@ function AnimatedRoutes() {
 
 function App() {
   const [loading, setLoading] = React.useState(true);
-  // Uygulama açılışında Supabase'den veri çek ve Realtime başlat
   const initSync = useStore(state => state.initSync);
   const currentUser = useStore(state => state.currentUser);
   
@@ -80,13 +78,17 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AnimatePresence>
-        {loading && <SplashScreen key="splash" finishLoading={() => setLoading(false)} />}
-      </AnimatePresence>
-      
       <BrowserRouter>
         <AnimatePresence mode="wait">
-          {!loading && !currentUser && <UserSelection key="user-selection-modal" />}
+          {loading ? (
+            <SplashScreen key="splash" finishLoading={() => setLoading(false)} />
+          ) : !currentUser ? (
+            <UserSelection key="user-selection-modal" />
+          ) : (
+            <div key="app-main-content" style={{ width: '100%', height: '100%' }}>
+              <AnimatedRoutes />
+            </div>
+          )}
         </AnimatePresence>
         
         <Toaster 
@@ -105,7 +107,6 @@ function App() {
             },
           }}
         />
-        {!loading && <AnimatedRoutes />}
       </BrowserRouter>
     </ErrorBoundary>
   );

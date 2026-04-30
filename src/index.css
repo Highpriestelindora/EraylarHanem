@@ -100,12 +100,12 @@ h1, h2, h3 { font-family: 'Fraunces', serif; font-weight: 800; }
 
 /* Utilities */
 .animate-fadeIn {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes float {
@@ -365,10 +365,9 @@ body:has(.modal-overlay) .app-content {
 }
 
 .tab-btn.active span {
-  animation: sweet-bounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
 }
-
-
 
 .icon-btn {
   width: 40px;
@@ -393,12 +392,6 @@ body:has(.modal-overlay) .app-content {
 .icon-btn.white {
   background: white;
   color: var(--txt);
-}
-
-@keyframes sweet-bounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1.1); }
 }
 
 .animate-float {
@@ -556,3 +549,4 @@ input[type="time"] {
   background: white !important;
 }
 
+/* End of CSS */

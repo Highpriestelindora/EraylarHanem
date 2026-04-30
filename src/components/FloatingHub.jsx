@@ -7,7 +7,7 @@ import { PET_QUOTES } from '../constants/petQuotes';
 import toast from 'react-hot-toast';
 import './FloatingHub.css';
 
-export default function FloatingHub() {
+function FloatingHub() {
   const navigate = useNavigate();
   const constraintsRef = useRef(null);
   
@@ -316,3 +316,5 @@ export default function FloatingHub() {
     </>
   );
 }
+
+export default React.memo(FloatingHub);

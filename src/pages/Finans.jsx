@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useTransition } from 'react';
 import {
   TrendingDown, CreditCard, Clock, Check, X, AlertCircle,
   ChevronDown, ChevronUp, Calendar, ArrowLeft, Eye, EyeOff,
@@ -31,7 +31,7 @@ const KART_GRADIENTS = {
 };
 
 // ── Özet Sekmesi ──────────────────────────────────────────────
-function OzetTab({ finans, prv }) {
+const OzetTab = React.memo(({ finans, prv }) => {
   const pool = finans?.approvalPool || [];
   const borclar = finans?.borclar || [];
   const kartlar = finans?.kartlar || [];
@@ -95,9 +95,9 @@ function OzetTab({ finans, prv }) {
       </div>
     </div>
   );
-}
+});
 
-function HarcamalarTab({ finans, prv }) {
+const HarcamalarTab = React.memo(({ finans, prv }) => {
   const [filter, setFilter] = useState('hepsi');
   const ev = useStore(state => state.ev);
   const buAyHarcamalar = finans?.buAyHarcamalar || [];
@@ -191,10 +191,10 @@ function HarcamalarTab({ finans, prv }) {
       )}
     </div>
   );
-}
+});
 
 // ── Kredi Sekmesi ─────────────────────────────────────────────
-function KrediTab({ finans, prv }) {
+const KrediTab = React.memo(({ finans, prv }) => {
   const kartlar = finans?.kartlar || [];
   const borclar = finans?.borclar || [];
   const kartMutabakat = finans?.kartMutabakat || {};
@@ -343,10 +343,10 @@ function KrediTab({ finans, prv }) {
       <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
     </div>
   );
-}
+});
 
 // ── Onay Sekmesi ──────────────────────────────────────────────
-function OnayTab({ finans, prv }) {
+const OnayTab = React.memo(({ finans, prv }) => {
   const onaylaHarcama = useStore(state => state.onaylaHarcama);
   const reddetHarcama = useStore(state => state.reddetHarcama);
   const pool = finans?.approvalPool || [];
@@ -411,10 +411,10 @@ function OnayTab({ finans, prv }) {
       ))}
     </div>
   );
-}
+});
 
 // ── Geçmiş Sekmesi ────────────────────────────────────────────
-function GecmisTab({ prv }) {
+const GecmisTab = React.memo(({ prv }) => {
   const getFinansArsiv = useStore(state => state.getFinansArsiv);
   const getGecmisAy = useStore(state => state.getGecmisAy);
   const ayKapat = useStore(state => state.ayKapat);
@@ -467,7 +467,7 @@ function GecmisTab({ prv }) {
             <div className="gac-header" onClick={() => handleAySecim(a.ay)}>
               <div>
                 <strong>{a.ay}</strong>
-                <small>{fmt(a.toplam_harcama, prv)} · Kart: {fmt(a.toplam_kart, prv)} · Nakit: {fmt(a.toplam_nakit, prv)}</small>
+                <small>{fmt(a.total_amount, prv)} · Kart: {fmt(a.card_total, prv)} · Nakit: {fmt(a.cash_total, prv)}</small>
               </div>
               {selected === a.ay ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
@@ -494,7 +494,7 @@ function GecmisTab({ prv }) {
       </div>
     </div>
   );
-}
+});
 
 function GecenAyForm({ oncekiAy, onClose }) {
   const { addHarcama, finans, currentUser } = useStore();
@@ -536,6 +536,7 @@ const TABS = [
 
 export default function Finans() {
   const [activeTab, setActiveTab] = useState('ozet');
+  const [isPending, startTransition] = useTransition();
   const navigate = useNavigate();
   
   // Performans için seçici abonelikler
@@ -545,6 +546,12 @@ export default function Finans() {
   
   const prv = privacyMode;
   const pool = finans?.approvalPool || [];
+
+  const handleTabChange = (id) => {
+    startTransition(() => {
+      setActiveTab(id);
+    });
+  };
 
   return (
     <AnimatedPage className="finans-container">
@@ -572,7 +579,7 @@ export default function Finans() {
             <button
               key={t.id}
               className={`tab-btn ${activeTab === t.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => handleTabChange(t.id)}
               style={{ whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <span>{t.icon}</span>

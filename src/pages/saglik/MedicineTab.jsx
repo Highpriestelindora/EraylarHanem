@@ -126,11 +126,11 @@ const MedicineTab = () => {
     const hour = new Date().getHours();
     let targetSlot = null;
 
-    if (med.schedule.morning > 0 && getSlotStatus(med.id, 'morning', med.schedule.morning) !== 'taken') {
+    if ((med.schedule?.morning || 0) > 0 && getSlotStatus(med.id, 'morning', med.schedule?.morning) !== 'taken') {
       targetSlot = 'morning';
-    } else if (med.schedule.afternoon > 0 && getSlotStatus(med.id, 'afternoon', med.schedule.afternoon) !== 'taken') {
+    } else if ((med.schedule?.afternoon || 0) > 0 && getSlotStatus(med.id, 'afternoon', med.schedule?.afternoon) !== 'taken') {
       targetSlot = 'afternoon';
-    } else if (med.schedule.evening > 0 && getSlotStatus(med.id, 'evening', med.schedule.evening) !== 'taken') {
+    } else if ((med.schedule?.evening || 0) > 0 && getSlotStatus(med.id, 'evening', med.schedule?.evening) !== 'taken') {
       targetSlot = 'evening';
     }
 
