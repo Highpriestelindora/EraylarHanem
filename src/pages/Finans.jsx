@@ -90,11 +90,29 @@ function OzetTab({ finans, prv }) {
   );
 }
 
-// ── Harcamalar Sekmesi ────────────────────────────────────────
 function HarcamalarTab({ finans, prv }) {
   const [filter, setFilter] = useState('hepsi');
+  const ev = useStore(state => state.ev);
   const buAyHarcamalar = finans?.buAyHarcamalar || [];
-  const rekuranslar = finans?.rekurans || [];
+  
+  // FAZ 4: Rekuranslar Ev modülünden okunur
+  const evAbonelikleri = (ev?.abonelikler || []).map(a => ({
+    id: `abn-${a.id}`,
+    title: a.name,
+    amount: a.amount,
+    gun: a.date,
+    icon: a.icon || '📺'
+  }));
+
+  const evDuzenli = (ev?.duzenliOdemeler || []).map(d => ({
+    id: `duz-${d.id}`,
+    title: d.name,
+    amount: d.amount,
+    gun: d.date,
+    icon: d.icon || '🏢'
+  }));
+
+  const rekuranslar = [...evAbonelikleri, ...evDuzenli];
 
   const bugun = new Date();
   const buAy = bugun.getMonth();
