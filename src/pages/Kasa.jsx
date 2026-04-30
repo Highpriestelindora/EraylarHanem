@@ -25,7 +25,7 @@ export default function Kasa() {
   const navigate = useNavigate();
   const { 
     kasa, updateVarlik, updateTasinmaz, transferKasa, 
-    togglePrivacyMode, updateKasaBakiye, finans 
+    togglePrivacyMode, updateKasaBakiye, finans, garaj 
   } = useStore();
 
   const privacy = kasa?.privacyMode || false;
@@ -34,7 +34,8 @@ export default function Kasa() {
   const totalCash = Object.values(K.bakiyeler || {}).reduce((a, b) => a + b, 0);
   const totalVarlik = (K.varliklar || []).reduce((acc, v) => acc + (v.amount * v.price), 0);
   const totalTasinmaz = (K.tasinmazlar || []).reduce((acc, t) => acc + t.value, 0);
-  const totalWealth = totalCash + totalVarlik + totalTasinmaz;
+  const totalTasit = (garaj || []).reduce((acc, v) => acc + (v.marketValue || 0), 0);
+  const totalWealth = totalCash + totalVarlik + totalTasinmaz + totalTasit;
 
   const totalDebt = (finans?.borclar || []).reduce((a, b) => a + (b.remaining || 0), 0) + (finans?.kartlar || []).reduce((a, b) => a + (b.balance || 0), 0);
   const netWorth = totalWealth - totalDebt;
@@ -47,10 +48,10 @@ export default function Kasa() {
   ];
 
   const portfolioData = {
-    labels: ['Nakit', 'Varlıklar', 'Mülkler'],
+    labels: ['Nakit', 'Varlıklar', 'Mülkler', 'Taşıtlar'],
     datasets: [{
-      data: [totalCash, totalVarlik, totalTasinmaz],
-      backgroundColor: ['#10b981', '#f59e0b', '#7c3aed'],
+      data: [totalCash, totalVarlik, totalTasinmaz, totalTasit],
+      backgroundColor: ['#10b981', '#f59e0b', '#7c3aed', '#334155'],
       borderWidth: 0,
       cutout: '75%'
     }]
@@ -126,6 +127,7 @@ export default function Kasa() {
                 <div className="legend-item"><span style={{background: '#10b981'}} /> Nakit</div>
                 <div className="legend-item"><span style={{background: '#f59e0b'}} /> Altın/Borsa</div>
                 <div className="legend-item"><span style={{background: '#7c3aed'}} /> Mülkler</div>
+                <div className="legend-item"><span style={{background: '#334155'}} /> Taşıtlar</div>
               </div>
             </div>
 
@@ -146,6 +148,23 @@ export default function Kasa() {
                   <div className="acp-right">
                     <div className="acp-value">{formatMoney(v.amount * v.price, privacy)}</div>
                     <button className="acp-edit"><MoreVertical size={16} /></button>
+                  </div>
+                </div>
+              ))}
+              
+              {/* Taşıtlar */}
+              {garaj?.filter(v => v.marketValue > 0).map(v => (
+                <div key={v.id} className="asset-card-premium glass" style={{ borderLeft: '4px solid #334155' }}>
+                  <div className="acp-left">
+                    <div className="acp-icon">🚗</div>
+                    <div className="acp-info">
+                      <strong>{v.model}</strong>
+                      <small>{v.plaka} · Güncel Değer</small>
+                    </div>
+                  </div>
+                  <div className="acp-right">
+                    <div className="acp-value">{formatMoney(v.marketValue, privacy)}</div>
+                    <button className="acp-edit" onClick={() => navigate('/aracim')}><ChevronRight size={16} /></button>
                   </div>
                 </div>
               ))}

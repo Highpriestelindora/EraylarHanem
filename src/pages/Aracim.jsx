@@ -300,6 +300,21 @@ export default function Aracim() {
 
         {activeTab === 'analiz' && (
           <div className="analysis-view animate-fadeIn">
+            {/* Market Value Widget */}
+            <div className="section-header-v2">
+              <h3>💰 Finansal Değer</h3>
+            </div>
+            <div className="km-widget-premium glass mb-24" onClick={() => { setEditingVehicle(vehicle); setShowVehicleForm(true); }} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', cursor: 'pointer' }}>
+              <div className="kmw-main">
+                <Landmark size={32} className="kmw-icon" />
+                <div className="kmw-text">
+                  <small style={{ color: 'rgba(255,255,255,0.8)' }}>GÜNCEL PİYASA DEĞERİ</small>
+                  <h2 style={{ fontSize: '24px', color: 'white' }}>{formatMoney(vehicle.marketValue)}</h2>
+                </div>
+              </div>
+              <Edit3 size={18} className="kmw-arrow" />
+            </div>
+
             <div className="section-header-v2">
               <h3>📊 Yakıt Verimliliği</h3>
               <small>L/100km</small>
@@ -643,7 +658,7 @@ function GarageModal({ garaj, selectedId, onSelect, onAdd, onClose }) {
 }
 
 function VehicleFormModal({ vehicle, onSave, onDelete, onClose }) {
-  const [form, setForm] = useState(vehicle || { type: 'car', brand: '', model: '', plaka: '' });
+  const [form, setForm] = useState(vehicle || { type: 'car', brand: '', model: '', plaka: '', marketValue: 0 });
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
@@ -666,6 +681,16 @@ function VehicleFormModal({ vehicle, onSave, onDelete, onClose }) {
           <div className="form-group-v2 mt-12">
             <label>Plaka / Bağlama Kütüğü</label>
             <input value={form.plaka} onChange={e => setForm({...form, plaka: e.target.value})} className="premium-input" placeholder="34 HH 1144" />
+          </div>
+          <div className="form-group-v2 mt-12">
+            <label>Güncel Piyasa Değeri (TL)</label>
+            <input 
+              type="number" 
+              value={form.marketValue} 
+              onChange={e => setForm({...form, marketValue: Number(e.target.value)})} 
+              className="premium-input" 
+              placeholder="1.500.000" 
+            />
           </div>
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
             <button className="submit-btn-premium" style={{ flex: 2 }} onClick={() => { onSave(form); onClose(); }}>Kaydet</button>
@@ -773,10 +798,23 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
         </div>
         <div className="modal-body-v2">
           <div className="form-group-v2">
-            <label className="flex items-center gap-8">
-              <input type="checkbox" checked={form.isAVM} onChange={e => setForm({...form, isAVM: e.target.checked})} />
-              AVM / Kapalı Otopark mı?
-            </label>
+            <label>Park Alanı Türü</label>
+            <div className="pill-toggle">
+              <button 
+                type="button" 
+                className={`pill-btn ${!form.isAVM ? 'active' : ''}`}
+                onClick={() => setForm({ ...form, isAVM: false })}
+              >
+                🌳 Açık Alan / Sokak
+              </button>
+              <button 
+                type="button" 
+                className={`pill-btn ${form.isAVM ? 'active' : ''}`}
+                onClick={() => setForm({ ...form, isAVM: true })}
+              >
+                🏢 AVM / Kapalı
+              </button>
+            </div>
           </div>
           {form.isAVM && (
             <div className="form-grid-v2 mt-12 animate-fadeIn">

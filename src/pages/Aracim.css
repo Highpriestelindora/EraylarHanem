@@ -490,3 +490,33 @@
   transform: scale(0.97);
   background: #f1f5f9;
 }
+
+/* Pill Toggle */
+.pill-toggle {
+  display: flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 50px;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.pill-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 40px;
+  border: none;
+  background: transparent;
+  color: var(--txt-light);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.pill-btn.active {
+  background: white;
+  color: var(--aracim);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}

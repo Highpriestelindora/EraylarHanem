@@ -175,7 +175,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v4.10.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>MEMORY VAULT & EV HUB</span>
+            v2.32.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"ARISTOTLE"</span>
           </span>
         </div>
         <span style={{

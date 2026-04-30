@@ -3516,9 +3516,10 @@ export const INITIAL_TRIPS = [
 ];
 
 export const INITIAL_VEHICLE = {
-  km: 45200,
+  marketValue: 1550000,
+  km: 41452,
   plaka: '34 HH 1144',
-  model: 'Volkswagen Tiguan R-Line',
+  model: 'Toyota C-HR 1.8 Hybrid',
   muayene: {
     last: '2025-06-15',
     next: '2027-06-15',

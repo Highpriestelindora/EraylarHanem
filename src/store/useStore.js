@@ -151,7 +151,7 @@ const DEFAULT_STATE = {
   },
   // ── Global System ──────────────────────────────────
   system: {
-    version: '2.31.0',
+    version: '2.32.0 "Aristotle"',
     globalScore: 85,
     onboardingComplete: false,
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
@@ -188,10 +188,11 @@ const DEFAULT_STATE = {
     {
       id: 'v1',
       type: 'car',
-      brand: 'Volkswagen',
-      model: 'Tiguan R-Line',
+      brand: 'Toyota',
+      model: 'C-HR 1.8 Hybrid',
       plaka: '34 HH 1144',
-      km: 45200,
+      km: 41452,
+      marketValue: 1550000,
       parts: [
         { id: 'oil', name: 'Motor Yağı', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🛢️' },
         { id: 'filter', name: 'Hava Filtresi', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🌪️' },
