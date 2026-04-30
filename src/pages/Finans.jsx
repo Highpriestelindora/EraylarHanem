@@ -210,10 +210,9 @@ function KrediTab({ finans, prv }) {
   return (
     <div className="f-tab-content animate-fadeIn">
       <div className="ozet-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>💳 Kart Mutabakatı</span>
+        <span>💳 Kredi Kartlarım</span>
         <button className="icon-btn" onClick={() => setShowKartModal(true)} style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}><Settings size={16} /></button>
       </div>
-      <p className="kredi-hint">Ay sonunda gerçek banka borcunu gir, sistem farkı gösterir.</p>
 
       {kartlar.map(kart => {
         const mut = kartMutabakat[kart.id] || {};
