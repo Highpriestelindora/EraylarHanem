@@ -347,7 +347,8 @@ function KrediTab({ finans, prv }) {
 
 // ── Onay Sekmesi ──────────────────────────────────────────────
 function OnayTab({ finans, prv }) {
-  const { onaylaHarcama, reddetHarcama } = useStore();
+  const onaylaHarcama = useStore(state => state.onaylaHarcama);
+  const reddetHarcama = useStore(state => state.reddetHarcama);
   const pool = finans?.approvalPool || [];
   const kartlar = finans?.kartlar || [];
   const [kartSecim, setKartSecim] = useState({});
@@ -414,7 +415,9 @@ function OnayTab({ finans, prv }) {
 
 // ── Geçmiş Sekmesi ────────────────────────────────────────────
 function GecmisTab({ prv }) {
-  const { getFinansArsiv, getGecmisAy, ayKapat } = useStore();
+  const getFinansArsiv = useStore(state => state.getFinansArsiv);
+  const getGecmisAy = useStore(state => state.getGecmisAy);
+  const ayKapat = useStore(state => state.ayKapat);
   const [arsiv, setArsiv] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -534,8 +537,13 @@ const TABS = [
 export default function Finans() {
   const [activeTab, setActiveTab] = useState('ozet');
   const navigate = useNavigate();
-  const { finans, kasa, togglePrivacyMode } = useStore();
-  const prv = kasa?.privacyMode || false;
+  
+  // Performans için seçici abonelikler
+  const finans = useStore(state => state.finans);
+  const privacyMode = useStore(state => state.kasa?.privacyMode ?? false);
+  const togglePrivacyMode = useStore(state => state.togglePrivacyMode);
+  
+  const prv = privacyMode;
   const pool = finans?.approvalPool || [];
 
   return (

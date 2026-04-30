@@ -33,13 +33,8 @@ import PersonalityHub from './pages/PersonalityHub';
 
 function AnimatedRoutes() {
   const location = useLocation();
-  const navigate = useNavigate();
 
-  // Her yeni açılışta/yenilemede ana ekrana yönlendir
-  useEffect(() => {
-    navigate('/');
-  }, []);
-
+  // location.pathname key olarak kullanılıyor, AnimatePresence için kritik
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
@@ -80,7 +75,7 @@ function App() {
   useEffect(() => {
     initSync();
     notificationService.requestPermission();
-  }, []);
+  }, [initSync]); // initSync bağımlılık olarak eklendi
 
   return (
     <ErrorBoundary>

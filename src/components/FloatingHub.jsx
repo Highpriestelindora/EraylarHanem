@@ -10,7 +10,15 @@ import './FloatingHub.css';
 export default function FloatingHub() {
   const navigate = useNavigate();
   const constraintsRef = useRef(null);
-  const { mutfak, addKitchenNote, archiveNote, currentUser, addExpense, updateNotePosition, ui } = useStore();
+  
+  // Seçici abonelikler (Sadece değişen kısım render tetikler)
+  const mutfak = useStore(state => state.mutfak);
+  const currentUser = useStore(state => state.currentUser);
+  const ui = useStore(state => state.ui);
+  
+  const addKitchenNote = useStore(state => state.addKitchenNote);
+  const archiveNote = useStore(state => state.archiveNote);
+  const updateNotePosition = useStore(state => state.updateNotePosition);
   
   const [isOpen, setIsOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'chat' or 'expense'

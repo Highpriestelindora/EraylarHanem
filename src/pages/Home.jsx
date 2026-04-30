@@ -14,17 +14,14 @@ import toast from 'react-hot-toast';
 import './Home.css';
 
 const Home = () => {
-  const { 
-    system = { version: '2.31.0', globalScore: 0, weeklyReports: [{ spending: 0, health: '...', goalsReached: 0 }], achievements: [] }, 
-    currentUser, 
-    saglik,
-    addMood,
-    logs = [], 
-    calculateGlobalScore,
-    garaj,
-    selectedVehicleId
-  } = useStore();
-
+  // Performans için seçici abonelikler (Selective Selectors)
+  const currentUser = useStore(state => state.currentUser);
+  const system = useStore(state => state.system) || { version: '2.31.0', globalScore: 0, weeklyReports: [], achievements: [] };
+  const saglik = useStore(state => state.saglik);
+  const garaj = useStore(state => state.garaj);
+  const selectedVehicleId = useStore(state => state.selectedVehicleId);
+  const calculateGlobalScore = useStore(state => state.calculateGlobalScore);
+  
   const isOnline = system?.isOnline ?? true;
 
   const activeVehicle = useMemo(() => 

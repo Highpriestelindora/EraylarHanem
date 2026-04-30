@@ -9,7 +9,8 @@ import './AppLayout.css';
 export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isOnline, currentUser } = useStore();
+  const isOnline = useStore(state => state.system?.isOnline ?? true);
+  const currentUser = useStore(state => state.currentUser);
   const isHome = location.pathname === '/';
   
   return (

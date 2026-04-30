@@ -23,7 +23,7 @@ export default function Mutfak() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('menu');
   const [searchTerm, setSearchTerm] = useState('');
-  const { mutfak } = useStore();
+  const mutfak = useStore(state => state.mutfak);
 
   const tabs = [
     { id: 'menu', label: 'Menü', icon: Calendar, emoji: '📅' },
