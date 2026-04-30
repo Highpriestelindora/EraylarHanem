@@ -1055,12 +1055,20 @@ const useStore = create(
       },
 
       // Ayı kapatır: özet oluşturur ve finans_arsiv'e yazar
-      ayKapat: async (ay) => {
+      ayKapat: async (ay, isAuto = false) => {
         const hedefAy = ay || new Date().toISOString().slice(0, 7);
         const harcamalar = await fetchGecmisAyFromSupabase(hedefAy);
 
         if (harcamalar.length === 0) {
-          toast.error('Bu ay için harcama kaydı bulunamadı.');
+          if (!isAuto) toast.error('Bu ay için harcama kaydı bulunamadı.');
+          // Otomatik kapanışta sürekli tetiklenmemesi için 0 kayıtlı bir arşiv atıyoruz
+          await upsertArsiv(hedefAy, {
+            toplam_harcama: 0,
+            toplam_kart: 0,
+            toplam_nakit: 0,
+            kategori_ozet: {},
+            kart_ozet: {},
+          });
           return;
         }
 
@@ -1105,7 +1113,7 @@ const useStore = create(
 
         if (!zatenKapatilmis) {
           console.log(`🔄 Otomatik kapanış tetikleniyor: ${oncekiAy}`);
-          await get().ayKapat(oncekiAy);
+          await get().ayKapat(oncekiAy, true);
         }
       },
 
