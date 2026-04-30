@@ -732,16 +732,18 @@ const useStore = create(
         if (saveTimeout) clearTimeout(saveTimeout);
         
         saveTimeout = setTimeout(async () => {
-          if (get().isSaving) return;
+          if (get().isSaving) {
+            // If already saving, schedule another check after a short delay
+            setTimeout(() => get().saveToSupabase(), 2000);
+            return;
+          }
           
           try {
             set({ isSaving: true });
             const state = get();
             
-            // CRITICAL PROTECTION: Never save to cloud if we haven't loaded from cloud yet.
-            // This prevents LocalStorage (which might have missing data) from overwriting Supabase.
             if (!state.system.isCloudReady) {
-              console.warn('⚠️ Cloud data not ready. Skipping save to prevent photo loss.');
+              console.warn('⚠️ Cloud data not ready. Skipping save.');
               set({ isSaving: false });
               return;
             }
@@ -752,11 +754,10 @@ const useStore = create(
             await pushToSupabase(dataToPush);
             set({ isOnline: true, isSaving: false });
           } catch (err) {
-            set({ isSaving: false });
-            set({ isOnline: false });
+            set({ isSaving: false, isOnline: false });
           }
           saveTimeout = null;
-        }, 1000); // 1 second debounce
+        }, 1000);
       },
 
       // ── Eraylar Finans Actions ───────────────────────────

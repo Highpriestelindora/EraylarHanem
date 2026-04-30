@@ -1863,24 +1863,33 @@ function SeyahatAlbumu({ trip }) {
   const isJoint = trip.travelers === 'ikimiz';
   const activeUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
 
+  const [uploadingSlots, setUploadingSlots] = useState({});
+
   const compressImage = (base64Str) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.src = base64Str;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 700;
+        const MAX_WIDTH = 800; // Slightly larger for better detail
         let width = img.width;
         let height = img.height;
+        
         if (width > MAX_WIDTH) {
           height *= MAX_WIDTH / width;
           width = MAX_WIDTH;
         }
+        
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: false }); // Performance optimization
+        
+        // Better scaling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.5));
+        resolve(canvas.toDataURL('image/jpeg', 0.45)); // Slightly lower quality for better speed/size balance
       };
       img.onerror = (e) => reject(e);
     });
@@ -1888,13 +1897,22 @@ function SeyahatAlbumu({ trip }) {
 
   const handlePhotoUpload = (slotUser, index) => {
     if (activeUser !== slotUser) return toast.error("Sadece kendi favorilerini ekleyebilirsin! 🛑");
-    
+    if (uploadingSlots[`${slotUser}-${index}`]) return;
+
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
+        // Size check (max 10MB for processing safety)
+        if (file.size > 10 * 1024 * 1024) {
+          return toast.error("Dosya çok büyük (Max 10MB).");
+        }
+
+        const slotKey = `${slotUser}-${index}`;
+        setUploadingSlots(prev => ({ ...prev, [slotKey]: true }));
+        
         const reader = new FileReader();
         reader.onload = async (event) => {
           try {
@@ -1902,7 +1920,6 @@ function SeyahatAlbumu({ trip }) {
             const currentEval = trip.evaluations?.[slotUser] || { star: 0, note: '', photos: [null, null, null] };
             const newPhotos = Array.isArray(currentEval.photos) ? [...currentEval.photos] : [null, null, null];
             
-            // Ensure array length
             while(newPhotos.length < 3) newPhotos.push(null);
             newPhotos[index] = compressed;
 
@@ -1913,17 +1930,19 @@ function SeyahatAlbumu({ trip }) {
               }
             };
 
-            // Also update global trip.photos for legacy/preview support if both evaluations exist
             const allGallery = [];
             const gP = updates.evaluations.gorkem?.photos || [];
             const eP = updates.evaluations.esra?.photos || [];
             [...gP, ...eP].forEach(p => { if(p) allGallery.push(p); });
             updates.photos = allGallery.slice(0, 6);
 
-            updateTrip(trip.id, updates);
+            await updateTrip(trip.id, updates);
             toast.success("Fotoğraf eklendi! ✨");
           } catch (err) {
+            console.error(err);
             toast.error("Hata oluştu.");
+          } finally {
+            setUploadingSlots(prev => ({ ...prev, [slotKey]: false }));
           }
         };
         reader.readAsDataURL(file);
@@ -1962,17 +1981,23 @@ function SeyahatAlbumu({ trip }) {
             <div className="as-user-header gorkem">👨🏻‍💻 Görkem'in Favorileri</div>
             <div className="as-photo-grid">
                {[0, 1, 2].map(i => (
-                 <div key={i} className={`as-photo-card glass ${activeUser === 'gorkem' ? 'editable' : ''}`} onClick={() => handlePhotoUpload('gorkem', i)}>
+                 <div key={i} className={`as-photo-card glass ${activeUser === 'gorkem' ? 'editable' : ''} ${uploadingSlots[`gorkem-${i}`] ? 'loading' : ''}`} onClick={() => handlePhotoUpload('gorkem', i)}>
+                    {uploadingSlots[`gorkem-${i}`] && (
+                      <div className="spinner-premium-container">
+                        <div className="spinner-premium" />
+                        <span>İşleniyor...</span>
+                      </div>
+                    )}
                     {gPhotos[i] ? (
                       <>
                         <img src={gPhotos[i]} alt="Görkem" />
-                        {activeUser === 'gorkem' && (
+                        {activeUser === 'gorkem' && !uploadingSlots[`gorkem-${i}`] && (
                           <button className="photo-remove-btn" onClick={(e) => { e.stopPropagation(); removePhoto('gorkem', i); }}>
                             <X size={12} />
                           </button>
                         )}
                       </>
-                    ) : (
+                    ) : !uploadingSlots[`gorkem-${i}`] && (
                       <div className="as-empty">
                         <PlusCircle size={24} opacity={0.3} />
                         {activeUser === 'gorkem' && <span>Ekle</span>}
@@ -1989,17 +2014,23 @@ function SeyahatAlbumu({ trip }) {
             <div className="as-user-header esra">👩 Esra'nın Favorileri</div>
             <div className="as-photo-grid">
                {[0, 1, 2].map(i => (
-                 <div key={i} className={`as-photo-card glass ${activeUser === 'esra' ? 'editable' : ''}`} onClick={() => handlePhotoUpload('esra', i)}>
+                 <div key={i} className={`as-photo-card glass ${activeUser === 'esra' ? 'editable' : ''} ${uploadingSlots[`esra-${i}`] ? 'loading' : ''}`} onClick={() => handlePhotoUpload('esra', i)}>
+                    {uploadingSlots[`esra-${i}`] && (
+                      <div className="spinner-premium-container">
+                        <div className="spinner-premium" />
+                        <span>İşleniyor...</span>
+                      </div>
+                    )}
                     {ePhotos[i] ? (
                       <>
                         <img src={ePhotos[i]} alt="Esra" />
-                        {activeUser === 'esra' && (
+                        {activeUser === 'esra' && !uploadingSlots[`esra-${i}`] && (
                           <button className="photo-remove-btn" onClick={(e) => { e.stopPropagation(); removePhoto('esra', i); }}>
                             <X size={12} />
                           </button>
                         )}
                       </>
-                    ) : (
+                    ) : !uploadingSlots[`esra-${i}`] && (
                       <div className="as-empty">
                         <PlusCircle size={24} opacity={0.3} />
                         {activeUser === 'esra' && <span>Ekle</span>}
@@ -2024,6 +2055,7 @@ function TripReviewPanel({ trip, onComplete }) {
   const isJoint = trip.travelers === 'ikimiz';
   const activeUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
   
+   const [uploadingSlots, setUploadingSlots] = useState({});
   const [evalData, setEvalData] = useState({ 
     star: trip.evaluations?.[activeUser]?.star ?? (typeof trip.evaluations?.[activeUser] === 'number' ? trip.evaluations[activeUser] : 0), 
     note: trip.evaluations?.[activeUser]?.note || '', 
@@ -2048,14 +2080,14 @@ function TripReviewPanel({ trip, onComplete }) {
     onComplete(activeUser, evalData);
   };
 
-  const compressImage = (base64Str) => {
+   const compressImage = (base64Str) => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = "anonymous";
       img.src = base64Str;
       img.onload = () => {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 700;
+        const MAX_WIDTH = 800;
         let width = img.width;
         let height = img.height;
         if (width > MAX_WIDTH) {
@@ -2064,21 +2096,31 @@ function TripReviewPanel({ trip, onComplete }) {
         }
         canvas.width = width;
         canvas.height = height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', 0.5));
+        resolve(canvas.toDataURL('image/jpeg', 0.45));
       };
       img.onerror = (e) => reject(e);
     });
   };
 
-  const handlePhotoClick = (index) => {
+   const handlePhotoClick = (index) => {
+    if (uploadingSlots[index]) return;
+
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
     input.onchange = (e) => {
       const file = e.target.files[0];
       if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+          return toast.error("Dosya çok büyük (Max 10MB).");
+        }
+
+        setUploadingSlots(prev => ({ ...prev, [index]: true }));
+
         const reader = new FileReader();
         reader.onload = async (event) => {
           try {
@@ -2086,9 +2128,12 @@ function TripReviewPanel({ trip, onComplete }) {
             const newPhotos = [...evalData.photos];
             newPhotos[index] = compressed;
             setEvalData({ ...evalData, photos: newPhotos });
+            toast.success("Fotoğraf işlendi! ✨");
           } catch (err) {
             console.error('Compression error:', err);
             toast.error('Fotoğraf işlenirken hata oluştu.');
+          } finally {
+            setUploadingSlots(prev => ({ ...prev, [index]: false }));
           }
         };
         reader.readAsDataURL(file);
@@ -2125,14 +2170,20 @@ function TripReviewPanel({ trip, onComplete }) {
           />
         </div>
 
-        <div className="rfb-section mt-20">
+         <div className="rfb-section mt-20">
           <h4>📸 Favori 3 Karen</h4>
           <div className="review-photo-grid">
             {[0, 1, 2].map(i => (
-              <div key={i} className="rp-slot glass" onClick={() => handlePhotoClick(i)}>
+              <div key={i} className={`rp-slot glass ${uploadingSlots[i] ? 'loading' : ''}`} onClick={() => handlePhotoClick(i)}>
+                {uploadingSlots[i] && (
+                  <div className="spinner-premium-container">
+                    <div className="spinner-premium" />
+                    <span>İşleniyor...</span>
+                  </div>
+                )}
                 {evalData.photos[i] ? (
                   <img src={evalData.photos[i]} alt="Upload" />
-                ) : (
+                ) : !uploadingSlots[i] && (
                   <PlusCircle size={20} opacity={0.5} />
                 )}
               </div>

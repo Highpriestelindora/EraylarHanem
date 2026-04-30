@@ -5747,3 +5747,47 @@
   font-size: 13px;
   font-weight: 500;
 }
+
+/* Premium Loading Spinner */
+.spinner-premium-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 20;
+  border-radius: inherit;
+}
+
+.spinner-premium {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(30, 134, 200, 0.1);
+  border-top-color: #1E86C8;
+  border-radius: 50%;
+  animation: spin-premium 0.8s linear infinite;
+}
+
+.spinner-premium-container span {
+  font-size: 9px;
+  font-weight: 800;
+  color: #1E86C8;
+  margin-top: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+@keyframes spin-premium {
+  to { transform: rotate(360deg); }
+}
+
+.as-photo-card.loading {
+  cursor: wait;
+}
+
+.rp-slot.loading {
+  cursor: wait;
+}
