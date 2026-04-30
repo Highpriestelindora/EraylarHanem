@@ -74,12 +74,13 @@ function AnimatedRoutes() {
 
 function App() {
   const [loading, setLoading] = React.useState(true);
-  const { initSync, currentUser, getBuAyHarcamalar } = useStore();
+  const { initSync, currentUser, getBuAyHarcamalar, checkAutoKapanis } = useStore();
 
   // Uygulama açılışında Supabase'den veri çek ve Realtime başlat
   useEffect(() => {
     initSync();
     getBuAyHarcamalar(); // Bu ayın harcamalarını finans_harcamalar tablosundan çek
+    checkAutoKapanis(); // FAZ 9: Otomatik geçmiş ay arşivi kapanışı kontrolü
     notificationService.requestPermission();
   }, []);
 

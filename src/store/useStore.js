@@ -1093,6 +1093,22 @@ const useStore = create(
         toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);
       },
 
+      // Otomatik ay kapanışı kontrolü (App.jsx tarafından çağrılır)
+      checkAutoKapanis: async () => {
+        const d = new Date();
+        // Bir önceki ayı bul
+        d.setMonth(d.getMonth() - 1);
+        const oncekiAy = d.toISOString().slice(0, 7);
+
+        const arsivler = await get().getFinansArsiv(5);
+        const zatenKapatilmis = arsivler.some(a => a.ay === oncekiAy);
+
+        if (!zatenKapatilmis) {
+          console.log(`🔄 Otomatik kapanış tetikleniyor: ${oncekiAy}`);
+          await get().ayKapat(oncekiAy);
+        }
+      },
+
       // ─────────────────────────────────────────────────────
 
       rejectExpense: (poolId) => {

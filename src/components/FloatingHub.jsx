@@ -23,7 +23,8 @@ export default function FloatingHub() {
   const [expTitle, setExpTitle] = useState('');
   const [expAmount, setExpAmount] = useState('');
   const [expCategory, setExpCategory] = useState('Diğer');
-  const [expPayer, setExpPayer] = useState(currentUser?.name || 'Görkem');
+  const [expCard, setExpCard] = useState(''); // '' means cash
+  const kartlar = useStore(state => state.finans?.kartlar || []);
 
   if (ui.isModalOpen) return null;
 
@@ -41,19 +42,26 @@ export default function FloatingHub() {
     setNoteText('');
   };
 
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     if (!expTitle || !expAmount) return toast.error('Lütfen tutar ve açıklama girin');
-    addExpense({
-      title: expTitle,
-      amount: Number(expAmount),
-      category: expCategory,
-      payer: expPayer.toLowerCase()
+    
+    // Hızlı ödeme doğrudan Supabase finans_harcamalar'a işlenir (addHarcama)
+    await useStore.getState().addHarcama({
+      baslik: expTitle,
+      tutar: Number(expAmount),
+      kategori: expCategory,
+      kart_id: expCard || null,
+      odenme_turu: expCard ? 'kart' : 'nakit',
+      kayit_eden: currentUser?.name || 'Sistem',
+      kaynak: 'Hızlı Ödeme'
     });
+
     setExpTitle('');
     setExpAmount('');
+    setExpCard('');
     setActiveModal(null);
     setIsOpen(false);
-    toast.success('Harcama kaydedildi! 💸');
+    toast.success('Hızlı harcama sisteme işlendi! 💸');
   };
 
   const handlePetClick = (pet) => {
@@ -240,12 +248,15 @@ export default function FloatingHub() {
             </div>
 
             <div className="hub-payer-select">
-              <button className={expPayer === 'gorkem' ? 'active' : ''} onClick={() => setExpPayer('gorkem')}>👨 Görkem</button>
-              <button className={expPayer === 'esra' ? 'active' : ''} onClick={() => setExpPayer('esra')}>👩 Esra</button>
-              <button className={expPayer === 'ortak' ? 'active' : ''} onClick={() => setExpPayer('ortak')}>🏡 Ortak</button>
+              <select className="hub-input" style={{ width: '100%', marginBottom: '10px' }} value={expCard} onChange={e => setExpCard(e.target.value)}>
+                <option value="">💵 Nakit (Elden / Kasa)</option>
+                {kartlar.map(k => (
+                  <option key={k.id} value={k.id}>💳 {k.name} ({k.owner === 'gorkem' ? 'Görkem' : 'Esra'})</option>
+                ))}
+              </select>
             </div>
 
-            <button className="hub-submit-btn" onClick={handleAddExpense}>Kaydet</button>
+            <button className="hub-submit-btn" onClick={handleAddExpense}>Sisteme İşle</button>
           </div>
         </div>
       )}
