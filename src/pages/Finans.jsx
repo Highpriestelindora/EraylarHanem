@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   TrendingDown, CreditCard, Clock, Check, X, AlertCircle,
   ChevronDown, ChevronUp, Calendar, ArrowLeft, Eye, EyeOff,
-  Landmark, RotateCcw, Plus, History, Wallet, PieChart
+  Landmark, RotateCcw, Plus, History, Wallet, PieChart,
+  Settings, Trash2, Edit
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -191,10 +192,12 @@ function KrediTab({ finans, prv }) {
   const kartlar = finans?.kartlar || [];
   const borclar = finans?.borclar || [];
   const kartMutabakat = finans?.kartMutabakat || {};
-  const { gercekKartBorcuGir, payLoanInstallment } = useStore();
+  const { gercekKartBorcuGir, payLoanInstallment, updateFinansData } = useStore();
 
   const [inputMap, setInputMap] = useState({});
   const [expandedKart, setExpandedKart] = useState(null);
+  const [showKartModal, setShowKartModal] = useState(false);
+  const [showBorcModal, setShowBorcModal] = useState(false);
   const buAy = new Date().toISOString().slice(0, 7);
 
   const handleGercekGir = async (kartId) => {
@@ -206,7 +209,10 @@ function KrediTab({ finans, prv }) {
 
   return (
     <div className="f-tab-content animate-fadeIn">
-      <div className="ozet-section-title">💳 Kart Mutabakatı</div>
+      <div className="ozet-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>💳 Kart Mutabakatı</span>
+        <button className="icon-btn" onClick={() => setShowKartModal(true)}><Settings size={16} /></button>
+      </div>
       <p className="kredi-hint">Ay sonunda gerçek banka borcunu gir, sistem farkı gösterir.</p>
 
       {kartlar.map(kart => {
@@ -265,7 +271,10 @@ function KrediTab({ finans, prv }) {
         );
       })}
 
-      <div className="ozet-section-title" style={{ marginTop: '28px' }}>🏦 Krediler</div>
+      <div className="ozet-section-title" style={{ marginTop: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span>🏦 Krediler</span>
+        <button className="icon-btn" onClick={() => setShowBorcModal(true)}><Settings size={16} /></button>
+      </div>
       {borclar.map(loan => {
         const perc = ((loan.total - loan.remaining) / loan.total) * 100;
         return (
@@ -287,6 +296,10 @@ function KrediTab({ finans, prv }) {
           </div>
         );
       })}
+      })}
+
+      <KartYonetimModal isOpen={showKartModal} onClose={() => setShowKartModal(false)} finans={finans} updateFinansData={updateFinansData} />
+      <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
     </div>
   );
 }
@@ -528,5 +541,134 @@ export default function Finans() {
         {activeTab === 'gecmis'     && <GecmisTab prv={prv} />}
       </div>
     </AnimatedPage>
+  );
+}
+
+// ── Yönetim Modalları ─────────────────────────────────────────
+
+function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
+  if (!isOpen) return null;
+  const kartlar = finans?.kartlar || [];
+
+  const [yeniKart, setYeniKart] = useState({ id: '', name: '', limit: '', cutoff_day: '', owner: 'ortak', color: '#6366f1' });
+
+  const handleEkle = () => {
+    if (!yeniKart.name || !yeniKart.limit || !yeniKart.cutoff_day) return toast.error('Eksik alanları doldurun!');
+    const kartId = yeniKart.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+    const newKartlar = [...kartlar, { ...yeniKart, id: kartId, limit: Number(yeniKart.limit), cutoff_day: Number(yeniKart.cutoff_day), balance: 0 }];
+    updateFinansData('kartlar', newKartlar);
+    setYeniKart({ id: '', name: '', limit: '', cutoff_day: '', owner: 'ortak', color: '#6366f1' });
+    toast.success('Kart eklendi!');
+  };
+
+  const handleSil = (id) => {
+    const newKartlar = kartlar.filter(k => k.id !== id);
+    updateFinansData('kartlar', newKartlar);
+    toast.success('Kart silindi!');
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content animate-scaleIn">
+        <div className="modal-header">
+          <h3>Kart Yönetimi</h3>
+          <button className="icon-btn" onClick={onClose}><X size={20}/></button>
+        </div>
+        <div className="modal-body">
+          {kartlar.map(k => (
+            <div key={k.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>{k.name}</strong>
+                <div style={{ fontSize: '12px', opacity: 0.7 }}>Limit: ₺{k.limit} · Kesim: {k.cutoff_day}</div>
+              </div>
+              <button className="icon-btn" onClick={() => handleSil(k.id)}><Trash2 size={16} color="#ef4444" /></button>
+            </div>
+          ))}
+
+          <div className="glass" style={{ padding: '16px', marginTop: '20px' }}>
+            <h4 style={{ margin: '0 0 12px 0' }}>Yeni Kart Ekle</h4>
+            <input type="text" placeholder="Kart Adı" value={yeniKart.name} onChange={e => setYeniKart({...yeniKart, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <input type="number" placeholder="Limit (₺)" value={yeniKart.limit} onChange={e => setYeniKart({...yeniKart, limit: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <input type="number" placeholder="Kesim Günü" value={yeniKart.cutoff_day} onChange={e => setYeniKart({...yeniKart, cutoff_day: e.target.value})} style={{ width: '100px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <select value={yeniKart.owner} onChange={e => setYeniKart({...yeniKart, owner: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }}>
+                <option value="ortak">Ortak</option>
+                <option value="gorkem">Görkem</option>
+                <option value="esra">Esra</option>
+              </select>
+              <input type="color" value={yeniKart.color} onChange={e => setYeniKart({...yeniKart, color: e.target.value})} style={{ width: '50px', height: '36px', border: 'none', borderRadius: '8px', cursor: 'pointer' }} />
+            </div>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={handleEkle}>Ekle</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
+  if (!isOpen) return null;
+  const borclar = finans?.borclar || [];
+
+  const [yeniBorc, setYeniBorc] = useState({ name: '', total: '', remaining: '', monthly: '', due_day: '' });
+
+  const handleEkle = () => {
+    if (!yeniBorc.name || !yeniBorc.total || !yeniBorc.monthly) return toast.error('Eksik alanları doldurun!');
+    const newBorclar = [...borclar, { 
+      id: Date.now(), 
+      name: yeniBorc.name, 
+      total: Number(yeniBorc.total), 
+      remaining: Number(yeniBorc.remaining || yeniBorc.total), 
+      monthly: Number(yeniBorc.monthly), 
+      due_day: Number(yeniBorc.due_day),
+      type: 'kredi'
+    }];
+    updateFinansData('borclar', newBorclar);
+    setYeniBorc({ name: '', total: '', remaining: '', monthly: '', due_day: '' });
+    toast.success('Borç/Kredi eklendi!');
+  };
+
+  const handleSil = (id) => {
+    const newBorclar = borclar.filter(b => b.id !== id);
+    updateFinansData('borclar', newBorclar);
+    toast.success('Borç/Kredi silindi!');
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content animate-scaleIn">
+        <div className="modal-header">
+          <h3>Borç/Kredi Yönetimi</h3>
+          <button className="icon-btn" onClick={onClose}><X size={20}/></button>
+        </div>
+        <div className="modal-body">
+          {borclar.map(b => (
+            <div key={b.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>{b.name}</strong>
+                <div style={{ fontSize: '12px', opacity: 0.7 }}>Aylık: ₺{b.monthly} · Kalan: ₺{b.remaining}</div>
+              </div>
+              <button className="icon-btn" onClick={() => handleSil(b.id)}><Trash2 size={16} color="#ef4444" /></button>
+            </div>
+          ))}
+
+          <div className="glass" style={{ padding: '16px', marginTop: '20px' }}>
+            <h4 style={{ margin: '0 0 12px 0' }}>Yeni Kredi Ekle</h4>
+            <input type="text" placeholder="Borç/Kredi Adı" value={yeniBorc.name} onChange={e => setYeniBorc({...yeniBorc, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <input type="number" placeholder="Toplam Tutar" value={yeniBorc.total} onChange={e => setYeniBorc({...yeniBorc, total: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <input type="number" placeholder="Kalan Tutar" value={yeniBorc.remaining} onChange={e => setYeniBorc({...yeniBorc, remaining: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            </div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              <input type="number" placeholder="Aylık Taksit" value={yeniBorc.monthly} onChange={e => setYeniBorc({...yeniBorc, monthly: e.target.value})} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+              <input type="number" placeholder="Ödeme Günü" value={yeniBorc.due_day} onChange={e => setYeniBorc({...yeniBorc, due_day: e.target.value})} style={{ width: '100px', padding: '8px', borderRadius: '8px', border: '1px solid #ddd' }} />
+            </div>
+            <button className="btn-primary" style={{ width: '100%' }} onClick={handleEkle}>Ekle</button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

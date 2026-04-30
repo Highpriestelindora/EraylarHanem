@@ -889,6 +889,11 @@ const useStore = create(
       },
 
       // ── Eraylar Finans Actions ───────────────────────────
+      updateFinansData: (key, data) => {
+        const state = get();
+        set({ finans: { ...state.finans, [key]: data } });
+        get().saveToSupabase();
+      },
       addExpense: (expense) => {
         const state = get();
         const newPoolItem = {
