@@ -383,24 +383,35 @@ function HaftaTab({ sosyal, onAdd }) {
 
     let poolMap = new Map();
     
-    // 1. Mandatory Routines (High Weight)
+    // 1. Mandatory Routines & Packages (High Weight)
+    (sosyal.routinePackages || []).forEach(r => {
+      const title = r.name || r.baslik || r.title;
+      poolMap.set(title, { ...r, baslik: title, title: title, type: 'rutin', emoji: r.icon || r.emoji || '🏋️', weight: 10 });
+    });
+    
+    // Also include user's personal routines
     (sosyal.rutinler || []).forEach(r => {
-      const title = r.baslik || r.title;
-      poolMap.set(title, { ...r, baslik: title, title: title, type: 'rutin', emoji: '🏋️', weight: 10 });
+      const title = r.aktivite || r.baslik || r.title;
+      if (title) {
+        poolMap.set(title, { ...r, baslik: title, title: title, type: 'rutin', emoji: r.icon || r.emoji || '🔁', weight: 8 });
+      }
     });
     
     // 2. Ideas Pool (Base weight)
-    (sosyal.havuz || []).forEach(h => {
+    const combinedPool = [...(sosyal.poolItems || []), ...(sosyal.havuz || [])];
+    combinedPool.forEach(h => {
       const title = h.title || h.baslik;
-      const existing = poolMap.get(title);
-      poolMap.set(title, { 
-        ...h, 
-        baslik: title,
-        title: title,
-        emoji: h.icon || h.emoji || '💡',
-        type: 'fikir', 
-        weight: (existing?.weight || 0) + (h.count ? Math.min(h.count, 10) : 5) 
-      });
+      if (title) {
+        const existing = poolMap.get(title);
+        poolMap.set(title, { 
+          ...h, 
+          baslik: title,
+          title: title,
+          emoji: h.icon || h.emoji || '💡',
+          type: 'fikir', 
+          weight: (existing?.weight || 0) + (h.count ? Math.min(h.count, 10) : 5) 
+        });
+      }
     });
     
     // 3. Smart Family Checks
