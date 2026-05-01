@@ -2131,11 +2131,35 @@ const useStore = create(
 
       addWaterOrder: async (qty = 2) => {
         const state = get();
-        const yeniHistory = [{ dt: new Date().toISOString(), q: qty }, ...state.mutfak.su.history].slice(0, 20);
+        const currentSu = state.mutfak.su || { level1: 100, level2: 100, history: [] };
+        const yeniHistory = [{ dt: new Date().toISOString(), q: qty }, ...(currentSu.history || [])].slice(0, 20);
+        
+        // Mantık: Sipariş verildiğinde Yedek (level2) dolar. 
+        // Mutfaktaki (level1) mevcut su seviyesi değişmez.
         set({
           mutfak: {
             ...state.mutfak,
-            su: { ...state.mutfak.su, level1: 100, level2: 100, lastOrder: new Date().toISOString(), history: yeniHistory }
+            su: { 
+              ...currentSu, 
+              level2: 100, // Yedekler tazelendi
+              lastOrder: new Date().toISOString(), 
+              history: yeniHistory 
+            }
+          }
+        });
+        get().saveToSupabase();
+      },
+
+      removeWaterOrder: async (index) => {
+        const state = get();
+        const currentSu = state.mutfak.su || { history: [] };
+        const newHistory = [...(currentSu.history || [])];
+        newHistory.splice(index, 1);
+        
+        set({
+          mutfak: {
+            ...state.mutfak,
+            su: { ...currentSu, history: newHistory }
           }
         });
         get().saveToSupabase();
