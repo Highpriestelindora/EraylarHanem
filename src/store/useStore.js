@@ -2153,8 +2153,7 @@ const useStore = create(
       removeWaterOrder: async (index) => {
         const state = get();
         const currentSu = state.mutfak.su || { history: [] };
-        const newHistory = [...(currentSu.history || [])];
-        newHistory.splice(index, 1);
+        const newHistory = (currentSu.history || []).filter((_, i) => i !== index);
         
         set({
           mutfak: {
@@ -2163,21 +2162,59 @@ const useStore = create(
           }
         });
         get().saveToSupabase();
+        toast.success('Kayıt silindi.');
       },
 
-      refillPetWater: async () => {
+      processDailyWaterDeduction: () => {
         const state = get();
-        const currentSu = state.mutfak.su || { level1: 100 };
-        const newLevel = Math.max(0, currentSu.level1 - 5);
+        const su = state.mutfak.su || {};
+        if (!su.lastChecked) return;
+
+        const now = new Date();
+        const last = new Date(su.lastChecked);
+        const diffMs = now - last;
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+        if (diffDays < 0.1) return; // 2.4 saatten azsa işlem yapma
+
+        const rate = su.dailyRate || 20;
+        const totalDeduction = diffDays * rate;
         
+        let newLevel1 = su.level1 || 0;
+        let newLevel2 = su.level2 || 0;
+        let remainingDeduction = totalDeduction;
+
+        // Önce mutfaktakini düş
+        if (newLevel1 >= remainingDeduction) {
+          newLevel1 -= remainingDeduction;
+          remainingDeduction = 0;
+        } else {
+          remainingDeduction -= newLevel1;
+          newLevel1 = 0;
+        }
+
+        // Sonra yedektekini düş
+        if (remainingDeduction > 0) {
+          newLevel2 = Math.max(0, newLevel2 - remainingDeduction);
+        }
+
         set({
           mutfak: {
             ...state.mutfak,
-            su: { ...currentSu, level1: newLevel }
+            su: { 
+              ...su, 
+              level1: Math.round(newLevel1), 
+              level2: Math.round(newLevel2), 
+              lastChecked: now.toISOString() 
+            }
           }
         });
         get().saveToSupabase();
-        toast.success('Waffle ve Mayıs\'ın suyu tazelendi! 🐾✨', { icon: '🐶' });
+      },
+
+      refillPetWater: async () => {
+        // Kullanıcı isteğiyle bu fonksiyonun işlevini kaldırdık veya pet-card'ı sildiğimiz için boş bıraktık
+        // Ancak store'da kalması zarar vermez, UI'dan çağrılmayacak.
       },
 
       setItemFinished: async (moduleKey, itemName, qty) => {

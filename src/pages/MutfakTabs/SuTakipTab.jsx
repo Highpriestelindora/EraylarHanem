@@ -1,18 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Droplets, Calendar, Minus, Plus, Trash2, RefreshCw, Info } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 export default function SuTakipTab() {
-  const { mutfak, updateWaterLevel, addWaterOrder, removeWaterOrder, addExpense, setWaterDailyRate } = useStore();
+  const { mutfak, updateWaterLevel, addWaterOrder, removeWaterOrder, addExpense, setWaterDailyRate, processDailyWaterDeduction } = useStore();
   const water = mutfak.su || {};
   const level1 = water?.level1 ?? 100;
   const level2 = water?.level2 ?? 100;
   const history = water?.history || [];
   const lastOrder = water?.lastOrder ? new Date(water.lastOrder) : null;
 
+  // Sayfa açıldığında geçen zamana göre günlük düşümü yap
+  useEffect(() => {
+    processDailyWaterDeduction();
+  }, []);
+
   const calculateDaysLeft = () => {
-    const totalLevel = level1 + level2; // 0 - 200 range
+    const totalLevel = level1 + level2; 
     const rate = water.dailyRate || 20;
     const days = Math.floor(totalLevel / rate);
     return days > 0 ? days : 0;
@@ -45,9 +50,8 @@ export default function SuTakipTab() {
   const handleSwap = () => {
     if (level2 <= 0) return toast.error('Yedek su kalmadı! 😱');
     
-    // Mutfaktaki bittiğinde yedekten alıp mutfağa takıyoruz
     updateWaterLevel('level1', 100);
-    updateWaterLevel('level2', Math.max(0, level2 - 50)); // Bir damacana %50 gibi varsayalım (2 yedek varsa)
+    updateWaterLevel('level2', Math.max(0, level2 - 50)); 
     toast.success('Yeni damacana takıldı! ✨');
   };
 
@@ -87,24 +91,6 @@ export default function SuTakipTab() {
           </div>
         </div>
 
-        {/* Pet Water Section */}
-        <div className="pet-water-card glass">
-          <div className="pwc-info">
-             <div className="pwc-avatars">
-               <span className="pwc-emoji">🐱</span>
-               <span className="pwc-emoji">🐶</span>
-             </div>
-             <div className="pwc-text">
-               <strong>Waffle & Mayıs</strong>
-               <small>Onların suyunu da unutmayalım!</small>
-             </div>
-          </div>
-          <button className="pet-refill-btn" onClick={() => useStore.getState().refillPetWater()}>
-            <Droplets size={16} />
-            <span>Kapları Doldur</span>
-          </button>
-        </div>
-
         <div className="daily-consumption-ctrl glass">
           <div className="dc-label">
             <strong>GÜNLÜK TÜKETİM HIZI</strong>
@@ -138,7 +124,7 @@ export default function SuTakipTab() {
         </div>
         <div className="history-list">
           {history.map((h, i) => (
-            <div key={i} className="history-item glass animate-fadeIn" style={{ animationDelay: `${i * 0.05}s` }}>
+            <div key={`${h.dt}-${i}`} className="history-item glass animate-fadeIn" style={{ animationDelay: `${i * 0.05}s` }}>
               <div className="h-left">
                 <div className="h-date">
                   <Calendar size={14} />
@@ -152,8 +138,8 @@ export default function SuTakipTab() {
                 if (window.confirm('Bu sipariş kaydını silmek istediğine emin misin?')) {
                   removeWaterOrder(i);
                 }
-              }}>
-                <Trash2 size={16} />
+              }} title="Sil">
+                <Trash2 size={18} />
               </button>
             </div>
           ))}
@@ -163,6 +149,7 @@ export default function SuTakipTab() {
     </div>
   );
 }
+
 
 function WaterTank({ label, level, onLevelChange }) {
   return (
