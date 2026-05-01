@@ -4082,6 +4082,50 @@ const useStore = create(
           date: new Date().toISOString()
         };
         set({ logs: [newLog, ...(state.logs || [])].slice(0, 100) });
+      },
+
+      seedExampleGoals: () => {
+        const state = get();
+        const exampleVisionGoal = { 
+          id: 'v-sample-' + Date.now(), 
+          title: 'Almanca B2 Sertifikası', 
+          owner: 'gorkem', 
+          category: 'kariyer', 
+          current: 40, 
+          target: 100, 
+          targetDate: '2026-12-30', 
+          priority: 'Yüksek',
+          milestones: [
+            { id: 1, text: 'A1 & A2 Seviyesi Tamamla', done: true },
+            { id: 2, text: 'B1 Kursuna Kayıt Ol', done: true },
+            { id: 3, text: 'B2 Sınavına Gir', done: false }
+          ]
+        };
+
+        const exampleMoneyGoal = { 
+          id: 'm-sample-' + Date.now(), 
+          name: 'iPhone 17 Pro Max', 
+          target: 120000, 
+          current: 30000, 
+          icon: '📱', 
+          deadline: '2026-10-25', 
+          priority: 'Orta', 
+          category: 'Teknoloji', 
+          owner: 'gorkem' 
+        };
+
+        set({
+          hedefler: {
+            ...state.hedefler,
+            goals: [...(state.hedefler.goals || []), exampleVisionGoal]
+          },
+          kasa: {
+            ...state.kasa,
+            kumbaralar: [...(state.kasa.kumbaralar || []), exampleMoneyGoal]
+          }
+        });
+        get().saveToSupabase();
+        toast.success("Örnek hedefler yüklendi! 🎯");
       }
     }),
     {

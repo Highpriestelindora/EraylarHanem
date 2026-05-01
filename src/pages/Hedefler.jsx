@@ -182,6 +182,7 @@ export default function Hedefler() {
                 <button className="add-btn-mini" onClick={() => navigate('/kasa', { state: { activeTab: 'kumbara' } })} title="Kasa'da Hedef Yönet">
                    <Plus size={14} />
                 </button>
+                <button className="seed-btn-link" onClick={() => useStore.getState().seedExampleGoals()}>Örnek Yükle</button>
               </div>
               <div className="goals-grid-v2">
                 {unifiedGoals
