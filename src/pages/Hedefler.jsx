@@ -29,17 +29,38 @@ export default function Hedefler() {
 
   const moneyGoals = kasa?.kumbaralar || [];
 
-  // Combine both types of goals for the unified view
+  // Combine both types of goals for the unified view with math engine
   const unifiedGoals = useMemo(() => {
+    const now = new Date();
+    
     const combined = [
       ...goals.map(g => ({ ...g, type: 'vision' })),
-      ...moneyGoals.map(g => ({ 
-        ...g, 
-        type: 'money', 
-        title: g.name, 
-        targetDate: g.deadline,
-        owner: g.owner || 'ortak'
-      }))
+      ...moneyGoals.map(g => {
+        // Math Engine: Forecasting
+        let forecast = null;
+        if (g.deadline && g.current < g.target) {
+          const dl = new Date(g.deadline);
+          const diffTime = dl - now;
+          const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30.44));
+          
+          if (diffMonths > 0) {
+            const remaining = g.target - g.current;
+            const monthly = Math.round(remaining / diffMonths);
+            forecast = { months: diffMonths, monthlyNeeded: monthly };
+          } else {
+            forecast = { overdue: true };
+          }
+        }
+
+        return { 
+          ...g, 
+          type: 'money', 
+          title: g.name, 
+          targetDate: g.deadline,
+          owner: g.owner || 'ortak',
+          forecast
+        };
+      })
     ];
     return combined;
   }, [goals, moneyGoals]);
@@ -201,16 +222,30 @@ export default function Hedefler() {
                                 ))
                               )}
                            </div>
-                           <div className="gcp-footer">
-                             <div className="gcp-progress-text">
-                               {perc >= 100 ? (
-                                 <button className="complete-btn" onClick={() => handleComplete(g.id)}>TAMAMLA</button>
-                               ) : (
-                                 <span>%{Math.round(perc)} Tamamlandı</span>
-                               )}
-                             </div>
-                             <small>Hedef: {g.targetDate}</small>
-                           </div>
+                            <div className="gcp-footer">
+                              <div className="gcp-progress-text">
+                                {isMoney ? (
+                                   <div className="forecast-badge">
+                                      {g.forecast?.overdue ? (
+                                        <span className="overdue">Süre Doldu! ⚠️</span>
+                                      ) : g.forecast ? (
+                                        <span className="on-track">Aylık: <strong>{new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.forecast.monthlyNeeded)}</strong></span>
+                                      ) : perc >= 100 ? (
+                                        <span className="completed">TAMAMLANDI 🏆</span>
+                                      ) : (
+                                        <span>%{Math.round(perc)} Tamamlandı</span>
+                                      )}
+                                   </div>
+                                ) : (
+                                  perc >= 100 ? (
+                                    <button className="complete-btn" onClick={() => handleComplete(g.id)}>TAMAMLA</button>
+                                  ) : (
+                                    <span>%{Math.round(perc)} Tamamlandı</span>
+                                  )
+                                )}
+                              </div>
+                              <small>{isMoney ? (g.forecast?.months ? `${g.forecast.months} Ay Kaldı` : g.targetDate) : g.targetDate}</small>
+                            </div>
                         </div>
                      </div>
                    );

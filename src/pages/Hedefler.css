@@ -186,6 +186,7 @@
 
 .goal-advisor-card.success { background: #f0fdf4; border-color: #bbf7d0; }
 .goal-advisor-card.info { background: #f5f3ff; border-color: #ddd6fe; }
+.goal-advisor-card.warning { background: #fff1f2; border-color: #fecaca; }
 
 .ga-icon-box {
   width: 48px;
@@ -229,6 +230,18 @@
   font-size: 11px;
   color: var(--txt-light);
 }
+
+.forecast-badge {
+  display: inline-flex;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  font-size: 11px;
+}
+
+.forecast-badge .on-track { color: #3b82f6; }
+.forecast-badge .overdue { color: #ef4444; font-weight: 900; }
+.forecast-badge .completed { color: #10b981; }
 
 .circular-chart-v2 .circle-bg { fill: none; stroke: #f1f5f9; stroke-width: 3.8; }
 .circular-chart-v2 .circle { fill: none; stroke-width: 3.8; stroke-linecap: round; }
