@@ -368,16 +368,17 @@ export default function Kasa() {
         }
       >
         <KasaModals type={modal.type} data={modal.data} onClose={() => setModal({ open: false, type: null, data: null })} />
-        <ConfirmModal 
-          isOpen={showConfirm.open}
-          onClose={() => setShowConfirm({ ...showConfirm, open: false })}
-          onConfirm={() => {
-            showConfirm.onConfirm();
-            setShowConfirm({ ...showConfirm, open: false });
-          }}
-          message={showConfirm.message}
-        />
       </ActionSheet>
+
+      <ConfirmModal 
+        isOpen={showConfirm.open}
+        onClose={() => setShowConfirm({ ...showConfirm, open: false })}
+        onConfirm={() => {
+          showConfirm.onConfirm();
+          setShowConfirm({ ...showConfirm, open: false });
+        }}
+        message={showConfirm.message}
+      />
 
     </AnimatedPage>
   );

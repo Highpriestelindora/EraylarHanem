@@ -1866,6 +1866,7 @@ function SeyahatAlbumu({ trip }) {
   const activeUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
 
   const [uploadingSlots, setUploadingSlots] = useState({});
+  const [globalProcessing, setGlobalProcessing] = useState(null); // null, 'compressing', 'uploading', 'saving'
 
   const compressImage = (base64Str) => {
     return new Promise((resolve, reject) => {
@@ -1918,8 +1919,10 @@ function SeyahatAlbumu({ trip }) {
         const reader = new FileReader();
         reader.onload = async (event) => {
           try {
+            setGlobalProcessing('compressing');
             const compressedBase64 = await compressImage(event.target.result);
             
+            setGlobalProcessing('uploading');
             // Convert Base64 to Blob for cloud storage upload
             const response = await fetch(compressedBase64);
             const blob = await response.blob();
@@ -1928,6 +1931,7 @@ function SeyahatAlbumu({ trip }) {
             // Upload to Supabase Storage
             const publicUrl = await uploadTripPhoto(fileToUpload);
 
+            setGlobalProcessing('saving');
             const currentEval = trip.evaluations?.[slotUser] || { star: 0, note: '', photos: [null, null, null] };
             const newPhotos = Array.isArray(currentEval.photos) ? [...currentEval.photos] : [null, null, null];
             
@@ -1948,6 +1952,7 @@ function SeyahatAlbumu({ trip }) {
             toast.error("Hata oluştu.");
           } finally {
             setUploadingSlots(prev => ({ ...prev, [slotKey]: false }));
+            setGlobalProcessing(null);
           }
         };
         reader.readAsDataURL(file);
@@ -1976,6 +1981,26 @@ function SeyahatAlbumu({ trip }) {
 
   return (
     <div className="seyahat-albumu-container animate-fadeIn">
+      {globalProcessing && (
+        <div className="global-upload-overlay animate-fadeIn">
+           <div className="upload-loader-card glass">
+              <div className="loader-orbit">
+                <div className="orbit-dot"></div>
+                <Cloud size={32} color="#1E86C8" className="cloud-bounce" />
+              </div>
+              <h4>{
+                globalProcessing === 'compressing' ? 'Görüntü Optimize Ediliyor...' :
+                globalProcessing === 'uploading' ? 'Buluta Aktarılıyor...' :
+                'Anı Kaydediliyor...'
+              }</h4>
+              <p>Lütfen bekleyin, anılarınız güvenle işleniyor.</p>
+              <div className="upload-progress-bar">
+                <div className={`up-fill ${globalProcessing}`} />
+              </div>
+           </div>
+        </div>
+      )}
+
       <div className="album-intro">
         <p>Seyahatin en özel anlarından seçilen {gPhotos.filter(p => !!p).length + ePhotos.filter(p => !!p).length} kare.</p>
       </div>
