@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import GoalAdvisor from '../components/GoalAdvisor';
+import GoalSimulator from '../components/GoalSimulator';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import './Hedefler.css';
@@ -17,6 +18,7 @@ const formatPercent = (val) => `${Math.round(val)}%`;
 
 export default function Hedefler() {
   const [activeTab, setActiveTab] = useState('aktif');
+  const [showSimulator, setShowSimulator] = useState(false);
   const navigate = useNavigate();
   const { hedefler, kasa, updateGoalProgress, toggleHabit, completeGoal } = useStore();
 
@@ -126,7 +128,11 @@ export default function Hedefler() {
         {activeTab === 'aktif' && (
           <div className="aktif-view animate-fadeIn">
             {/* Eraylar Vizyoner HUD */}
-            <GoalAdvisor visionGoals={goals} moneyGoals={moneyGoals} />
+            <GoalAdvisor 
+              visionGoals={goals} 
+              moneyGoals={moneyGoals} 
+              onSimulate={() => setShowSimulator(true)}
+            />
 
             {/* Filter */}
             <div className="owner-filter-chips">
@@ -297,6 +303,13 @@ export default function Hedefler() {
           </div>
         )}
       </div>
+
+      {showSimulator && (
+        <GoalSimulator 
+          goals={unifiedGoals} 
+          onClose={() => setShowSimulator(false)} 
+        />
+      )}
     </AnimatedPage>
   );
 }

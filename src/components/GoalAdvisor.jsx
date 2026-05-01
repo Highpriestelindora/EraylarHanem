@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react';
 
-const GoalAdvisor = ({ visionGoals, moneyGoals }) => {
+const GoalAdvisor = ({ visionGoals, moneyGoals, onSimulate }) => {
   const advice = useMemo(() => {
+    const now = new Date();
     const totalVision = visionGoals.length;
     const completedVision = visionGoals.filter(g => g.completed).length;
     
@@ -70,6 +71,10 @@ const GoalAdvisor = ({ visionGoals, moneyGoals }) => {
        <div className="ga-content">
           <h4>{advice.title}</h4>
           <p>{advice.text}</p>
+          <button className="ga-simulate-btn" onClick={onSimulate}>
+             <span>Peki ya...?</span>
+             <Play size={10} fill="currentColor" />
+          </button>
        </div>
     </div>
   );
