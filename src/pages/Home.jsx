@@ -102,6 +102,8 @@ const Home = () => {
     calculateGlobalScore();
   }, [calculateGlobalScore]);
 
+  // Memoized Modules - Stabilizes the grid
+  const modules = useMemo(() => {
     // 11th Personalized Module
     let personalizedModule = null;
     if (currentUser?.name === 'Esra') {
