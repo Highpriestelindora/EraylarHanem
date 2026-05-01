@@ -152,7 +152,7 @@ const DEFAULT_STATE = {
   },
   // ── Global System ──────────────────────────────────
   system: {
-    version: '2.32.0 "Aristotle"',
+    version: '3.1.5 "VIZYONER"',
     globalScore: 85,
     onboardingComplete: false,
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,

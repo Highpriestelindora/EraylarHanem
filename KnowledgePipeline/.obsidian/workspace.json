@@ -11,17 +11,28 @@
             "id": "604643cf77e47817",
             "type": "leaf",
             "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
+            }
+          },
+          {
+            "id": "132508efb8707785",
+            "type": "leaf",
+            "state": {
               "type": "markdown",
               "state": {
-                "file": "raw/legacy/Tatil_Modulu.md",
+                "file": "sources/codebase.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Tatil_Modulu"
+              "title": "codebase"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "vertical"
@@ -183,28 +194,30 @@
       "bases:Create new base": false
     }
   },
-  "active": "604643cf77e47817",
+  "active": "132508efb8707785",
   "lastOpenFiles": [
-    "index.md",
+    "sources/legacy_docs.md",
     "sources/codebase.md",
+    "index.md",
+    "log.md",
+    "raw/legacy/Index.md",
+    "concepts/ios_oncelikli_tasarim.md",
+    "decisions/ikinci_beyin_mimarisi.md",
+    "decisions/ios_oncelikli_test.md",
+    "raw/legacy/Tatil_Modulu.md",
     "entities/ev_ve_yasam.md",
     "entities/pet.md",
-    "log.md",
     "entities/tatil.md",
     "entities/finans_ve_kasa.md",
     "entities/aracim.md",
     "decisions/tek_tablo_jsonb_depolama.md",
     "decisions/stok_bazli_tarif_gosterimi.md",
-    "decisions/ios_oncelikli_test.md",
     "raw/legacy/Ev_ve_Yasam.md",
-    "raw/legacy/Index.md",
     "entities/mutfak_modulu.md",
     "concepts/merkezi_state_yonetimi.md",
     "concepts/senkronizasyon_stratejisi.md",
     "entities/sosyal_ve_etkinlikler.md",
     "entities/saglik.md",
-    "raw/legacy/Aracim_ve_Ulasim.md",
-    "sources/legacy_docs.md",
-    "concepts/ios_oncelikli_tasarim.md"
+    "raw/legacy/Aracim_ve_Ulasim.md"
   ]
 }
