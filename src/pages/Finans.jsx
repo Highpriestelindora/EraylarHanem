@@ -651,29 +651,63 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
             </div>
           ))}
 
-          <div className="glass" style={{ padding: '16px', marginTop: '20px', color: '#1e293b' }}>
-            <h4 style={{ margin: '0 0 12px 0' }}>Yeni Kart Ekle</h4>
-            <input type="text" placeholder="Kart Adı" value={yeniKart.name} onChange={e => setYeniKart({...yeniKart, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-            
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <input type="number" placeholder="Limit (₺)" value={yeniKart.limit} onChange={e => setYeniKart({...yeniKart, limit: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-              <input type="number" placeholder="Kesim Günü" value={yeniKart.cutoff_day} onChange={e => setYeniKart({...yeniKart, cutoff_day: e.target.value})} style={{ width: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+          <div className="premium-form-card glass" style={{ padding: '20px', marginTop: '24px', color: '#1e293b', borderRadius: '16px', background: 'rgba(255,255,255,0.4)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <div style={{ background: 'var(--finans, #10b981)', padding: '6px', borderRadius: '8px', color: 'white' }}>
+                <Plus size={18} />
+              </div>
+              <h4 style={{ margin: 0, fontSize: '16px' }}>Yeni Kart Ekle</h4>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <input type="number" placeholder="Ödeme Günü (+Gün)" value={yeniKart.due_day_offset} onChange={e => setYeniKart({...yeniKart, due_day_offset: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-              <input type="number" placeholder="Asgari (%)" value={yeniKart.min_pct} onChange={e => setYeniKart({...yeniKart, min_pct: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+            <div className="form-grid-v2">
+              <div className="form-field-v2 full">
+                <label><CreditCard size={14} /> Kart Adı</label>
+                <input type="text" placeholder="Örn: Garanti Bonus" value={yeniKart.name} onChange={e => setYeniKart({...yeniKart, name: e.target.value})} />
+              </div>
+              
+              <div className="form-field-v2">
+                <label>💰 Limit (₺)</label>
+                <input type="number" placeholder="0" value={yeniKart.limit} onChange={e => setYeniKart({...yeniKart, limit: e.target.value})} />
+              </div>
+
+              <div className="form-field-v2">
+                <label>📅 Kesim Günü</label>
+                <input type="number" placeholder="1-31" value={yeniKart.cutoff_day} onChange={e => setYeniKart({...yeniKart, cutoff_day: e.target.value})} />
+                <small>Ekstre kesim tarihi</small>
+              </div>
+
+              <div className="form-field-v2">
+                <label>⏰ Vade (+Gün)</label>
+                <input type="number" placeholder="10" value={yeniKart.due_day_offset} onChange={e => setYeniKart({...yeniKart, due_day_offset: e.target.value})} />
+                <small>Kesimden kaç gün sonra?</small>
+              </div>
+
+              <div className="form-field-v2">
+                <label>📉 Asgari (%)</label>
+                <input type="number" placeholder="20" value={yeniKart.min_pct} onChange={e => setYeniKart({...yeniKart, min_pct: e.target.value})} />
+                <small>Min. ödeme yüzdesi</small>
+              </div>
+
+              <div className="form-field-v2">
+                <label>👤 Sahibi</label>
+                <select value={yeniKart.owner} onChange={e => setYeniKart({...yeniKart, owner: e.target.value})}>
+                  <option value="ortak">Ortak</option>
+                  <option value="gorkem">Görkem</option>
+                  <option value="esra">Esra</option>
+                </select>
+              </div>
+
+              <div className="form-field-v2">
+                <label>🎨 Renk</label>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                   <input type="color" value={yeniKart.color} onChange={e => setYeniKart({...yeniKart, color: e.target.value})} style={{ width: '100%', height: '40px', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '2px', background: 'white' }} />
+                </div>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-              <select value={yeniKart.owner} onChange={e => setYeniKart({...yeniKart, owner: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }}>
-                <option value="ortak">Ortak</option>
-                <option value="gorkem">Görkem</option>
-                <option value="esra">Esra</option>
-              </select>
-              <input type="color" value={yeniKart.color} onChange={e => setYeniKart({...yeniKart, color: e.target.value})} style={{ width: '50px', height: '36px', border: 'none', borderRadius: '8px', cursor: 'pointer' }} />
-            </div>
-            <button style={{ width: '100%', borderRadius: '50px', padding: '12px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }} onClick={handleEkle}>Ekle</button>
+            <button className="premium-submit-btn" style={{ width: '100%', borderRadius: '50px', padding: '14px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '24px', fontSize: '16px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }} onClick={handleEkle}>
+              Kartı Kaydet
+            </button>
           </div>
         </div>
       </div>
