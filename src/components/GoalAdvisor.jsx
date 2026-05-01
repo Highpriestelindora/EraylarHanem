@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Lightbulb } from 'lucide-react';
+import { Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Lightbulb, Play } from 'lucide-react';
 
 const GoalAdvisor = ({ visionGoals, moneyGoals, onSimulate }) => {
   const advice = useMemo(() => {
