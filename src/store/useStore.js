@@ -1,10 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { supabase } from '../lib/supabaseClient';
-import { 
-  INITIAL_RECIPES, 
-  INITIAL_FRIDGE, 
-  INITIAL_PANTRY, 
+import {
+  INITIAL_RECIPES,
+  INITIAL_FRIDGE,
+  INITIAL_PANTRY,
   INITIAL_FROZEN,
   ACHIEVEMENTS,
   PET_META,
@@ -26,9 +26,9 @@ const DEFAULT_STATE = {
     buAyHarcamalar: [], // Bu ayın Supabase'den çekilen harcamaları (UI cache)
     kartMutabakat: {
       'gorkem-ziraat': { beklenen: 0, gercek: null, ay: null },
-      'gorkem-ykb':    { beklenen: 0, gercek: null, ay: null },
-      'esra-garanti':  { beklenen: 0, gercek: null, ay: null },
-      'esra-enpara':   { beklenen: 0, gercek: null, ay: null },
+      'gorkem-ykb': { beklenen: 0, gercek: null, ay: null },
+      'esra-garanti': { beklenen: 0, gercek: null, ay: null },
+      'esra-enpara': { beklenen: 0, gercek: null, ay: null },
     },
     borclar: [
       { id: 1, name: 'Konut Kredisi', total: 1200000, remaining: 850000, monthly: 15400, due_day: 15, type: 'kredi' },
@@ -71,19 +71,19 @@ const DEFAULT_STATE = {
   kasa: {
     bakiyeler: { gorkem: 15000, esra: 12000, ortak: 5000 },
     tasinmazlar: [
-      { 
+      {
         id: 1, name: 'Antalya Kepez Daire', city: 'Antalya', district: 'Kepez', neighborhood: 'Ulus',
         type: 'Kat İrtifakı (Daire)', adaParsel: '1382 / 7', unit: '7', floor: '1', area: '648.51', share: '4/40',
         nitelik: 'Mesken', propertyNo: '16783065', icon: '🏢', status: 'Mülk Sahibi',
         income: 0, expense: 0, tax: 1500, taxPaid: false, value: 5500000
       },
-      { 
+      {
         id: 2, name: 'Didim Prefabrik Ev', city: 'Aydın', district: 'Didim', neighborhood: 'Akyeniköy',
         type: 'Ana Taşınmaz', adaParsel: '1268 / 20', unit: '-', floor: '0', area: '300', share: 'Tam',
         nitelik: 'Tek Katlı Prefabrik Ev', propertyNo: '14680312', icon: '🏡', status: 'Mülk Sahibi',
         income: 0, expense: 500, tax: 800, taxPaid: true, value: 3200000
       },
-      { 
+      {
         id: 3, name: 'Eskişehir Tepebaşı Arsa', city: 'Eskişehir', district: 'Tepebaşı', neighborhood: 'Ömerağa',
         type: 'Arsa + Kat İrtifakı', adaParsel: '1012 / 38', unit: '5', floor: '-', area: '232.55', share: '1/8',
         nitelik: 'Arsa', propertyNo: '13738275', icon: '🗺️', status: 'Mülk Sahibi',
@@ -103,32 +103,32 @@ const DEFAULT_STATE = {
     rates: { EUR: 35.2, USD: 32.5 }
   },
   mutfak: {
-    menu: {},          
-    buzdolabi: INITIAL_FRIDGE,     
+    menu: {},
+    buzdolabi: INITIAL_FRIDGE,
     kiler: INITIAL_PANTRY,
     dondurucu: INITIAL_FROZEN,
-    alisveris: [],     
+    alisveris: [],
     tarifler: INITIAL_RECIPES,
     siparisler: [],    // { id, dt, fr, wh, pr, u, tm }
     restaurantlar: [], // list of strings for auto-fill
-    su: { 
-      level1: 80, 
-      level2: 60, 
-      dailyRate: 20, 
-      lastChecked: new Date().toISOString(), 
-      lastOrder: new Date().toISOString(), 
-      history: [] 
+    su: {
+      level1: 80,
+      level2: 60,
+      dailyRate: 20,
+      lastChecked: new Date().toISOString(),
+      lastOrder: new Date().toISOString(),
+      history: []
     },
-    consumption: {}, 
-    sohbet: [],        
-    arsiv: [],         
+    consumption: {},
+    sohbet: [],
+    arsiv: [],
     history: [
       { id: 1714045200000, t: 'Akşama ne yesek? Mantı var dondurucuda.', w: 'Esra', d: '2026-04-25T17:00:00Z' },
       { id: 1714048800000, t: 'Olur, yanına da yoğurt sosu yaparız.', w: 'Görkem', d: '2026-04-25T18:00:00Z' },
       { id: 1714052400000, t: 'Waffle\'ın aşısı yaklaşıyor, hatırlatıcı kurdum.', w: 'Esra', d: '2026-04-25T19:00:00Z' },
       { id: 1713958800000, t: 'Marketten süt ve ekmek aldım.', w: 'Görkem', d: '2026-04-24T18:00:00Z' }
-    ],       
-    priceHistory: {},  
+    ],
+    priceHistory: {},
     ekmeklik: [],      // { id, tip, ic, raf, mk, adet, dt }
   },
   saglik: {
@@ -146,7 +146,7 @@ const DEFAULT_STATE = {
     ],
     moods: [],
     sleep: [],
-    sleepGoals: { gorkem: 6, esra: 9 },       
+    sleepGoals: { gorkem: 6, esra: 9 },
     logs: []
   },
   // ── Global System ──────────────────────────────────
@@ -171,9 +171,9 @@ const DEFAULT_STATE = {
     ev: [],
     wishlist: [], // { id, nm, link, pr, dt }
   },
-  hedefler: [],        
+  hedefler: [],
   sosyal: {
-    aktiviteler: INITIAL_SOCIAL.aktiviteler || [],   
+    aktiviteler: INITIAL_SOCIAL.aktiviteler || [],
     rutinler: [
       { id: 'r1', aktivite: 'Spor Salonu', kisi: 'Görkem', vakit: 'sabah', gunler: ['Pzt', 'Çar', 'Cum'], saati: '08:00', ucret: 0 },
       { id: 'r2', aktivite: 'Haftalık Temizlik', kisi: 'İkisi', vakit: 'öğle', gunler: ['Cmt'], saati: '11:00', ucret: 0 }
@@ -297,8 +297,8 @@ const DEFAULT_STATE = {
       },
       personality: { type: null, traits: {}, lastTestDate: null },
       weeklyHabits: {}, // { "Mon-09": { home: 2, work: 15, other: 1 }, ... }
-      lastCheck: null, 
-      logs: [] 
+      lastCheck: null,
+      logs: []
     },
     personalSafe: {
       locked: true,
@@ -321,32 +321,32 @@ const DEFAULT_STATE = {
     gallery: { waffle: [], mayis: [] }
   },
   tatil: {
-    trips: INITIAL_TRIPS,       
+    trips: INITIAL_TRIPS,
     wishlist: [
       { id: 1, place: 'Tokyo, Japonya', notes: 'Kiraz çiçekleri zamanı gitmeli 🌸', user: 'Görkem', date: '2026-04-26T10:00:00Z' },
       { id: 2, place: 'İzlanda', notes: 'Kuzey ışıkları ve road trip 🇮🇸', user: 'Esra', date: '2026-04-26T11:00:00Z' }
     ],
-    passport: { 
-      gorkem: { 
-        name: 'Görkem', 
-        surname: 'ERAY', 
-        no: 'U28345678', 
-        nationality: 'TC', 
-        birthDate: '31.10.1988', 
-        issueDate: '15.10.2020', 
+    passport: {
+      gorkem: {
+        name: 'Görkem',
+        surname: 'ERAY',
+        no: 'U28345678',
+        nationality: 'TC',
+        birthDate: '31.10.1988',
+        issueDate: '15.10.2020',
         exp: '2030-10-15',
         birthPlace: 'Eskişehir'
-      }, 
-      esra: { 
-        name: 'Esra', 
-        surname: 'ERAY', 
-        no: 'U29456789', 
-        nationality: 'TC', 
-        birthDate: '05.01.1989', 
-        issueDate: '22.03.2021', 
+      },
+      esra: {
+        name: 'Esra',
+        surname: 'ERAY',
+        no: 'U29456789',
+        nationality: 'TC',
+        birthDate: '05.01.1989',
+        issueDate: '22.03.2021',
         exp: '2031-03-22',
         birthPlace: 'Antalya'
-      } 
+      }
     },
     visas: [
       { id: 1, type: 'Schengen', owner: 'gorkem', start: '2025-05-01', end: '2026-05-01', entries: 'Multi', country: 'Almanya' },
@@ -354,7 +354,7 @@ const DEFAULT_STATE = {
     ],
     ttab: 'trips'
   },
-  achievements: ACHIEVEMENTS,    
+  achievements: ACHIEVEMENTS,
   logs: [],
   ui: {
     isModalOpen: false
@@ -389,13 +389,13 @@ async function pushToSupabase(appData) {
       console.log('⏳ Save throttled, waiting for next window...');
       return;
     }
-    
+
     lastSaveTime = now;
     console.log('📤 Pushing to Supabase...', { size: JSON.stringify(appData).length });
     const { error, status, statusText } = await supabase
       .from('eraylar_store')
       .upsert({ id: 1, data: appData });
-      
+
     if (error) {
       console.error('❌ Supabase Upsert Error:', {
         message: error.message,
@@ -525,22 +525,22 @@ async function upsertArsiv(ay, ozet) {
 
 function extractAppData(state, forPersist = false) {
   const data = {
-    finans:    state.finans,
-    users:     state.users,
-    kasa:      state.kasa,
-    mutfak:    state.mutfak,
-    saglik:    state.saglik,
+    finans: state.finans,
+    users: state.users,
+    kasa: state.kasa,
+    mutfak: state.mutfak,
+    saglik: state.saglik,
     alisveris: state.alisveris,
-    hedefler:  state.hedefler,
-    sosyal:    state.sosyal,
-    ev:        state.ev,
-    pet:       state.pet,
-    garaj:     state.garaj,
+    hedefler: state.hedefler,
+    sosyal: state.sosyal,
+    ev: state.ev,
+    pet: state.pet,
+    garaj: state.garaj,
     selectedVehicleId: state.selectedVehicleId,
-    tatil:     state.tatil,
+    tatil: state.tatil,
     achievements: state.achievements,
-    logs:      state.logs,
-    system:    state.system,
+    logs: state.logs,
+    system: state.system,
   };
 
   if (forPersist && data.tatil?.trips) {
@@ -602,7 +602,7 @@ const useStore = create(
         // Bug Fix: If data is not an object, just replace it. 
         // If it is an object, merge it.
         const isObject = data !== null && typeof data === 'object' && !Array.isArray(data);
-        
+
         if (isObject) {
           set({ [moduleName]: { ...state[moduleName], ...data } });
         } else {
@@ -655,23 +655,23 @@ const useStore = create(
         const newStok = Math.max(0, (med.stok || 0) - 1);
         meds[idx] = { ...med, stok: newStok };
 
-        const log = { 
-          id: Date.now(), 
-          medId: med.id, 
-          ad: med.ad, 
-          kisi: med.kisi, 
+        const log = {
+          id: Date.now(),
+          medId: med.id,
+          ad: med.ad,
+          kisi: med.kisi,
           slot: slot,
           date: new Date().toISOString().split('T')[0],
-          dt: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) 
+          dt: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
         };
         const updatedLogs = [log, ...(state.saglik.logs || [])].slice(0, 100);
 
         set({ saglik: { ...state.saglik, ilaclar: meds, logs: updatedLogs } });
-        
+
         if (newStok <= (med.minStok || 5)) {
           get().addLog('İlaç Azaldı', `${med.ad} stoğu kritik seviyeye düştü (${newStok} adet kaldı). Yenisini almayı unutmayın!`);
         }
-        
+
         get().saveToSupabase();
       },
 
@@ -747,7 +747,7 @@ const useStore = create(
           set({ syncing: true });
           await get().loadFromSupabase();
           get().subscribeToSupabase();
-          
+
           // Veri yüklendikten sonra bildirimleri kontrol et
           setTimeout(() => get().checkSystemNotifications(), 2000);
 
@@ -768,18 +768,18 @@ const useStore = create(
         set({ syncing: true });
         const remote = await fetchFromSupabase();
         if (remote) {
-          const legacyFinans = remote.kasa ? { 
-            ...DEFAULT_STATE.finans, 
+          const legacyFinans = remote.kasa ? {
+            ...DEFAULT_STATE.finans,
             bakiyeler: { gorkem: remote.kasa.gorkem, esra: remote.kasa.esra, ortak: remote.kasa.ortak },
             history: remote.kasa.gecmis || []
           } : null;
 
           set({
-            users:     remote.users || DEFAULT_STATE.users,
-            finans:    remote.finans || legacyFinans || DEFAULT_STATE.finans,
-            kasa:      remote.kasa || (legacyFinans ? remote.kasa : DEFAULT_STATE.kasa),
-            mutfak:    { 
-              ...DEFAULT_STATE.mutfak, 
+            users: remote.users || DEFAULT_STATE.users,
+            finans: remote.finans || legacyFinans || DEFAULT_STATE.finans,
+            kasa: remote.kasa || (legacyFinans ? remote.kasa : DEFAULT_STATE.kasa),
+            mutfak: {
+              ...DEFAULT_STATE.mutfak,
               ...remote.mutfak,
               // Ensure critical arrays exist even if remote is missing them
               tarifler: remote.mutfak?.tarifler || DEFAULT_STATE.mutfak.tarifler,
@@ -789,24 +789,24 @@ const useStore = create(
               alisveris: remote.mutfak?.alisveris || DEFAULT_STATE.mutfak.alisveris,
               sohbet: remote.mutfak?.sohbet || DEFAULT_STATE.mutfak.sohbet,
             },
-            saglik:    { ...DEFAULT_STATE.saglik, ...remote.saglik },
+            saglik: { ...DEFAULT_STATE.saglik, ...remote.saglik },
             alisveris: remote.alisveris || DEFAULT_STATE.alisveris,
-            hedefler:  remote.hedefler  || DEFAULT_STATE.hedefler,
-            sosyal:    { ...DEFAULT_STATE.sosyal, ...remote.sosyal },
-            ev:        { ...DEFAULT_STATE.ev, ...remote.ev },
-            pet:       { ...DEFAULT_STATE.pet, ...remote.pet },
-            garaj:     remote.garaj || (remote.aracim ? [{ ...DEFAULT_STATE.garaj[0], ...remote.aracim, id: 'v1' }] : DEFAULT_STATE.garaj),
+            hedefler: remote.hedefler || DEFAULT_STATE.hedefler,
+            sosyal: { ...DEFAULT_STATE.sosyal, ...remote.sosyal },
+            ev: { ...DEFAULT_STATE.ev, ...remote.ev },
+            pet: { ...DEFAULT_STATE.pet, ...remote.pet },
+            garaj: remote.garaj || (remote.aracim ? [{ ...DEFAULT_STATE.garaj[0], ...remote.aracim, id: 'v1' }] : DEFAULT_STATE.garaj),
             selectedVehicleId: remote.selectedVehicleId || 'v1',
-            tatil:     { ...DEFAULT_STATE.tatil, ...remote.tatil },
+            tatil: { ...DEFAULT_STATE.tatil, ...remote.tatil },
             achievements: remote.achievements || DEFAULT_STATE.achievements,
-            logs:      remote.logs || DEFAULT_STATE.logs,
-            system:    { ...get().system, isCloudReady: true },
-            isOnline:  true
+            logs: remote.logs || DEFAULT_STATE.logs,
+            system: { ...get().system, isCloudReady: true },
+            isOnline: true
           });
         } else {
         }
         set({ syncing: false });
-        
+
         // FAZ 9: JSON verisi yüklendikten sonra yeni SQL tablolarını üzerine yaz/kontrol et
         get().getBuAyHarcamalar();
         get().checkAutoKapanis();
@@ -818,67 +818,67 @@ const useStore = create(
 
         supabase
           .channel('schema-db-changes')
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'eraylar_store', filter: 'id=eq.1' }, 
-          (payload) => {
-            const prevState = get();
-            const newData = payload.new.data;
-            if (!newData) return;
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'eraylar_store', filter: 'id=eq.1' },
+            (payload) => {
+              const prevState = get();
+              const newData = payload.new.data;
+              if (!newData) return;
 
-            // Smart Notifications Check
-            if (prevState.currentUser && !get().settings.silentMode) {
+              // Smart Notifications Check
+              if (prevState.currentUser && !get().settings.silentMode) {
 
-              // 1. New Sohbet Note
-              if (newData.mutfak?.sohbet?.length > (prevState.mutfak.sohbet?.length || 0)) {
-                const newNote = newData.mutfak.sohbet[0];
-                if (newNote.w !== prevState.currentUser.name) {
-                  const title = newNote.t.startsWith('🛒') ? '🛒 Alışveriş Listesi' : '📝 Yeni Not';
-                  notificationService.send(title, `${newNote.w} sana bir mesaj bıraktı: ${newNote.t}`);
+                // 1. New Sohbet Note
+                if (newData.mutfak?.sohbet?.length > (prevState.mutfak.sohbet?.length || 0)) {
+                  const newNote = newData.mutfak.sohbet[0];
+                  if (newNote.w !== prevState.currentUser.name) {
+                    const title = newNote.t.startsWith('🛒') ? '🛒 Alışveriş Listesi' : '📝 Yeni Not';
+                    notificationService.send(title, `${newNote.w} sana bir mesaj bıraktı: ${newNote.t}`);
+                  }
+                }
+
+                // 3. New Expense
+                if (newData.finans?.harcamalar?.length > (prevState.finans.harcamalar?.length || 0)) {
+                  const newExp = newData.finans.harcamalar[0];
+                  if (newExp.payer !== prevState.currentUser.name) {
+                    notificationService.send('💸 Yeni Harcama', `${newExp.payer}, ${newExp.amount}₺ tutarında ${newExp.title} harcaması girdi.`);
+                  }
                 }
               }
 
-              // 3. New Expense
-              if (newData.finans?.harcamalar?.length > (prevState.finans.harcamalar?.length || 0)) {
-                const newExp = newData.finans.harcamalar[0];
-                if (newExp.payer !== prevState.currentUser.name) {
-                  notificationService.send('💸 Yeni Harcama', `${newExp.payer}, ${newExp.amount}₺ tutarında ${newExp.title} harcaması girdi.`);
-                }
+              const state = get();
+              if (state.isSaving) return;
+
+              // 1. Ignore updates from ourselves
+              if (newData.system?.lastUpdatedBy === state.system.clientId) return;
+
+              // 2. Only update if data is actually different
+              const currentDataStr = JSON.stringify(extractAppData(state));
+              const newDataStr = JSON.stringify(newData);
+
+              if (currentDataStr !== newDataStr) {
+                console.log('🔄 Remote data changed by another client, updating local state...');
+                set({ ...newData });
               }
-            }
-
-            const state = get();
-            if (state.isSaving) return;
-            
-            // 1. Ignore updates from ourselves
-            if (newData.system?.lastUpdatedBy === state.system.clientId) return;
-
-            // 2. Only update if data is actually different
-            const currentDataStr = JSON.stringify(extractAppData(state));
-            const newDataStr = JSON.stringify(newData);
-            
-            if (currentDataStr !== newDataStr) {
-              console.log('🔄 Remote data changed by another client, updating local state...');
-              set({ ...newData });
-            }
-          })
+            })
           .subscribe();
-        
+
         set({ subscribed: true });
       },
 
       saveToSupabase: async () => {
         if (saveTimeout) clearTimeout(saveTimeout);
-        
+
         saveTimeout = setTimeout(async () => {
           if (get().isSaving) {
             // If already saving, schedule another check after a short delay
             setTimeout(() => get().saveToSupabase(), 2000);
             return;
           }
-          
+
           try {
             set({ isSaving: true });
             const state = get();
-            
+
             if (!state.system.isCloudReady) {
               console.warn('⚠️ Cloud data not ready. Skipping save.');
               set({ isSaving: false });
@@ -887,7 +887,7 @@ const useStore = create(
 
             const dataToPush = extractAppData(state);
             dataToPush.system = { ...dataToPush.system, lastUpdatedBy: state.system.clientId };
-            
+
             await pushToSupabase(dataToPush);
             set({ isOnline: true, isSaving: false });
           } catch (err) {
@@ -931,7 +931,7 @@ const useStore = create(
           yeniBakiyeler[payerKey] -= Number(item.amount);
         }
 
-        set({ 
+        set({
           finans: { ...state.finans, harcamalar: updatedHarcamalar, approvalPool: updatedPool },
           kasa: { ...state.kasa, bakiyeler: yeniBakiyeler }
         });
@@ -1140,7 +1140,7 @@ const useStore = create(
         // Use kasa.bakiyeler as the unified source
         const yeniBakiyeler = { ...state.kasa.bakiyeler };
         const payerKey = (expense.payer || '').toLowerCase();
-        
+
         // Revert balance if it was originally deducted (not card)
         if (payerKey && yeniBakiyeler[payerKey] !== undefined && !expense.cardId) {
           yeniBakiyeler[payerKey] += Number(expense.amount);
@@ -1161,7 +1161,7 @@ const useStore = create(
         get().addLog('Harcama Silindi', `${expense.payer || 'Sistem'}: ${expense.amount}₺ - ${expense.title}`);
         get().saveToSupabase();
       },
-      
+
       togglePrivacyMode: () => {
         const state = get();
         set({ kasa: { ...state.kasa, privacyMode: !state.kasa.privacyMode } });
@@ -1200,7 +1200,7 @@ const useStore = create(
       transferKasa: async (from, to, amount) => {
         const state = get();
         if (state.kasa.bakiyeler[from] < amount) throw new Error('Yetersiz bakiye!');
-        
+
         set({
           kasa: {
             ...state.kasa,
@@ -1286,7 +1286,7 @@ const useStore = create(
             calculatedExp = date.toISOString().split('T')[0];
           }
         }
-        
+
         const newItem = {
           id: Date.now(),
           buyDate: new Date().toISOString().split('T')[0],
@@ -1294,7 +1294,7 @@ const useStore = create(
           ...itemData,
           expDate: calculatedExp
         };
-        
+
         kits[kitType] = [newItem, ...kits[kitType]];
         set({ ev: { ...state.ev, emergencyKits: kits } });
         get().addLog('Güvenlik', `${newItem.item} ${kitType === 'deprem' ? 'Deprem' : 'İlk Yardım'} çantasına eklendi.`);
@@ -1304,7 +1304,7 @@ const useStore = create(
       addEmergencyToShopping: (item) => {
         const state = get();
         const alisveris = [...(state.mutfak.alisveris || [])];
-        
+
         const newItem = {
           id: Date.now(),
           nm: item.item || item,
@@ -1327,7 +1327,7 @@ const useStore = create(
         const state = get();
         const kits = { ...state.ev.emergencyKits };
         if (!kits[kitType]) return;
-        
+
         kits[kitType] = kits[kitType].filter(item => item.id !== id);
         set({ ev: { ...state.ev, emergencyKits: kits } });
         get().saveToSupabase();
@@ -1370,14 +1370,14 @@ const useStore = create(
         const state = get();
         const newExpense = { ...expense, id: Date.now(), timestamp: new Date().toISOString() };
         const currentHarcamalar = state.ev.finans?.harcamalar || [];
-        set({ 
-          ev: { 
-            ...state.ev, 
-            finans: { 
-              ...state.ev.finans, 
-              harcamalar: [...currentHarcamalar, newExpense] 
-            } 
-          } 
+        set({
+          ev: {
+            ...state.ev,
+            finans: {
+              ...state.ev.finans,
+              harcamalar: [...currentHarcamalar, newExpense]
+            }
+          }
         });
         get().saveToSupabase();
       },
@@ -1392,14 +1392,14 @@ const useStore = create(
       updateLocationSettings: (type, coords) => {
         const state = get();
         const currentTracking = state.ev.tracking || {};
-        set({ 
-          ev: { 
-            ...state.ev, 
-            tracking: { 
-              ...currentTracking, 
-              [type]: { ...(currentTracking[type] || {}), ...coords } 
-            } 
-          } 
+        set({
+          ev: {
+            ...state.ev,
+            tracking: {
+              ...currentTracking,
+              [type]: { ...(currentTracking[type] || {}), ...coords }
+            }
+          }
         });
         get().saveToSupabase();
         toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi! 📍`);
@@ -1440,7 +1440,7 @@ const useStore = create(
           yeniBakiyeler[payerKey] -= Number(amount);
         }
 
-        set({ 
+        set({
           finans: {
             ...state.finans,
             harcamalar: [newHarcama, ...(state.finans.harcamalar || [])]
@@ -1458,12 +1458,12 @@ const useStore = create(
         const { name, amount, date, linkedCardId, type, user } = data;
         const today = new Date().toISOString();
 
-        const newItem = { 
-          id: Date.now(), 
-          name, 
-          amount: Number(amount), 
-          date: Number(date), 
-          linkedCardId, 
+        const newItem = {
+          id: Date.now(),
+          name,
+          amount: Number(amount),
+          date: Number(date),
+          linkedCardId,
           icon: type === 'abonelik' ? '🎬' : '🏢',
           autoPay: true,
           createdBy: user,
@@ -1503,9 +1503,9 @@ const useStore = create(
         let pages = Array.isArray(safe.pages) ? [...safe.pages] : [
           { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }
         ];
-        
+
         pages[activeIdx] = { ...pages[activeIdx], notes: note };
-        
+
         set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
         get().saveToSupabase();
       },
@@ -1517,10 +1517,10 @@ const useStore = create(
         let pages = Array.isArray(safe.pages) ? [...safe.pages] : [
           { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }
         ];
-        
+
         const currentStamps = pages[activeIdx].stamps || [];
         pages[activeIdx] = { ...pages[activeIdx], stamps: [...currentStamps, stamp] };
-        
+
         set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
         get().saveToSupabase();
       },
@@ -1532,9 +1532,9 @@ const useStore = create(
         let pages = Array.isArray(safe.pages) ? [...safe.pages] : [
           { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }, { notes: "", stamps: [] }
         ];
-        
+
         pages[activeIdx] = { ...pages[activeIdx], stamps: [] };
-        
+
         set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
         get().saveToSupabase();
       },
@@ -1552,7 +1552,7 @@ const useStore = create(
             updatedMutfak[loc] = updatedMutfak[loc].map(item => ({ ...item, mn: 0 }));
           }
         });
-        
+
         await state.setModuleData('mutfak', updatedMutfak);
         toast.success('Bütün kritik stoklar 0 yapıldı! ✅');
       },
@@ -1564,20 +1564,20 @@ const useStore = create(
 
         const monthlyAmount = loan.monthly;
         const newRemaining = Math.max(0, loan.remaining - monthlyAmount);
-        
-        const yeniBorclar = state.finans.borclar.map(b => 
+
+        const yeniBorclar = state.finans.borclar.map(b =>
           b.id === loanId ? { ...b, remaining: newRemaining } : b
         );
 
         set({ finans: { ...state.finans, borclar: yeniBorclar } });
-        
+
         get().addExpense({
           title: `${loan.name} Taksit Ödemesi`,
           amount: monthlyAmount,
           category: 'Borç/Kredi',
           payer: 'ortak'
         });
-        
+
         get().addLog('Kredi Ödemesi', `${loan.name} taksiti ödendi. Kalan: ${newRemaining}₺`);
       },
 
@@ -1635,11 +1635,11 @@ const useStore = create(
           family_id: state.family_id,
           user_id: state.currentUser?.id,
           status: 'planned', // Normalized status
-          tripType: trip.tripType || 'tatil', 
-          travelers: trip.travelers || 'ikimiz', 
-          locationType: trip.locationType || 'yurtdisi', 
-          transportType: trip.transportType || 'ucak', 
-          valiz: { 
+          tripType: trip.tripType || 'tatil',
+          travelers: trip.travelers || 'ikimiz',
+          locationType: trip.locationType || 'yurtdisi',
+          transportType: trip.transportType || 'ucak',
+          valiz: {
             gorkem: [
               { id: 1, text: 'Pasaport', done: false },
               { id: 2, text: 'Şarj Cihazları', done: false }
@@ -1670,7 +1670,7 @@ const useStore = create(
 
       updateTrip: (tripId, updates) => {
         const state = get();
-        const updatedTrips = state.tatil.trips.map(t => 
+        const updatedTrips = state.tatil.trips.map(t =>
           t.id === tripId ? { ...t, ...updates } : t
         );
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
@@ -1681,7 +1681,7 @@ const useStore = create(
         const state = get();
         const updatedTrips = state.tatil.trips.map(t => {
           if (t.id === tripId) {
-            const newList = t.valiz[person].map(item => 
+            const newList = t.valiz[person].map(item =>
               item.id === itemId ? { ...item, done: !item.done } : item
             );
             return { ...t, valiz: { ...t.valiz, [person]: newList } };
@@ -1709,7 +1709,7 @@ const useStore = create(
           if (String(t.id) === String(tripId)) {
             const newEvals = { ...t.evaluations, [person]: evalData };
             let newStatus = t.status;
-            
+
             // Auto-completion logic
             if (t.travelers === 'ikimiz') {
               if (newEvals.gorkem && newEvals.esra) newStatus = 'completed';
@@ -1719,12 +1719,12 @@ const useStore = create(
 
             // Sync photos to main trip object if available
             const allGalleryPhotos = [];
-            if (newEvals.gorkem?.photos) newEvals.gorkem.photos.forEach(p => { if(p) allGalleryPhotos.push(p); });
-            if (newEvals.esra?.photos) newEvals.esra.photos.forEach(p => { if(p) allGalleryPhotos.push(p); });
+            if (newEvals.gorkem?.photos) newEvals.gorkem.photos.forEach(p => { if (p) allGalleryPhotos.push(p); });
+            if (newEvals.esra?.photos) newEvals.esra.photos.forEach(p => { if (p) allGalleryPhotos.push(p); });
 
-            return { 
-              ...t, 
-              evaluations: newEvals, 
+            return {
+              ...t,
+              evaluations: newEvals,
               status: newStatus,
               photos: allGalleryPhotos.length > 0 ? allGalleryPhotos.slice(0, 6) : t.photos
             };
@@ -1736,21 +1736,21 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-    syncValizToDepo: (itemText, category) => {
-      const state = get();
-      const alreadyInDepo = state.ev.depo.some(i => i.nm.toLowerCase() === itemText.toLowerCase());
-      if (!alreadyInDepo) {
-        const newItem = {
-          id: Date.now(),
-          nm: itemText,
-          qt: 1,
-          dt: new Date().toISOString().split('T')[0],
-          category: category || 'Seyahat',
-          icon: '🧳'
-        };
-        set({ ev: { ...state.ev, depo: [...state.ev.depo, newItem] } });
-      }
-    },
+      syncValizToDepo: (itemText, category) => {
+        const state = get();
+        const alreadyInDepo = state.ev.depo.some(i => i.nm.toLowerCase() === itemText.toLowerCase());
+        if (!alreadyInDepo) {
+          const newItem = {
+            id: Date.now(),
+            nm: itemText,
+            qt: 1,
+            dt: new Date().toISOString().split('T')[0],
+            category: category || 'Seyahat',
+            icon: '🧳'
+          };
+          set({ ev: { ...state.ev, depo: [...state.ev.depo, newItem] } });
+        }
+      },
 
       addDream: (dream) => {
         const state = get();
@@ -1779,7 +1779,7 @@ const useStore = create(
           if (uploadError) throw uploadError;
 
           const { data: { publicUrl } } = supabase.storage
-            .from('eraylar-storage')
+            .from('eraylar_storage')
             .getPublicUrl(filePath);
 
           return publicUrl;
@@ -1795,7 +1795,7 @@ const useStore = create(
         const state = get();
         const updatedTrips = state.tatil.trips.map(t => {
           if (t.id === tripId) {
-            const updatedChecklist = t.checklists.map(c => 
+            const updatedChecklist = t.checklists.map(c =>
               c.id === itemId ? { ...c, done: !c.done } : c
             );
             return { ...t, checklists: updatedChecklist };
@@ -1845,10 +1845,10 @@ const useStore = create(
       syncRecipesFromData: () => {
         const state = get();
         console.log(`Force syncing ${INITIAL_RECIPES.length} recipes from data.js...`);
-        
+
         // Mevcut tarifleri INITIAL_RECIPES ile tamamen değiştiriyoruz (Master liste öncelikli)
         const updatedTarifler = INITIAL_RECIPES.map((r, i) => ({ ...r, id: i + 1 }));
-        
+
         set({ mutfak: { ...state.mutfak, tarifler: updatedTarifler } });
         get().saveToSupabase();
         return updatedTarifler.length;
@@ -1864,7 +1864,7 @@ const useStore = create(
         const bPool = recipes.filter(r => r.c === 'kahvalti');
         const dPool = recipes.filter(r => r.c !== 'kahvalti');
         console.log('🍳 Breakfast pool:', bPool.length, '🥘 Dinner pool:', dPool.length);
-        
+
         let newMenu = { ...(state.mutfak.menu || {}) };
         let count = 0;
 
@@ -1909,7 +1909,7 @@ const useStore = create(
         const state = get();
         const { fr, pr } = info;
         const prefix = ml === 'k' ? 'k' : 'a';
-        
+
         if (pr > 0) {
           get().addExpense({
             title: 'Dışarıda Yemek (' + (fr || 'Restoran') + ')',
@@ -1940,7 +1940,7 @@ const useStore = create(
         const state = get();
         const { fr, wh, pr } = info;
         const prefix = ml === 'k' ? 'k' : 'a';
-        
+
         const newOrder = {
           id: Date.now(),
           dt, fr, wh, pr,
@@ -1958,7 +1958,7 @@ const useStore = create(
         }
 
         const yeniSiparisler = [newOrder, ...(state.mutfak.siparisler || [])].slice(0, 100);
-        
+
         // Save restaurant name for auto-fill
         let yeniRestaurants = [...(state.mutfak.restaurantlar || [])];
         if (fr && !yeniRestaurants.includes(fr)) {
@@ -1984,12 +1984,12 @@ const useStore = create(
           ...recipe
         };
         const yeniTarifler = [newRecipe, ...state.mutfak.tarifler];
-        
+
         // Auto-add ingredients to stock if missing
         let updatedMutfak = { ...state.mutfak, tarifler: yeniTarifler };
         const allStock = [...updatedMutfak.buzdolabi, ...updatedMutfak.kiler, ...updatedMutfak.dondurucu];
         const stockNames = allStock.map(s => s.n.toLowerCase());
-        
+
         (recipe.ig || []).forEach(igLine => {
           const name = igLine.split(':')[0].trim();
           if (name && !stockNames.includes(name.toLowerCase())) {
@@ -2011,12 +2011,12 @@ const useStore = create(
       updateRecipe: async (id, updates) => {
         const state = get();
         const yeniTarifler = state.mutfak.tarifler.map(r => r.id === id ? { ...r, ...updates } : r);
-        
+
         // Auto-add ingredients to stock if missing
         let updatedMutfak = { ...state.mutfak, tarifler: yeniTarifler };
         const allStock = [...updatedMutfak.buzdolabi, ...updatedMutfak.kiler, ...updatedMutfak.dondurucu];
         const stockNames = allStock.map(s => s.n.toLowerCase());
-        
+
         (updates.ig || []).forEach(igLine => {
           const name = igLine.split(':')[0].trim();
           if (name && !stockNames.includes(name.toLowerCase())) {
@@ -2051,15 +2051,15 @@ const useStore = create(
 
       updateWaterLevel: async (tank, level) => {
         const state = get();
-        set({ 
-          mutfak: { 
-            ...state.mutfak, 
-            su: { 
-              ...state.mutfak.su, 
+        set({
+          mutfak: {
+            ...state.mutfak,
+            su: {
+              ...state.mutfak.su,
               [tank]: level,
               lastChecked: new Date().toISOString() // Reset timer on manual update
-            } 
-          } 
+            }
+          }
         });
         get().saveToSupabase();
       },
@@ -2094,16 +2094,16 @@ const useStore = create(
             newLevel2 = Math.max(0, newLevel2 - totalDepletion);
           }
 
-          set({ 
-            mutfak: { 
-              ...state.mutfak, 
-              su: { 
-                ...su, 
-                level1: newLevel1, 
+          set({
+            mutfak: {
+              ...state.mutfak,
+              su: {
+                ...su,
+                level1: newLevel1,
                 level2: newLevel2,
-                lastChecked: now.toISOString() 
-              } 
-            } 
+                lastChecked: now.toISOString()
+              }
+            }
           });
           get().saveToSupabase();
         }
@@ -2112,11 +2112,11 @@ const useStore = create(
       addWaterOrder: async (qty = 2) => {
         const state = get();
         const yeniHistory = [{ dt: new Date().toISOString(), q: qty }, ...state.mutfak.su.history].slice(0, 20);
-        set({ 
-          mutfak: { 
-            ...state.mutfak, 
-            su: { ...state.mutfak.su, level1: 100, level2: 100, lastOrder: new Date().toISOString(), history: yeniHistory } 
-          } 
+        set({
+          mutfak: {
+            ...state.mutfak,
+            su: { ...state.mutfak.su, level1: 100, level2: 100, lastOrder: new Date().toISOString(), history: yeniHistory }
+          }
         });
         get().saveToSupabase();
       },
@@ -2154,96 +2154,96 @@ const useStore = create(
         const state = get();
         let fromItems = [...state.mutfak[fromModule]];
         let toItems = [...state.mutfak[toModule]];
-        
+
         const fromIdx = fromItems.findIndex(x => x.n === itemName);
         if (fromIdx === -1) return;
-        
+
         const fromItem = fromItems[fromIdx];
         const transferQty = Math.min(fromItem.cr, qty);
         if (transferQty <= 0) return;
 
         fromItems[fromIdx] = { ...fromItem, cr: fromItem.cr - transferQty };
-        
+
         const toIdx = toItems.findIndex(x => x.n === itemName);
         if (toIdx !== -1) {
           toItems[toIdx] = { ...toItems[toIdx], cr: toItems[toIdx].cr + transferQty };
         } else {
           toItems.push({ ...fromItem, cr: transferQty, bt: new Date().toISOString() });
         }
-        
+
         set({ mutfak: { ...state.mutfak, [fromModule]: fromItems, [toModule]: toItems } });
         get().saveToSupabase();
       },
 
       bulkFinishItems: async (itemsToFinish) => {
-         const state = get();
-         let finalMutfak = { ...state.mutfak };
-         let newShopping = [...finalMutfak.alisveris];
+        const state = get();
+        let finalMutfak = { ...state.mutfak };
+        let newShopping = [...finalMutfak.alisveris];
 
-         itemsToFinish.forEach(({ moduleKey, itemName, qty }) => {
-            let items = [...finalMutfak[moduleKey]];
-            const idx = items.findIndex(x => x.n === itemName);
-            if (idx === -1) return;
+        itemsToFinish.forEach(({ moduleKey, itemName, qty }) => {
+          let items = [...finalMutfak[moduleKey]];
+          const idx = items.findIndex(x => x.n === itemName);
+          if (idx === -1) return;
 
-            const item = items[idx];
-            const newCr = Math.max(0, item.cr - qty);
-            items[idx] = { ...item, cr: newCr };
+          const item = items[idx];
+          const newCr = Math.max(0, item.cr - qty);
+          items[idx] = { ...item, cr: newCr };
 
-            const isAlreadyInShopping = newShopping.some(s => s.nm.toLowerCase() === itemName.toLowerCase() && !s.dn);
-            if (newCr === 0 && !isAlreadyInShopping) {
-              newShopping.push({
-                id: Date.now() + Math.floor(Math.random() * 10000),
-                nm: item.n,
-                qt: (item.mn || 1) + ' ' + (item.u || 'adet'),
-                mk: item.mk || 'BİM',
-                dn: false,
-                loc: moduleKey === 'buzdolabi' ? 'buz' : 'kil'
-              });
-            }
-            finalMutfak[moduleKey] = items;
-         });
+          const isAlreadyInShopping = newShopping.some(s => s.nm.toLowerCase() === itemName.toLowerCase() && !s.dn);
+          if (newCr === 0 && !isAlreadyInShopping) {
+            newShopping.push({
+              id: Date.now() + Math.floor(Math.random() * 10000),
+              nm: item.n,
+              qt: (item.mn || 1) + ' ' + (item.u || 'adet'),
+              mk: item.mk || 'BİM',
+              dn: false,
+              loc: moduleKey === 'buzdolabi' ? 'buz' : 'kil'
+            });
+          }
+          finalMutfak[moduleKey] = items;
+        });
 
-         finalMutfak.alisveris = newShopping;
-         set({ mutfak: finalMutfak });
-         get().saveToSupabase();
+        finalMutfak.alisveris = newShopping;
+        set({ mutfak: finalMutfak });
+        get().saveToSupabase();
       },
 
       addMissingToShopping: async (missingItems) => {
-         const state = get();
-         let newShopping = [...state.mutfak.alisveris];
-         let addedCount = 0;
+        const state = get();
+        let newShopping = [...state.mutfak.alisveris];
+        let addedCount = 0;
 
-         const allStock = [...state.mutfak.buzdolabi, ...state.mutfak.kiler, ...state.mutfak.dondurucu];
+        const allStock = [...state.mutfak.buzdolabi, ...state.mutfak.kiler, ...state.mutfak.dondurucu];
 
-         missingItems.forEach(itemName => {
-            const isAlreadyInShopping = newShopping.some(s => s.nm.toLowerCase() === itemName.toLowerCase() && !s.dn);
-            if (!isAlreadyInShopping) {
-              // Find smart defaults
-              const stockItem = allStock.find(s => s.n.toLowerCase() === itemName.toLowerCase());
-              let loc = 'buz';
-              if (stockItem) {
-                if (state.mutfak.kiler.some(s => s.n === stockItem.n)) loc = 'kil';
-                else if (state.mutfak.dondurucu.some(s => s.n === stockItem.n)) loc = 'don';
-              }
-
-              newShopping.push({
-                id: Date.now() + Math.floor(Math.random() * 10000),
-                nm: itemName,
-                qt: (stockItem?.mn || 1) + ' ' + (stockItem?.u || 'adet'),
-                mk: stockItem?.mk || 'BİM',
-                dn: false,
-                loc: loc,
-                ct: stockItem?.ct || 'Diğer'
-              });
-              addedCount++;
+        missingItems.forEach(itemName => {
+          const isAlreadyInShopping = newShopping.some(s => s.nm.toLowerCase() === itemName.toLowerCase() && !s.dn);
+          if (!isAlreadyInShopping) {
+            // Find smart defaults
+            const stockItem = allStock.find(s => s.n.toLowerCase() === itemName.toLowerCase());
+            let loc = 'buz';
+            if (stockItem) {
+              if (state.mutfak.kiler.some(s => s.n === stockItem.n)) loc = 'kil';
+              else if (state.mutfak.dondurucu.some(s => s.n === stockItem.n)) loc = 'don';
             }
-         });
 
-         if (addedCount > 0) {
-            set({ mutfak: { ...state.mutfak, alisveris: newShopping } });
-            get().saveToSupabase();
-         }
-         return addedCount;
+            newShopping.push({
+              id: Date.now() + Math.floor(Math.random() * 10000),
+              nm: itemName,
+              qt: (stockItem?.mn || 1) + ' ' + (stockItem?.u || 'adet'),
+              mk: stockItem?.mk || 'BİM',
+              dn: false,
+              loc: loc,
+              ct: stockItem?.ct || 'Diğer'
+            });
+            addedCount++;
+          }
+        });
+
+        if (addedCount > 0) {
+          set({ mutfak: { ...state.mutfak, alisveris: newShopping } });
+          get().saveToSupabase();
+        }
+        return addedCount;
       },
 
       addCriticalToShopping: async () => {
@@ -2293,14 +2293,14 @@ const useStore = create(
         const yeniSohbet = [newNote, ...state.mutfak.sohbet].slice(0, 12);
         // History keeps everything (up to 500)
         const yeniHistory = [newNote, ...(state.mutfak.history || [])].slice(0, 100);
-        
+
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, history: yeniHistory } });
         get().saveToSupabase();
       },
 
       updateNotePosition: (noteId, x, y) => {
         const state = get();
-        const yeniSohbet = state.mutfak.sohbet.map(n => 
+        const yeniSohbet = state.mutfak.sohbet.map(n =>
           n.id === noteId ? { ...n, x, y } : n
         );
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet } });
@@ -2318,10 +2318,10 @@ const useStore = create(
         const state = get();
         const note = state.mutfak.sohbet.find(n => n.id === noteId);
         const yeniSohbet = state.mutfak.sohbet.filter(n => n.id !== noteId);
-        
+
         // When removed from board, move to archive just in case, but history already has it
         const yeniArsiv = note ? [{ ...note, archDate: new Date().toISOString() }, ...state.mutfak.arsiv].slice(0, 100) : state.mutfak.arsiv;
-        
+
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
         get().saveToSupabase();
       },
@@ -2358,9 +2358,9 @@ const useStore = create(
           const exists = state.mutfak.ekmeklik.find(e => e.tip === breadData.tip);
           let newEkmeklik = [...state.mutfak.ekmeklik];
           if (exists) {
-             newEkmeklik = newEkmeklik.map(e => e.tip === breadData.tip ? { ...e, ...breadData } : e);
+            newEkmeklik = newEkmeklik.map(e => e.tip === breadData.tip ? { ...e, ...breadData } : e);
           } else {
-             newEkmeklik.push({ id: Date.now(), ...breadData });
+            newEkmeklik.push({ id: Date.now(), ...breadData });
           }
           set({ mutfak: { ...state.mutfak, ekmeklik: newEkmeklik } });
         }
@@ -2373,7 +2373,7 @@ const useStore = create(
         if (!item) return;
 
         // 1. Mark as done in shopping
-        const yeniAlisveris = state.mutfak.alisveris.map(i => 
+        const yeniAlisveris = state.mutfak.alisveris.map(i =>
           i.id === id ? { ...i, dn: true, mk, qt, pr, loc, cardId, ct } : i
         );
 
@@ -2401,7 +2401,7 @@ const useStore = create(
         if (targetKey) {
           const items = [...state.mutfak[targetKey]];
           const idx = items.findIndex(x => x.n.toLowerCase() === item.nm.toLowerCase());
-          
+
           const matchNum = (qt || '').match(/[\d.]+/);
           const num = parseFloat(matchNum?.[0]) || 1;
           const uStr = (qt || '').replace(/[\d.\s]/g, '').toLowerCase() || 'adet';
@@ -2435,29 +2435,29 @@ const useStore = create(
 
         const breakfastPool = recipes.filter(r => r.c === 'kahvalti');
         const dinnerPool = recipes.filter(r => r.c !== 'kahvalti');
-        
+
         let newMenu = { ...(state.mutfak.menu || {}) };
         let count = 0;
 
         days.forEach(day => {
           const iso = day.iso;
           if (!newMenu[iso]) newMenu[iso] = {};
-          
+
           const dayData = { ...newMenu[iso] };
           let changed = false;
 
           // Fill Breakfast if empty
           if (!dayData.k && !dayData.kdis && !dayData.ksp) {
-             const pool = breakfastPool.length > 0 ? breakfastPool : recipes;
-             dayData.k = pool[Math.floor(Math.random() * pool.length)].n;
-             changed = true;
+            const pool = breakfastPool.length > 0 ? breakfastPool : recipes;
+            dayData.k = pool[Math.floor(Math.random() * pool.length)].n;
+            changed = true;
           }
 
           // Fill Evening if empty
           if (!dayData.a && !dayData.adis && !dayData.asp) {
-             const pool = dinnerPool.length > 0 ? dinnerPool : recipes;
-             dayData.a = pool[Math.floor(Math.random() * pool.length)].n;
-             changed = true;
+            const pool = dinnerPool.length > 0 ? dinnerPool : recipes;
+            dayData.a = pool[Math.floor(Math.random() * pool.length)].n;
+            changed = true;
           }
 
           if (changed) {
@@ -2487,46 +2487,46 @@ const useStore = create(
         days.forEach(day => {
           const dayData = state.mutfak.menu[day.iso] || {};
           ['k', 'a'].forEach(mealKey => {
-             const dishName = dayData[mealKey];
-             if (!dishName) return;
-             const recipe = tarifler.find(r => r.n === dishName);
-             if (!recipe || !recipe.ig) return;
+            const dishName = dayData[mealKey];
+            if (!dishName) return;
+            const recipe = tarifler.find(r => r.n === dishName);
+            if (!recipe || !recipe.ig) return;
 
-             recipe.ig.forEach(line => {
-                // Parse "Ingredient:Qty Unit"
-                const parts = line.split(':');
-                const name = parts[0].trim();
-                const qtyStr = parts[1]?.trim() || '';
-                const matchNum = qtyStr.match(/[\d.]+/);
-                const val = (parseFloat(matchNum?.[0]) || 1) * factor;
-                const unit = qtyStr.replace(/[\d.\s]/g, '') || 'adet';
+            recipe.ig.forEach(line => {
+              // Parse "Ingredient:Qty Unit"
+              const parts = line.split(':');
+              const name = parts[0].trim();
+              const qtyStr = parts[1]?.trim() || '';
+              const matchNum = qtyStr.match(/[\d.]+/);
+              const val = (parseFloat(matchNum?.[0]) || 1) * factor;
+              const unit = qtyStr.replace(/[\d.\s]/g, '') || 'adet';
 
-                // Check stock
-                const stockItem = currentStock.find(s => s.n.toLowerCase() === name.toLowerCase());
-                const inShopping = newItems.find(i => i.nm.toLowerCase() === name.toLowerCase() && !i.dn);
+              // Check stock
+              const stockItem = currentStock.find(s => s.n.toLowerCase() === name.toLowerCase());
+              const inShopping = newItems.find(i => i.nm.toLowerCase() === name.toLowerCase() && !i.dn);
 
-                if (!stockItem || stockItem.cr < val) {
-                   if (!inShopping) {
-                      newItems.push({
-                        id: Date.now() + Math.floor(Math.random() * 100000),
-                        nm: name,
-                        qt: `${val} ${unit}`,
-                        mk: 'BİM',
-                        dn: false,
-                        loc: 'buz'
-                      });
-                      addedAny = true;
-                   } else {
-                      // Check if existing shopping qty is enough
-                      const shopMatch = inShopping.qt.match(/[\d.]+/);
-                      const shopVal = parseFloat(shopMatch?.[0]) || 0;
-                      if (shopVal < val) {
-                        inShopping.qt = `${val} ${unit}`;
-                        addedAny = true;
-                      }
-                   }
+              if (!stockItem || stockItem.cr < val) {
+                if (!inShopping) {
+                  newItems.push({
+                    id: Date.now() + Math.floor(Math.random() * 100000),
+                    nm: name,
+                    qt: `${val} ${unit}`,
+                    mk: 'BİM',
+                    dn: false,
+                    loc: 'buz'
+                  });
+                  addedAny = true;
+                } else {
+                  // Check if existing shopping qty is enough
+                  const shopMatch = inShopping.qt.match(/[\d.]+/);
+                  const shopVal = parseFloat(shopMatch?.[0]) || 0;
+                  if (shopVal < val) {
+                    inShopping.qt = `${val} ${unit}`;
+                    addedAny = true;
+                  }
                 }
-             });
+              }
+            });
           });
         });
 
@@ -2537,15 +2537,15 @@ const useStore = create(
         }
         return false;
       },
-      
+
       // ── Sosyal Actions ──────────────────────────────────
       addSocialActivity: (activity) => {
         const state = get();
-        const newActivity = { 
-          id: Date.now(), 
-          tamamlandi: false, 
+        const newActivity = {
+          id: Date.now(),
+          tamamlandi: false,
           durum: 'planda',
-          ...activity 
+          ...activity
         };
         const currentAkt = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
         set({ sosyal: { ...state.sosyal, aktiviteler: [newActivity, ...currentAkt] } });
@@ -2555,7 +2555,7 @@ const useStore = create(
       updateSocialActivity: (id, updates) => {
         const state = get();
         const aktList = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
-        const updatedAktiviteler = aktList.map(a => 
+        const updatedAktiviteler = aktList.map(a =>
           a.id === id ? { ...a, ...updates } : a
         );
         set({ sosyal: { ...state.sosyal, aktiviteler: updatedAktiviteler } });
@@ -2569,25 +2569,25 @@ const useStore = create(
         if (!act) return;
 
         const completionDate = new Date().toISOString();
-        const yeniAktiviteler = aktList2.map(a => 
-          a.id === id ? { 
-            ...a, 
-            tamamlandi: true, 
-            durum: 'tamamlandi', 
-            puan_gorkem: pGorkem, 
-            puan_esra: pEsra, 
+        const yeniAktiviteler = aktList2.map(a =>
+          a.id === id ? {
+            ...a,
+            tamamlandi: true,
+            durum: 'tamamlandi',
+            puan_gorkem: pGorkem,
+            puan_esra: pEsra,
             harcama: cost,
             yorum: comment,
             doneDate: completionDate
           } : a
         );
-        
+
         // 1. Finance Integration
         if (cost > 0) {
-          get().addExpense({ 
-            title: `🌟 Aktivite: ${act.baslik}`, 
-            amount: Number(cost), 
-            category: 'Sosyal Aktivite', 
+          get().addExpense({
+            title: `🌟 Aktivite: ${act.baslik}`,
+            amount: Number(cost),
+            category: 'Sosyal Aktivite',
             payer: 'ortak',
             dt: completionDate.split('T')[0]
           });
@@ -2619,14 +2619,14 @@ const useStore = create(
 
       addSocialPoolItem: (item) => {
         const state = get();
-        const newItem = { 
-          id: Date.now(), 
+        const newItem = {
+          id: Date.now(),
           title: item.baslik || item.title,
           icon: item.emoji || item.icon || '💡',
           category: item.tur === 'disari' ? 'Dışarı' : item.tur === 'evde' ? 'Evde' : (item.category || 'Genel'),
           cost: item.harcama ? `${item.harcama} TL` : (item.cost || '0 TL'),
           duration: '1 saat',
-          ...item 
+          ...item
         };
         const currentHavuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
         set({ sosyal: { ...state.sosyal, havuz: [newItem, ...currentHavuz] } });
@@ -2645,13 +2645,13 @@ const useStore = create(
         const state = get();
         const currentHavuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
         const currentPoolItems = Array.isArray(state.sosyal.poolItems) ? state.sosyal.poolItems : [];
-        
-        set({ 
-          sosyal: { 
-            ...state.sosyal, 
+
+        set({
+          sosyal: {
+            ...state.sosyal,
             havuz: currentHavuz.filter(i => String(i.id) !== String(id)),
             poolItems: currentPoolItems.filter(i => String(i.id) !== String(id))
-          } 
+          }
         });
         get().saveToSupabase();
       },
@@ -2682,12 +2682,12 @@ const useStore = create(
       applySocialRoutine: (routine, startDate) => {
         const state = get();
         const { addSocialActivity } = get();
-        
+
         routine.items.forEach((itemTitle, index) => {
           // Find activity info from pool or use defaults
-          const poolItem = (state.sosyal.poolItems || []).find(h => h.title === itemTitle) || 
-                           (INITIAL_SOCIAL_POOL || []).find(p => p.title === itemTitle);
-          
+          const poolItem = (state.sosyal.poolItems || []).find(h => h.title === itemTitle) ||
+            (INITIAL_SOCIAL_POOL || []).find(p => p.title === itemTitle);
+
           addSocialActivity({
             baslik: itemTitle,
             tarih: startDate,
@@ -2726,7 +2726,7 @@ const useStore = create(
           status: 'Bekliyor',
           ...fatura
         };
-        
+
         const updatedFaturalar = [newFatura, ...(state.ev.faturalar || [])];
         set({ ev: { ...state.ev, faturalar: updatedFaturalar } });
 
@@ -2748,7 +2748,7 @@ const useStore = create(
         const fatura = state.ev.faturalar.find(f => f.id === id);
         if (!fatura) return;
 
-        const updatedFaturalar = state.ev.faturalar.map(f => 
+        const updatedFaturalar = state.ev.faturalar.map(f =>
           f.id === id ? { ...f, status: 'Ödendi' } : f
         );
 
@@ -2760,23 +2760,23 @@ const useStore = create(
 
       addTasinmaz: (item) => {
         const state = get();
-        const newItem = { 
-          id: Date.now(), 
-          value: 0, 
-          tax: 0, 
+        const newItem = {
+          id: Date.now(),
+          value: 0,
+          tax: 0,
           income: 0,
           expense: 0,
           aidat: 0,
-          icon: '🏠', 
-          status: 'Mülk Sahibi', 
-          taxPaid1: false, 
+          icon: '🏠',
+          status: 'Mülk Sahibi',
+          taxPaid1: false,
           taxPaid2: false,
           daskExpiry: '',
           daskFile: null,
           lastUpdate: new Date().toISOString().split('T')[0],
-          ...item 
+          ...item
         };
-        
+
         // Auto-sync with Finance
         let updatedDuzenli = [...(state.ev.duzenliOdemeler || [])];
         if (newItem.aidat > 0) {
@@ -2807,7 +2807,7 @@ const useStore = create(
           });
         }
 
-        set({ 
+        set({
           kasa: { ...state.kasa, tasinmazlar: [...state.kasa.tasinmazlar, newItem] },
           ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
           finans: { ...state.finans, rekurans: updatedRekurans }
@@ -2821,7 +2821,7 @@ const useStore = create(
         const tasinmaz = state.kasa.tasinmazlar.find(t => t.id === id);
         if (!tasinmaz) return;
 
-        const updatedTasinmazlar = state.kasa.tasinmazlar.map(t => 
+        const updatedTasinmazlar = state.kasa.tasinmazlar.map(t =>
           t.id === id ? { ...t, ...updates, lastUpdate: new Date().toISOString().split('T')[0] } : t
         );
 
@@ -2829,7 +2829,7 @@ const useStore = create(
         let updatedDuzenli = (state.ev.duzenliOdemeler || []).filter(d => d.id !== `tasinmaz-aidat-${id}`);
         const finalAidat = updates.aidat !== undefined ? updates.aidat : tasinmaz.aidat;
         const finalName = updates.name !== undefined ? updates.name : tasinmaz.name;
-        
+
         if (Number(finalAidat) > 0) {
           updatedDuzenli.push({
             id: `tasinmaz-aidat-${id}`,
@@ -2862,7 +2862,7 @@ const useStore = create(
           });
         }
 
-        set({ 
+        set({
           kasa: { ...state.kasa, tasinmazlar: updatedTasinmazlar },
           ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
           finans: { ...state.finans, rekurans: updatedRekurans }
@@ -2876,7 +2876,7 @@ const useStore = create(
         const updatedDuzenli = (state.ev.duzenliOdemeler || []).filter(d => d.id !== `tasinmaz-aidat-${id}`);
         const updatedRekurans = (state.finans.rekurans || []).filter(r => r.id !== `tasinmaz-kira-${id}`);
 
-        set({ 
+        set({
           kasa: { ...state.kasa, tasinmazlar: updatedTasinmazlar },
           ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
           finans: { ...state.finans, rekurans: updatedRekurans }
@@ -2899,10 +2899,10 @@ const useStore = create(
           clearedAt: null,
           isArchived: false
         };
-        
+
         const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
         const newList = [newItem, ...currentList];
-        
+
         set({ ev: { ...currentEv, onarimListesi: newList } });
         get().saveToSupabase();
         toast.success(`"${task}" listeye eklendi! 📋`);
@@ -2911,7 +2911,7 @@ const useStore = create(
       toggleOnarimItem: (id, userKey) => {
         const currentEv = get().ev || {};
         const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
-        
+
         const newList = currentList.map(item => {
           if (item.id === id) {
             const isCompleting = item.status !== 'Completed';
@@ -2924,7 +2924,7 @@ const useStore = create(
           }
           return item;
         });
-        
+
         set({ ev: { ...currentEv, onarimListesi: newList } });
         get().saveToSupabase();
       },
@@ -2945,7 +2945,7 @@ const useStore = create(
           }
           return item;
         });
-        
+
         set({ ev: { ...currentEv, onarimListesi: newList } });
         get().saveToSupabase();
         toast.success('Tamamlanan görevler arşivlendi! ✨');
@@ -2954,7 +2954,7 @@ const useStore = create(
       // Legacy support for toggleHomeTask if needed elsewhere
       toggleHomeTask: (listType, id) => {
         const state = get();
-        const list = state.ev[listType].map(item => 
+        const list = state.ev[listType].map(item =>
           item.id === id ? { ...item, status: item.status === 'Completed' ? 'Pending' : 'Completed' } : item
         );
         set({ ev: { ...state.ev, [listType]: list } });
@@ -2977,12 +2977,12 @@ const useStore = create(
       addPeriodicBakim: (item) => {
         const currentEv = get().ev || {};
         const currentBakimlar = Array.isArray(currentEv.bakimlar) ? currentEv.bakimlar : [];
-        const newItem = { 
-          id: Date.now().toString(), 
-          lastDate: new Date().toISOString().split('T')[0], 
-          ...item 
+        const newItem = {
+          id: Date.now().toString(),
+          lastDate: new Date().toISOString().split('T')[0],
+          ...item
         };
-        
+
         set({ ev: { ...currentEv, bakimlar: [...currentBakimlar, newItem] } });
         get().saveToSupabase();
         toast.success('Yeni periyodik bakım eklendi! 🔄');
@@ -2991,11 +2991,11 @@ const useStore = create(
       updatePeriodicBakim: (id, updates) => {
         const currentEv = get().ev || {};
         const currentBakimlar = Array.isArray(currentEv.bakimlar) ? currentEv.bakimlar : [];
-        
-        const updated = currentBakimlar.map(b => 
+
+        const updated = currentBakimlar.map(b =>
           b.id === id ? { ...b, ...updates } : b
         );
-        
+
         set({ ev: { ...currentEv, bakimlar: updated } });
         get().saveToSupabase();
         toast.success('Bakım bilgileri güncellendi! 💾');
@@ -3004,11 +3004,11 @@ const useStore = create(
       resetPeriodicBakim: (id) => {
         const currentEv = get().ev || {};
         const currentBakimlar = Array.isArray(currentEv.bakimlar) ? currentEv.bakimlar : [];
-        
-        const updated = currentBakimlar.map(b => 
+
+        const updated = currentBakimlar.map(b =>
           b.id === id ? { ...b, lastDate: new Date().toISOString().split('T')[0] } : b
         );
-        
+
         set({ ev: { ...currentEv, bakimlar: updated } });
         get().saveToSupabase();
         toast.success('Bakım zamanlayıcısı sıfırlandı! 🕒');
@@ -3018,7 +3018,7 @@ const useStore = create(
         const currentEv = get().ev || {};
         const currentBakimlar = Array.isArray(currentEv.bakimlar) ? currentEv.bakimlar : [];
         const updated = currentBakimlar.filter(b => b.id !== id);
-        
+
         set({ ev: { ...currentEv, bakimlar: updated } });
         get().saveToSupabase();
         toast.success('Bakım kaydı silindi.');
@@ -3045,7 +3045,7 @@ const useStore = create(
       deleteVaccineHistory: (petName, vaccineName, hDate) => {
         const currentPet = get().pet || {};
         const currentVaccines = Array.isArray(currentPet.vaccines?.[petName]) ? currentPet.vaccines[petName] : [];
-        
+
         const updated = currentVaccines.map(v => {
           if (v.n === vaccineName) {
             return { ...v, h: (v.h || []).filter(date => date !== hDate) };
@@ -3062,14 +3062,14 @@ const useStore = create(
       updateLocationSettings: (type, updates) => {
         const currentEv = get().ev || {};
         const currentTracking = currentEv.tracking || {};
-        set({ 
-          ev: { 
-            ...currentEv, 
-            tracking: { 
-              ...currentTracking, 
-              [type]: { ...currentTracking[type], ...updates } 
-            } 
-          } 
+        set({
+          ev: {
+            ...currentEv,
+            tracking: {
+              ...currentTracking,
+              [type]: { ...currentTracking[type], ...updates }
+            }
+          }
         });
         get().saveToSupabase();
         toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi.`);
@@ -3102,14 +3102,14 @@ const useStore = create(
         if (tracking.lastCheck && tracking.lastCheck.type === effectiveType) {
           const gapMs = now - tracking.lastCheck.timestamp;
           const gapMinutes = Math.floor(gapMs / (60 * 1000));
-          
+
           if (gapMinutes > 15 && gapMinutes < 720) {
             const sliceCount = Math.floor(gapMinutes / 15);
             for (let i = 1; i <= sliceCount; i++) {
-              updatedLogs.unshift({ 
+              updatedLogs.unshift({
                 date: new Date(tracking.lastCheck.timestamp + (i * 15 * 60 * 1000)).toISOString().split('T')[0],
-                type: effectiveType, 
-                durationMinutes: 15, 
+                type: effectiveType,
+                durationMinutes: 15,
                 timestamp: tracking.lastCheck.timestamp + (i * 15 * 60 * 1000)
               });
             }
@@ -3118,26 +3118,26 @@ const useStore = create(
 
         const newLog = { date: today, type: effectiveType, durationMinutes: minutes, timestamp: now };
         updatedLogs = [newLog, ...updatedLogs].slice(0, 2000);
-        
+
         const dateObj = new Date(now);
         const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dateObj.getDay()];
         const hour = dateObj.getHours().toString().padStart(2, '0');
         const habitKey = `${day}-${hour}`;
-        
+
         const currentHabits = tracking.weeklyHabits || {};
         const slot = currentHabits[habitKey] || { home: 0, work: 0, other: 0, tatil: 0 };
         slot[effectiveType] = (slot[effectiveType] || 0) + 1;
-        
-        set({ 
-          ev: { 
-            ...currentEv, 
-            tracking: { 
-              ...tracking, 
-              logs: updatedLogs, 
+
+        set({
+          ev: {
+            ...currentEv,
+            tracking: {
+              ...tracking,
+              logs: updatedLogs,
               lastCheck: { type: effectiveType, timestamp: now },
               weeklyHabits: { ...currentHabits, [habitKey]: slot }
-            } 
-          } 
+            }
+          }
         });
         get().saveToSupabase();
       },
@@ -3146,15 +3146,15 @@ const useStore = create(
         const currentEv = get().ev || {};
         const tracking = currentEv.tracking || {};
         const today = new Date().toISOString().split('T')[0];
-        set({ 
-          ev: { 
-            ...currentEv, 
-            tracking: { 
-              ...tracking, 
-              cachedAnalysis: analysisData, 
-              lastAnalysisDate: today 
-            } 
-          } 
+        set({
+          ev: {
+            ...currentEv,
+            tracking: {
+              ...tracking,
+              cachedAnalysis: analysisData,
+              lastAnalysisDate: today
+            }
+          }
         });
         get().saveToSupabase();
       },
@@ -3164,7 +3164,7 @@ const useStore = create(
         const tracking = currentEv.tracking || {};
         const personality = tracking.personality || { results: {}, history: [] };
         const today = new Date().toISOString();
-        
+
         // Context-aware type determination
         let type = "Gelişmekte Olan";
         if (testId === 'big5') {
@@ -3179,22 +3179,22 @@ const useStore = create(
           if (traits.empathy > 4) type = "Empati Ustası";
         }
 
-        const newResults = { 
-          ...personality.results, 
-          [testId]: { traits, type, date: today } 
+        const newResults = {
+          ...personality.results,
+          [testId]: { traits, type, date: today }
         };
 
         const newHistoryItem = { testId, traits, type, date: today };
         const newHistory = [newHistoryItem, ...(personality.history || [])].slice(0, 50);
 
-        set({ 
-          ev: { 
-            ...currentEv, 
-            tracking: { 
-              ...tracking, 
+        set({
+          ev: {
+            ...currentEv,
+            tracking: {
+              ...tracking,
               personality: { results: newResults, history: newHistory, lastUpdated: today }
-            } 
-          } 
+            }
+          }
         });
         get().saveToSupabase();
       },
@@ -3211,7 +3211,7 @@ const useStore = create(
         const state = get();
         const currentGaraj = Array.isArray(state.garaj) ? state.garaj : [];
         const targetId = state.selectedVehicleId || (currentGaraj[0]?.id);
-        
+
         if (!targetId) {
           toast.error("Güncellenecek araç bulunamadı.");
           return;
@@ -3223,10 +3223,10 @@ const useStore = create(
           return;
         }
 
-        const updatedGaraj = currentGaraj.map(v => 
+        const updatedGaraj = currentGaraj.map(v =>
           String(v.id) === String(targetId) ? { ...v, km: kmVal } : v
         );
-        
+
         set({ garaj: updatedGaraj });
         get().addLog('Garaj', `Kilometre güncellendi: ${kmVal} KM`);
         get().saveToSupabase();
@@ -3246,24 +3246,24 @@ const useStore = create(
           }
         }
 
-        const newLog = { 
-          id: Date.now(), 
+        const newLog = {
+          id: Date.now(),
           consumption: consumption > 0 ? consumption.toFixed(1) : "0.0",
-          ...log 
+          ...log
         };
 
-        const updatedGaraj = state.garaj.map(v => 
-          v.id === state.selectedVehicleId 
-            ? { 
-                ...v, 
-                km: Math.max(v.km, Number(log.km)), 
-                fuelLogs: [newLog, ...v.fuelLogs].slice(0, 50) 
-              } 
+        const updatedGaraj = state.garaj.map(v =>
+          v.id === state.selectedVehicleId
+            ? {
+              ...v,
+              km: Math.max(v.km, Number(log.km)),
+              fuelLogs: [newLog, ...v.fuelLogs].slice(0, 50)
+            }
             : v
         );
 
         set({ garaj: updatedGaraj });
-        
+
         get().addExpense({
           title: `Yakıt: ${log.station} (${vehicle.model})`,
           amount: log.amount * log.price,
@@ -3280,18 +3280,18 @@ const useStore = create(
         if (!vehicle) return;
 
         const newRecord = { id: Date.now(), ...record };
-        const updatedGaraj = state.garaj.map(v => 
-          v.id === state.selectedVehicleId 
-            ? { 
-                ...v, 
-                km: Math.max(v.km, Number(record.km)), 
-                services: [newRecord, ...v.services] 
-              } 
+        const updatedGaraj = state.garaj.map(v =>
+          v.id === state.selectedVehicleId
+            ? {
+              ...v,
+              km: Math.max(v.km, Number(record.km)),
+              services: [newRecord, ...v.services]
+            }
             : v
         );
 
         set({ garaj: updatedGaraj });
-        
+
         get().addExpense({
           title: `Servis: ${record.title} (${vehicle.model})`,
           amount: record.cost,
@@ -3342,12 +3342,12 @@ const useStore = create(
         const vehicle = state.garaj.find(v => v.id === vehicleId);
         if (!vehicle) return;
 
-        const updatedGaraj = state.garaj.map(v => 
+        const updatedGaraj = state.garaj.map(v =>
           v.id === vehicleId ? { ...v, lastCleaned: date } : v
         );
 
         set({ garaj: updatedGaraj });
-        
+
         if (price > 0) {
           get().addExpense({
             title: `Yıkama: ${vehicle.model}`,
@@ -3363,7 +3363,7 @@ const useStore = create(
 
       startParking: (vehicleId, parkData) => {
         const state = get();
-        const updatedGaraj = state.garaj.map(v => 
+        const updatedGaraj = state.garaj.map(v =>
           v.id === vehicleId ? { ...v, parkLocation: { ...parkData, active: true } } : v
         );
         set({ garaj: updatedGaraj });
@@ -3384,7 +3384,7 @@ const useStore = create(
           });
         }
 
-        const updatedGaraj = state.garaj.map(v => 
+        const updatedGaraj = state.garaj.map(v =>
           v.id === vehicleId ? { ...v, parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false } } : v
         );
 
@@ -3394,7 +3394,7 @@ const useStore = create(
 
       deleteServiceRecord: (vehicleId, serviceId) => {
         const state = get();
-        const updatedGaraj = state.garaj.map(v => 
+        const updatedGaraj = state.garaj.map(v =>
           v.id === vehicleId ? { ...v, services: v.services.filter(s => s.id !== serviceId) } : v
         );
         set({ garaj: updatedGaraj });
@@ -3403,7 +3403,7 @@ const useStore = create(
 
       deleteDocument: (vehicleId, docId) => {
         const state = get();
-        const updatedGaraj = state.garaj.map(v => 
+        const updatedGaraj = state.garaj.map(v =>
           v.id === vehicleId ? { ...v, documents: v.documents.filter(d => d.id !== docId) } : v
         );
         set({ garaj: updatedGaraj });
@@ -3414,11 +3414,11 @@ const useStore = create(
         const state = get();
         const vehicle = state.garaj.find(v => v.id === vehicleId);
         const newDoc = { id: Date.now().toString(), ...doc };
-        const updatedGaraj = state.garaj.map(v => 
+        const updatedGaraj = state.garaj.map(v =>
           v.id === vehicleId ? { ...v, documents: [...v.documents, newDoc] } : v
         );
         set({ garaj: updatedGaraj });
-        
+
         if (doc.cost > 0) {
           get().addExpense({
             title: `${doc.name}: ${vehicle?.model || 'Araç'}`,
@@ -3447,7 +3447,7 @@ const useStore = create(
 
       updateSupportContacts: (vehicleId, contacts) => {
         const state = get();
-        const updatedGaraj = state.garaj.map(v => 
+        const updatedGaraj = state.garaj.map(v =>
           v.id === vehicleId ? { ...v, supportContacts: contacts } : v
         );
         set({ garaj: updatedGaraj });
@@ -3458,7 +3458,7 @@ const useStore = create(
         const state = get();
         const updatedGaraj = state.garaj.map(v => {
           if (v.id === vehicleId) {
-            const updatedParts = v.parts.map(p => 
+            const updatedParts = v.parts.map(p =>
               p.id === partId ? { ...p, lastKM, lastDate } : p
             );
             return { ...v, parts: updatedParts };
@@ -3471,7 +3471,7 @@ const useStore = create(
 
       deleteFuelLog: (vehicleId, logId) => {
         const state = get();
-        const updatedGaraj = state.garaj.map(v => 
+        const updatedGaraj = state.garaj.map(v =>
           v.id === vehicleId ? { ...v, fuelLogs: v.fuelLogs.filter(l => l.id !== logId) } : v
         );
         set({ garaj: updatedGaraj });
@@ -3498,15 +3498,15 @@ const useStore = create(
         const state = get();
         const currentWeights = state.pet.weights[petId] || [];
         const yeniWeights = [{ id: Date.now(), ...weightData }, ...currentWeights];
-        set({ 
-          pet: { 
-            ...state.pet, 
+        set({
+          pet: {
+            ...state.pet,
             weights: { ...state.pet.weights, [petId]: yeniWeights },
             history: [
               { id: Date.now(), pet: petId, action: `Kilo güncellendi: ${weightData.w} kg`, dt: weightData.dt, type: 'weight' },
               ...(state.pet.history || [])
             ].slice(0, 50)
-          } 
+          }
         });
         get().saveToSupabase();
       },
@@ -3529,7 +3529,7 @@ const useStore = create(
           const vName = logToDelete.vaccineName;
           const pDate = logToDelete.prevDate;
 
-          const updatedVaccines = (state.pet.vaccines[petId] || []).map(v => 
+          const updatedVaccines = (state.pet.vaccines[petId] || []).map(v =>
             v.n === vName ? { ...v, last: pDate, h: (v.h || []).filter(date => date !== logToDelete.dt) } : v
           );
 
@@ -3537,7 +3537,7 @@ const useStore = create(
         }
 
         yeniPet.history = (state.pet.history || []).filter(h => h.id !== id);
-        
+
         set({ pet: yeniPet });
         get().saveToSupabase();
       },
@@ -3548,7 +3548,7 @@ const useStore = create(
         if (!supplies[petId]) supplies[petId] = { mama: 'var', kum: 'var' };
         supplies[petId] = { ...supplies[petId], [supplyType]: status };
         set({ pet: { ...state.pet, supplies } });
-        
+
         if (status === 'azaldi') {
           get().addLog('Pet Uyarısı', `${state.pet.meta[petId].name} için ${supplyType} azalıyor!`);
         }
@@ -3567,7 +3567,7 @@ const useStore = create(
       // ── Hedefler Actions ───────────────────────────────
       updateGoalProgress: (id, current) => {
         const state = get();
-        const goals = state.hedefler.goals.map(g => 
+        const goals = state.hedefler.goals.map(g =>
           g.id === id ? { ...g, current } : g
         );
         set({ hedefler: { ...state.hedefler, goals } });
@@ -3580,8 +3580,8 @@ const useStore = create(
         const habits = state.hedefler.habits.map(h => {
           if (h.id === id) {
             const isDone = h.lastDone === today;
-            return { 
-              ...h, 
+            return {
+              ...h,
               lastDone: isDone ? '' : today,
               streak: isDone ? Math.max(0, h.streak - 1) : h.streak + 1
             };
@@ -3599,18 +3599,18 @@ const useStore = create(
 
         const updatedGoals = state.hedefler.goals.filter(g => g.id !== id);
         const newHallItem = { ...goal, completedDate: new Date().toISOString().split('T')[0] };
-        
-        set({ 
-          hedefler: { 
-            ...state.hedefler, 
-            goals: updatedGoals, 
-            hallOfFame: [newHallItem, ...state.hedefler.hallOfFame] 
-          } 
+
+        set({
+          hedefler: {
+            ...state.hedefler,
+            goals: updatedGoals,
+            hallOfFame: [newHallItem, ...state.hedefler.hallOfFame]
+          }
         });
         get().addLog('Hedef Tamamlandı', `🌟 Tebrikler! "${goal.title}" hedefine ulaşıldı!`);
         get().saveToSupabase();
       },
-      
+
       setOnlineStatus: (status) => {
         set(state => ({ system: { ...state.system, isOnline: status } }));
       },
@@ -3630,7 +3630,7 @@ const useStore = create(
           const itemName = item.name || item.nm; // Fallback for legacy data
           return itemName && itemName.toLowerCase() === name.toLowerCase();
         });
-        
+
         let updatedDepo;
 
         if (existingIdx !== -1) {
@@ -3644,13 +3644,13 @@ const useStore = create(
             totalQty: Number(item.totalQty || 0) + Number(qty || 1),
             lastDate: now,
             history: [
-              { 
-                id: Date.now(), 
-                date: now, 
-                qty: Number(qty || 1), 
-                pr: price || 0, 
-                source: source || 'manual', 
-                note: note || 'Güncelleme' 
+              {
+                id: Date.now(),
+                date: now,
+                qty: Number(qty || 1),
+                pr: price || 0,
+                source: source || 'manual',
+                note: note || 'Güncelleme'
               },
               ...(item.history || [])
             ].slice(0, 50) // Keep last 50 events
@@ -3665,13 +3665,13 @@ const useStore = create(
             totalQty: Number(qty || 1),
             firstDate: now,
             lastDate: now,
-            history: [{ 
-              id: Date.now(), 
-              date: now, 
-              qty: Number(qty || 1), 
-              pr: price || 0, 
-              source: source || 'manual', 
-              note: note || 'Kayıt' 
+            history: [{
+              id: Date.now(),
+              date: now,
+              qty: Number(qty || 1),
+              pr: price || 0,
+              source: source || 'manual',
+              note: note || 'Kayıt'
             }]
           };
           updatedDepo = [newItem, ...currentDepo];
@@ -3710,24 +3710,24 @@ const useStore = create(
         const state = get();
         // Weighted logic: 30% Finance, 20% Health, 20% Home, 20% Goals, 10% Vehicle
         let score = 70; // Baseline
-        
+
         const vehicle = state.garaj?.[0];
         const km = vehicle?.km || 0;
         if (km > 0) score += 5;
-        
+
         const goals = state.hedefler?.goals || [];
         const faturalar = state.ev?.faturalar || [];
 
         if (goals.length > 0) score += 5;
         if (faturalar.length > 0 && faturalar.every(f => f.status === 'Ödendi')) score += 10;
         if (km > 0) score += 5;
-        
+
         set({ system: { ...state.system, globalScore: Math.min(100, score) } });
       },
 
       addBadge: (badgeId) => {
         const state = get();
-        const achievements = state.system.achievements.map(a => 
+        const achievements = state.system.achievements.map(a =>
           a.id === badgeId ? { ...a, earned: true } : a
         );
         set({ system: { ...state.system, achievements } });
@@ -3739,13 +3739,13 @@ const useStore = create(
         const state = get();
         const q = query.toLowerCase();
         const results = [];
-        
+
         // Search in Goals
         const goals = state.hedefler?.goals || [];
         goals.forEach(g => {
           if (g.title.toLowerCase().includes(q)) results.push({ type: 'Hedef', text: g.title, path: '/hedefler' });
         });
-        
+
         // Search in Expenses
         const pool = state.finans?.approvalPool || [];
         pool.forEach(e => {
@@ -3756,7 +3756,7 @@ const useStore = create(
         history.forEach(e => {
           if (e.title.toLowerCase().includes(q)) results.push({ type: 'Harcama', text: `${e.title} - ${e.amount}₺`, path: '/kasa' });
         });
-        
+
         return results;
       },
 
@@ -3786,12 +3786,12 @@ const useStore = create(
         const fridge = mutfak.buzdolabi.filter(i => i.cr > 0).map(i => i.n.toLowerCase());
         const pantry = mutfak.kiler.filter(i => i.cr > 0).map(i => i.n.toLowerCase());
         const frozen = mutfak.dondurucu.filter(i => i.cr > 0).map(i => i.n.toLowerCase());
-        
+
         const readyStock = [...fridge, ...pantry];
 
         return mutfak.tarifler.map(recipe => {
           if (!recipe.ig || recipe.ig.length === 0) return { ...recipe, status: 'ready', missing: [] };
-          
+
           let missingCount = 0;
           let frozenCount = 0;
           let missingItems = [];
@@ -3800,7 +3800,7 @@ const useStore = create(
             const name = igLine.split(':')[0].trim().toLowerCase();
             const inReady = readyStock.some(s => s === name);
             if (inReady) return;
-            
+
             const inFrozen = frozen.some(s => s === name);
             if (inFrozen) {
               frozenCount++;
@@ -3816,7 +3816,7 @@ const useStore = create(
           } else if (frozenCount > 0) {
             status = 'frozen'; // ❄️
           }
-          
+
           return { ...recipe, status, missing: missingItems };
         });
       },
@@ -3908,11 +3908,11 @@ const useStore = create(
             console.error('Commodity/Crypto fetch error:', e);
           }
 
-          set(state => ({ 
-            kasa: { 
-              ...state.kasa, 
-              rates: rates 
-            } 
+          set(state => ({
+            kasa: {
+              ...state.kasa,
+              rates: rates
+            }
           }));
           console.log('📈 Market rates updated:', rates);
         } catch (err) {
@@ -3960,7 +3960,7 @@ const useStore = create(
             obj[key] = initialState[key] && Array.isArray(initialState[key]) ? initialState[key] : [];
           }
         };
-        
+
         // Fix Sosyal
         if (merged.sosyal) {
           if (!Array.isArray(merged.sosyal.aktiviteler)) merged.sosyal.aktiviteler = [];
@@ -3991,7 +3991,7 @@ const useStore = create(
         if (merged.saglik && !Array.isArray(merged.saglik.randevular)) merged.saglik.randevular = [];
         if (merged.tatil) {
           if (!Array.isArray(merged.tatil.trips)) merged.tatil.trips = [];
-          
+
           // Protection & Migration
           merged.tatil.trips = merged.tatil.trips.map(t => {
             const initialT = initialState.tatil?.trips?.find(it => it.id === t.id);
@@ -4002,7 +4002,7 @@ const useStore = create(
               return {
                 ...t,
                 evaluations,
-                transportation: { 
+                transportation: {
                   departure: { flightNo: t.transportation?.flightNo || '', airline: t.transportation?.airline || '', pnr: t.transportation?.pnr || '', time: t.transportation?.time || '', status: 'Planlandı' },
                   return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
                 }
@@ -4014,19 +4014,19 @@ const useStore = create(
           // Specially update Viyana trip if it's the one from the screenshot
           const viennaTrip = merged.tatil.trips.find(t => t.title?.includes('Viyana'));
           if (viennaTrip && !viennaTrip.transportation?.return?.flightNo) {
-             viennaTrip.transportation.departure = { flightNo: 'PC903', airline: 'Pegasus', pnr: '1TG17K', time: '10:15 (SAW)', status: 'Planlandı' };
-             viennaTrip.transportation.return = { flightNo: 'PC904', airline: 'Pegasus', pnr: '1TG17K', time: '12:20 (VIE)', status: 'Planlandı' };
-             viennaTrip.accommodation = { 
-               hotel: 'Austria Trend Hotel Europa Wien', 
-               address: 'Kärntner Str. 18, 1010 Wien', 
-               bookingId: '3824.152.941', 
-               link: 'https://www.booking.com/hotel/at/austriatrendhoteleuropa.tr.html' 
-             };
+            viennaTrip.transportation.departure = { flightNo: 'PC903', airline: 'Pegasus', pnr: '1TG17K', time: '10:15 (SAW)', status: 'Planlandı' };
+            viennaTrip.transportation.return = { flightNo: 'PC904', airline: 'Pegasus', pnr: '1TG17K', time: '12:20 (VIE)', status: 'Planlandı' };
+            viennaTrip.accommodation = {
+              hotel: 'Austria Trend Hotel Europa Wien',
+              address: 'Kärntner Str. 18, 1010 Wien',
+              bookingId: '3824.152.941',
+              link: 'https://www.booking.com/hotel/at/austriatrendhoteleuropa.tr.html'
+            };
           }
         }
         if (merged.pet && !Array.isArray(merged.pet.vaccines)) merged.pet.vaccines = [];
         if (!Array.isArray(merged.logs)) merged.logs = [];
-        
+
         return merged;
       }
     }
@@ -4035,7 +4035,7 @@ const useStore = create(
 
 if (typeof window !== 'undefined') {
   window.useStore = useStore;
-  
+
   // Connectivity Listeners
   window.addEventListener('online', () => useStore.getState().setOnlineStatus(true));
   window.addEventListener('offline', () => useStore.getState().setOnlineStatus(false));
