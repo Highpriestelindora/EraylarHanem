@@ -30,6 +30,8 @@ import Achievements from './pages/Achievements';
 import Guvenlik from './pages/Guvenlik';
 import PersonalityTest from './pages/PersonalityTest';
 import PersonalityHub from './pages/PersonalityHub';
+import Modaring from './pages/Modaring';
+import Muhendislik from './pages/Muhendislik';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -51,6 +53,8 @@ function AnimatedRoutes() {
           {/* Ek Modüller */}
           <Route path="sosyal" element={<Sosyal />} />
           <Route path="hedefler" element={<Hedefler />} />
+          <Route path="modaring" element={<Modaring />} />
+          <Route path="muhendislik" element={<Muhendislik />} />
           <Route path="ev" element={<Ev />} />
           <Route path="pet" element={<Pet />} />
           <Route path="aracim" element={<Aracim />} />
