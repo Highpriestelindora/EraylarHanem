@@ -626,9 +626,11 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
   };
 
   const handleSil = (id) => {
-    const newKartlar = kartlar.filter(k => k.id !== id);
-    updateFinansData('kartlar', newKartlar);
-    toast.success('Kart silindi!');
+    if (window.confirm('Bu kartı silmek istediğine emin misin? Bu işlem geri alınamaz.')) {
+      const newKartlar = kartlar.filter(k => k.id !== id);
+      updateFinansData('kartlar', newKartlar);
+      toast.success('Kart silindi!');
+    }
   };
 
   return (
@@ -738,9 +740,11 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
   };
 
   const handleSil = (id) => {
-    const newBorclar = borclar.filter(b => b.id !== id);
-    updateFinansData('borclar', newBorclar);
-    toast.success('Borç/Kredi silindi!');
+    if (window.confirm('Bu borç/kredi kaydını silmek istediğine emin misin?')) {
+      const newBorclar = borclar.filter(b => b.id !== id);
+      updateFinansData('borclar', newBorclar);
+      toast.success('Borç/Kredi silindi!');
+    }
   };
 
   return (
