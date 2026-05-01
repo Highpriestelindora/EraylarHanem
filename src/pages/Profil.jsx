@@ -5,8 +5,9 @@ import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
+import LocationModal from '../components/LocationModal';
 import logo from '../assets/eraylar-logo.png';
-import './Ayarlar.css'; // Reusing common styles, will add profile specific ones
+import './Ayarlar.css'; 
 
 export default function Profil() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function Profil() {
   const { ev, updateLocationSettings } = useStore();
   const [editingLocation, setEditingLocation] = useState(null); // 'home' or 'work'
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
@@ -136,22 +138,23 @@ export default function Profil() {
       <div className="settings-group">
         <h4>Konumlarım & Takip</h4>
         
-        <div className="setting-item clickable" onClick={() => setEditingLocation('home')}>
-          <div className="setting-icon" style={{ background: '#ecfdf5', color: '#10b981' }}><Home size={20} /></div>
+        <div className="setting-item clickable" onClick={() => setShowLocationModal(true)}>
+          <div className="setting-icon" style={{ background: '#ecfdf5', color: '#10b981' }}><Navigation size={20} /></div>
           <div className="setting-content">
-            <span className="setting-title">Ev Konumu</span>
-            <span className="setting-desc">{ev.tracking?.home?.label || 'Belirlenmedi'} • {ev.tracking?.home?.address || 'Adres yok'}</span>
+            <span className="setting-title">Konum Takibi</span>
+            <span className="setting-desc">Ev ve İş yerinizi tek haritada yönetin</span>
           </div>
-          <ChevronRight size={18} className="chevron" />
-        </div>
-
-        <div className="setting-item clickable" onClick={() => setEditingLocation('work')}>
-          <div className="setting-icon" style={{ background: '#eff6ff', color: '#3b82f6' }}><Building size={20} /></div>
-          <div className="setting-content">
-            <span className="setting-title">İş Konumu</span>
-            <span className="setting-desc">{ev.tracking?.work?.label || 'Belirlenmedi'} • {ev.tracking?.work?.address || 'Adres yok'}</span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button className="btn-edit-inline" onClick={(e) => {
+              e.stopPropagation();
+              setEditingLocation('home');
+            }}><Home size={14} /></button>
+            <button className="btn-edit-inline" onClick={(e) => {
+              e.stopPropagation();
+              setEditingLocation('work');
+            }}><Building size={14} /></button>
+            <ChevronRight size={18} className="chevron" />
           </div>
-          <ChevronRight size={18} className="chevron" />
         </div>
       </div>
 
@@ -188,6 +191,15 @@ export default function Profil() {
           onCancel={() => setShowLogoutConfirm(false)}
         />
       )}
+
+      <LocationModal 
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+        locations={{
+          home: ev.tracking?.home,
+          work: ev.tracking?.work
+        }}
+      />
 
       {isEditing && (
         <div className="modal-overlay" onClick={() => setIsEditing(false)}>
@@ -559,6 +571,24 @@ export default function Profil() {
         }
 
         .form-group label { display: flex; align-items: center; gap: 6px; }
+
+        .btn-edit-inline {
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #64748b;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .btn-edit-inline:hover {
+          background: #e2e8f0;
+          color: #1e293b;
+        }
       `}</style>
     </AnimatedPage>
   );
