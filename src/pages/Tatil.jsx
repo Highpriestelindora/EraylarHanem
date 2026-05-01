@@ -632,7 +632,9 @@ function MemoryCard({ trip, onClick }) {
     const unique = Array.from(new Set(all));
     
     if (unique.length > 0) {
-      return unique[0]; // Just use the first one as cover
+      // Pick a random photo from the unique set
+      const randomIndex = Math.floor(Math.random() * unique.length);
+      return unique[randomIndex];
     }
 
     return null;
