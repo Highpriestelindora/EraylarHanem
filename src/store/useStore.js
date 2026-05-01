@@ -4126,6 +4126,41 @@ const useStore = create(
         });
         get().saveToSupabase();
         toast.success("Örnek hedefler yüklendi! 🎯");
+      },
+
+      distributeSavings: (totalAmount) => {
+        const state = get();
+        const kumbaralar = [...(state.kasa.kumbaralar || [])];
+        if (kumbaralar.length === 0) return;
+
+        // Sorting: High Priority First, then closest Deadline
+        const activeGoals = kumbaralar
+          .filter(g => g.current < g.target)
+          .sort((a, b) => {
+            const pMap = { 'Yüksek': 3, 'Orta': 2, 'Düşük': 1 };
+            if (pMap[b.priority] !== pMap[a.priority]) return pMap[b.priority] - pMap[a.priority];
+            if (a.deadline && b.deadline) return new Date(a.deadline) - new Date(b.deadline);
+            return 0;
+          });
+
+        if (activeGoals.length === 0) return;
+
+        let remaining = Number(totalAmount);
+        const updatedKumbaralar = kumbaralar.map(g => {
+          const isActive = activeGoals.find(ag => ag.id === g.id);
+          if (!isActive || remaining <= 0) return g;
+
+          const needed = g.target - g.current;
+          const toAdd = Math.min(needed, remaining);
+          remaining -= toAdd;
+          
+          return { ...g, current: g.current + toAdd };
+        });
+
+        set({ kasa: { ...state.kasa, kumbaralar: updatedKumbaralar } });
+        get().addLog('Akıllı Dağıtım', `${totalAmount}₺ hedeflere öncelik sırasına göre dağıtıldı.`);
+        get().saveToSupabase();
+        toast.success(`${totalAmount}₺ akıllıca dağıtıldı! 🤖💰`);
       }
     }),
     {
