@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ConfirmModal';
 import './Finans.css';
 
 const fmt = (val, prv = false) => {
@@ -625,11 +626,18 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
     toast.success('Kart eklendi!');
   };
 
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+
   const handleSil = (id) => {
-    if (window.confirm('Bu kartı silmek istediğine emin misin? Bu işlem geri alınamaz.')) {
-      const newKartlar = kartlar.filter(k => k.id !== id);
+    setDeleteModal({ open: true, id });
+  };
+
+  const confirmSil = () => {
+    if (deleteModal.id) {
+      const newKartlar = kartlar.filter(k => k.id !== deleteModal.id);
       updateFinansData('kartlar', newKartlar);
       toast.success('Kart silindi!');
+      setDeleteModal({ open: false, id: null });
     }
   };
 
@@ -713,6 +721,17 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
           </div>
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={deleteModal.open}
+        title="Kartı Siliyorsun"
+        message="Bu kredi kartını silmek istediğine emin misin? Tüm limit ve borç verileri etkilenebilir."
+        onConfirm={confirmSil}
+        onCancel={() => setDeleteModal({ open: false, id: null })}
+        confirmText="Evet, Sil"
+        cancelText="Vazgeç"
+        icon="💳"
+      />
     </div>
   );
 }
@@ -739,11 +758,18 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
     toast.success('Borç/Kredi eklendi!');
   };
 
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+
   const handleSil = (id) => {
-    if (window.confirm('Bu borç/kredi kaydını silmek istediğine emin misin?')) {
-      const newBorclar = borclar.filter(b => b.id !== id);
+    setDeleteModal({ open: true, id });
+  };
+
+  const confirmSil = () => {
+    if (deleteModal.id) {
+      const newBorclar = borclar.filter(b => b.id !== deleteModal.id);
       updateFinansData('borclar', newBorclar);
       toast.success('Borç/Kredi silindi!');
+      setDeleteModal({ open: false, id: null });
     }
   };
 
@@ -780,6 +806,17 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
           </div>
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={deleteModal.open}
+        title="Borcu Siliyorsun"
+        message="Bu borç veya kredi kaydını tamamen silmek istediğine emin misin?"
+        onConfirm={confirmSil}
+        onCancel={() => setDeleteModal({ open: false, id: null })}
+        confirmText="Evet, Sil"
+        cancelText="Vazgeç"
+        icon="📉"
+      />
     </div>
   );
 }

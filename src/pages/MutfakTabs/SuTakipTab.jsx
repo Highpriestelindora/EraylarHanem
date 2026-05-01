@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Droplets, Calendar, Minus, Plus, Trash2, RefreshCw, Info } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../../components/ConfirmModal';
 
 export default function SuTakipTab() {
   const { mutfak, updateWaterLevel, addWaterOrder, removeWaterOrder, addExpense, setWaterDailyRate, processDailyWaterDeduction } = useStore();
@@ -10,6 +11,8 @@ export default function SuTakipTab() {
   const level2 = water?.level2 ?? 100;
   const history = water?.history || [];
   const lastOrder = water?.lastOrder ? new Date(water.lastOrder) : null;
+
+  const [deleteModal, setDeleteModal] = useState({ open: false, index: null });
 
   // Sayfa açıldığında geçen zamana göre günlük düşümü yap
   useEffect(() => {
@@ -53,6 +56,13 @@ export default function SuTakipTab() {
     updateWaterLevel('level1', 100);
     updateWaterLevel('level2', Math.max(0, level2 - 50)); 
     toast.success('Yeni damacana takıldı! ✨');
+  };
+
+  const handleDelete = () => {
+    if (deleteModal.index !== null) {
+      removeWaterOrder(deleteModal.index);
+      setDeleteModal({ open: false, index: null });
+    }
   };
 
   const available = isOrderAvailable();
@@ -134,11 +144,11 @@ export default function SuTakipTab() {
                   <strong>{h.q} Damacana</strong>
                 </div>
               </div>
-              <button className="h-delete-btn" onClick={() => {
-                if (window.confirm('Bu sipariş kaydını silmek istediğine emin misin?')) {
-                  removeWaterOrder(i);
-                }
-              }} title="Sil">
+              <button 
+                className="h-delete-btn" 
+                onClick={() => setDeleteModal({ open: true, index: i })} 
+                title="Sil"
+              >
                 <Trash2 size={18} />
               </button>
             </div>
@@ -146,6 +156,17 @@ export default function SuTakipTab() {
           {history.length === 0 && <div className="empty-history">Henüz sipariş kaydı yok.</div>}
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={deleteModal.open}
+        title="Kaydı Siliyorsun"
+        message="Bu su siparişi kaydını silmek istediğine emin misin? Bu işlem geri alınamaz."
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteModal({ open: false, index: null })}
+        confirmText="Evet, Sil"
+        cancelText="Vazgeç"
+        icon="🗑️"
+      />
     </div>
   );
 }
