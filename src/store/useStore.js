@@ -1174,6 +1174,22 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      addVarlik: async (varlik) => {
+        const state = get();
+        const newItem = { id: Date.now(), type: 'tl', location: 'Banka', ...varlik }; // Default type is TL, location Banka
+        set({ kasa: { ...state.kasa, varliklar: [newItem, ...(state.kasa.varliklar || [])] } });
+        get().addLog('Varlık Eklendi', `${newItem.name}: ${newItem.amount} ${newItem.unit}`);
+        get().saveToSupabase();
+      },
+
+      deleteVarlik: async (id) => {
+        const state = get();
+        const v = state.kasa.varliklar.find(x => x.id === id);
+        set({ kasa: { ...state.kasa, varliklar: state.kasa.varliklar.filter(x => x.id !== id) } });
+        if (v) get().addLog('Varlık Silindi', `${v.name}`);
+        get().saveToSupabase();
+      },
+
       updateTasinmaz: async (id, updates) => {
         const state = get();
         const yeniTasinmazlar = state.kasa.tasinmazlar.map(t => t.id === id ? { ...t, ...updates } : t);
@@ -1196,6 +1212,29 @@ const useStore = create(
           }
         });
         get().addLog('Kasa Transferi', `${from} -> ${to}: ${amount}₺`);
+        get().saveToSupabase();
+      },
+
+      addGoal: (goal) => {
+        const state = get();
+        const newGoal = { id: Date.now(), current: 0, ...goal };
+        set({ kasa: { ...state.kasa, kumbaralar: [...(state.kasa.kumbaralar || []), newGoal] } });
+        get().addLog('Hedef Eklendi', `Yeni hedef: ${goal.name}`);
+        get().saveToSupabase();
+      },
+
+      updateGoal: (id, updates) => {
+        const state = get();
+        const updated = (state.kasa.kumbaralar || []).map(g => g.id === id ? { ...g, ...updates } : g);
+        set({ kasa: { ...state.kasa, kumbaralar: updated } });
+        get().saveToSupabase();
+      },
+
+      deleteGoal: (id) => {
+        const state = get();
+        const g = (state.kasa.kumbaralar || []).find(x => x.id === id);
+        set({ kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(x => x.id !== id) } });
+        if (g) get().addLog('Hedef Silindi', `${g.name}`);
         get().saveToSupabase();
       },
 
@@ -3838,23 +3877,44 @@ const useStore = create(
 
       updateExchangeRates: async () => {
         try {
+          // 1. Currencies
           const res = await fetch('https://api.exchangerate-api.com/v4/latest/TRY');
           const data = await res.json();
+          const rates = { EUR: 35, USD: 32, GBP: 40, GA: 2500 }; // Fallbacks
+
           if (data && data.rates) {
-            const eurRate = 1 / data.rates.EUR;
-            const usdRate = 1 / data.rates.USD;
-            
-            set(state => ({ 
-              kasa: { 
-                ...state.kasa, 
-                rates: { 
-                  EUR: Number(eurRate.toFixed(2)), 
-                  USD: Number(usdRate.toFixed(2)) 
-                } 
-              } 
-            }));
-            console.log('📈 Currency rates updated:', { EUR: eurRate.toFixed(2), USD: usdRate.toFixed(2) });
+            rates.EUR = Number((1 / data.rates.EUR).toFixed(2));
+            rates.USD = Number((1 / data.rates.USD).toFixed(2));
+            rates.GBP = Number((1 / data.rates.GBP).toFixed(2));
           }
+
+          // 2. Gold & Crypto (Gram Gold, BTC, ETH in TRY)
+          try {
+            const goldRes = await fetch('https://api.coinbase.com/v2/prices/XAU-TRY/spot');
+            const goldData = await goldRes.json();
+            if (goldData?.data?.amount) {
+              rates.GA = Number((Number(goldData.data.amount) / 31.1035).toFixed(2));
+            }
+
+            const btcRes = await fetch('https://api.coinbase.com/v2/prices/BTC-TRY/spot');
+            const btcData = await btcRes.json();
+            if (btcData?.data?.amount) rates.BTC = Number(btcData.data.amount);
+
+            const ethRes = await fetch('https://api.coinbase.com/v2/prices/ETH-TRY/spot');
+            const ethData = await ethRes.json();
+            if (ethData?.data?.amount) rates.ETH = Number(ethData.data.amount);
+
+          } catch (e) {
+            console.error('Commodity/Crypto fetch error:', e);
+          }
+
+          set(state => ({ 
+            kasa: { 
+              ...state.kasa, 
+              rates: rates 
+            } 
+          }));
+          console.log('📈 Market rates updated:', rates);
         } catch (err) {
           console.error('Exchange rate fetch error:', err);
         }

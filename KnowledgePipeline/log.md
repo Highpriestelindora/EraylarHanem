@@ -10,3 +10,5 @@
 ## [2026-04-28] upgrade | Tatil Modülü: v2.30.0 — Harita HUD filtreleri, unique country istatistikleri ve bireysel macera filtreleme devreye alındı.
 ## [2026-04-28] upgrade | Ev Modülü: v3.0 — 5-tab navigasyon (Yaşam, Bakım, Abonelik, Taşınmaz, Güvenlik) ve Depo v3.5 envanter sistemi kuruldu.
 ## [2026-05-01] upgrade | v2.32.0 "Aristotle" — Finans Hub Entegrasyonu: Ev modülündeki aboneliklerin Finans'a bağlanması, Araç Piyasa Değeri takibi ve Kasa servet yönetimi stabilizasyonu tamamlandı. 
+## [2026-05-01] upgrade | v2.32.1 — Sosyal Rutin UI: iPhone hizalama sorunları giderildi, 'Uygulama Tarihi' seçicisi kaldırılarak 'UYGULA' butonuna dinamik tarih seçimi (ActionSheet) eklendi.
+## [2026-05-01] upgrade | v2.33.0 — Kasa Modülü Finalizasyonu: 4-sekme yapısı (Özet, Birikim, Taşınmaz, Kumbara) kuruldu. Finans modülünden borç verileri çekilerek Net Servet hesabı eklendi. Tüm varlık ve hedef yönetim butonları (Ekle/Düzenle/Transfer) aktif edildi.

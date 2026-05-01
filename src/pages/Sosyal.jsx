@@ -1348,15 +1348,18 @@ function RutinTab({ sosyal, onAdd }) {
   const { applySocialRoutine, addSocialRoutinePackage, updateSocialRoutinePackage, deleteSocialRoutinePackage } = useStore();
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [managingPkg, setManagingPkg] = useState(null); // { mode: 'add' | 'edit', pkg: null | object }
+  const [applyingRoutine, setApplyingRoutine] = useState(null); // the routine object being applied
+  const [customDate, setCustomDate] = useState(new Date().toISOString().split('T')[0]);
   const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
 
   const requestConfirm = (message, onConfirm) => {
     setShowConfirm({ open: true, message, onConfirm });
   };
 
-  const handleApply = (routine) => {
-    applySocialRoutine(routine, startDate);
-    toast.success(`${routine.name} plana eklendi! 📅`);
+  const handleApply = (routine, date) => {
+    applySocialRoutine(routine, date || new Date().toISOString().split('T')[0]);
+    toast.success(`${routine.name} ${date ? new Date(date).toLocaleDateString('tr-TR') : 'bugün'} için plana eklendi! 📅`);
+    setApplyingRoutine(null);
   };
 
   const handleSavePkg = (pkgData) => {
@@ -1393,22 +1396,11 @@ function RutinTab({ sosyal, onAdd }) {
         </button>
       </div>
 
-      <div className="routine-date-selector" style={{ padding: '0 20px', marginBottom: '20px' }}>
-        <div className="form-group glass" style={{ padding: '15px', borderRadius: '16px', border: '1px solid var(--brd)' }}>
-          <label style={{ fontSize: '12px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Uygulama Tarihi</label>
-          <input 
-            type="date" 
-            value={startDate} 
-            onChange={e => setStartDate(e.target.value)}
-            style={{ width: '100%', padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: 'var(--bg)' }}
-          />
-        </div>
-      </div>
 
       <div className="routines-grid" style={{ padding: '0 20px', display: 'flex', flexDirection: 'column', gap: '15px', paddingBottom: '100px' }}>
         {routines.map(r => (
           <div key={r.id} className="routine-combo-card glass" style={{ padding: '20px', borderRadius: '24px', border: '1px solid var(--brd)', position: 'relative', overflow: 'hidden' }}>
-            <div className="rc-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+            <div className="rc-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <span style={{ fontSize: '32px' }}>{r.icon}</span>
                 <div>
@@ -1420,29 +1412,21 @@ function RutinTab({ sosyal, onAdd }) {
                 <button 
                   onClick={() => setManagingPkg({ mode: 'edit', pkg: r })}
                   style={{ background: 'var(--bg)', color: 'var(--txt-light)', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Düzenle"
                 >
-                  <Activity size={16} />
+                  <Edit3 size={16} />
                 </button>
                 <button 
                   onClick={(e) => handleDeletePkg(e, r.id)}
                   style={{ background: '#fff5f5', color: '#f87171', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  title="Sil"
                 >
                   <Trash2 size={16} />
-                </button>
-                <button 
-                  className="apply-routine-btn"
-                  onClick={() => handleApply(r)}
-                  style={{ 
-                    padding: '8px 16px', borderRadius: '12px', border: 'none', 
-                    background: 'var(--social)', color: 'white', fontSize: '11px', fontWeight: '800'
-                  }}
-                >
-                  UYGULA
                 </button>
               </div>
             </div>
             
-            <div className="rc-items" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="rc-items" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
               {r.items.map((item, idx) => (
                 <div key={idx} className="rc-item-mini" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', opacity: 0.8 }}>
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--social)' }} />
@@ -1450,9 +1434,71 @@ function RutinTab({ sosyal, onAdd }) {
                 </div>
               ))}
             </div>
+
+            <button 
+              className="apply-routine-btn-v2"
+              onClick={() => setApplyingRoutine(r)}
+              style={{ 
+                width: '100%', padding: '12px', borderRadius: '16px', border: 'none', 
+                background: 'var(--social)', color: 'white', fontSize: '13px', fontWeight: '900',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                boxShadow: '0 4px 12px rgba(197, 28, 108, 0.2)'
+              }}
+            >
+              UYGULA
+            </button>
           </div>
         ))}
       </div>
+
+      <ActionSheet
+        isOpen={!!applyingRoutine}
+        onClose={() => setApplyingRoutine(null)}
+        title="📅 Ne Zaman Uygulansın?"
+      >
+        {applyingRoutine && (
+          <div className="modal-form" style={{ padding: '10px 0 20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <button 
+                className="leaf-action-btn activity-btn" 
+                onClick={() => handleApply(applyingRoutine, new Date().toISOString().split('T')[0])}
+                style={{ padding: '18px', background: 'var(--social)', color: 'white' }}
+              >
+                Bugün ({new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })})
+              </button>
+              <button 
+                className="leaf-action-btn note-btn" 
+                onClick={() => {
+                  const tomorrow = new Date();
+                  tomorrow.setDate(tomorrow.getDate() + 1);
+                  handleApply(applyingRoutine, tomorrow.toISOString().split('T')[0]);
+                }}
+                style={{ padding: '18px' }}
+              >
+                Yarın ({new Date(Date.now() + 86400000).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })})
+              </button>
+              
+              <div className="form-group glass" style={{ marginTop: '10px', padding: '15px', borderRadius: '16px', border: '1px solid var(--brd)' }}>
+                <label style={{ fontSize: '12px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Veya Başka Bir Tarih Seç:</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input 
+                    type="date" 
+                    value={customDate} 
+                    onChange={e => setCustomDate(e.target.value)}
+                    style={{ flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid var(--brd)', background: 'var(--bg)' }}
+                  />
+                  <button 
+                    onClick={() => handleApply(applyingRoutine, customDate)}
+                    style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '0 20px', borderRadius: '10px', fontWeight: '800' }}
+                  >
+                    SEÇ
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </ActionSheet>
 
       <ActionSheet
         isOpen={!!managingPkg}

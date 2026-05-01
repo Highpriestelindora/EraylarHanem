@@ -9,7 +9,7 @@ import {
   Building, FileText, Landmark, Home, MapPin, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode, X,
   Book, Lock, Unlock, MousePointer2, Stamp as StampIcon, Activity, CreditCard
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import ActionSheet from '../components/ActionSheet';
@@ -116,9 +116,9 @@ function getAggregatedData(evData, daysCount, tatilData) {
 
 
 export default function Ev() {
-  const [activeTab, setActiveTab] = useState('yasam');
-  const [showWifiMain, setShowWifiMain] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'yasam');
   const { 
     ev, kasa, users, currentUser, setCurrentUser,
     updateHomeSecurity, 
