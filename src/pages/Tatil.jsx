@@ -1859,7 +1859,7 @@ function MemoryDetailView({ trip, onEditEval }) {
 }
 
 function SeyahatAlbumu({ trip }) {
-  const { currentUser, updateTrip, uploadTripPhoto } = useStore();
+  const { currentUser, updateTrip, uploadTripPhoto, deleteTripPhoto } = useStore();
   const gPhotos = trip.evaluations?.gorkem?.photos || [null, null, null];
   const ePhotos = trip.evaluations?.esra?.photos || [null, null, null];
   const isJoint = trip.travelers === 'ikimiz';
@@ -1962,10 +1962,17 @@ function SeyahatAlbumu({ trip }) {
     input.click();
   };
 
-  const removePhoto = (slotUser, index) => {
+  const removePhoto = async (slotUser, index) => {
     if (activeUser !== slotUser) return;
     const currentEval = trip.evaluations?.[slotUser];
-    if (!currentEval) return;
+    if (!currentEval || !currentEval.photos) return;
+
+    const photoUrl = currentEval.photos[index];
+    
+    // Physical deletion from Supabase
+    if (photoUrl) {
+      await deleteTripPhoto(photoUrl);
+    }
 
     const newPhotos = [...currentEval.photos];
     newPhotos[index] = null;
@@ -1976,7 +1983,7 @@ function SeyahatAlbumu({ trip }) {
         [slotUser]: { ...currentEval, photos: newPhotos }
       }
     };
-    updateTrip(trip.id, updates);
+    await updateTrip(trip.id, updates);
     toast.success("Fotoğraf kaldırıldı.");
   };
 

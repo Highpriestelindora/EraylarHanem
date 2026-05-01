@@ -1789,6 +1789,26 @@ const useStore = create(
         }
       },
 
+      deleteTripPhoto: async (publicUrl) => {
+        try {
+          if (!publicUrl || !publicUrl.includes('eraylar-storage')) return;
+          
+          // Extract file path from URL
+          // Format: .../eraylar-storage/public/filename.jpg
+          const parts = publicUrl.split('eraylar-storage/');
+          if (parts.length < 2) return;
+          
+          const filePath = parts[1];
+          const { error } = await supabase.storage
+            .from('eraylar-storage')
+            .remove([filePath]);
+
+          if (error) throw error;
+        } catch (err) {
+          console.error('Photo deletion error:', err);
+        }
+      },
+
 
 
       toggleTripChecklist: (tripId, itemId) => {
