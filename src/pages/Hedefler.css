@@ -171,3 +171,64 @@
 .hall-card p { font-size: 11px; font-weight: 800; color: #b45309; margin-top: 12px; }
 
 .empty-hall { padding: 40px; text-align: center; color: var(--txt-light); opacity: 0.6; }
+
+/* Goal Advisor HUD */
+.goal-advisor-card {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 28px;
+  margin-bottom: 24px;
+  border: 1px solid var(--brd);
+  background: white;
+  transition: all 0.3s;
+}
+
+.goal-advisor-card.success { background: #f0fdf4; border-color: #bbf7d0; }
+.goal-advisor-card.info { background: #f5f3ff; border-color: #ddd6fe; }
+
+.ga-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  flex-shrink: 0;
+}
+
+.ga-content h4 {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--txt);
+  margin-bottom: 4px;
+}
+
+.ga-content p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--txt-light);
+  font-weight: 700;
+}
+
+.money-milestone {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.money-milestone strong {
+  font-size: 14px;
+  color: var(--txt);
+  font-weight: 900 !important;
+}
+
+.money-milestone span {
+  font-size: 11px;
+  color: var(--txt-light);
+}
+
+.circular-chart-v2 .circle-bg { fill: none; stroke: #f1f5f9; stroke-width: 3.8; }
+.circular-chart-v2 .circle { fill: none; stroke-width: 3.8; stroke-linecap: round; }

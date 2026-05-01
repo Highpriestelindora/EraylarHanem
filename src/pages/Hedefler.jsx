@@ -8,6 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import GoalAdvisor from '../components/GoalAdvisor';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import './Hedefler.css';
@@ -17,7 +18,7 @@ const formatPercent = (val) => `${Math.round(val)}%`;
 export default function Hedefler() {
   const [activeTab, setActiveTab] = useState('aktif');
   const navigate = useNavigate();
-  const { hedefler, updateGoalProgress, toggleHabit, completeGoal } = useStore();
+  const { hedefler, kasa, updateGoalProgress, toggleHabit, completeGoal } = useStore();
 
   const { 
     goals = [], 
@@ -25,6 +26,23 @@ export default function Hedefler() {
     hallOfFame = [], 
     moodboard = { quote: "Büyük işler, küçük başlangıçlarla olur." } 
   } = hedefler || {};
+
+  const moneyGoals = kasa?.kumbaralar || [];
+
+  // Combine both types of goals for the unified view
+  const unifiedGoals = useMemo(() => {
+    const combined = [
+      ...goals.map(g => ({ ...g, type: 'vision' })),
+      ...moneyGoals.map(g => ({ 
+        ...g, 
+        type: 'money', 
+        title: g.name, 
+        targetDate: g.deadline,
+        owner: g.owner || 'ortak'
+      }))
+    ];
+    return combined;
+  }, [goals, moneyGoals]);
 
   const [filterOwner, setFilterOwner] = useState('all');
 
@@ -86,6 +104,9 @@ export default function Hedefler() {
       <div className="hedefler-scroll-content">
         {activeTab === 'aktif' && (
           <div className="aktif-view animate-fadeIn">
+            {/* Eraylar Vizyoner HUD */}
+            <GoalAdvisor visionGoals={goals} moneyGoals={moneyGoals} />
+
             {/* Filter */}
             <div className="owner-filter-chips">
               {['all', 'gorkem', 'esra', 'ortak'].map(o => (
@@ -130,12 +151,17 @@ export default function Hedefler() {
             {/* Goals List */}
             <div className="goals-section mt-24">
               <div className="section-header-v2">
-                <h3>🎯 Aktif Hedefler</h3>
-                <button className="add-btn-mini"><Plus size={14} /></button>
+                <h3>🎯 Aktif Hedefler & Birikimler</h3>
+                <button className="add-btn-mini" onClick={() => navigate('/kasa', { state: { activeTab: 'kumbara' } })} title="Kasa'da Hedef Yönet">
+                   <Plus size={14} />
+                </button>
               </div>
               <div className="goals-grid-v2">
-                {filteredGoals.map(g => {
-                   const perc = (g.current / g.target) * 100;
+                {unifiedGoals
+                  .filter(g => filterOwner === 'all' || g.owner === filterOwner)
+                  .map(g => {
+                    const isMoney = g.type === 'money';
+                    const perc = isMoney ? (g.current / g.target) * 100 : (g.current / g.target) * 100;
                    return (
                      <div key={g.id} className="goal-card-premium glass">
                         <div className="gcp-ring-box">
@@ -144,9 +170,15 @@ export default function Hedefler() {
                              <path className="circle" stroke={perc > 75 ? '#10b981' : '#7c3aed'} strokeDasharray={`${perc}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                            </svg>
                            <div className="gcp-icon">
-                             {g.category === 'finans' && <TrendingUp size={16} />}
-                             {g.category === 'kariyer' && <Briefcase size={16} />}
-                             {g.category === 'sağlık' && <Zap size={16} />}
+                              {isMoney ? (
+                                <TrendingUp size={16} color="#10b981" />
+                              ) : (
+                                <>
+                                  {g.category === 'finans' && <TrendingUp size={16} />}
+                                  {g.category === 'kariyer' && <Briefcase size={16} />}
+                                  {g.category === 'sağlık' && <Zap size={16} />}
+                                </>
+                              )}
                            </div>
                         </div>
                         <div className="gcp-content">
@@ -155,12 +187,19 @@ export default function Hedefler() {
                              <span className="priority-tag">{g.priority}</span>
                            </div>
                            <div className="gcp-milestones">
-                             {g.milestones.slice(0, 2).map(m => (
-                               <div key={m.id} className="m-item">
-                                 {m.done ? <CheckCircle size={10} color="#10b981" /> : <Circle size={10} />}
-                                 <span>{m.text}</span>
-                               </div>
-                             ))}
+                              {isMoney ? (
+                                <div className="money-milestone">
+                                   <strong>{new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.current)}</strong>
+                                   <span> / {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.target)}</span>
+                                </div>
+                              ) : (
+                                g.milestones?.slice(0, 2).map(m => (
+                                  <div key={m.id} className="m-item">
+                                    {m.done ? <CheckCircle size={10} color="#10b981" /> : <Circle size={10} />}
+                                    <span>{m.text}</span>
+                                  </div>
+                                ))
+                              )}
                            </div>
                            <div className="gcp-footer">
                              <div className="gcp-progress-text">

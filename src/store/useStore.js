@@ -96,8 +96,8 @@ const DEFAULT_STATE = {
       { id: 3, name: 'Euro Nakit', amount: 1200, unit: 'EUR', price: 35.2, type: 'currency', icon: '💶' }
     ],
     kumbaralar: [
-      { id: 1, name: 'Yeni Araba', target: 1500000, current: 450000, icon: '🚗' },
-      { id: 2, name: 'Yaz Tatili', target: 80000, current: 25000, icon: '🌴' }
+      { id: 1, name: 'Yeni Araba', target: 1500000, current: 450000, icon: '🚗', deadline: '2027-06-01', priority: 'Yüksek', category: 'Birikim' },
+      { id: 2, name: 'Yaz Tatili', target: 80000, current: 25000, icon: '🌴', deadline: '2026-07-15', priority: 'Orta', category: 'Tatil' }
     ],
     privacyMode: false,
     rates: { EUR: 35.2, USD: 32.5 }
@@ -1217,7 +1217,14 @@ const useStore = create(
 
       addGoal: (goal) => {
         const state = get();
-        const newGoal = { id: Date.now(), current: 0, ...goal };
+        const newGoal = { 
+          id: Date.now(), 
+          current: 0, 
+          deadline: '', 
+          priority: 'Orta',
+          category: 'Genel',
+          ...goal 
+        };
         set({ kasa: { ...state.kasa, kumbaralar: [...(state.kasa.kumbaralar || []), newGoal] } });
         get().addLog('Hedef Eklendi', `Yeni hedef: ${goal.name}`);
         get().saveToSupabase();

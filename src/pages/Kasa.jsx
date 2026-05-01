@@ -578,6 +578,24 @@ function KasaModals({ type, data, onClose }) {
           <label>Hedef Tutar (₺)</label>
           <input type="number" value={form.target} onChange={e => setForm({...form, target: e.target.value})} />
         </div>
+        <div className="form-group">
+          <label>Hedef Tarih</label>
+          <input type="date" value={form.deadline} onChange={e => setForm({...form, deadline: e.target.value})} />
+        </div>
+        <div className="form-grid">
+           <div className="form-group">
+             <label>Öncelik</label>
+             <select value={form.priority} onChange={e => setForm({...form, priority: e.target.value})}>
+                <option value="Yüksek">Yüksek 🔥</option>
+                <option value="Orta">Orta ⚡</option>
+                <option value="Düşük">Düşük 🧊</option>
+             </select>
+           </div>
+           <div className="form-group">
+             <label>Kategori</label>
+             <input value={form.category} onChange={e => setForm({...form, category: e.target.value})} placeholder="Örn: Tatil, Araç" />
+           </div>
+        </div>
         <button className="submit-btn" onClick={handleSave}>{type === 'addGoal' ? 'HEDEF OLUŞTUR' : 'GÜNCELLE'}</button>
         {type === 'editGoal' && <button className="del-btn-link" onClick={() => { deleteGoal(data.id); onClose(); }}>Hedefi Sil</button>}
       </div>
