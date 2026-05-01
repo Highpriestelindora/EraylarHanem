@@ -180,6 +180,7 @@ export default function Profil() {
 
       {showLogoutConfirm && (
         <ConfirmModal 
+          isOpen={true}
           title="Kullanıcı Değiştir"
           message="Kullanıcı seçim ekranına dönmek istiyor musun?"
           confirmText="Evet, Çıkış Yap"
