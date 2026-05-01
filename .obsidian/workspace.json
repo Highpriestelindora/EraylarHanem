@@ -1,14 +1,14 @@
 {
   "main": {
-    "id": "108558bf0433b91f",
+    "id": "cb6ef7947a6f6ecf",
     "type": "split",
     "children": [
       {
-        "id": "de1a79ed8119784e",
+        "id": "659fefc6afc01c48",
         "type": "tabs",
         "children": [
           {
-            "id": "e6d056d63fb4650a",
+            "id": "7d9f18a2de085a70",
             "type": "leaf",
             "state": {
               "type": "graph",
@@ -23,15 +23,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "099872477574d66d",
+    "id": "443dab0570fe2321",
     "type": "split",
     "children": [
       {
-        "id": "c6c04376f89a825b",
+        "id": "81cdcbedc05c683e",
         "type": "tabs",
         "children": [
           {
-            "id": "bef1cec0b6ec14e1",
+            "id": "cb0ed073339e30ba",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -44,7 +44,7 @@
             }
           },
           {
-            "id": "4daa21c990890063",
+            "id": "86a285d4aba8d55c",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -57,17 +57,17 @@
                 "sortOrder": "alphabetical"
               },
               "icon": "lucide-search",
-              "title": "Ara"
+              "title": "Search"
             }
           },
           {
-            "id": "bdab252d49b083d3",
+            "id": "a403845bf575a6d8",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
               "state": {},
               "icon": "lucide-bookmark",
-              "title": "Yer İmleri"
+              "title": "Bookmarks"
             }
           }
         ]
@@ -77,20 +77,19 @@
     "width": 300
   },
   "right": {
-    "id": "c8db321185b63297",
+    "id": "02a5a74fec2ac860",
     "type": "split",
     "children": [
       {
-        "id": "af845b24654e411f",
+        "id": "cb5ba40bbb68883c",
         "type": "tabs",
         "children": [
           {
-            "id": "faa7c2c97b1a5791",
+            "id": "4732d25201e48cb0",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "entities/tatil.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -100,25 +99,24 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "tatil için geri bağlantılar"
+              "title": "Backlinks"
             }
           },
           {
-            "id": "38d86094a8d92847",
+            "id": "5904949a1aa950e4",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "entities/tatil.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "tatil'dan giden bağlantılar"
+              "title": "Outgoing links"
             }
           },
           {
-            "id": "fb79648f037d99cd",
+            "id": "5a306ca5ebb27fe2",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -129,11 +127,11 @@
                 "searchQuery": ""
               },
               "icon": "lucide-tags",
-              "title": "Etiketler"
+              "title": "Tags"
             }
           },
           {
-            "id": "c24bbc5f5d3d1ad1",
+            "id": "f7cdc9ce1be5e749",
             "type": "leaf",
             "state": {
               "type": "all-properties",
@@ -143,22 +141,21 @@
                 "searchQuery": ""
               },
               "icon": "lucide-archive",
-              "title": "Tüm özellikler"
+              "title": "All properties"
             }
           },
           {
-            "id": "491f111ce2f0f571",
+            "id": "ab0a6c3af9aa0d90",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "entities/tatil.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "tatil ana hatları"
+              "title": "Outline"
             }
           }
         ]
@@ -179,30 +176,6 @@
       "bases:Create new base": false
     }
   },
-  "active": "e6d056d63fb4650a",
-  "lastOpenFiles": [
-    "decisions/ikinci_beyin_mimarisi.md",
-    "log.md",
-    "decisions/ios_oncelikli_test.md",
-    "sources/legacy_docs.md",
-    "raw/legacy/Index.md",
-    "sources/codebase.md",
-    "index.md",
-    "concepts/ios_oncelikli_tasarim.md",
-    "raw/legacy/Tatil_Modulu.md",
-    "entities/ev_ve_yasam.md",
-    "entities/pet.md",
-    "entities/tatil.md",
-    "entities/finans_ve_kasa.md",
-    "entities/aracim.md",
-    "decisions/tek_tablo_jsonb_depolama.md",
-    "decisions/stok_bazli_tarif_gosterimi.md",
-    "raw/legacy/Ev_ve_Yasam.md",
-    "entities/mutfak_modulu.md",
-    "concepts/merkezi_state_yonetimi.md",
-    "concepts/senkronizasyon_stratejisi.md",
-    "entities/sosyal_ve_etkinlikler.md",
-    "entities/saglik.md",
-    "raw/legacy/Aracim_ve_Ulasim.md"
-  ]
+  "active": "7d9f18a2de085a70",
+  "lastOpenFiles": []
 }

@@ -384,6 +384,7 @@ export default function Tatil() {
               setSelectedTrip(null);
             }}
             requestConfirm={requestConfirm}
+            onViewPdf={setViewPdf}
           />
         )}
       </ActionSheet>
@@ -865,7 +866,7 @@ function AddTripWizard({ mode, initialData, onClose }) {
   );
 }
 
-function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, requestConfirm }) {
+function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, requestConfirm, onViewPdf }) {
   const { addExpense, tatil, setModuleData, deleteTrip } = useStore();
   const [weatherForecast, setWeatherForecast] = useState([]);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -1085,6 +1086,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
                   onUpdate={handleUpdateTrip} 
                   onOpenTracker={onOpenTracker}
                   onOpenMap={onOpenMap}
+                  onViewPdf={onViewPdf}
                 />
                 
                 <div className="assistant-row-cute mt-15">
@@ -1136,7 +1138,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
   );
 }
 
-function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
+function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf }) {
   const [editingSection, setEditingSection] = useState(null); // 'dep', 'ret', 'acc'
   
   // Local state for forms
@@ -1372,7 +1374,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap }) {
                   style={{ width: '100%' }}
                   onClick={() => {
                     if (trip.accommodation?.pdf) {
-                      setViewPdf(trip.accommodation.pdf);
+                      onViewPdf(trip.accommodation.pdf);
                     } else {
                       document.getElementById(`pdf-upload-${trip.id}`).click();
                     }
