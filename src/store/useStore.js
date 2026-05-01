@@ -96,8 +96,9 @@ const DEFAULT_STATE = {
       { id: 3, name: 'Euro Nakit', amount: 1200, unit: 'EUR', price: 35.2, type: 'currency', icon: '💶' }
     ],
     kumbaralar: [
-      { id: 1, name: 'Yeni Araba', target: 1500000, current: 450000, icon: '🚗', deadline: '2027-06-01', priority: 'Yüksek', category: 'Birikim' },
-      { id: 2, name: 'Yaz Tatili', target: 80000, current: 25000, icon: '🌴', deadline: '2026-07-15', priority: 'Orta', category: 'Tatil' }
+      { id: 1, name: 'Yeni Araba', target: 1500000, current: 450000, icon: '🚗', deadline: '2027-06-01', priority: 'Yüksek', category: 'Birikim', owner: 'ortak' },
+      { id: 2, name: 'Yaz Tatili', target: 80000, current: 25000, icon: '🌴', deadline: '2026-07-15', priority: 'Orta', category: 'Tatil', owner: 'ortak' },
+      { id: Date.now(), name: 'iPhone 17 Pro Max', target: 120000, current: 30000, icon: '📱', deadline: '2026-10-25', priority: 'Orta', category: 'Teknoloji', owner: 'gorkem' }
     ],
     privacyMode: false,
     rates: { EUR: 35.2, USD: 32.5 }
@@ -171,7 +172,31 @@ const DEFAULT_STATE = {
     ev: [],
     wishlist: [], // { id, nm, link, pr, dt }
   },
-  hedefler: [],
+  hedefler: {
+    goals: [
+      { 
+        id: 'v1', 
+        title: 'Almanca B2 Sertifikası', 
+        owner: 'gorkem', 
+        category: 'kariyer', 
+        current: 40, 
+        target: 100, 
+        targetDate: '2026-12-30', 
+        priority: 'Yüksek',
+        milestones: [
+          { id: 1, text: 'A1 & A2 Seviyesi Tamamla', done: true },
+          { id: 2, text: 'B1 Kursuna Kayıt Ol', done: true },
+          { id: 3, text: 'B2 Sınavına Gir', done: false }
+        ]
+      }
+    ],
+    habits: [
+      { id: 'h1', name: 'Kitap Okuma', streak: 5, lastDone: '' },
+      { id: 'h2', name: 'Su İçme (2L)', streak: 12, lastDone: '' }
+    ],
+    hallOfFame: [],
+    moodboard: { quote: "Büyük işler, küçük başlangıçlarla olur." }
+  },
   sosyal: {
     aktiviteler: INITIAL_SOCIAL.aktiviteler || [],
     rutinler: [
