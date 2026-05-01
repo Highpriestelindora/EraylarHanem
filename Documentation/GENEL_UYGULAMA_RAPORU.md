@@ -54,6 +54,11 @@ Gidilen yerlerin ve biriktirilen anıların haritası.
 - **Waffle İstatistikleri**: Gezi verilerinin modern grafiklerle sunumu.
 - **Anı Galerisi**: Tatil fotoğraflarının modül içerisinde şık bir şekilde sergilenmesi.
 
+## 👤 9. Kişiye Özel Modüller (v3.1.0)
+Giriş yapan kullanıcıya göre değişen, tamamen kişiselleştirilmiş 12. modül alanı.
+- **Modaring (Esra)**: Esra'nın tasarım, moda ve yaratıcı projelerini yönettiği özel estetik alan.
+- **Mühendislik (Görkem)**: Görkem'in yazılım, teknik dökümantasyon ve mühendislik projeleri için kullandığı teknik atölye.
+
 ---
 
 ### 🛡️ Temel Güvenlik Kuralı
