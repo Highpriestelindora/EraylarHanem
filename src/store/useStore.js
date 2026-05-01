@@ -2165,6 +2165,21 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      refillPetWater: async () => {
+        const state = get();
+        const currentSu = state.mutfak.su || { level1: 100 };
+        const newLevel = Math.max(0, currentSu.level1 - 5);
+        
+        set({
+          mutfak: {
+            ...state.mutfak,
+            su: { ...currentSu, level1: newLevel }
+          }
+        });
+        get().saveToSupabase();
+        toast.success('Waffle ve Mayıs\'ın suyu tazelendi! 🐾✨', { icon: '🐶' });
+      },
+
       setItemFinished: async (moduleKey, itemName, qty) => {
         const state = get();
         const items = [...state.mutfak[moduleKey]];

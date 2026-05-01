@@ -87,6 +87,24 @@ export default function SuTakipTab() {
           </div>
         </div>
 
+        {/* Pet Water Section */}
+        <div className="pet-water-card glass">
+          <div className="pwc-info">
+             <div className="pwc-avatars">
+               <span className="pwc-emoji">🐱</span>
+               <span className="pwc-emoji">🐶</span>
+             </div>
+             <div className="pwc-text">
+               <strong>Waffle & Mayıs</strong>
+               <small>Onların suyunu da unutmayalım!</small>
+             </div>
+          </div>
+          <button className="pet-refill-btn" onClick={() => useStore.getState().refillPetWater()}>
+            <Droplets size={16} />
+            <span>Kapları Doldur</span>
+          </button>
+        </div>
+
         <div className="daily-consumption-ctrl glass">
           <div className="dc-label">
             <strong>GÜNLÜK TÜKETİM HIZI</strong>

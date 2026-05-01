@@ -599,6 +599,76 @@
   gap: 15px;
 }
 
+.pet-water-card {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  padding: 12px 16px;
+  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  backdrop-filter: blur(5px);
+}
+
+.pwc-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pwc-avatars {
+  display: flex;
+  position: relative;
+}
+
+.pwc-emoji {
+  font-size: 20px;
+  background: white;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.pwc-emoji:last-child {
+  margin-left: -10px;
+}
+
+.pwc-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.pwc-text strong { font-size: 14px; color: white; }
+.pwc-text small { font-size: 10px; opacity: 0.8; color: white; }
+
+.pet-refill-btn {
+  background: white;
+  color: #3B82F6; /* Water Blue */
+  border: none;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.pet-refill-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+}
+
+.pet-refill-btn:active { transform: scale(0.95); }
+
 .dc-val span { font-size: 18px; font-weight: 900; }
 
 .dc-btns {
