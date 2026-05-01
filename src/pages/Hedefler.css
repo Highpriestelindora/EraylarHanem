@@ -110,7 +110,10 @@
 .gcp-content { flex: 1; }
 .gcp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .gcp-header strong { font-size: 15px; color: var(--txt); }
-.priority-tag { font-size: 9px; font-weight: 900; background: #fef2f2; color: #f87171; padding: 2px 6px; border-radius: 4px; }
+.priority-tag { font-size: 9px; font-weight: 900; padding: 2px 8px; border-radius: 6px; text-transform: uppercase; }
+.priority-tag.yuksek { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; }
+.priority-tag.orta { background: #f0f9ff; color: #0ea5e9; border: 1px solid #e0f2fe; }
+.priority-tag.dusuk { background: #f8fafc; color: #64748b; border: 1px solid #f1f5f9; }
 
 .gcp-milestones { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
 .m-item { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: var(--txt-light); }
@@ -128,6 +131,29 @@
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 1px;
+}
+
+.goal-card-premium.focus-glow {
+  border-color: #7c3aed;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.15);
+  position: relative;
+}
+
+.goal-card-premium.focus-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 26px;
+  background: linear-gradient(45deg, #7c3aed, #3b82f6, #10b981);
+  z-index: -1;
+  opacity: 0.3;
+  filter: blur(8px);
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.2; }
+  100% { transform: scale(0.95); opacity: 0.5; }
 }
 
 /* Vision Layers */

@@ -190,7 +190,7 @@ export default function Hedefler() {
                     const isMoney = g.type === 'money';
                     const perc = isMoney ? (g.current / g.target) * 100 : (g.current / g.target) * 100;
                    return (
-                     <div key={g.id} className="goal-card-premium glass">
+                     <div key={g.id} className={`goal-card-premium glass ${perc > 80 ? 'focus-glow' : ''}`}>
                         <div className="gcp-ring-box">
                            <svg viewBox="0 0 36 36" className="circular-chart-v2">
                              <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -211,7 +211,10 @@ export default function Hedefler() {
                         <div className="gcp-content">
                            <div className="gcp-header">
                              <strong>{g.title}</strong>
-                             <span className="priority-tag">{g.priority}</span>
+                             <span className={`priority-tag ${
+                               g.priority === 'Yüksek' ? 'yuksek' : 
+                               g.priority === 'Orta' ? 'orta' : 'dusuk'
+                             }`}>{g.priority}</span>
                            </div>
                            <div className="gcp-milestones">
                               {isMoney ? (

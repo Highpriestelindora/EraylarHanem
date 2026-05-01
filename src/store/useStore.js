@@ -3697,20 +3697,40 @@ const useStore = create(
 
       completeGoal: (id) => {
         const state = get();
-        const goal = state.hedefler.goals.find(g => g.id === id);
+        // Check vision goals
+        let goal = state.hedefler.goals.find(g => g.id === id);
+        let isMoney = false;
+
+        // Check money goals if not found
+        if (!goal) {
+          goal = (state.kasa.kumbaralar || []).find(g => g.id === id);
+          if (goal) isMoney = true;
+        }
+
         if (!goal) return;
 
-        const updatedGoals = state.hedefler.goals.filter(g => g.id !== id);
-        const newHallItem = { ...goal, completedDate: new Date().toISOString().split('T')[0] };
+        const updatedVisionGoals = isMoney ? state.hedefler.goals : state.hedefler.goals.filter(g => g.id !== id);
+        const updatedMoneyGoals = isMoney ? (state.kasa.kumbaralar || []).filter(g => g.id !== id) : state.kasa.kumbaralar;
+        
+        const newHallItem = { 
+          ...goal, 
+          title: goal.title || goal.name,
+          completedDate: new Date().toISOString().split('T')[0],
+          reward: isMoney ? 'Finansal Özgürlük Adımı' : 'Vizyon Başarısı'
+        };
 
         set({
           hedefler: {
             ...state.hedefler,
-            goals: updatedGoals,
-            hallOfFame: [newHallItem, ...state.hedefler.hallOfFame]
+            goals: updatedVisionGoals,
+            hallOfFame: [newHallItem, ...(state.hedefler.hallOfFame || [])]
+          },
+          kasa: {
+            ...state.kasa,
+            kumbaralar: updatedMoneyGoals
           }
         });
-        get().addLog('Hedef Tamamlandı', `🌟 Tebrikler! "${goal.title}" hedefine ulaşıldı!`);
+        get().addLog('Hedef Tamamlandı', `🌟 Tebrikler! "${newHallItem.title}" hedefine ulaşıldı!`);
         get().saveToSupabase();
       },
 
