@@ -102,8 +102,28 @@ const Home = () => {
     calculateGlobalScore();
   }, [calculateGlobalScore]);
 
-  // Memoized Modules - Stabilizes the grid
-  const modules = useMemo(() => {
+    // 11th Personalized Module
+    let personalizedModule = null;
+    if (currentUser?.name === 'Esra') {
+      personalizedModule = { 
+        id: 'modaring', 
+        name: 'Eraylar Modaring', 
+        sub: 'Esra\'nın Dünyası', 
+        icon: '✨', 
+        color: 'linear-gradient(180deg, #FB7185 0%, #E11D48 100%)', 
+        path: '/modaring' 
+      };
+    } else if (currentUser?.name === 'Görkem') {
+      personalizedModule = { 
+        id: 'muhendislik', 
+        name: 'Eraylar Mühendislik', 
+        sub: 'Görkem\'in Atölyesi', 
+        icon: '⚙️', 
+        color: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)', 
+        path: '/muhendislik' 
+      };
+    }
+
     const baseModules = [
       { id: 'mutfak', name: 'Eraylar Mutfak', sub: 'Yemek & Alışveriş', icon: '🍲', color: 'linear-gradient(180deg, #EF4444 0%, #DC2626 100%)', path: '/mutfak' },
       { id: 'sosyal', name: 'Eraylar Sosyal', sub: 'Aktivite & Rutin', icon: '🎯', color: 'linear-gradient(180deg, #DB2777 0%, #C026D3 100%)', path: '/sosyal' },
@@ -115,29 +135,12 @@ const Home = () => {
       { id: 'aracim', name: 'Eraylar Garajım', sub: activeVehicle?.model || 'Garaj Yönetimi', icon: '🏢', color: 'linear-gradient(180deg, #334155 0%, #0F172A 100%)', path: '/aracim' },
       { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '🏦', color: 'linear-gradient(180deg, #7C3AED 0%, #6D28D9 100%)', path: '/kasa' },
       { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(180deg, #1E1B4B 0%, #312E81 100%)', path: '/finans' },
-      { id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏆', color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)', path: '/hedefler' }
     ];
 
-    // 12th Personalized Module
-    if (currentUser?.name === 'Esra') {
-      baseModules.push({ 
-        id: 'modaring', 
-        name: 'Eraylar Modaring', 
-        sub: 'Esra\'nın Dünyası', 
-        icon: '✨', 
-        color: 'linear-gradient(180deg, #FB7185 0%, #E11D48 100%)', 
-        path: '/modaring' 
-      });
-    } else if (currentUser?.name === 'Görkem') {
-      baseModules.push({ 
-        id: 'muhendislik', 
-        name: 'Eraylar Mühendislik', 
-        sub: 'Görkem\'in Atölyesi', 
-        icon: '⚙️', 
-        color: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)', 
-        path: '/muhendislik' 
-      });
-    }
+    if (personalizedModule) baseModules.push(personalizedModule);
+    
+    // 12. Modül: Hedefler (Her zaman sağda kalsın diye en sona ekliyoruz)
+    baseModules.push({ id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏆', color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)', path: '/hedefler' });
 
     return baseModules;
   }, [activeVehicle, currentUser]);
