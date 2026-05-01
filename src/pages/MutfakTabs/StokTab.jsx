@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Search, AlertCircle, Plus, ShoppingCart, Edit3, X, Save, Snowflake, Sun, ListChecks, ChefHat, BookOpen } from 'lucide-react';
+import { Search, AlertCircle, Plus, ShoppingCart, Edit3, X, Save, Snowflake, Sun, ListChecks, ChefHat, BookOpen, Trash2 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { REYON_ORDER, REYON_IC } from '../../constants/data';
 import toast from 'react-hot-toast';
 import ActionSheet from '../../components/ActionSheet';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const StokTab = () => {
   const { 
@@ -18,6 +19,7 @@ const StokTab = () => {
   const [showNeYap, setShowNeYap] = useState(false);
   const [showBulkFinish, setShowBulkFinish] = useState(false);
   const [bulkItems, setBulkItems] = useState({});
+  const [confirmModal, setConfirmModal] = useState({ open: false, title: '', message: '', onConfirm: null, icon: '🗑️' });
   
   const availableRecipes = getAvailableRecipes();
   
@@ -49,8 +51,33 @@ const StokTab = () => {
   }, {});
 
   const handleFinish = (itemName) => {
-    setItemFinished(subTab, itemName);
-    toast.success(`${itemName} bitti olarak işaretlendi. Stok sıfırlandı.`);
+    setConfirmModal({
+      open: true,
+      title: 'Bitti mi?',
+      message: `${itemName} bitti olarak işaretlenecek ve stok sıfırlanacak. Emin misin?`,
+      icon: '📉',
+      onConfirm: () => {
+        setItemFinished(subTab, itemName);
+        toast.success(`${itemName} bitti olarak işaretlendi.`);
+        setConfirmModal({ ...confirmModal, open: false });
+      }
+    });
+  };
+
+  const handleDeleteItem = (itemName) => {
+    setConfirmModal({
+      open: true,
+      title: 'Stok Kartını Sil',
+      message: `${itemName} stok kartını tamamen silmek istediğine emin misin? Bu işlem geri alınamaz.`,
+      icon: '🗑️',
+      onConfirm: () => {
+        const updatedItems = items.filter(i => i.n !== itemName);
+        setModuleData('mutfak', { ...mutfak, [subTab]: updatedItems });
+        setEditingItem(null);
+        toast.success(`${itemName} tamamen silindi.`);
+        setConfirmModal({ ...confirmModal, open: false });
+      }
+    });
   };
 
   const handleManualAddShopping = (item) => {
@@ -297,10 +324,22 @@ const StokTab = () => {
               </div>
             </div>
 
-            <button type="submit" className="submit-btn mutfak">
-              <Save size={20} />
-              <span>Kaydet</span>
-            </button>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              <button type="submit" className="submit-btn mutfak" style={{ flex: 3, marginTop: 0 }}>
+                <Save size={20} />
+                <span>Kaydet</span>
+              </button>
+              {!editingItem.isNew && (
+                <button 
+                  type="button" 
+                  className="submit-btn" 
+                  onClick={() => handleDeleteItem(editingItem.item.n)}
+                  style={{ flex: 1, background: '#fee2e2', color: '#ef4444', marginTop: 0, border: '1px solid #fecaca' }}
+                >
+                  <Trash2 size={20} />
+                </button>
+              )}
+            </div>
           </form>
         )}
       </ActionSheet>
@@ -425,6 +464,16 @@ const StokTab = () => {
         .stock-card { cursor: pointer; transition: transform 0.2s; }
         .stock-card:active { transform: scale(0.98); }
       `}</style>
+      <ConfirmModal 
+        isOpen={confirmModal.open}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ ...confirmModal, open: false })}
+        icon={confirmModal.icon}
+        confirmText="Evet, Devam Et"
+        cancelText="Vazgeç"
+      />
     </>
   );
 };

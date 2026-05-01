@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Plus, Trash2, AlertTriangle, Wheat, ShoppingCart, X } from 'lucide-react';
 import useStore from '../../store/useStore';
 import ActionSheet from '../../components/ActionSheet';
+import ConfirmModal from '../../components/ConfirmModal';
 import toast from 'react-hot-toast';
 
 
@@ -24,6 +25,7 @@ export default function EkmeklikTab() {
   const [showShopModal, setShowShopModal] = useState(false);
   const [shopType, setShopType] = useState('Somun');
   const [shopQty, setShopQty] = useState(1);
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
 
   const calculateFreshness = (bread) => {
     const life = SHELF_LIFE[bread.tip] || 3;
@@ -47,8 +49,14 @@ export default function EkmeklikTab() {
   };
 
   const handleRemove = (id) => {
-    const newStock = ekmeklik.filter(e => e.id !== id);
+    setDeleteModal({ open: true, id });
+  };
+
+  const confirmRemove = () => {
+    const newStock = ekmeklik.filter(e => e.id !== deleteModal.id);
     updateBreadStock(newStock);
+    setDeleteModal({ open: false, id: null });
+    toast.success('Stok kaldırıldı.');
   };
 
   const handleQtyChange = (id, delta) => {
@@ -226,6 +234,16 @@ export default function EkmeklikTab() {
           </div>
         )}
       </div>
+      <ConfirmModal 
+        isOpen={deleteModal.open}
+        title="Stoktan Kaldır"
+        message="Bu ekmeği stoktan tamamen çıkarmak istediğine emin misin?"
+        onConfirm={confirmRemove}
+        onCancel={() => setDeleteModal({ open: false, id: null })}
+        confirmText="Evet, Kaldır"
+        cancelText="Vazgeç"
+        icon="🥖"
+      />
     </div>
   );
 }

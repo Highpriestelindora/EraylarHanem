@@ -12,6 +12,12 @@ Uygulamayı iPhone 15 Pro ekranında (Dynamic Island ve Safe Area kurallarıyla)
 
 Bu araç, mobil geliştirmeler sırasında tasarımın iPhone standartlarına uygunluğunu denetlemek için kullanılır.
 
+## 💎 Tasarım & Güvenlik İlkeleri
+
+Uygulama genelinde premium kullanıcı deneyimini korumak için:
+- **ConfirmModal**: Standart tarayıcı onay pencereleri (`confirm`) yerine her zaman `src/components/ConfirmModal.jsx` kullanılır.
+- **Micro-interactions**: Her silme, ekleme ve güncelleme işlemi kullanıcıya görsel geri bildirim (toast, animation) vermelidir.
+
 - [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
 - [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   History as HistoryIcon, 
@@ -20,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ConfirmModal';
 import './Kayitlar.css';
 
 export default function Kayitlar() {
@@ -27,6 +27,7 @@ export default function Kayitlar() {
   const { ev, mutfak, pet, users, saglik, deleteOnarimItem, deleteAlisverisItem, deleteVaccineHistory } = useStore();
   const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteModal, setDeleteModal] = useState({ open: false, item: null });
 
   // Helpers to safely get date objects
   const safeDate = (d) => {
@@ -138,6 +139,13 @@ export default function Kayitlar() {
     return matchesSearch && matchesTab;
   });
 
+  const confirmDelete = () => {
+    if (deleteModal.item) {
+      deleteModal.item.onDelete();
+      setDeleteModal({ open: false, item: null });
+    }
+  };
+
   return (
     <AnimatedPage className="kayitlar-container">
       <header className="kayitlar-header glass">
@@ -167,7 +175,7 @@ export default function Kayitlar() {
               { id: 'maintenance', label: 'Ev Bakımı', icon: <WrenchIcon size={16} /> },
               { id: 'shopping', label: 'Alışveriş', icon: <ShoppingCartIcon size={16} /> },
               { id: 'medicine', label: 'İlaç Takibi', icon: <HeartIcon size={16} /> },
-              { id: 'pet', label: 'Pet Sağlık', icon: <HeartIcon size={16} /> }
+              { id: 'pet', label: 'Pet Sağlık', icon: <ShieldCheckIcon size={16} /> }
             ].map(cat => (
               <button 
                 key={cat.id}
@@ -194,9 +202,7 @@ export default function Kayitlar() {
                   className="rc-delete-btn" 
                   onClick={(e) => {
                     e.stopPropagation();
-                    if(window.confirm('Bu kaydı arşivden tamamen silmek istiyor musunuz?')) {
-                      item.onDelete();
-                    }
+                    setDeleteModal({ open: true, item });
                   }}
                 >
                   <Trash2Icon size={14} />
@@ -234,6 +240,17 @@ export default function Kayitlar() {
           </div>
         )}
       </div>
+
+      <ConfirmModal 
+        isOpen={deleteModal.open}
+        title="Kaydı Tamamen Siliyorsun"
+        message="Bu kaydı arşivden kalıcı olarak silmek istediğine emin misin? Bu işlem geri alınamaz."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ open: false, item: null })}
+        confirmText="Evet, Kalıcı Sil"
+        cancelText="Vazgeç"
+        icon="🗑️"
+      />
     </AnimatedPage>
   );
 }

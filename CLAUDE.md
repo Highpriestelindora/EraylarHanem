@@ -15,6 +15,7 @@
 - **Git Komutu**: Git işlemleri için HER ZAMAN şu tam yol kullanılmalıdır: `& "C:\Users\Administrator\AppData\Local\GitHubDesktop\app-3.5.8\resources\app\git\cmd\git.exe"`
 - **Kural**: Git komutu bulunamadığında veya hata alındığında başka yer arama, direkt bu dosyadaki (`CLAUDE.md`) yolu kullan.
 - **iOS Öncelikli Tasarım**: Uygulama her zaman iPhone 15 Pro simülatörü (`/iphone15.html`) üzerinden test edilmelidir. Safe area ve dynamic island uyumu kritiktir.
+- **Silme Kuralı (Deletion Rule)**: Herhangi bir veriyi silerken STANDART tarayıcı uyarısı (`window.confirm`) KESİNLİKLE kullanılmamalıdır. Bunun yerine HER ZAMAN `src/components/ConfirmModal.jsx` bileşeni kullanılmalı ve silme işlemi bir onay modalı üzerinden gerçekleştirilmelidir.
 - **State Yönetimi**: Global state için Zustand kullanılır. Karmaşık state'ler JSONB olarak Supabase'de tutulur.
 
 ## 🚀 Milat (2026-04-27)
