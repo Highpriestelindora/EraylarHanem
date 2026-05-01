@@ -1770,7 +1770,7 @@ const useStore = create(
         try {
           const fileExt = file.name.split('.').pop();
           const fileName = `trip_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-          const filePath = `${fileName}`;
+          const filePath = `public/${fileName}`;
 
           const { error: uploadError } = await supabase.storage
             .from('eraylar-storage')
@@ -1779,7 +1779,7 @@ const useStore = create(
           if (uploadError) throw uploadError;
 
           const { data: { publicUrl } } = supabase.storage
-            .from('eraylar_storage')
+            .from('eraylar-storage')
             .getPublicUrl(filePath);
 
           return publicUrl;

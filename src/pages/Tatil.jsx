@@ -1949,7 +1949,8 @@ function SeyahatAlbumu({ trip }) {
             toast.success("Fotoğraf buluta yüklendi! ☁️✨");
           } catch (err) {
             console.error(err);
-            toast.error("Hata oluştu.");
+            const msg = err.message || "Hata oluştu.";
+            toast.error(`Yükleme Hatası: ${msg}`);
           } finally {
             setUploadingSlots(prev => ({ ...prev, [slotKey]: false }));
             setGlobalProcessing(null);
