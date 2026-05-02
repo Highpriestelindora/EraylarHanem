@@ -885,7 +885,13 @@ const useStore = create(
             hedefler: remote.hedefler || DEFAULT_STATE.hedefler,
             sosyal: { ...DEFAULT_STATE.sosyal, ...remote.sosyal },
             ev: { ...DEFAULT_STATE.ev, ...remote.ev },
-            pet: { ...DEFAULT_STATE.pet, ...remote.pet },
+            pet: { 
+              ...DEFAULT_STATE.pet, 
+              ...remote.pet,
+              // Safeguard against corrupted data (arrays instead of objects)
+              vaccines: (remote.pet?.vaccines && !Array.isArray(remote.pet.vaccines)) ? remote.pet.vaccines : DEFAULT_STATE.pet.vaccines,
+              weights: (remote.pet?.weights && !Array.isArray(remote.pet.weights)) ? remote.pet.weights : DEFAULT_STATE.pet.weights,
+            },
             garaj: remote.garaj || (remote.aracim ? [{ ...DEFAULT_STATE.garaj[0], ...remote.aracim, id: 'v1' }] : DEFAULT_STATE.garaj),
             selectedVehicleId: remote.selectedVehicleId || 'v1',
             tatil: { ...DEFAULT_STATE.tatil, ...remote.tatil },
