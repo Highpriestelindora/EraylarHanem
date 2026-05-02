@@ -281,7 +281,7 @@ export default function Pet() {
             <h3>⌛ Sağlık & Bakım Günlüğü</h3>
           </div>
             <div className="history-timeline-premium">
-            {(history || []).filter(h => h.pet === activePet).map((h) => (
+            {(history || []).filter(h => h.pet === activePet && h.type !== 'vaccine_done').map((h) => (
               <div key={h.id} className="history-card-v2 glass">
                 <div className="hc-icon">{h.type === 'weight' ? '⚖️' : '📝'}</div>
                 <div className="hc-info">

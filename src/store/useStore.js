@@ -3801,20 +3801,10 @@ const useStore = create(
           h: newHistory
         };
 
-        // Günlüğe ekle (Aşı tarihini de belirt)
-        const petLog = {
-          id: Date.now(),
-          pet: petId,
-          action: `${vaccineName} aşısı yapıldı (${data.place || 'Veteriner'})`,
-          dt: data.date,
-          type: 'vaccine_done'
-        };
-
         set({ 
           pet: { 
             ...state.pet, 
-            vaccines, 
-            history: [petLog, ...(state.pet.history || [])] 
+            vaccines
           } 
         });
 
