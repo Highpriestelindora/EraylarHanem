@@ -6,11 +6,13 @@ import toast from 'react-hot-toast';
 import './SleepTab.css';
 
 const SleepTab = () => {
-  const { saglik, setModuleData } = useStore();
+  const { saglik, setModuleData, currentUser } = useStore();
+  const activeName = currentUser?.name || 'Görkem';
+
   const [modalOpen, setModalOpen] = useState(false);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
   const [form, setForm] = useState({ 
-    kisi: 'Görkem', 
+    kisi: activeName, 
     tarih: new Date().toISOString().split('T')[0], 
     yatis: '23:00',
     kalkis: '07:00',
@@ -19,8 +21,13 @@ const SleepTab = () => {
     not: '' 
   });
 
-  const sleepData = saglik.sleep || [];
+  const allSleepData = saglik.sleep || [];
   const sleepGoals = saglik.sleepGoals || { gorkem: 6, esra: 9 };
+
+  // Filter data for the current user
+  const sleepData = allSleepData.filter(s => 
+    s.kisi?.toLowerCase() === activeName.toLowerCase()
+  );
 
   const calculateStats = (user) => {
     const userLogs = sleepData.filter(s => s.kisi === user).slice(0, 7);
@@ -76,7 +83,7 @@ const SleepTab = () => {
     }
 
     const newEntry = { id: Date.now(), ...form, sure: duration };
-    setModuleData('saglik', { ...saglik, sleep: [newEntry, ...sleepData] });
+    setModuleData('saglik', { ...saglik, sleep: [newEntry, ...allSleepData] });
     setModalOpen(false);
     toast.success('Uyku verisi kaydedildi! 😴');
   };
@@ -91,7 +98,7 @@ const SleepTab = () => {
   };
 
   const handleDelete = (id) => {
-    const updated = sleepData.filter(s => s.id !== id);
+    const updated = allSleepData.filter(s => s.id !== id);
     setModuleData('saglik', { ...saglik, sleep: updated });
     toast.success('Kayıt silindi.');
   };
@@ -194,24 +201,6 @@ const SleepTab = () => {
         title="😴 Uyku Takibi"
       >
         <div className="modal-form sleep-form" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="form-group">
-            <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Kim Uyudu?</label>
-            <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
-              {['Görkem', 'Esra'].map(name => (
-                <button 
-                  key={name}
-                  className={form.kisi === name ? 'active' : ''} 
-                  onClick={() => setForm({...form, kisi: name})}
-                  style={{ 
-                    flex: 1, padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', 
-                    background: form.kisi === name ? '#6366f1' : 'white', 
-                    color: form.kisi === name ? 'white' : 'inherit', fontWeight: 'bold',
-                    transition: 'all 0.2s'
-                  }}
-                >{name}</button>
-              ))}
-            </div>
-          </div>
 
           <div className="form-row" style={{ display: 'flex', gap: '10px' }}>
             <div className="form-group" style={{ flex: 1 }}>
