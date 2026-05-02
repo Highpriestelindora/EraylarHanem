@@ -112,7 +112,9 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
   const buAy = bugun.getMonth();
   const buYil = bugun.getFullYear();
 
-  const { addHarcama } = useStore();
+  const { addHarcama, deleteHarcama, updateHarcama } = useStore();
+  const [editingHarcama, setEditingHarcama] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const bulunanRekuranslar = rekuranslar.map(r => {
     const gun = r.gun || parseInt((r.date || '').split('-')[2]) || 0;
@@ -193,6 +195,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
         <div className="f-empty glass">
           <Calendar size={40} opacity={0.2} />
           <p>Bu ay henüz harcama kaydı yok.</p>
+          <small>Sistem harcamaları otomatik eşleşir.</small>
         </div>
       ) : (
         filtrelenmis.map(h => (
@@ -202,10 +205,35 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
               <strong>{h.baslik}</strong>
               <small>{h.tarih} · {h.kayit_eden} · {h.kart_id ? h.kart_id.split('-').pop() : 'Nakit'}</small>
             </div>
-            <span className="hr-amount">{fmt(h.tutar, prv)}</span>
+            <div className="hr-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+              <span className="hr-amount">{fmt(h.tutar, prv)}</span>
+              <div className="hr-actions-mini" style={{ display: 'flex', gap: '8px' }}>
+                <button className="icon-btn-mini" onClick={() => setEditingHarcama(h)}><Edit size={12} /></button>
+                <button className="icon-btn-mini del" onClick={() => setDeletingId(h.id)}><Trash2 size={12} /></button>
+              </div>
+            </div>
           </div>
         ))
       )}
+
+      {editingHarcama && (
+        <EditHarcamaModal 
+          harcama={editingHarcama} 
+          onClose={() => setEditingHarcama(null)} 
+          onSave={(updates) => updateHarcama(editingHarcama.id, updates)}
+        />
+      )}
+
+      <ConfirmModal 
+        isOpen={!!deletingId}
+        title="Harcamayı Sil"
+        message="Bu harcama kaydını silmek istediğine emin misin? Bu işlem geri alınamaz."
+        onConfirm={() => { deleteHarcama(deletingId); setDeletingId(null); }}
+        onCancel={() => setDeletingId(null)}
+        confirmText="Evet, Sil"
+        cancelText="Vazgeç"
+        icon="🗑️"
+      />
     </div>
   );
 });
@@ -550,6 +578,53 @@ const TABS = [
   { id: 'onay', icon: '✅', label: 'Onay' },
   { id: 'gecmis', icon: '📦', label: 'Geçmiş' },
 ];
+
+function EditHarcamaModal({ harcama, onClose, onSave }) {
+  const [form, setForm] = useState({ ...harcama });
+  const finans = useStore(state => state.finans);
+  const kartlar = finans?.kartlar || [];
+
+  const handleSave = () => {
+    if (!form.baslik || !form.tutar) return toast.error('Başlık ve tutar gerekli');
+    onSave(form);
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay" style={{ zIndex: 2000 }}>
+      <div className="modal-content animate-scaleIn">
+        <div className="modal-header">
+          <h3>Harcamayı Düzenle</h3>
+          <button className="icon-btn" onClick={onClose}><X size={20}/></button>
+        </div>
+        <div className="modal-body">
+          <div className="premium-form-card glass">
+            <div className="form-field-v2 full">
+              <label>Başlık</label>
+              <input value={form.baslik} onChange={e => setForm({...form, baslik: e.target.value})} />
+            </div>
+            <div className="form-field-v2">
+              <label>Tutar (₺)</label>
+              <input type="number" value={form.tutar} onChange={e => setForm({...form, tutar: e.target.value})} />
+            </div>
+            <div className="form-field-v2">
+              <label>Tarih</label>
+              <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} />
+            </div>
+            <div className="form-field-v2">
+              <label>Kart</label>
+              <select value={form.kart_id || ''} onChange={e => setForm({...form, kart_id: e.target.value || null})}>
+                <option value="">Nakit</option>
+                {kartlar.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+              </select>
+            </div>
+            <button className="premium-submit-btn" style={{ width: '100%', marginTop: '20px' }} onClick={handleSave}>Değişiklikleri Kaydet</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Finans() {
   const [activeTab, setActiveTab] = useState('ozet');

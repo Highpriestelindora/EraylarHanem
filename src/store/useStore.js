@@ -477,6 +477,16 @@ async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
   }
 }
 
+async function deleteHarcamaFromSupabase(id) {
+  const { error } = await supabase.from('finans_harcamalar').delete().eq('id', id);
+  if (error) throw error;
+}
+
+async function updateHarcamaInSupabase(id, updates) {
+  const { error } = await supabase.from('finans_harcamalar').update(updates).eq('id', id);
+  if (error) throw error;
+}
+
 async function fetchBuAyHarcamalar(familyId = DEFAULT_FID) {
   try {
     const buAy = new Date().toISOString().slice(0, 7);
@@ -1116,6 +1126,34 @@ const useStore = create(
         set({ finans: { ...state.finans, approvalPool: updatedPool } });
         get().saveToSupabase();
         toast.success('Harcama reddedildi.');
+      },
+
+      deleteHarcama: async (id) => {
+        try {
+          await deleteHarcamaFromSupabase(id);
+          const updatedHarcamalar = (get().finans.buAyHarcamalar || []).filter(h => h.id !== id);
+          set({ finans: { ...get().finans, buAyHarcamalar: updatedHarcamalar } });
+          toast.success('Harcama silindi.');
+          get().saveToSupabase();
+        } catch (err) {
+          console.error(err);
+          toast.error('Silme işlemi başarısız.');
+        }
+      },
+
+      updateHarcama: async (id, updates) => {
+        try {
+          await updateHarcamaInSupabase(id, updates);
+          const updatedHarcamalar = (get().finans.buAyHarcamalar || []).map(h => 
+            h.id === id ? { ...h, ...updates } : h
+          );
+          set({ finans: { ...get().finans, buAyHarcamalar: updatedHarcamalar } });
+          toast.success('Harcama güncellendi.');
+          get().saveToSupabase();
+        } catch (err) {
+          console.error(err);
+          toast.error('Güncelleme işlemi başarısız.');
+        }
       },
 
       // Banka ekstresinden gerçek borcu girer

@@ -49,6 +49,33 @@
 }
 .fh-icon-btn:hover { background: rgba(255,255,255,0.25); }
 
+.icon-btn-mini {
+  background: rgba(46, 16, 101, 0.05);
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6d28d9;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.icon-btn-mini:hover {
+  background: rgba(46, 16, 101, 0.1);
+}
+
+.icon-btn-mini.del {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.icon-btn-mini.del:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
 /* Tab Nav */
 .finans-tab-nav {
   display: flex;
