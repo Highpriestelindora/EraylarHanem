@@ -21,7 +21,6 @@ import toast from 'react-hot-toast';
 
 const DEFAULT_STATE = {
   finans: {
-    harcamalar: [], // Geriye dönük uyumluluk için korunuyor (cache)
     approvalPool: [], // Diğer modüllerden gelen, onay bekleyen harcamalar
     buAyHarcamalar: [], // Bu ayın Supabase'den çekilen harcamaları (UI cache)
     kartMutabakat: {
@@ -157,10 +156,13 @@ const DEFAULT_STATE = {
   // ── Global System ──────────────────────────────────
   system: {
     version: '3.1.5 "VIZYONER"',
+    clientId: typeof window !== 'undefined' ? (localStorage.getItem('eraylar_client_id') || Math.random().toString(36).substring(2)) : 'ssr',
     globalScore: 85,
     onboardingComplete: false,
     isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
     notifications: [],
+    isCloudReady: false,
+    lastUpdatedBy: null,
     achievements: [
       { id: 'saving_king', title: 'Tasarruf Kralı', earned: true, icon: '👑' },
       { id: 'km_hunter', title: 'Kilometre Avcısı', earned: false, icon: '🏎️' },
@@ -465,27 +467,57 @@ async function pushToSupabase(appData) {
 // Not: RLS politikaları gereği family_id gönderimi zorunludur.
 const DEFAULT_FID = 'eraylar-family-shared-id';
 
+// Çok daha güvenilir UUID oluşturucu
+const generateUniqueId = () => {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+  } catch (e) {}
+  // Fallback: Time + Random string
+  return `local-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+};
+
 async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
   try {
+    // ÖNEMLİ: ID'yi her zaman biz belirleyelim ki local state ile DB tam eşleşsin.
+    // Eğer gelen harcamada uzun bir string ID (UUID gibi) yoksa, yeni bir tane üretelim.
+    const finalId = (harcama.id && typeof harcama.id === 'string' && harcama.id.length > 20) 
+      ? harcama.id 
+      : generateUniqueId();
+
+    const payload = {
+      id: finalId,
+      family_id: familyId,
+      ay: harcama.ay,
+      tarih: harcama.tarih,
+      baslik: harcama.baslik,
+      tutar: Number(harcama.tutar),
+      kategori: harcama.kategori || 'Diğer',
+      kart_id: harcama.kart_id || null,
+      odenme_turu: harcama.odenme_turu || 'kart',
+      kayit_eden: harcama.kayit_eden || 'Sistem',
+      kaynak: harcama.kaynak || 'Manuel',
+      durum: 'onaylı',
+      notlar: harcama.notlar || null,
+    };
+
     const { data, error } = await supabase
       .from('finans_harcamalar')
-      .insert({
-        family_id: familyId,
-        ay: harcama.ay, // Added ay column
-        tarih: harcama.tarih,
-        baslik: harcama.baslik,
-        tutar: Number(harcama.tutar),
-        kategori: harcama.kategori || 'Diğer',
-        kart_id: harcama.kart_id || null,
-        odenme_turu: harcama.odenme_turu || 'kart',
-        kayit_eden: harcama.kayit_eden || 'Sistem',
-        kaynak: harcama.kaynak || 'Manuel',
-        durum: 'onaylı',
-        notlar: harcama.notlar || null,
-      })
+      .insert(payload)
       .select();
 
-    if (error) throw error;
+    if (error) {
+      // ID çakışması veya başka bir hata durumunda, ID'yi Supabase'e bırakıp tekrar deneyelim
+      console.warn('⚠️ Supabase insert retry without custom ID...', error.message);
+      const { data: retryData, error: retryError } = await supabase
+        .from('finans_harcamalar')
+        .insert({ ...payload, id: undefined })
+        .select();
+      
+      if (retryError) throw retryError;
+      return retryData && retryData[0] ? retryData[0] : null;
+    }
     return data && data[0] ? data[0] : null;
   } catch (err) {
     console.error('❌ finans_harcamalar push error:', err);
@@ -493,14 +525,44 @@ async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
   }
 }
 
-async function deleteHarcamaFromSupabase(id, familyId = DEFAULT_FID) {
-  // RLS politikaları için family_id ile filtrelemek daha güvenlidir
-  const { error } = await supabase
-    .from('finans_harcamalar')
-    .delete()
-    .eq('id', id)
-    .eq('family_id', familyId);
-  if (error) throw error;
+async function deleteHarcamaFromSupabase(id, familyId = DEFAULT_FID, item = null) {
+  try {
+    // 1. Serbest ID ile silme (RLS kapalı olduğu için en garantili yöntem)
+    // family_id kontrolünü opsiyonel yapalım ki NULL olan kayıtlar da silinebilsin.
+    const { error, count } = await supabase
+      .from('finans_harcamalar')
+      .delete()
+      .eq('id', id);
+    
+    if (count > 0) {
+      console.log('✅ Fiziksel silme başarılı (ID ile).');
+      return; 
+    }
+
+    // 2. Eğer ID ile bulunamadıysa (local ID uyuşmazlığı), başlık ve tarih ile dene
+    if (item) {
+       const { count: attrCount } = await supabase
+        .from('finans_harcamalar')
+        .delete()
+        .eq('baslik', item.baslik)
+        .eq('tarih', item.tarih)
+        .eq('tutar', Number(item.tutar));
+       
+       if (attrCount > 0) {
+         console.log('✅ Fiziksel silme başarılı (Özellikler ile).');
+         return;
+       }
+    }
+
+    // 3. Hala silinemiyorsa işaretle (Soft Delete Fallback)
+    await supabase
+      .from('finans_harcamalar')
+      .update({ durum: 'silindi' })
+      .eq('id', id);
+
+  } catch (err) {
+    console.error('❌ deleteHarcamaFromSupabase critical error:', err);
+  }
 }
 
 async function updateHarcamaInSupabase(id, updates) {
@@ -515,7 +577,8 @@ async function fetchBuAyHarcamalar(familyId = DEFAULT_FID) {
       .from('finans_harcamalar')
       .select('*')
       .eq('family_id', familyId)
-      .eq('ay', buAy) // Use the dedicated month column
+      .eq('ay', buAy)
+      .neq('durum', 'silindi') // Silinmişleri getirme
       .order('tarih', { ascending: false });
     if (error) throw error;
     return data || [];
@@ -532,6 +595,7 @@ async function fetchGecmisAyFromSupabase(ay, familyId = DEFAULT_FID) {
       .select('*')
       .eq('family_id', familyId)
       .eq('ay', ay)
+      .neq('durum', 'silindi') // Silinmişleri getirme
       .order('tarih', { ascending: false });
     if (error) throw error;
     return data || [];
@@ -812,6 +876,10 @@ const useStore = create(
       initSync: async () => {
         if (get().syncing) return; // Zaten çalışıyor
         try {
+          // Client ID'yi sabitle
+          const cid = localStorage.getItem('eraylar_client_id') || Math.random().toString(36).substring(2);
+          localStorage.setItem('eraylar_client_id', cid);
+
           set({ syncing: true });
           await get().loadFromSupabase();
           get().subscribeToSupabase();
@@ -1021,53 +1089,36 @@ const useStore = create(
       subscribeToSupabase: () => {
         if (get().subscribed) return;
 
-        supabase
-          .channel('schema-db-changes')
+        // Benzersiz bir kanal adı kullanalım (InitSync hatasını önlemek için)
+        const channelName = `store-sync-${Math.random().toString(36).substring(7)}`;
+        
+        const channel = supabase.channel(channelName);
+        
+        channel
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'eraylar_store', filter: 'id=eq.1' },
             (payload) => {
-              const prevState = get();
               const newData = payload.new.data;
               if (!newData) return;
-
-              // Smart Notifications Check
-              if (prevState.currentUser && !get().settings.silentMode) {
-
-                // 1. New Sohbet Note
-                if (newData.mutfak?.sohbet?.length > (prevState.mutfak.sohbet?.length || 0)) {
-                  const newNote = newData.mutfak.sohbet[0];
-                  if (newNote.w !== prevState.currentUser.name) {
-                    const title = newNote.t.startsWith('🛒') ? '🛒 Alışveriş Listesi' : '📝 Yeni Not';
-                    notificationService.send(title, `${newNote.w} sana bir mesaj bıraktı: ${newNote.t}`);
-                  }
-                }
-
-                // 3. New Expense
-                if (newData.finans?.harcamalar?.length > (prevState.finans.harcamalar?.length || 0)) {
-                  const newExp = newData.finans.harcamalar[0];
-                  if (newExp.payer !== prevState.currentUser.name) {
-                    notificationService.send('💸 Yeni Harcama', `${newExp.payer}, ${newExp.amount}₺ tutarında ${newExp.title} harcaması girdi.`);
-                  }
-                }
-              }
-
+              
               const state = get();
               if (state.isSaving) return;
-
-              // 1. Ignore updates from ourselves
               if (newData.system?.lastUpdatedBy === state.system.clientId) return;
 
-              // 2. Only update if data is actually different
+              // Veri gerçekten farklı mı kontrol et
               const currentDataStr = JSON.stringify(extractAppData(state));
               const newDataStr = JSON.stringify(newData);
+              if (currentDataStr === newDataStr) return;
 
-              if (currentDataStr !== newDataStr) {
-                console.log('🔄 Remote data changed by another client, updating local state...');
-                set({ ...newData });
-              }
+              console.log('🔄 Buluttan yeni veri geldi, senkronize ediliyor...');
+              set({ ...newData });
             })
-          .subscribe();
+          .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              set({ subscribed: true });
+            }
+          });
 
-        set({ subscribed: true });
+        return () => supabase.removeChannel(channel);
       },
 
       saveToSupabase: async () => {
@@ -1096,10 +1147,25 @@ const useStore = create(
             await pushToSupabase(dataToPush);
             set({ isOnline: true, isSaving: false });
           } catch (err) {
+            console.error('❌ saveToSupabase error:', err);
             set({ isSaving: false, isOnline: false });
           }
           saveTimeout = null;
         }, 1000);
+      },
+
+      // KRİTİK: Beklemeden, hemen buluta bas (Silme gibi işlemler için)
+      forceSaveToSupabase: async () => {
+        try {
+          set({ isSaving: true });
+          const state = get();
+          const dataToPush = extractAppData(state);
+          dataToPush.system = { ...dataToPush.system, lastUpdatedBy: state.system.clientId };
+          await pushToSupabase(dataToPush);
+          set({ isOnline: true, isSaving: false });
+        } catch (err) {
+          set({ isSaving: false });
+        }
       },
 
       // ── Eraylar Finans Actions ───────────────────────────
@@ -1168,7 +1234,7 @@ const useStore = create(
         const savedItem = await pushHarcamaToSupabase(harcama, state.family_id);
         
         // Eğer savedItem dönmediyse (RLS veya hata), local ID ile devam et ama uyar
-        const finalItem = savedItem || { ...harcama, id: Date.now(), ay: buAy };
+        const finalItem = savedItem || { ...harcama, id: generateUniqueId(), ay: buAy };
 
         // UI cache'ini güncelle (Gerçek ID ile)
         const yeniBuAy = [
@@ -1236,15 +1302,21 @@ const useStore = create(
       deleteHarcama: async (id) => {
         try {
           const state = get();
-          const item = state.finans.buAyHarcamalar.find(h => h.id === id);
+          const list = state.finans.buAyHarcamalar || [];
+          const item = list.find(h => h.id === id);
           
-          // Önce Supabase'den sil (family_id ile RLS onayı)
-          await deleteHarcamaFromSupabase(id, state.family_id);
+          // Önce Supabase'den sil (Aggressive fallback ile)
+          await deleteHarcamaFromSupabase(id, state.family_id, item);
           
-          // Sonra yerel state'i güncelle
-          const updatedHarcamalar = (state.finans.buAyHarcamalar || []).filter(h => h.id !== id);
+          // Yerel state'i güncelle (Ultra-Geniş Filtreleme)
+          // Sadece ID ile değil, eğer ghost kayıtsa aynı özelliklere sahip her şeyi yerel listeden çıkaralım
+          const updatedHarcamalar = list.filter(h => {
+            if (h.id === id) return false;
+            if (item && h.baslik === item.baslik && Number(h.tutar) === Number(item.tutar) && h.tarih === item.tarih) return false;
+            return true;
+          });
+
           let yeniMutabakat = { ...state.finans.kartMutabakat };
-          
           if (item && item.kart_id && yeniMutabakat[item.kart_id]) {
             const buAy = new Date().toISOString().slice(0, 7);
             const current = yeniMutabakat[item.kart_id];
@@ -1257,10 +1329,12 @@ const useStore = create(
           
           set({ finans: { ...state.finans, buAyHarcamalar: updatedHarcamalar, kartMutabakat: yeniMutabakat } });
           toast.success('Harcama silindi.');
-          get().saveToSupabase();
+          
+          // Beklemeden hemen bulutu güncelle (Hayalet kayıtları engellemek için)
+          get().forceSaveToSupabase();
         } catch (err) {
           console.error('❌ Harcama silme hatası:', err);
-          toast.error('Silme işlemi başarısız. Lütfen internet bağlantınızı kontrol edin.');
+          toast.error('Silme işlemi başarısız.');
         }
       },
 
