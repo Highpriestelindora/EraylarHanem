@@ -932,10 +932,11 @@ function CompleteActivityModal({ activity, onClose }) {
   const [pGorkem, setPGorkem] = useState(5);
   const [pEsra, setPEsra] = useState(5);
   const [cost, setCost] = useState(activity.harcama || 0);
-  const [comment, setComment] = useState('');
+  const [commentGorkem, setCommentGorkem] = useState('');
+  const [commentEsra, setCommentEsra] = useState('');
 
   const handleComplete = () => {
-    completeSocialActivity(activity.id, pGorkem, pEsra, Number(cost), comment);
+    completeSocialActivity(activity.id, pGorkem, pEsra, Number(cost), commentGorkem, commentEsra);
     onClose();
     toast.success('Aktivite tamamlandı! 🎉');
   };
@@ -968,9 +969,16 @@ function CompleteActivityModal({ activity, onClose }) {
         />
       </div>
       <div className="form-group">
-        <label>Yorum / Not</label>
+        <label>👨 Görkem'in Yorumu</label>
         <textarea 
-          value={comment} onChange={e => setComment(e.target.value)} placeholder="Nasıl geçti?" rows={2}
+          value={commentGorkem} onChange={e => setCommentGorkem(e.target.value)} placeholder="Nasıl geçti Görkem?" rows={2}
+          style={{ resize: 'none' }}
+        />
+      </div>
+      <div className="form-group">
+        <label>👩 Esra'nın Yorumu</label>
+        <textarea 
+          value={commentEsra} onChange={e => setCommentEsra(e.target.value)} placeholder="Nasıl geçti Esra?" rows={2}
           style={{ resize: 'none' }}
         />
       </div>
@@ -1150,7 +1158,8 @@ function EditHistoryModal({ activity, onClose }) {
   const [pGorkem, setPGorkem] = useState(activity.puan_gorkem || 5);
   const [pEsra, setPEsra] = useState(activity.puan_esra || 5);
   const [cost, setCost] = useState(activity.harcama || 0);
-  const [comment, setComment] = useState(activity.yorum || '');
+  const [commentGorkem, setCommentGorkem] = useState(activity.yorum_gorkem || '');
+  const [commentEsra, setCommentEsra] = useState(activity.yorum_esra || '');
   const [baslik, setBaslik] = useState(activity.baslik || '');
   const [date, setDate] = useState(activity.doneDate || activity.tarih || '');
 
@@ -1161,7 +1170,8 @@ function EditHistoryModal({ activity, onClose }) {
       puan_gorkem: Number(pGorkem), 
       puan_esra: Number(pEsra), 
       harcama: Number(cost), 
-      yorum: comment 
+      yorum_gorkem: commentGorkem,
+      yorum_esra: commentEsra
     });
     onClose();
     toast.success('Aktivite güncellendi! ✅');
@@ -1203,9 +1213,16 @@ function EditHistoryModal({ activity, onClose }) {
         />
       </div>
       <div className="form-group">
-        <label>Yorum / Not</label>
+        <label>👨 Görkem'in Yorumu</label>
         <textarea 
-          value={comment} onChange={e => setComment(e.target.value)} placeholder="Nasıl geçti?" rows={2}
+          value={commentGorkem} onChange={e => setCommentGorkem(e.target.value)} placeholder="Nasıl geçti Görkem?" rows={2}
+          style={{ resize: 'none' }}
+        />
+      </div>
+      <div className="form-group">
+        <label>👩 Esra'nın Yorumu</label>
+        <textarea 
+          value={commentEsra} onChange={e => setCommentEsra(e.target.value)} placeholder="Nasıl geçti Esra?" rows={2}
           style={{ resize: 'none' }}
         />
       </div>
@@ -1309,7 +1326,17 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
                         <div className="gcc-meta-item"><MapPin size={10} /> {a.mekan || 'Evde'}</div>
                         {a.detaylar && <div className="gcc-detay-text">{a.detaylar}</div>}
                       </div>
-                      {a.yorum && <div className="gcc-comment-box"><p>"{a.yorum}"</p></div>}
+                      {a.yorum_gorkem && (
+                        <div className="gcc-comment-box gorkem" style={{ borderLeft: '3px solid #3b82f6', background: 'rgba(59, 130, 246, 0.05)', marginBottom: '8px' }}>
+                          <p><span style={{ fontWeight: 900, color: '#3b82f6', fontSize: '10px' }}>👨 GÖRKEM:</span> "{a.yorum_gorkem}"</p>
+                        </div>
+                      )}
+                      {a.yorum_esra && (
+                        <div className="gcc-comment-box esra" style={{ borderLeft: '3px solid #ec4899', background: 'rgba(236, 72, 153, 0.05)' }}>
+                          <p><span style={{ fontWeight: 900, color: '#ec4899', fontSize: '10px' }}>👩 ESRA:</span> "{a.yorum_esra}"</p>
+                        </div>
+                      )}
+                      {a.yorum && !a.yorum_gorkem && !a.yorum_esra && <div className="gcc-comment-box"><p>"{a.yorum}"</p></div>}
                       
                       <div className="gcc-actions" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
                         <button 

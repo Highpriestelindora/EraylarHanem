@@ -2690,7 +2690,7 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      completeSocialActivity: (id, pGorkem, pEsra, cost = 0, comment = '') => {
+      completeSocialActivity: (id, pGorkem, pEsra, cost = 0, commentGorkem = '', commentEsra = '') => {
         const state = get();
         const aktList2 = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
         const act = aktList2.find(x => x.id === id);
@@ -2702,10 +2702,11 @@ const useStore = create(
             ...a,
             tamamlandi: true,
             durum: 'tamamlandi',
-            puan_gorkem: pGorkem,
-            puan_esra: pEsra,
-            harcama: cost,
-            yorum: comment,
+            puan_gorkem: Number(pGorkem),
+            puan_esra: Number(pEsra),
+            harcama: Number(cost),
+            yorum_gorkem: commentGorkem,
+            yorum_esra: commentEsra,
             doneDate: completionDate
           } : a
         );
