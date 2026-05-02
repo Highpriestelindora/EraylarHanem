@@ -152,6 +152,14 @@
 .w-trend-chip .up { color: #ef4444; }
 .w-trend-chip .down { color: #10b981; }
 
+.weight-chart-container {
+  width: 100%;
+  height: 120px;
+  background: rgba(0,0,0,0.02);
+  border-radius: 16px;
+  padding: 10px 5px;
+}
+
 /* History */
 .history-timeline-premium {
   display: flex;
@@ -190,6 +198,37 @@
   color: #f87171;
   background: transparent;
   border: none;
+}
+
+.hc-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.hc-edit {
+  padding: 8px;
+  color: #3b82f6;
+  background: transparent;
+  border: none;
+}
+
+.done-btn-mini {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid #10b981;
+  background: #ecfdf5;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.done-btn-mini:hover {
+  background: #10b981;
+  color: white;
 }
 
 .ps-header {

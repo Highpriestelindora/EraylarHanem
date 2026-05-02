@@ -3,7 +3,7 @@ import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import { 
   Plus, Trash2, Heart, 
-  Activity, Scale, ArrowLeft, Camera, ShieldCheck
+  Activity, Scale, ArrowLeft, Camera, ShieldCheck, Edit2, Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -11,17 +11,122 @@ import ActionSheet from '../components/ActionSheet';
 import ConfirmModal from '../components/ConfirmModal';
 import actionIcon from '../assets/eraylar-logo.png';
 import { PET_QUOTES } from '../constants/petQuotes';
+import { VACCINES, INITIAL_WEIGHTS } from '../constants/data';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 import './Pet.css';
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
 export default function Pet() {
-  const { pet, setModuleData, deletePetLog, deletePetVaccine, addPetVaccine, addPetWeight } = useStore();
+  const { pet, setModuleData, deletePetLog, updatePetLog, completePetVaccine, deletePetVaccine, addPetVaccine, addPetWeight } = useStore();
   const [activePet, setActivePet] = useState('waffle');
   const [showAddLog, setShowAddLog] = useState(false);
+  const [editingLog, setEditingLog] = useState(null);
+  const [completingVaccine, setCompletingVaccine] = useState(null);
   const [showAddVaccine, setShowAddVaccine] = useState(false);
   const [showAddWeight, setShowAddWeight] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
 
   const { meta, vaccines, history, weights } = pet || { meta: {}, vaccines: {}, history: [], weights: {} };
+
+  const handleBatchSync = () => {
+    const currentPetState = { ...pet };
+    
+    // 1. Aşıları sistem kayıtlarına (Takvim'e) işle
+    const newVaccines = JSON.parse(JSON.stringify(currentPetState.vaccines || {}));
+    
+    Object.entries(VACCINES).forEach(([pId, vList]) => {
+      if (!newVaccines[pId]) newVaccines[pId] = [];
+      
+      vList.forEach(sourceV => {
+        let targetV = newVaccines[pId].find(v => v.n === sourceV.n);
+        if (!targetV) {
+          targetV = { ...sourceV, h: [] };
+          newVaccines[pId].push(targetV);
+        }
+        
+        // Geçmiş tarihleri birleştir (Duplicate engelle)
+        const existingDates = new Set(targetV.h || []);
+        (sourceV.h || []).forEach(d => existingDates.add(d));
+        
+        targetV.h = Array.from(existingDates).sort((a, b) => {
+           const parse = (dt) => { 
+             const p = dt.split('.'); 
+             return new Date(`${p[2]}-${p[1]}-${p[0]}`).getTime(); 
+           };
+           return parse(a) - parse(b);
+        });
+        
+        // En son aşı tarihini güncelle (Takvim için kritik)
+        if (targetV.h.length > 0) {
+          targetV.last = targetV.h[targetV.h.length - 1];
+        }
+      });
+    });
+
+    // 2. Kiloları ve Notları Günlüğe (History) işle
+    // Aşıları günlükten temizle (Kullanıcı isteği: Aşılar günlükte olmasın)
+    const cleanHistory = (currentPetState.history || []).filter(h => h.type !== 'vaccine');
+    let addedWeights = [];
+    
+    Object.entries(INITIAL_WEIGHTS).forEach(([pId, wList]) => {
+      wList.forEach(w => {
+        const actionText = `Kilo güncellendi: ${w.w} kg`;
+        const exists = cleanHistory.some(h => h.pet === pId && h.action === actionText && h.dt === w.dt);
+        if (!exists) {
+          addedWeights.push({
+            id: `w_${pId}_${w.id}_${w.dt.replace(/\./g, '')}_${Date.now()}`,
+            pet: pId,
+            action: actionText,
+            dt: w.dt,
+            type: 'weight'
+          });
+        }
+      });
+    });
+
+    const finalHistory = [...addedWeights, ...cleanHistory].sort((a, b) => {
+        const parse = (dt) => { 
+          const p = dt.split('.'); 
+          if(p.length !== 3) return 0;
+          return new Date(`${p[2]}-${p[1]}-${p[0]}`).getTime(); 
+        };
+        return parse(b.dt) - parse(a.dt);
+    });
+
+    setModuleData('pet', { 
+      ...currentPetState, 
+      vaccines: newVaccines, 
+      history: finalHistory 
+    });
+    
+    toast.success("Tüm aşı kayıtları takvime, kilolar ise günlüğe başarıyla işlendi! 🐾", {
+      duration: 5000,
+      style: { background: '#1e3a8a', color: '#fff', border: '1px solid #3b82f6' }
+    });
+  };
   const currentPet = meta[activePet];
   const petVaccines = vaccines[activePet] || [];
   const petWeights = weights[activePet] || [];
@@ -91,6 +196,9 @@ export default function Pet() {
             </div>
           </div>
           <div className="header-actions">
+            <button className="icon-btn-v2" onClick={handleBatchSync} title="Veri Sihirbazı" style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)' }}>
+              <ShieldCheck size={20} />
+            </button>
             <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
           </div>
         </div>
@@ -110,12 +218,6 @@ export default function Pet() {
       </header>
 
       <div className="pet-scroll-content animate-fadeIn">
-        {/* Quick Actions */}
-        <div className="pet-quick-actions">
-          <button className="ps-btn finance" onClick={() => setShowAddExpense(true)}><Heart size={14} /> Harcama</button>
-          <button className="ps-btn" onClick={() => setShowAddLog(true)}><Plus size={14} /> Not</button>
-        </div>
-
         {/* Quick Status Bar */}
         <div className="quick-supply-bar">
           <div className="supply-item glass">
@@ -190,6 +292,33 @@ export default function Pet() {
                    )}
                  </div>
                )}
+               
+               {petWeights.length > 1 && (
+                 <div className="weight-chart-container mt-20">
+                   <Bar 
+                     data={{
+                       labels: [...petWeights].reverse().map(w => w.dt.split('.').slice(0,2).join('.')),
+                       datasets: [{
+                         label: 'Kilo',
+                         data: [...petWeights].reverse().map(w => w.w),
+                         backgroundColor: activePet === 'waffle' ? '#F97316' : '#FB923C',
+                         borderRadius: 6,
+                         barThickness: 20
+                       }]
+                     }}
+                     options={{
+                       responsive: true,
+                       maintainAspectRatio: false,
+                       plugins: { legend: { display: false } },
+                       scales: {
+                         x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } },
+                         y: { display: false }
+                       }
+                     }}
+                     height={100}
+                   />
+                 </div>
+               )}
             </div>
           </div>
         </section>
@@ -210,8 +339,13 @@ export default function Pet() {
                       <strong>{v.n}</strong>
                       <small>{v.last}</small>
                     </div>
-                    <div className="vr-badge" style={{ background: st.color + '20', color: st.color, fontSize: '10px', fontWeight: 900, padding: '4px 8px', borderRadius: '8px' }}>
-                      {st.label === 'GECİKMİŞ' ? '!' : st.days + ' g.'}
+                    <div className="vr-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div className="vr-badge" style={{ background: st.color + '20', color: st.color, fontSize: '10px', fontWeight: 900, padding: '4px 8px', borderRadius: '8px' }}>
+                        {st.label === 'GECİKMİŞ' ? `-${st.days} g.` : `${st.days} g.`}
+                      </div>
+                      <button className="done-btn-mini" onClick={() => setCompletingVaccine(v)} title="Yapıldı Olarak İşaretle">
+                        <Check size={14} />
+                      </button>
                     </div>
                   </div>
                 );
@@ -225,23 +359,36 @@ export default function Pet() {
           <div className="ps-header">
             <h3>⌛ Sağlık & Bakım Günlüğü</h3>
           </div>
-          <div className="history-timeline-premium">
+            <div className="history-timeline-premium">
             {(history || []).filter(h => h.pet === activePet).map((h) => (
               <div key={h.id} className="history-card-v2 glass">
-                <div className="hc-icon">📝</div>
+                <div className="hc-icon">{h.type === 'weight' ? '⚖️' : '📝'}</div>
                 <div className="hc-info">
                   <p>{h.action}</p>
                   <span className="hc-time">{h.dt}</span>
                 </div>
-                <button className="hc-del" onClick={() => deletePetLog(h.id)}><Trash2 size={14} /></button>
+                <div className="hc-actions">
+                  <button className="hc-edit" onClick={() => { setEditingLog(h); setShowAddLog(true); }}><Edit2 size={14} /></button>
+                  <button className="hc-del" onClick={() => deletePetLog(h.id)}><Trash2 size={14} /></button>
+                </div>
               </div>
             ))}
           </div>
         </section>
+
+        {/* Quick Actions Moved to Bottom */}
+        <div className="pet-quick-actions mt-24 mb-40">
+          <button className="ps-btn finance" onClick={() => setShowAddExpense(true)}><Heart size={14} /> Harcama</button>
+          <button className="ps-btn" onClick={() => { setEditingLog(null); setShowAddLog(true); }}><Plus size={14} /> Not</button>
+        </div>
       </div>
 
-      <ActionSheet isOpen={showAddLog} onClose={() => setShowAddLog(false)} title="📝 Günlüğe Ekle">
-        <AddPetLogContent petId={activePet} onClose={() => setShowAddLog(false)} />
+      <ActionSheet isOpen={showAddLog} onClose={() => { setShowAddLog(false); setEditingLog(null); }} title={editingLog ? "📝 Kaydı Düzenle" : "📝 Günlüğe Ekle"}>
+        <AddPetLogContent petId={activePet} onClose={() => { setShowAddLog(false); setEditingLog(null); }} editingLog={editingLog} />
+      </ActionSheet>
+
+      <ActionSheet isOpen={!!completingVaccine} onClose={() => setCompletingVaccine(null)} title={`💉 ${completingVaccine?.n} Aşısı Uygulandı`}>
+        <ApplyVaccineContent petId={activePet} vaccine={completingVaccine} onClose={() => setCompletingVaccine(null)} />
       </ActionSheet>
 
       <ActionSheet isOpen={showAddVaccine} onClose={() => setShowAddVaccine(false)} title="💉 Aşı Ekle">
@@ -342,32 +489,78 @@ function ManageVaccineContent({ petId, onClose }) {
   );
 }
 
-function AddPetLogContent({ petId, onClose }) {
-  const { pet, setModuleData } = useStore();
-  const [note, setNote] = useState('');
+function AddPetLogContent({ petId, onClose, editingLog }) {
+  const { pet, setModuleData, updatePetLog } = useStore();
+  const [note, setNote] = useState(editingLog ? editingLog.action : '');
+  const [date, setDate] = useState(editingLog ? editingLog.dt : new Date().toLocaleDateString('tr-TR'));
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!note) return;
-    const newLog = {
-      id: Date.now(),
-      pet: petId,
-      action: note,
-      dt: new Date().toLocaleDateString('tr-TR'),
-      type: 'manual'
-    };
-    setModuleData('pet', { ...pet, history: [newLog, ...(pet.history || [])] });
+
+    if (editingLog) {
+      updatePetLog(editingLog.id, { action: note, dt: date });
+      toast.success('Kayıt güncellendi! ✨');
+    } else {
+      const newLog = {
+        id: Date.now(),
+        pet: petId,
+        action: note,
+        dt: date,
+        type: 'manual'
+      };
+      setModuleData('pet', { ...pet, history: [newLog, ...(pet.history || [])] });
+      toast.success('Günlük kaydedildi! 📝');
+    }
     onClose();
-    toast.success('Günlük kaydedildi! 📝');
   };
 
   return (
     <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label>Neler Oldu?</label>
+        <label>Tarih</label>
+        <input type="text" value={date} onChange={e => setDate(e.target.value)} placeholder="02.05.2026" />
+      </div>
+      <div className="form-group">
+        <label>{editingLog?.type === 'weight' ? 'Kilo Bilgisi' : 'Neler Oldu?'}</label>
         <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Veteriner kontrolü..." rows={4} autoFocus />
       </div>
-      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Kaydet</button>
+      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>
+        {editingLog ? 'Güncelle' : 'Kaydet'}
+      </button>
+    </form>
+  );
+}
+function ApplyVaccineContent({ petId, vaccine, onClose }) {
+  const { completePetVaccine } = useStore();
+  const [place, setPlace] = useState('');
+  const [amount, setAmount] = useState('');
+  const [date, setDate] = useState(new Date().toLocaleDateString('tr-TR'));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await completePetVaccine(petId, vaccine.n, { place, amount, date });
+    toast.success(`${vaccine.n} aşısı başarıyla kaydedildi! 💉`);
+    onClose();
+  };
+
+  return (
+    <form className="modal-form" onSubmit={handleSubmit}>
+      <div className="form-group">
+        <label>Uygulama Tarihi</label>
+        <input type="text" value={date} onChange={e => setDate(e.target.value)} placeholder="DD.MM.YYYY" />
+      </div>
+      <div className="form-group">
+        <label>Nerede Yapıldı?</label>
+        <input type="text" value={place} onChange={e => setPlace(e.target.value)} placeholder="Veteriner kliniği adı..." />
+      </div>
+      <div className="form-group">
+        <label>Ücret (₺) <small>(Harcamalara eklemek için doldurun)</small></label>
+        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
+      </div>
+      <button type="submit" className="submit-btn" style={{ background: '#10b981', color: 'white' }}>
+        Aşıyı Onayla
+      </button>
     </form>
   );
 }

@@ -3737,6 +3737,95 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      updatePetLog: (id, updates) => {
+        const state = get();
+        let updatedWeights = { ...state.pet.weights };
+        const logToUpdate = (state.pet.history || []).find(h => h.id === id);
+
+        // If it's a weight log, update the corresponding weight in the weights array
+        if (logToUpdate && logToUpdate.type === 'weight') {
+          const petId = logToUpdate.pet;
+          const oldWMatch = logToUpdate.action.match(/(\d+\.?\d*)/);
+          const newWMatch = updates.action ? updates.action.match(/(\d+\.?\d*)/) : null;
+          
+          if (newWMatch && oldWMatch) {
+            const oldW = parseFloat(oldWMatch[1]);
+            const newW = parseFloat(newWMatch[1]);
+            
+            updatedWeights[petId] = (updatedWeights[petId] || []).map(w => 
+              (w.dt === logToUpdate.dt && w.w === oldW) ? { ...w, w: newW, dt: updates.dt || w.dt } : w
+            );
+          }
+        }
+
+        const updatedHistory = (state.pet.history || []).map(h => 
+          h.id === id ? { ...h, ...updates } : h
+        );
+
+        set({ 
+          pet: { 
+            ...state.pet, 
+            history: updatedHistory,
+            weights: updatedWeights 
+          } 
+        });
+        get().saveToSupabase();
+      },
+
+      completePetVaccine: async (petId, vaccineName, data) => {
+        const state = get();
+        const vaccines = { ...state.pet.vaccines };
+        if (!vaccines[petId]) return;
+
+        const vIdx = vaccines[petId].findIndex(v => v.n === vaccineName);
+        if (vIdx === -1) return;
+
+        const v = vaccines[petId][vIdx];
+        const newHistory = [data.date, ...(v.h || [])].sort((a, b) => {
+          const parse = (dt) => { 
+            const p = dt.split('.'); 
+            return new Date(`${p[2]}-${p[1]}-${p[0]}`).getTime(); 
+          };
+          return parse(b) - parse(a);
+        });
+
+        vaccines[petId][vIdx] = {
+          ...v,
+          last: data.date,
+          h: newHistory
+        };
+
+        // Günlüğe ekle (Aşı tarihini de belirt)
+        const petLog = {
+          id: Date.now(),
+          pet: petId,
+          action: `${vaccineName} aşısı yapıldı (${data.place || 'Veteriner'})`,
+          dt: data.date,
+          type: 'vaccine_done'
+        };
+
+        set({ 
+          pet: { 
+            ...state.pet, 
+            vaccines, 
+            history: [petLog, ...(state.pet.history || [])] 
+          } 
+        });
+
+        // Finans kaydı varsa ekle
+        if (data.amount && parseFloat(data.amount) > 0) {
+          await get().addHarcama({
+            tarih: data.date.split('.').reverse().join('-'), // format to YYYY-MM-DD
+            baslik: `${petId.charAt(0).toUpperCase() + petId.slice(1)}: ${vaccineName} Aşısı`,
+            tutar: parseFloat(data.amount),
+            kategori: 'Evcil Hayvan',
+            notlar: `${data.place || ''}`
+          });
+        }
+
+        get().saveToSupabase();
+      },
+
       updatePetSupply: (petId, supplyType, status) => {
         const state = get();
         const supplies = { ...state.pet.supplies };
