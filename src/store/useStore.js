@@ -385,6 +385,16 @@ const DEFAULT_STATE = {
     isModalOpen: false
   },
   currentUser: null, // { name: 'Görkem', emoji: '👨‍💻' } or { name: 'Esra', emoji: '👩‍🍳' }
+  muhendislik: {
+    activeTab: 'muhendislik',
+    pinnedConversions: [
+      { id: '1', from: 'lt/min', to: 'gpm', active: true },
+      { id: '2', from: 'bar', to: 'psi', active: true },
+      { id: '3', from: 'kg', to: 'lb', active: true }
+    ],
+    problemBank: [], // { id, title, definition, solution, alternatives, date, tags }
+    decisionLog: [], // { id, title, rationale, data, outcome, lesson, status, date, tags, criticality }
+  },
   family_id: 'eraylar-family-shared-id', // Fixed family ID for production consistency
 };
 
@@ -440,14 +450,15 @@ async function pushToSupabase(appData) {
 }
 
 // ── Finans Supabase Helpers ──────────────────────────────────
-const FAMILY_ID = 'eraylar-family-shared-id';
+// Not: RLS politikaları gereği family_id gönderimi zorunludur.
+const DEFAULT_FID = 'eraylar-family-shared-id';
 
-async function pushHarcamaToSupabase(harcama) {
+async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
   try {
     const { error } = await supabase
       .from('finans_harcamalar')
       .insert({
-        family_id: FAMILY_ID,
+        family_id: familyId,
         tarih: harcama.tarih,
         baslik: harcama.baslik,
         tutar: Number(harcama.tutar),
@@ -466,13 +477,13 @@ async function pushHarcamaToSupabase(harcama) {
   }
 }
 
-async function fetchBuAyHarcamalar() {
+async function fetchBuAyHarcamalar(familyId = DEFAULT_FID) {
   try {
     const buAy = new Date().toISOString().slice(0, 7);
     const { data, error } = await supabase
       .from('finans_harcamalar')
       .select('*')
-      .eq('family_id', FAMILY_ID)
+      .eq('family_id', familyId)
       .eq('ay', buAy)
       .order('tarih', { ascending: false });
     if (error) throw error;
@@ -483,12 +494,12 @@ async function fetchBuAyHarcamalar() {
   }
 }
 
-async function fetchGecmisAyFromSupabase(ay) {
+async function fetchGecmisAyFromSupabase(ay, familyId = DEFAULT_FID) {
   try {
     const { data, error } = await supabase
       .from('finans_harcamalar')
       .select('*')
-      .eq('family_id', FAMILY_ID)
+      .eq('family_id', familyId)
       .eq('ay', ay)
       .order('tarih', { ascending: false });
     if (error) throw error;
@@ -499,12 +510,12 @@ async function fetchGecmisAyFromSupabase(ay) {
   }
 }
 
-async function fetchArsivFromSupabase(limit = 12) {
+async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 12) {
   try {
     const { data, error } = await supabase
       .from('finans_arsiv')
       .select('*')
-      .eq('family_id', FAMILY_ID)
+      .eq('family_id', familyId)
       .order('ay', { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -515,12 +526,12 @@ async function fetchArsivFromSupabase(limit = 12) {
   }
 }
 
-async function upsertKartMutabakat(kart_id, ay, beklenen, gercek) {
+async function upsertKartMutabakat(kart_id, ay, beklenen, gercek, familyId = DEFAULT_FID) {
   try {
     const { error } = await supabase
       .from('finans_kart_mutabakat')
       .upsert({
-        family_id: FAMILY_ID,
+        family_id: familyId,
         kart_id,
         ay,
         beklenen_borc: beklenen,
@@ -532,12 +543,12 @@ async function upsertKartMutabakat(kart_id, ay, beklenen, gercek) {
   }
 }
 
-async function upsertArsiv(ay, ozet) {
+async function upsertArsiv(ay, ozet, familyId = DEFAULT_FID) {
   try {
     const { error } = await supabase
       .from('finans_arsiv')
       .upsert({
-        family_id: FAMILY_ID,
+        family_id: familyId,
         ay,
         ...ozet,
       }, { onConflict: 'family_id,ay' });
@@ -566,6 +577,7 @@ function extractAppData(state, forPersist = false) {
     achievements: state.achievements,
     logs: state.logs,
     system: state.system,
+    muhendislik: state.muhendislik,
   };
 
   if (forPersist && data.tatil?.trips) {
@@ -789,6 +801,60 @@ const useStore = create(
         }
       },
 
+      // ── Mühendislik Actions ────────────────────────────────
+      addEngineeringProblem: (problem) => {
+        const state = get();
+        const newProblem = {
+          id: Date.now(),
+          date: new Date().toISOString(),
+          ...problem
+        };
+        set({ muhendislik: { ...state.muhendislik, problemBank: [newProblem, ...state.muhendislik.problemBank] } });
+        get().addLog('Mühendislik', `Yeni problem kaydedildi: ${problem.title}`);
+        get().saveToSupabase();
+      },
+      updateEngineeringProblem: (id, updates) => {
+        const state = get();
+        const updated = state.muhendislik.problemBank.map(p => p.id === id ? { ...p, ...updates } : p);
+        set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
+        get().saveToSupabase();
+      },
+      deleteEngineeringProblem: (id) => {
+        const state = get();
+        const updated = state.muhendislik.problemBank.filter(p => p.id !== id);
+        set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
+        get().saveToSupabase();
+      },
+      addEngineeringDecision: (decision) => {
+        const state = get();
+        const newDecision = {
+          id: Date.now(),
+          date: new Date().toISOString(),
+          ...decision
+        };
+        set({ muhendislik: { ...state.muhendislik, decisionLog: [newDecision, ...state.muhendislik.decisionLog] } });
+        get().addLog('Karar Günlüğü', `Yeni karar alındı: ${decision.title}`);
+        get().saveToSupabase();
+      },
+      updateEngineeringDecision: (id, updates) => {
+        const state = get();
+        const updated = state.muhendislik.decisionLog.map(d => d.id === id ? { ...d, ...updates } : d);
+        set({ muhendislik: { ...state.muhendislik, decisionLog: updated } });
+        get().saveToSupabase();
+      },
+      deleteEngineeringDecision: (id) => {
+        const state = get();
+        const updated = state.muhendislik.decisionLog.filter(d => d.id !== id);
+        set({ muhendislik: { ...state.muhendislik, decisionLog: updated } });
+        get().saveToSupabase();
+      },
+      updatePinnedConversion: (id, updates) => {
+        const state = get();
+        const updated = state.muhendislik.pinnedConversions.map(c => c.id === id ? { ...c, ...updates } : c);
+        set({ muhendislik: { ...state.muhendislik, pinnedConversions: updated } });
+        get().saveToSupabase();
+      },
+
       loadFromSupabase: async () => {
         set({ syncing: true });
         const remote = await fetchFromSupabase();
@@ -984,7 +1050,7 @@ const useStore = create(
         };
 
         // Supabase'e yaz
-        await pushHarcamaToSupabase(harcama);
+        await pushHarcamaToSupabase(harcama, state.family_id);
 
         // UI cache'ini güncelle
         const yeniBuAy = [{ ...harcama, id: Date.now(), ay: buAy }, ...state.finans.buAyHarcamalar];
@@ -1003,7 +1069,8 @@ const useStore = create(
             harcama.kart_id,
             buAy,
             yeniMutabakat[harcama.kart_id].beklenen,
-            yeniMutabakat[harcama.kart_id].gercek
+            yeniMutabakat[harcama.kart_id].gercek,
+            state.family_id
           );
         }
 
@@ -1051,7 +1118,7 @@ const useStore = create(
         const hedefAy = ay || new Date().toISOString().slice(0, 7);
         const beklenen = state.finans.kartMutabakat[kartId]?.beklenen || 0;
 
-        await upsertKartMutabakat(kartId, hedefAy, beklenen, Number(tutar));
+        await upsertKartMutabakat(kartId, hedefAy, beklenen, Number(tutar), state.family_id);
 
         const yeniMutabakat = {
           ...state.finans.kartMutabakat,
@@ -1068,8 +1135,8 @@ const useStore = create(
 
       // Bu ayın harcamalarını Supabase'den çeker
       getBuAyHarcamalar: async () => {
-        const data = await fetchBuAyHarcamalar();
         const state = get();
+        const data = await fetchBuAyHarcamalar(state.family_id);
 
         // Kart mutabakatını da yeniden hesapla
         const yeniMutabakat = { ...state.finans.kartMutabakat };
@@ -1088,23 +1155,26 @@ const useStore = create(
 
       // Geçmiş bir ayın harcamalarını Supabase'den çeker (lazy)
       getGecmisAy: async (ay) => {
-        return await fetchGecmisAyFromSupabase(ay);
+        const state = get();
+        return await fetchGecmisAyFromSupabase(ay, state.family_id);
       },
 
       // Geçmiş arşivi çeker
       getFinansArsiv: async (limit = 12) => {
-        return await fetchArsivFromSupabase(limit);
+        const state = get();
+        return await fetchArsivFromSupabase(state.family_id, limit);
       },
 
       // Ayı kapatır: özet oluşturur ve finans_arsiv'e yazar
       ayKapat: async (ay, isAuto = false) => {
         const hedefAy = ay || new Date().toISOString().slice(0, 7);
-        const harcamalar = await fetchGecmisAyFromSupabase(hedefAy);
+        const state = get();
+        const harcamalar = await fetchGecmisAyFromSupabase(hedefAy, state.family_id);
 
         if (harcamalar.length === 0) {
           if (!isAuto) toast.error('Bu ay için harcama kaydı bulunamadı.');
           // Otomatik kapanışta sürekli tetiklenmemesi için 0 kayıtlı bir arşiv atıyoruz
-          await upsertArsiv(hedefAy, {});
+          await upsertArsiv(hedefAy, {}, state.family_id);
           return;
         }
 
@@ -1126,7 +1196,7 @@ const useStore = create(
           }
         });
 
-        await upsertArsiv(hedefAy, {});
+        await upsertArsiv(hedefAy, {}, state.family_id);
 
         toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);
       },
@@ -1419,22 +1489,6 @@ const useStore = create(
         const newAbo = { ...abo, id: Date.now() };
         set({ ev: { ...state.ev, abonelikler: [...state.ev.abonelikler, newAbo] } });
         get().saveToSupabase();
-      },
-
-      updateLocationSettings: (type, coords) => {
-        const state = get();
-        const currentTracking = state.ev.tracking || {};
-        set({
-          ev: {
-            ...state.ev,
-            tracking: {
-              ...currentTracking,
-              [type]: { ...(currentTracking[type] || {}), ...coords }
-            }
-          }
-        });
-        get().saveToSupabase();
-        toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi! 📍`);
       },
 
       updateAbonelik: (id, updates) => {
@@ -2714,7 +2768,7 @@ const useStore = create(
         // 1. Finance Integration
         if (cost > 0) {
           get().addExpense({
-            title: `🌟 Aktivite: ${act.baslik}`,
+            title: `🌟 Aktivite: ${act.baslik || act.title || 'İsimsiz'}`,
             amount: Number(cost),
             category: 'Sosyal Aktivite',
             payer: 'ortak',
@@ -2724,7 +2778,10 @@ const useStore = create(
 
         // 2. Pool Stats Update
         const yeniHavuz = (Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : []).map(p => {
-          if (p.baslik.toLowerCase() === act.baslik.toLowerCase()) {
+          const poolTitle = (p.baslik || p.title || '').toLowerCase();
+          const actTitle = (act.baslik || act.title || '').toLowerCase();
+          
+          if (poolTitle && actTitle && poolTitle === actTitle) {
             return {
               ...p,
               count: (p.count || 0) + 1,
@@ -3189,19 +3246,28 @@ const useStore = create(
 
       // ── Yaşam & Tracking Actions ────────────────────────
       updateLocationSettings: (type, updates) => {
-        const currentEv = get().ev || {};
+        const state = get();
+        const currentEv = state.ev || {};
         const currentTracking = currentEv.tracking || {};
+        
+        // Default radius values if not exist
+        const defaultRadius = type === 'home' ? 150 : 250;
+
         set({
           ev: {
             ...currentEv,
             tracking: {
               ...currentTracking,
-              [type]: { ...currentTracking[type], ...updates }
+              [type]: { 
+                radius: defaultRadius, 
+                ...(currentTracking[type] || {}), 
+                ...updates 
+              }
             }
           }
         });
         get().saveToSupabase();
-        toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi.`);
+        toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi! 📍`);
       },
 
       logTimeSlice: (type, minutes = 15) => {

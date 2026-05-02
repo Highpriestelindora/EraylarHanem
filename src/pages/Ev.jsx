@@ -172,6 +172,7 @@ export default function Ev() {
   const [isAIUpdating, setIsAIUpdating] = useState(false);
   const [showWifiPass, setShowWifiPass] = useState(false);
   const [showGuestWifiPass, setShowGuestWifiPass] = useState(false);
+  const [showWifiMain, setShowWifiMain] = useState(true);
   const [isChartsReady, setIsChartsReady] = useState(false);
 
   useEffect(() => {
@@ -212,9 +213,9 @@ export default function Ev() {
         const { home, work } = currentEv.tracking || {};
         
         let currentZone = 'other';
-        if (home && calculateDistance(latitude, longitude, home.lat, home.lng) * 1000 < (home.radius || 100)) {
+        if (home && calculateDistance(latitude, longitude, home.lat, home.lng) * 1000 < (home.radius || 150)) {
           currentZone = 'home';
-        } else if (work && calculateDistance(latitude, longitude, work.lat, work.lng) * 1000 < (work.radius || 200)) {
+        } else if (work && calculateDistance(latitude, longitude, work.lat, work.lng) * 1000 < (work.radius || 250)) {
           currentZone = 'work';
         }
 
@@ -477,30 +478,65 @@ export default function Ev() {
                </div>
                
                 <div className="tracking-setup mt-32 pt-24 mb-24 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', gap: '16px' }}>
-                  <button className={`btn-pill-v2 ${ev.tracking?.home?.lat ? 'fixed' : ''}`} onClick={() => {
-                    if (ev.tracking?.home?.lat) {
-                      navigate('/profil');
-                    } else {
-                      navigator.geolocation.getCurrentPosition(p => {
-                        updateLocationSettings('home', { lat: p.coords.latitude, lng: p.coords.longitude, label: 'Evim', address: 'Konum alınıyor...' });
-                      });
-                    }
-                  }}>
+                  <button 
+                    className={`btn-pill-v2 ${ev.tracking?.home?.lat ? 'fixed' : ''}`} 
+                    onClick={() => {
+                      const update = () => {
+                        toast.loading("Konum alınıyor...", { id: 'loc' });
+                        navigator.geolocation.getCurrentPosition(p => {
+                          updateLocationSettings('home', { 
+                            lat: p.coords.latitude, 
+                            lng: p.coords.longitude, 
+                            label: 'Evim', 
+                            address: 'Otomatik Konum' 
+                          });
+                          toast.success("Ev konumu güncellendi! 📍", { id: 'loc' });
+                        }, (err) => {
+                          console.error(err);
+                          toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
+                        });
+                      };
+
+                      if (ev.tracking?.home?.lat) {
+                        requestConfirm("Mevcut konumunu 'Evim' olarak güncellemek istiyor musun?", update);
+                      } else {
+                        update();
+                      }
+                    }}
+                  >
                     <Home size={14} />
-                    <span>Ev Konumu</span>
+                    <span>{ev.tracking?.home?.lat ? 'Evi Güncelle' : 'Evi Set Et'}</span>
                     {ev.tracking?.home?.lat && <div className="dot-active"></div>}
                   </button>
-                  <button className={`btn-pill-v2 ${ev.tracking?.work?.lat ? 'fixed' : ''}`} onClick={() => {
-                    if (ev.tracking?.work?.lat) {
-                      navigate('/profil');
-                    } else {
-                      navigator.geolocation.getCurrentPosition(p => {
-                        updateLocationSettings('work', { lat: p.coords.latitude, lng: p.coords.longitude, label: 'İşyerim', address: 'Konum alınıyor...' });
-                      });
-                    }
-                  }}>
+
+                  <button 
+                    className={`btn-pill-v2 ${ev.tracking?.work?.lat ? 'fixed' : ''}`} 
+                    onClick={() => {
+                      const update = () => {
+                        toast.loading("Konum alınıyor...", { id: 'loc' });
+                        navigator.geolocation.getCurrentPosition(p => {
+                          updateLocationSettings('work', { 
+                            lat: p.coords.latitude, 
+                            lng: p.coords.longitude, 
+                            label: 'İşyerim', 
+                            address: 'Otomatik Konum' 
+                          });
+                          toast.success("İş konumu güncellendi! 📍", { id: 'loc' });
+                        }, (err) => {
+                          console.error(err);
+                          toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
+                        });
+                      };
+
+                      if (ev.tracking?.work?.lat) {
+                        requestConfirm("Mevcut konumunu 'İşyerim' olarak güncellemek istiyor musun?", update);
+                      } else {
+                        update();
+                      }
+                    }}
+                  >
                     <Building size={14} />
-                    <span>İş Konumu</span>
+                    <span>{ev.tracking?.work?.lat ? 'İşi Güncelle' : 'İşi Set Et'}</span>
                     {ev.tracking?.work?.lat && <div className="dot-active"></div>}
                   </button>
                 </div>

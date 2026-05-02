@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   X, RefreshCcw, Settings, 
-  ChevronRight, History as HistoryIcon
+  ChevronRight, History as HistoryIcon, Heart
 } from 'lucide-react';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
@@ -12,6 +12,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PET_QUOTES } from '../constants/petQuotes';
 import toast from 'react-hot-toast';
 import './Home.css';
+
+const MOODS = [
+  { id: 'happy', emoji: '😊', label: 'Mutlu', color: '#fef3c7' },
+  { id: 'calm', emoji: '😌', label: 'Huzurlu', color: '#ecfdf5' },
+  { id: 'tired', emoji: '😫', label: 'Yorgun', color: '#f8fafc' },
+  { id: 'sad', emoji: '😔', label: 'Üzgün', color: '#eff6ff' },
+  { id: 'energetic', emoji: '🤩', label: 'Enerjik', color: '#fff7ed' },
+  { id: 'sick', emoji: '🤒', label: 'Hasta', color: '#fef2f2' }
+];
 
 const Home = () => {
   // Selective Selectors for Performance
@@ -36,6 +45,7 @@ const Home = () => {
   const [aiMessage, setAiMessage] = useState('Bugün her şey yolunda, keyfine bak! 💖');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showMoodCheck, setShowMoodCheck] = useState(false);
+  const [selectedMood, setSelectedMood] = useState(null);
 
   const getSmartInsights = () => {
     const store = useStore.getState();
@@ -101,6 +111,35 @@ const Home = () => {
   useEffect(() => {
     calculateGlobalScore();
   }, [calculateGlobalScore]);
+
+  // Daily Wellness Trigger
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const today = new Date().toDateString();
+    const userName = currentUser.name.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
+    const moods = saglik?.moods || [];
+    
+    const hasEnteredToday = moods.some(m => 
+      m.user === userName && new Date(m.date).toDateString() === today
+    );
+    
+    if (!hasEnteredToday) {
+      const timer = setTimeout(() => setShowMoodCheck(true), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [saglik?.moods, currentUser]);
+
+  const handleMoodSubmit = () => {
+    if (!selectedMood) return;
+    const userName = currentUser.name.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
+    addMood(userName, selectedMood, '', 'Günlük');
+    setShowMoodCheck(false);
+    toast.success('Günün ilk wellness kaydı yapıldı! ✨', {
+      icon: '💖',
+      style: { borderRadius: '15px', background: '#2E1065', color: '#fff' }
+    });
+  };
 
   // Memoized Modules - Stabilizes the grid
   const modules = useMemo(() => {
@@ -250,6 +289,53 @@ const Home = () => {
                     ))}
                  </div>
               </div>
+            </div>
+          </Portal>
+        )}
+
+        {showMoodCheck && (
+          <Portal>
+            <div className="modal-overlay wellness-check" onClick={() => setShowMoodCheck(false)}>
+              <motion.div 
+                className="mood-check-card glass animate-slideUp"
+                onClick={e => e.stopPropagation()}
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 100, opacity: 0 }}
+              >
+                <div className="mcc-header">
+                  <div className="mcc-icon-box">
+                    <Heart size={24} color="#EC4899" fill="#EC4899" />
+                  </div>
+                  <h3>Bugün Nasıl Hissediyorsun?</h3>
+                  <p>Eraylar Wellness asistanı gününü merak ediyor ✨</p>
+                </div>
+
+                <div className="mcc-grid">
+                  {MOODS.map(m => (
+                    <button 
+                      key={m.id}
+                      className={`mcc-btn ${selectedMood?.id === m.id ? 'active' : ''}`}
+                      onClick={() => setSelectedMood(m)}
+                      style={{ '--mood-color': m.color }}
+                    >
+                      <span className="mcc-emoji">{m.emoji}</span>
+                      <span className="mcc-label">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mcc-actions">
+                  <button className="mcc-skip" onClick={() => setShowMoodCheck(false)}>Daha Sonra</button>
+                  <button 
+                    className="mcc-submit" 
+                    disabled={!selectedMood}
+                    onClick={handleMoodSubmit}
+                  >
+                    Harika Görünüyor
+                  </button>
+                </div>
+              </motion.div>
             </div>
           </Portal>
         )}

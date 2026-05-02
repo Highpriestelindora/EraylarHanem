@@ -115,7 +115,11 @@ export default function Kayitlar() {
       
       const d1 = new Date(first.id);
       const d2 = new Date(last.id);
-      const diffDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+      
+      // Calculate calendar days difference
+      const s1 = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate());
+      const s2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
+      const diffDays = Math.round(Math.abs(s2 - s1) / (1000 * 60 * 60 * 24)) + 1;
 
       records.push({
         id: `med-agg-${first.id}`,

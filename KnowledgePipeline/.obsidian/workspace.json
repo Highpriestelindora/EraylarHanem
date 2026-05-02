@@ -4,17 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "de1a79ed8119784e",
+        "id": "0dc40b8469b0c7ea",
         "type": "tabs",
         "children": [
           {
-            "id": "e6d056d63fb4650a",
+            "id": "d7cb612a97fffb98",
             "type": "leaf",
             "state": {
-              "type": "graph",
+              "type": "empty",
               "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Graph view"
+              "icon": "lucide-file",
+              "title": "New tab"
             }
           }
         ]
@@ -179,30 +179,30 @@
       "bases:Create new base": false
     }
   },
-  "active": "e6d056d63fb4650a",
+  "active": "d7cb612a97fffb98",
   "lastOpenFiles": [
+    "entities/mutfak_modulu.md",
+    "decisions/tek_tablo_jsonb_depolama.md",
+    "sources/legacy_docs.md",
+    "sources/codebase.md",
+    "entities/sosyal_ve_etkinlikler.md",
+    "entities/tatil.md",
+    "entities/saglik.md",
+    "entities/finans_ve_kasa.md",
+    "entities/ev_ve_yasam.md",
+    "entities/aracim.md",
     "decisions/ikinci_beyin_mimarisi.md",
     "log.md",
     "decisions/ios_oncelikli_test.md",
-    "sources/legacy_docs.md",
     "raw/legacy/Index.md",
-    "sources/codebase.md",
     "index.md",
     "concepts/ios_oncelikli_tasarim.md",
     "raw/legacy/Tatil_Modulu.md",
-    "entities/ev_ve_yasam.md",
     "entities/pet.md",
-    "entities/tatil.md",
-    "entities/finans_ve_kasa.md",
-    "entities/aracim.md",
-    "decisions/tek_tablo_jsonb_depolama.md",
     "decisions/stok_bazli_tarif_gosterimi.md",
     "raw/legacy/Ev_ve_Yasam.md",
-    "entities/mutfak_modulu.md",
     "concepts/merkezi_state_yonetimi.md",
     "concepts/senkronizasyon_stratejisi.md",
-    "entities/sosyal_ve_etkinlikler.md",
-    "entities/saglik.md",
     "raw/legacy/Aracim_ve_Ulasim.md"
   ]
 }

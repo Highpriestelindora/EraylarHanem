@@ -330,6 +330,19 @@ export default function Profil() {
               </div>
             </div>
 
+            <div className="form-group">
+              <label><Activity size={14} /> Algılama Menzili (Metre)</label>
+              <input 
+                type="number" 
+                defaultValue={ev.tracking?.[editingLocation]?.radius || (editingLocation === 'home' ? 150 : 250)} 
+                id="loc-radius"
+                placeholder="Örn: 150"
+              />
+              <small style={{ fontSize: '10px', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                Cihazınız bu merkeze belirtilen metreden daha yakınsa konumu otomatik algılar.
+              </small>
+            </div>
+
             <button 
               className="btn-primary" 
               onClick={() => {
@@ -337,7 +350,8 @@ export default function Profil() {
                 const address = document.getElementById('loc-address').value;
                 const lat = parseFloat(document.getElementById('loc-lat').value);
                 const lng = parseFloat(document.getElementById('loc-lng').value);
-                handleSaveLocation(editingLocation, { label, address, lat, lng });
+                const radius = parseInt(document.getElementById('loc-radius').value) || 150;
+                handleSaveLocation(editingLocation, { label, address, lat, lng, radius });
               }} 
               style={{ marginTop: '20px', width: '100%', background: '#10b981', color: 'white', border: 'none', padding: '16px', borderRadius: '16px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >

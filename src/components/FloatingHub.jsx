@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, MessageSquare, Plus, X, Send, Trash2, Refrigerator, BadgeDollarSign, Archive } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -23,6 +23,17 @@ function FloatingHub() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeModal, setActiveModal] = useState(null); // 'chat' or 'expense'
   const [fridgeView, setFridgeView] = useState('board'); // 'board' or 'history'
+  const historyEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    historyEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (fridgeView === 'history') {
+      scrollToBottom();
+    }
+  }, [fridgeView, mutfak?.history]);
   
   const [focusedNote, setFocusedNote] = useState(null);
   const [noteText, setNoteText] = useState('');
@@ -51,12 +62,13 @@ function FloatingHub() {
   };
 
   const handleAddExpense = async () => {
-    if (!expTitle || !expAmount) return toast.error('Lütfen tutar ve açıklama girin');
+    if (!expAmount) return toast.error('Lütfen tutar girin');
     
-    // Hızlı ödeme doğrudan Supabase finans_harcamalar'a işlenir (addHarcama)
+    // Açıklama boşsa kategori adını kullan
+    const finalTitle = expTitle.trim() || `${expCategory} Harcaması`;
     await useStore.getState().addHarcama({
-      baslik: expTitle,
-      tutar: Number(expAmount),
+      baslik: finalTitle,
+      tutar: parseFloat(expAmount.replace(',', '.')),
       kategori: expCategory,
       kart_id: expCard || null,
       odenme_turu: expCard ? 'kart' : 'nakit',
@@ -186,7 +198,7 @@ function FloatingHub() {
             ) : (
               <div className="immersive-history-list">
                 {(mutfak.history || []).length > 0 ? (
-                  mutfak.history.map((log) => (
+                  [...mutfak.history].sort((a, b) => new Date(a.d) - new Date(b.d)).map((log) => (
                     <div key={log.id} className={`history-item ${log.w.toLowerCase()}`}>
                       <div className="history-bubble">
                         <p>{log.t}</p>
@@ -200,6 +212,7 @@ function FloatingHub() {
                 ) : (
                   <div className="empty-history">Henüz geçmiş kaydı yok. ✨</div>
                 )}
+                <div ref={historyEndRef} />
               </div>
             )}
 
@@ -230,14 +243,15 @@ function FloatingHub() {
             <input 
               className="hub-input amount" 
               type="number" 
-              placeholder="0₺" 
+              step="any"
+              placeholder="0.00₺" 
               value={expAmount}
               onChange={e => setExpAmount(e.target.value)}
               autoFocus
             />
             <input 
               className="hub-input title" 
-              placeholder="Ne harcaması?" 
+              placeholder="Ne harcaması? (Opsiyonel)" 
               value={expTitle}
               onChange={e => setExpTitle(e.target.value)}
             />
