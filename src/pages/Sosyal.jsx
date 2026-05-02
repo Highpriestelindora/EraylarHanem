@@ -290,7 +290,7 @@ function HaftaTab({ sosyal, onAdd }) {
     const events = [];
 
     // 1. Social Activities & Notes
-    (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => !a.tamamlandi && a.durum !== 'iptal').forEach(a => {
+    (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.durum !== 'iptal').forEach(a => {
       events.push({ 
         date: a.tarih, 
         icon: a.emoji || (a.tur === 'not' ? '📝' : '🎭'), 

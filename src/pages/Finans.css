@@ -669,7 +669,7 @@
 }
 
 /* Mobile Adjustments */
-@media (max-width: 400px) {
+@media (max-width: 600px) {
   .form-grid-v2 {
     grid-template-columns: 1fr;
   }

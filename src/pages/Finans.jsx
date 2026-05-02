@@ -10,6 +10,7 @@ import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
+import ActionSheet from '../components/ActionSheet';
 import './Finans.css';
 
 const fmt = (val, prv = false) => {
@@ -695,9 +696,7 @@ export default function Finans() {
 // ── Yönetim Modalları ─────────────────────────────────────────
 
 function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
-  if (!isOpen) return null;
   const kartlar = finans?.kartlar || [];
-
   const [yeniKart, setYeniKart] = useState({ id: '', name: '', limit: '', cutoff_day: '', due_day_offset: 10, min_pct: 20, owner: 'ortak', color: '#6366f1' });
 
   const handleEkle = () => {
@@ -733,83 +732,75 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content animate-scaleIn">
-        <div className="modal-header" style={{ color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>Kart Yönetimi</h3>
-          <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.05)', color: '#334155', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20}/></button>
-        </div>
-        <div className="modal-body">
-          {kartlar.map(k => (
-            <div key={k.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b' }}>
-              <div>
-                <strong>{k.name}</strong>
-                <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                  Limit: ₺{k.limit} · Kesim: {k.cutoff_day} · Asgari: %{k.min_pct}
-                </div>
-              </div>
-              <button className="icon-btn" style={{ color: '#ef4444' }} onClick={() => handleSil(k.id)}><Trash2 size={16} /></button>
-            </div>
-          ))}
-
-          <div className="premium-form-card glass" style={{ padding: '20px', marginTop: '24px', color: '#1e293b', borderRadius: '16px', background: 'rgba(255,255,255,0.4)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-              <div style={{ background: 'var(--finans, #10b981)', padding: '6px', borderRadius: '8px', color: 'white' }}>
-                <Plus size={18} />
-              </div>
-              <h4 style={{ margin: 0, fontSize: '16px' }}>Yeni Kart Ekle</h4>
-            </div>
-
-            <div className="form-grid-v2">
-              <div className="form-field-v2 full">
-                <label><CreditCard size={14} /> Kart Adı</label>
-                <input type="text" placeholder="Örn: Garanti Bonus" value={yeniKart.name} onChange={e => setYeniKart({...yeniKart, name: e.target.value})} />
-              </div>
-              
-              <div className="form-field-v2">
-                <label>💰 Limit (₺)</label>
-                <input type="number" placeholder="0" value={yeniKart.limit} onChange={e => setYeniKart({...yeniKart, limit: e.target.value})} />
-              </div>
-
-              <div className="form-field-v2">
-                <label>📅 Kesim Günü</label>
-                <input type="number" placeholder="1-31" value={yeniKart.cutoff_day} onChange={e => setYeniKart({...yeniKart, cutoff_day: e.target.value})} />
-                <small>Ekstre kesim tarihi</small>
-              </div>
-
-              <div className="form-field-v2">
-                <label>⏰ Vade (+Gün)</label>
-                <input type="number" placeholder="10" value={yeniKart.due_day_offset} onChange={e => setYeniKart({...yeniKart, due_day_offset: e.target.value})} />
-                <small>Kesimden kaç gün sonra?</small>
-              </div>
-
-              <div className="form-field-v2">
-                <label>📉 Asgari (%)</label>
-                <input type="number" placeholder="20" value={yeniKart.min_pct} onChange={e => setYeniKart({...yeniKart, min_pct: e.target.value})} />
-                <small>Min. ödeme yüzdesi</small>
-              </div>
-
-              <div className="form-field-v2">
-                <label>👤 Sahibi</label>
-                <select value={yeniKart.owner} onChange={e => setYeniKart({...yeniKart, owner: e.target.value})}>
-                  <option value="ortak">Ortak</option>
-                  <option value="gorkem">Görkem</option>
-                  <option value="esra">Esra</option>
-                </select>
-              </div>
-
-              <div className="form-field-v2">
-                <label>🎨 Renk</label>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                   <input type="color" value={yeniKart.color} onChange={e => setYeniKart({...yeniKart, color: e.target.value})} style={{ width: '100%', height: '40px', border: 'none', borderRadius: '8px', cursor: 'pointer', padding: '2px', background: 'white' }} />
-                </div>
+    <ActionSheet isOpen={isOpen} onClose={onClose} title="💳 Kart Yönetimi">
+      <div className="modal-body" style={{ padding: 0 }}>
+        {kartlar.map(k => (
+          <div key={k.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b', borderRadius: '14px' }}>
+            <div>
+              <strong style={{ fontSize: '14px' }}>{k.name}</strong>
+              <div style={{ fontSize: '11px', opacity: 0.8 }}>
+                Limit: ₺{k.limit} · Kesim: {k.cutoff_day} · Asgari: %{k.min_pct}
               </div>
             </div>
-
-            <button className="premium-submit-btn" style={{ width: '100%', borderRadius: '50px', padding: '14px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '24px', fontSize: '16px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }} onClick={handleEkle}>
-              Kartı Kaydet
-            </button>
+            <button className="icon-btn-mini del" onClick={() => handleSil(k.id)}><Trash2 size={14} /></button>
           </div>
+        ))}
+
+        <div className="premium-form-card glass" style={{ padding: '20px', marginTop: '24px', color: '#1e293b', borderRadius: '16px', background: 'rgba(255,255,255,0.4)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+            <div style={{ background: 'var(--finans, #10b981)', padding: '6px', borderRadius: '8px', color: 'white' }}>
+              <Plus size={18} />
+            </div>
+            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800' }}>Yeni Kart Ekle</h4>
+          </div>
+
+          <div className="form-grid-v2">
+            <div className="form-field-v2 full">
+              <label><CreditCard size={14} /> Kart Adı</label>
+              <input type="text" placeholder="Örn: Garanti Bonus" value={yeniKart.name} onChange={e => setYeniKart({...yeniKart, name: e.target.value})} />
+            </div>
+            
+            <div className="form-field-v2">
+              <label>💰 Limit (₺)</label>
+              <input type="number" placeholder="0" value={yeniKart.limit} onChange={e => setYeniKart({...yeniKart, limit: e.target.value})} />
+            </div>
+
+            <div className="form-field-v2">
+              <label>📅 Kesim Günü</label>
+              <input type="number" placeholder="1-31" value={yeniKart.cutoff_day} onChange={e => setYeniKart({...yeniKart, cutoff_day: e.target.value})} />
+              <small>Ekstre kesim tarihi</small>
+            </div>
+
+            <div className="form-field-v2">
+              <label>⏰ Vade (+Gün)</label>
+              <input type="number" placeholder="10" value={yeniKart.due_day_offset} onChange={e => setYeniKart({...yeniKart, due_day_offset: e.target.value})} />
+              <small>Kesimden kaç gün sonra?</small>
+            </div>
+
+            <div className="form-field-v2">
+              <label>📉 Asgari (%)</label>
+              <input type="number" placeholder="20" value={yeniKart.min_pct} onChange={e => setYeniKart({...yeniKart, min_pct: e.target.value})} />
+              <small>Min. ödeme yüzdesi</small>
+            </div>
+
+            <div className="form-field-v2">
+              <label>👤 Sahibi</label>
+              <select value={yeniKart.owner} onChange={e => setYeniKart({...yeniKart, owner: e.target.value})}>
+                <option value="ortak">Ortak</option>
+                <option value="gorkem">Görkem</option>
+                <option value="esra">Esra</option>
+              </select>
+            </div>
+
+            <div className="form-field-v2">
+              <label>🎨 Renk</label>
+              <input type="color" value={yeniKart.color} onChange={e => setYeniKart({...yeniKart, color: e.target.value})} style={{ width: '100%', height: '44px', border: 'none', borderRadius: '12px', cursor: 'pointer', padding: '4px', background: 'white' }} />
+            </div>
+          </div>
+
+          <button className="premium-submit-btn" style={{ width: '100%', borderRadius: '50px', padding: '14px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '24px', fontSize: '16px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }} onClick={handleEkle}>
+            Kartı Kaydet
+          </button>
         </div>
       </div>
 
@@ -823,14 +814,13 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
         cancelText="Vazgeç"
         icon="💳"
       />
-    </div>
+    </ActionSheet>
   );
 }
 
-function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
-  if (!isOpen) return null;
-  const borclar = finans?.borclar || [];
 
+function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
+  const borclar = finans?.borclar || [];
   const [yeniBorc, setYeniBorc] = useState({ name: '', total: '', remaining: '', monthly: '', due_day: '' });
 
   const handleEkle = () => {
@@ -865,36 +855,32 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
   };
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content animate-scaleIn">
-        <div className="modal-header" style={{ color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>Borç/Kredi Yönetimi</h3>
-          <button onClick={onClose} style={{ background: 'rgba(0,0,0,0.05)', color: '#334155', border: 'none', borderRadius: '50%', padding: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20}/></button>
-        </div>
-        <div className="modal-body">
-          {borclar.map(b => (
-            <div key={b.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b' }}>
-              <div>
-                <strong>{b.name}</strong>
-                <div style={{ fontSize: '12px', opacity: 0.8 }}>Aylık: ₺{b.monthly} · Kalan: ₺{b.remaining}</div>
-              </div>
-              <button className="icon-btn" style={{ color: '#ef4444' }} onClick={() => handleSil(b.id)}><Trash2 size={16} /></button>
+    <ActionSheet isOpen={isOpen} onClose={onClose} title="📉 Borç & Kredi Yönetimi">
+      <div className="modal-body" style={{ padding: 0 }}>
+        {borclar.map(b => (
+          <div key={b.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b', borderRadius: '14px' }}>
+            <div>
+              <strong style={{ fontSize: '14px' }}>{b.name}</strong>
+              <div style={{ fontSize: '11px', opacity: 0.8 }}>Aylık: ₺{b.monthly} · Kalan: ₺{b.remaining}</div>
             </div>
-          ))}
-
-          <div className="glass" style={{ padding: '16px', marginTop: '20px', color: '#1e293b' }}>
-            <h4 style={{ margin: '0 0 12px 0' }}>Yeni Kredi Ekle</h4>
-            <input type="text" placeholder="Borç/Kredi Adı" value={yeniBorc.name} onChange={e => setYeniBorc({...yeniBorc, name: e.target.value})} style={{ width: '100%', marginBottom: '8px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <input type="number" placeholder="Toplam Tutar" value={yeniBorc.total} onChange={e => setYeniBorc({...yeniBorc, total: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-              <input type="number" placeholder="Kalan Tutar" value={yeniBorc.remaining} onChange={e => setYeniBorc({...yeniBorc, remaining: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-            </div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-              <input type="number" placeholder="Aylık Taksit" value={yeniBorc.monthly} onChange={e => setYeniBorc({...yeniBorc, monthly: e.target.value})} style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-              <input type="number" placeholder="Ödeme Günü" value={yeniBorc.due_day} onChange={e => setYeniBorc({...yeniBorc, due_day: e.target.value})} style={{ width: '100px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-            </div>
-            <button style={{ width: '100%', borderRadius: '50px', padding: '12px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '8px' }} onClick={handleEkle}>Ekle</button>
+            <button className="icon-btn-mini del" onClick={() => handleSil(b.id)}><Trash2 size={14} /></button>
           </div>
+        ))}
+
+        <div className="glass" style={{ padding: '20px', marginTop: '20px', color: '#1e293b', borderRadius: '16px' }}>
+          <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '800' }}>Yeni Kredi Ekle</h4>
+          <input type="text" placeholder="Borç/Kredi Adı" value={yeniBorc.name} onChange={e => setYeniBorc({...yeniBorc, name: e.target.value})} style={{ width: '100%', marginBottom: '12px', padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+            <input type="number" placeholder="Toplam Tutar" value={yeniBorc.total} onChange={e => setYeniBorc({...yeniBorc, total: e.target.value})} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+            <input type="number" placeholder="Kalan Tutar" value={yeniBorc.remaining} onChange={e => setYeniBorc({...yeniBorc, remaining: e.target.value})} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+            <input type="number" placeholder="Aylık Taksit" value={yeniBorc.monthly} onChange={e => setYeniBorc({...yeniBorc, monthly: e.target.value})} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+            <input type="number" placeholder="Ödeme Günü" value={yeniBorc.due_day} onChange={e => setYeniBorc({...yeniBorc, due_day: e.target.value})} style={{ width: '110px', padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+          </div>
+          <button className="premium-submit-btn" style={{ width: '100%', borderRadius: '50px', padding: '14px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={handleEkle}>
+            Kredi Kaydet
+          </button>
         </div>
       </div>
 
@@ -908,6 +894,6 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
         cancelText="Vazgeç"
         icon="📉"
       />
-    </div>
+    </ActionSheet>
   );
 }
