@@ -644,6 +644,26 @@
   opacity: 0.7;
 }
 
+.premium-submit-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 50px;
+  border: none;
+  background: linear-gradient(135deg, #2E1065 0%, #4C1D95 100%);
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(46, 16, 101, 0.25);
+  transition: all 0.2s;
+}
+
+.premium-submit-btn:hover {
+  filter: brightness(1.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(46, 16, 101, 0.3);
+}
+
 .premium-submit-btn:active {
   transform: scale(0.98);
 }
