@@ -67,8 +67,9 @@ export default function ActionSheet({
                 background: 'var(--card)',
                 borderTopLeftRadius: '32px',
                 borderTopRightRadius: '32px',
-                width: '100vw',
-                maxWidth: '100vw',
+                width: '100%',
+                maxWidth: '500px',
+                margin: '0 auto',
                 boxSizing: 'border-box',
                 zIndex: 1000000,
                 display: 'flex',
@@ -124,8 +125,9 @@ export default function ActionSheet({
               <div style={{ 
                 flex: 1, 
                 overflowY: 'auto', 
-                overflowX: 'hidden',
-                padding: '20px 24px 40px',
+                overflowX: 'hidden', 
+                padding: '16px 16px 40px',
+                width: '100%',
                 WebkitOverflowScrolling: 'touch'
               }}>
                 {children}
@@ -134,7 +136,7 @@ export default function ActionSheet({
               {/* Footer */}
               {footer && (
                 <div style={{ 
-                  padding: '16px 24px calc(16px + env(safe-area-inset-bottom, 20px))', 
+                  padding: '16px 16px calc(16px + env(safe-area-inset-bottom, 20px))', 
                   borderTop: '1px solid var(--brd)',
                   background: 'var(--card)'
                 }}>
