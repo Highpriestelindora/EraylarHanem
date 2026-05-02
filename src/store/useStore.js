@@ -527,41 +527,25 @@ async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
 
 async function deleteHarcamaFromSupabase(id, familyId = DEFAULT_FID, item = null) {
   try {
-    // 1. Serbest ID ile silme (RLS kapalı olduğu için en garantili yöntem)
-    // family_id kontrolünü opsiyonel yapalım ki NULL olan kayıtlar da silinebilsin.
-    const { error, count } = await supabase
+    // 1. Serbest ID ile fiziksel silme
+    const { count } = await supabase
       .from('finans_harcamalar')
       .delete()
       .eq('id', id);
     
-    if (count > 0) {
-      console.log('✅ Fiziksel silme başarılı (ID ile).');
-      return; 
-    }
+    if (count > 0) return; 
 
-    // 2. Eğer ID ile bulunamadıysa (local ID uyuşmazlığı), başlık ve tarih ile dene
+    // 2. Fallback: ID uyuşmazlığı varsa özelliklerle fiziksel silme
     if (item) {
-       const { count: attrCount } = await supabase
+       await supabase
         .from('finans_harcamalar')
         .delete()
         .eq('baslik', item.baslik)
         .eq('tarih', item.tarih)
         .eq('tutar', Number(item.tutar));
-       
-       if (attrCount > 0) {
-         console.log('✅ Fiziksel silme başarılı (Özellikler ile).');
-         return;
-       }
     }
-
-    // 3. Hala silinemiyorsa işaretle (Soft Delete Fallback)
-    await supabase
-      .from('finans_harcamalar')
-      .update({ durum: 'silindi' })
-      .eq('id', id);
-
   } catch (err) {
-    console.error('❌ deleteHarcamaFromSupabase critical error:', err);
+    console.error('❌ deleteHarcamaFromSupabase hatası:', err);
   }
 }
 
@@ -578,7 +562,6 @@ async function fetchBuAyHarcamalar(familyId = DEFAULT_FID) {
       .select('*')
       .eq('family_id', familyId)
       .eq('ay', buAy)
-      .neq('durum', 'silindi') // Silinmişleri getirme
       .order('tarih', { ascending: false });
     if (error) throw error;
     return data || [];
@@ -595,7 +578,6 @@ async function fetchGecmisAyFromSupabase(ay, familyId = DEFAULT_FID) {
       .select('*')
       .eq('family_id', familyId)
       .eq('ay', ay)
-      .neq('durum', 'silindi') // Silinmişleri getirme
       .order('tarih', { ascending: false });
     if (error) throw error;
     return data || [];
