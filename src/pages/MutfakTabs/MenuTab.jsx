@@ -530,11 +530,11 @@ export default function MenuTab() {
         .p-cat-btn .p-cat-label { font-size: 9px; font-weight: 800; white-space: nowrap; }
 
         .recipe-scroll { max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-bottom: 30px; margin-top: 10px; }
-        .recipe-item-mini { padding: 15px 12px; border-radius: 16px; margin-bottom: 2px; min-height: 60px; display: flex; align-items: center; }
+        .recipe-item-mini { padding: 12px 8px; border-radius: 16px; margin-bottom: 4px; min-height: 65px; display: flex; align-items: center; }
         .ri-content { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
         .ri-info { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
         .ri-emoji { font-size: 22px; flex-shrink: 0; }
-        .ri-name { font-size: 14px; font-weight: 800; white-space: normal; line-height: 1.2; }
+        .ri-name { font-size: 13px; font-weight: 800; white-space: normal; line-height: 1.1; word-break: break-word; }
         .ri-btns { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
         
         .add-missing-mini-btn { 
@@ -564,8 +564,8 @@ export default function MenuTab() {
         .recipe-select-btn:active { transform: scale(0.94); }
         .recipe-select-btn span { line-height: 1.1; }
         .recipe-select-btn .plus { font-size: 14px; font-weight: 400; color: #2E1065; }
-        .recipe-select-btn .label { font-size: 13px; font-weight: 800; color: #2E1065; }
-        .recipe-select-btn .sub { font-size: 10px; font-weight: 700; color: #2E1065; font-style: italic; opacity: 0.8; }
+        .recipe-select-btn .label { font-size: 11px; font-weight: 800; color: #2E1065; }
+        .recipe-select-btn .sub { font-size: 9px; font-weight: 700; color: #2E1065; font-style: italic; opacity: 0.8; }
 
         .ri-text { display: flex; flex-direction: column; gap: 2px; }
         .ri-missing { font-size: 11px; font-weight: 700; color: #ef4444; }

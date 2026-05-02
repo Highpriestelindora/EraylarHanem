@@ -595,7 +595,7 @@
 .form-grid-v2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px; /* Reduced gap */
 }
 
 .form-field-v2.full {
@@ -671,9 +671,46 @@
 /* Mobile Adjustments */
 @media (max-width: 600px) {
   .form-grid-v2 {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
   .form-field-v2.full {
     grid-column: span 1;
   }
+  .premium-form-card {
+    padding: 16px !important;
+  }
+  .f-tab-content {
+    padding: 16px !important;
+  }
+}
+
+/* Card Actions */
+.kmc-actions-box {
+  display: flex;
+  gap: 8px;
+  margin-right: 8px;
+}
+
+.kmc-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(0,0,0,0.05);
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kmc-action-btn:hover {
+  background: rgba(0,0,0,0.1);
+  color: var(--txt);
+}
+
+.kmc-action-btn.del:hover {
+  background: #fee2e2;
+  color: #ef4444;
 }

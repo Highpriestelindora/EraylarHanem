@@ -64,16 +64,18 @@ function FloatingHub() {
   const handleAddExpense = async () => {
     if (!expAmount) return toast.error('Lütfen tutar girin');
     
-    // Açıklama boşsa kategori adını kullan
     const finalTitle = expTitle.trim() || `${expCategory} Harcaması`;
-    await useStore.getState().addHarcama({
-      baslik: finalTitle,
-      tutar: parseFloat(expAmount.replace(',', '.')),
-      kategori: expCategory,
-      kart_id: expCard || null,
-      odenme_turu: expCard ? 'kart' : 'nakit',
-      kayit_eden: currentUser?.name || 'Sistem',
-      kaynak: 'Hızlı Ödeme'
+    const amount = parseFloat(expAmount.replace(',', '.'));
+
+    // Doğrudan addHarcama yerine addExpense (onay havuzu) kullanıyoruz
+    useStore.getState().addExpense({
+      title: finalTitle,
+      amount: amount,
+      category: expCategory,
+      payer: currentUser?.name || 'Sistem',
+      source: 'Hızlı Ödeme',
+      // Onay sırasında kart seçilecek ama hızlı girişte tercih edilen varsa saklayalım
+      preferredCardId: expCard || null
     });
 
     setExpTitle('');
@@ -81,7 +83,7 @@ function FloatingHub() {
     setExpCard('');
     setActiveModal(null);
     setIsOpen(false);
-    toast.success('Hızlı harcama sisteme işlendi! 💸');
+    toast.success('Harcama onay havuzuna gönderildi! 📥');
   };
 
   const handlePetClick = (pet) => {

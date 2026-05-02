@@ -51,14 +51,15 @@ export default function Kasa() {
     return v.price || 0;
   };
 
-  const totalCash = Object.values(K.bakiyeler || {}).reduce((a, b) => a + b, 0);
-  const totalVarlik = (K.varliklar || []).reduce((acc, v) => acc + (v.amount * getAssetPrice(v)), 0);
-  const totalTasinmaz = (K.tasinmazlar || []).reduce((acc, t) => acc + (t.value || 0), 0);
-  const totalTasit = (garaj || []).reduce((acc, v) => acc + (v.marketValue || 0), 0);
+  const totalBanka = (K.bankaHesaplari || []).reduce((acc, b) => acc + Number(b.balance || 0), 0);
+  const totalCash = Object.values(K.bakiyeler || {}).reduce((a, b) => a + Number(b || 0), 0) + totalBanka;
+  const totalVarlik = (K.varliklar || []).reduce((acc, v) => acc + (Number(v.amount) * Number(getAssetPrice(v))), 0);
+  const totalTasinmaz = (K.tasinmazlar || []).reduce((acc, t) => acc + Number(t.value || 0), 0);
+  const totalTasit = (garaj || []).reduce((acc, v) => acc + Number(v.marketValue || 0), 0);
   
   const totalWealth = totalCash + totalVarlik + totalTasinmaz + totalTasit;
-  const totalDebt = (finans?.borclar || []).reduce((a, b) => a + (b.remaining || 0), 0) + 
-                    (finans?.kartlar || []).reduce((a, b) => a + (b.balance || 0), 0);
+  const totalDebt = (finans?.borclar || []).reduce((a, b) => a + Number(b.remaining || 0), 0) + 
+                    (finans?.kartlar || []).reduce((a, b) => a + Number(b.balance || 0), 0);
   const netWorth = totalWealth - totalDebt;
 
   const requestConfirm = (message, onConfirm) => {
@@ -68,6 +69,7 @@ export default function Kasa() {
   const tabs = [
     { id: 'ozet', label: 'Özet', emoji: '📊' },
     { id: 'birikim', label: 'Birikim', emoji: '🪙' },
+    { id: 'banka', label: 'Banka', emoji: '🏦' },
     { id: 'tasinmaz', label: 'Taşınmaz', emoji: '🏠' },
     { id: 'kumbara', label: 'Kumbara', emoji: '🎯' }
   ];
@@ -240,6 +242,65 @@ export default function Kasa() {
           </div>
         )}
 
+        {activeTab === 'banka' && (
+          <div className="banka-view animate-fadeIn">
+            <div className="section-header-v2 mt-20">
+              <h3>🏦 Banka Hesapları</h3>
+              <button className="pill-btn" style={{ background: 'var(--kasa)' }} onClick={() => setModal({ open: true, type: 'addBanka' })}>
+                <Plus size={16} /> Hesap Ekle
+              </button>
+            </div>
+            <div className="bank-list-v4">
+              {(K.bankaHesaplari || []).map(b => (
+                <div key={b.id} className="bank-card glass-premium">
+                  <div className="bc-header">
+                    <div className="bc-bank-info">
+                      <span className="bc-icon">{b.icon || '🏦'}</span>
+                      <div className="bc-texts">
+                        <strong>{b.name}</strong>
+                        <small>{b.bank} · {b.owner === 'gorkem' ? 'Görkem' : 'Esra'}</small>
+                      </div>
+                    </div>
+                    <div className="bc-actions">
+                      <button onClick={() => setModal({ open: true, type: 'editBanka', data: b })}><Edit3 size={16} /></button>
+                    </div>
+                  </div>
+                  <div className="bc-body">
+                    <div className="bc-main-row">
+                      <div className="bc-balance">
+                        <small>GÜNCEL BAKİYE</small>
+                        <h2 className={b.balance < 0 ? 'neg' : ''}>{formatMoney(b.balance, privacy)}</h2>
+                      </div>
+                      {b.kmh > 0 && (
+                        <div className="bc-kmh-info">
+                          <small>KMH LİMİTİ</small>
+                          <strong>{formatMoney(b.kmh, privacy)}</strong>
+                        </div>
+                      )}
+                    </div>
+                    {b.iban && (
+                      <div className="bc-iban" onClick={() => { navigator.clipboard.writeText(b.iban); toast.success('IBAN kopyalandı!'); }}>
+                        <code>{b.iban}</code>
+                      </div>
+                    )}
+                  </div>
+                  <div className="bc-footer">
+                    <button className="bc-quick-update" onClick={() => setModal({ open: true, type: 'updateBankaBakiye', data: b })}>
+                      <PlusCircle size={14} /> Bakiye Güncelle
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {(K.bankaHesaplari || []).length === 0 && (
+                <div className="empty-state glass">
+                  <Landmark size={48} opacity={0.2} />
+                  <p>Henüz banka hesabı eklenmemiş.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'tasinmaz' && (
           <div className="tasinmaz-view animate-fadeIn">
             <div className="section-header-v2">
@@ -364,7 +425,10 @@ export default function Kasa() {
           modal.type === 'editTasinmaz' ? '🏠 Taşınmazı Düzenle' :
           modal.type === 'addGoal' ? '🎯 Yeni Hedef' :
           modal.type === 'editGoal' ? '🎯 Hedefi Düzenle' :
-          modal.type === 'fillGoal' ? '💰 Kumbaraya Ekle' : ''
+          modal.type === 'fillGoal' ? '💰 Kumbaraya Ekle' : 
+          modal.type === 'addBanka' ? '🏦 Yeni Banka Hesabı' :
+          modal.type === 'editBanka' ? '🏦 Hesabı Düzenle' :
+          modal.type === 'updateBankaBakiye' ? '💰 Bakiye Güncelle' : ''
         }
       >
         <KasaModals type={modal.type} data={modal.data} onClose={() => setModal({ open: false, type: null, data: null })} />
@@ -419,6 +483,13 @@ function KasaModals({ type, data, onClose }) {
         updateKasaBakiye(source, kasa.bakiyeler[source] - Number(form.amount));
         updateGoal(data.id, { current: data.current + Number(form.amount) });
         toast.success('Kumbaraya eklendi! 🎯');
+      } else if (type === 'addBanka') {
+        useStore.getState().addBankaHesabi(form);
+      } else if (type === 'editBanka') {
+        useStore.getState().updateBankaHesabi(data.id, form);
+      } else if (type === 'updateBankaBakiye') {
+        useStore.getState().updateBankaBakiye(data.id, form.balance);
+        toast.success('Bakiye güncellendi! 💰');
       }
       onClose();
     } catch (err) {
@@ -613,6 +684,59 @@ function KasaModals({ type, data, onClose }) {
           <input type="number" placeholder="0₺" onChange={e => setForm({...form, amount: e.target.value})} />
         </div>
         <button className="submit-btn" onClick={handleSave}>KUMBARAYA AT</button>
+      </div>
+    );
+  }
+
+  if (type === 'addBanka' || type === 'editBanka') {
+    return (
+      <div className="modal-form">
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Hesap Adı</label>
+            <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Örn: YKB Maaş Hesabı" />
+          </div>
+          <div className="form-group">
+            <label>Banka</label>
+            <input value={form.bank} onChange={e => setForm({...form, bank: e.target.value})} placeholder="Örn: Yapı Kredi" />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>IBAN</label>
+          <input value={form.iban} onChange={e => setForm({...form, iban: e.target.value})} placeholder="TR..." />
+        </div>
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Başlangıç Bakiyesi</label>
+            <input type="number" value={form.balance} onChange={e => setForm({...form, balance: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>KMH Limiti (Eksiye Düşebilir)</label>
+            <input type="number" value={form.kmh} onChange={e => setForm({...form, kmh: e.target.value})} placeholder="0₺" />
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Hesap Sahibi</label>
+          <select value={form.owner} onChange={e => setForm({...form, owner: e.target.value})}>
+            <option value="gorkem">Görkem</option>
+            <option value="esra">Esra</option>
+            <option value="ortak">Ortak</option>
+          </select>
+        </div>
+        <button className="submit-btn" onClick={handleSave}>{type === 'addBanka' ? 'HESAP EKLE' : 'GÜNCELLE'}</button>
+        {type === 'editBanka' && <button className="del-btn-link" onClick={() => { useStore.getState().deleteBankaHesabi(data.id); onClose(); }}>Hesabı Sil</button>}
+      </div>
+    );
+  }
+
+  if (type === 'updateBankaBakiye') {
+    return (
+      <div className="modal-form">
+        <div className="form-group">
+          <label>{data.name} - Güncel Bakiye</label>
+          <input type="number" value={form.balance} onChange={e => setForm({...form, balance: e.target.value})} autoFocus />
+        </div>
+        <button className="submit-btn" onClick={handleSave}>GÜNCELLE</button>
       </div>
     );
   }

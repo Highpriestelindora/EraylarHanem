@@ -100,6 +100,10 @@ const DEFAULT_STATE = {
       { id: 2, name: 'Yaz Tatili', target: 80000, current: 25000, icon: '🌴', deadline: '2026-07-15', priority: 'Orta', category: 'Tatil', owner: 'ortak' },
       { id: Date.now(), name: 'iPhone 17 Pro Max', target: 120000, current: 30000, icon: '📱', deadline: '2026-10-25', priority: 'Orta', category: 'Teknoloji', owner: 'gorkem' }
     ],
+    bankaHesaplari: [
+      { id: 'gorkem-ykb', name: 'Yapı Kredi (Maaş)', bank: 'Yapı Kredi', iban: '', balance: 45000, owner: 'gorkem', icon: '🏦' },
+      { id: 'esra-garanti', name: 'Garanti (Birikim)', bank: 'Garanti BBVA', iban: '', balance: 12000, owner: 'esra', icon: '🏦' }
+    ],
     privacyMode: false,
     rates: { EUR: 35.2, USD: 32.5 }
   },
@@ -463,10 +467,11 @@ const DEFAULT_FID = 'eraylar-family-shared-id';
 
 async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('finans_harcamalar')
       .insert({
         family_id: familyId,
+        ay: harcama.ay, // Added ay column
         tarih: harcama.tarih,
         baslik: harcama.baslik,
         tutar: Number(harcama.tutar),
@@ -477,16 +482,24 @@ async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
         kaynak: harcama.kaynak || 'Manuel',
         durum: 'onaylı',
         notlar: harcama.notlar || null,
-      });
+      })
+      .select();
+
     if (error) throw error;
+    return data && data[0] ? data[0] : null;
   } catch (err) {
     console.error('❌ finans_harcamalar push error:', err);
     throw err;
   }
 }
 
-async function deleteHarcamaFromSupabase(id) {
-  const { error } = await supabase.from('finans_harcamalar').delete().eq('id', id);
+async function deleteHarcamaFromSupabase(id, familyId = DEFAULT_FID) {
+  // RLS politikaları için family_id ile filtrelemek daha güvenlidir
+  const { error } = await supabase
+    .from('finans_harcamalar')
+    .delete()
+    .eq('id', id)
+    .eq('family_id', familyId);
   if (error) throw error;
 }
 
@@ -502,7 +515,7 @@ async function fetchBuAyHarcamalar(familyId = DEFAULT_FID) {
       .from('finans_harcamalar')
       .select('*')
       .eq('family_id', familyId)
-      .eq('ay', buAy)
+      .eq('ay', buAy) // Use the dedicated month column
       .order('tarih', { ascending: false });
     if (error) throw error;
     return data || [];
@@ -1148,21 +1161,28 @@ const useStore = create(
           kayit_eden: data.kayit_eden || state.currentUser?.name || 'Sistem',
           kaynak: data.kaynak || data.source || 'Manuel',
           notlar: data.notlar || null,
+          ay: buAy, // Ensure ay is in the object
         };
 
-        // Supabase'e yaz
-        await pushHarcamaToSupabase(harcama, state.family_id);
+        // Supabase'e yaz ve gerçek ID'yi al
+        const savedItem = await pushHarcamaToSupabase(harcama, state.family_id);
+        
+        // Eğer savedItem dönmediyse (RLS veya hata), local ID ile devam et ama uyar
+        const finalItem = savedItem || { ...harcama, id: Date.now(), ay: buAy };
 
-        // UI cache'ini güncelle
-        const yeniBuAy = [{ ...harcama, id: Date.now(), ay: buAy }, ...state.finans.buAyHarcamalar];
+        // UI cache'ini güncelle (Gerçek ID ile)
+        const yeniBuAy = [
+          finalItem, 
+          ...state.finans.buAyHarcamalar
+        ];
 
         // Kart beklenen borcunu güncelle
         let yeniMutabakat = { ...state.finans.kartMutabakat };
-        if (harcama.kart_id && yeniMutabakat[harcama.kart_id]) {
-          const mevcutBeklenen = yeniMutabakat[harcama.kart_id].beklenen || 0;
+        if (harcama.kart_id) {
+          const current = yeniMutabakat[harcama.kart_id] || { beklenen: 0, gercek: null, ay: buAy };
           yeniMutabakat[harcama.kart_id] = {
-            ...yeniMutabakat[harcama.kart_id],
-            beklenen: mevcutBeklenen + harcama.tutar,
+            ...current,
+            beklenen: (current.beklenen || 0) + harcama.tutar,
             ay: buAy,
           };
           // Supabase'deki mutabakat kaydını güncelle
@@ -1215,24 +1235,74 @@ const useStore = create(
 
       deleteHarcama: async (id) => {
         try {
-          await deleteHarcamaFromSupabase(id);
-          const updatedHarcamalar = (get().finans.buAyHarcamalar || []).filter(h => h.id !== id);
-          set({ finans: { ...get().finans, buAyHarcamalar: updatedHarcamalar } });
+          const state = get();
+          const item = state.finans.buAyHarcamalar.find(h => h.id === id);
+          
+          // Önce Supabase'den sil (family_id ile RLS onayı)
+          await deleteHarcamaFromSupabase(id, state.family_id);
+          
+          // Sonra yerel state'i güncelle
+          const updatedHarcamalar = (state.finans.buAyHarcamalar || []).filter(h => h.id !== id);
+          let yeniMutabakat = { ...state.finans.kartMutabakat };
+          
+          if (item && item.kart_id && yeniMutabakat[item.kart_id]) {
+            const buAy = new Date().toISOString().slice(0, 7);
+            const current = yeniMutabakat[item.kart_id];
+            yeniMutabakat[item.kart_id] = {
+              ...current,
+              beklenen: Math.max(0, (Number(current.beklenen) || 0) - Number(item.tutar)),
+            };
+            upsertKartMutabakat(item.kart_id, buAy, yeniMutabakat[item.kart_id].beklenen, current.gercek, state.family_id);
+          }
+          
+          set({ finans: { ...state.finans, buAyHarcamalar: updatedHarcamalar, kartMutabakat: yeniMutabakat } });
           toast.success('Harcama silindi.');
           get().saveToSupabase();
         } catch (err) {
-          console.error(err);
-          toast.error('Silme işlemi başarısız.');
+          console.error('❌ Harcama silme hatası:', err);
+          toast.error('Silme işlemi başarısız. Lütfen internet bağlantınızı kontrol edin.');
         }
       },
 
       updateHarcama: async (id, updates) => {
         try {
+          const oldItem = get().finans.buAyHarcamalar.find(h => h.id === id);
           await updateHarcamaInSupabase(id, updates);
+          
           const updatedHarcamalar = (get().finans.buAyHarcamalar || []).map(h => 
             h.id === id ? { ...h, ...updates } : h
           );
-          set({ finans: { ...get().finans, buAyHarcamalar: updatedHarcamalar } });
+          
+          let yeniMutabakat = { ...get().finans.kartMutabakat };
+          const buAy = new Date().toISOString().slice(0, 7);
+
+          // Eski karttan düş
+          if (oldItem && oldItem.kart_id && yeniMutabakat[oldItem.kart_id]) {
+            yeniMutabakat[oldItem.kart_id].beklenen = Math.max(0, (yeniMutabakat[oldItem.kart_id].beklenen || 0) - Number(oldItem.tutar));
+          }
+          
+          // Yeni karta (veya aynı karta yeni tutarı) ekle
+          const newKartId = updates.kart_id !== undefined ? updates.kart_id : (oldItem?.kart_id);
+          const newTutar = updates.tutar !== undefined ? Number(updates.tutar) : Number(oldItem?.tutar);
+
+          if (newKartId) {
+            const current = yeniMutabakat[newKartId] || { beklenen: 0, gercek: null, ay: buAy };
+            yeniMutabakat[newKartId] = {
+              ...current,
+              beklenen: (current.beklenen || 0) + newTutar,
+              ay: buAy
+            };
+          }
+
+          // Supabase mutabakatlarını güncelle (etkilenen kartlar için)
+          if (oldItem && oldItem.kart_id) {
+             upsertKartMutabakat(oldItem.kart_id, buAy, yeniMutabakat[oldItem.kart_id].beklenen, yeniMutabakat[oldItem.kart_id].gercek, get().family_id);
+          }
+          if (newKartId && newKartId !== oldItem?.kart_id) {
+             upsertKartMutabakat(newKartId, buAy, yeniMutabakat[newKartId].beklenen, yeniMutabakat[newKartId].gercek, get().family_id);
+          }
+
+          set({ finans: { ...get().finans, buAyHarcamalar: updatedHarcamalar, kartMutabakat: yeniMutabakat } });
           toast.success('Harcama güncellendi.');
           get().saveToSupabase();
         } catch (err) {
@@ -1274,7 +1344,10 @@ const useStore = create(
           yeniMutabakat[k] = { ...yeniMutabakat[k], beklenen: 0, ay: buAy };
         });
         data.forEach(h => {
-          if (h.kart_id && yeniMutabakat[h.kart_id]) {
+          if (h.kart_id) {
+            if (!yeniMutabakat[h.kart_id]) {
+              yeniMutabakat[h.kart_id] = { beklenen: 0, gercek: null, ay: buAy };
+            }
             yeniMutabakat[h.kart_id].beklenen += Number(h.tutar);
           }
         });
@@ -1466,6 +1539,43 @@ const useStore = create(
         const g = (state.kasa.kumbaralar || []).find(x => x.id === id);
         set({ kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(x => x.id !== id) } });
         if (g) get().addLog('Hedef Silindi', `${g.name}`);
+        get().saveToSupabase();
+      },
+
+      // ── Kasa Banka Actions ──────────────────────────────
+      addBankaHesabi: (hesap) => {
+        const state = get();
+        const newHesap = { 
+          id: Date.now().toString(), 
+          ...hesap,
+          balance: Number(hesap.balance || 0),
+          kmh: Number(hesap.kmh || 0)
+        };
+        set({ kasa: { ...state.kasa, bankaHesaplari: [...(state.kasa.bankaHesaplari || []), newHesap] } });
+        get().addLog('Banka', `Yeni banka hesabı eklendi: ${hesap.name}`);
+        get().saveToSupabase();
+      },
+      updateBankaHesabi: (id, updates) => {
+        const state = get();
+        const updated = (state.kasa.bankaHesaplari || []).map(h => h.id === id ? { 
+          ...h, 
+          ...updates,
+          balance: updates.balance !== undefined ? Number(updates.balance) : h.balance,
+          kmh: updates.kmh !== undefined ? Number(updates.kmh) : h.kmh
+        } : h);
+        set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
+        get().saveToSupabase();
+      },
+      deleteBankaHesabi: (id) => {
+        const state = get();
+        const updated = (state.kasa.bankaHesaplari || []).filter(h => h.id !== id);
+        set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
+        get().saveToSupabase();
+      },
+      updateBankaBakiye: (id, newBalance) => {
+        const state = get();
+        const updated = (state.kasa.bankaHesaplari || []).map(h => h.id === id ? { ...h, balance: Number(newBalance) } : h);
+        set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
         get().saveToSupabase();
       },
 

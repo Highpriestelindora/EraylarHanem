@@ -248,6 +248,8 @@ const KrediTab = React.memo(({ finans, prv }) => {
 
   const [inputMap, setInputMap] = useState({});
   const [expandedKart, setExpandedKart] = useState(null);
+  const [editingKart, setEditingKart] = useState(null);
+  const [deletingKartId, setDeletingKartId] = useState(null);
   const [showKartModal, setShowKartModal] = useState(false);
   const [showBorcModal, setShowBorcModal] = useState(false);
   const buAy = new Date().toISOString().slice(0, 7);
@@ -278,6 +280,15 @@ const KrediTab = React.memo(({ finans, prv }) => {
               <div className="kmc-name">
                 <strong>{kart.name}</strong>
                 <small>{kart.owner === 'gorkem' ? '👨🏻‍💻 Görkem' : '👩 Esra'} · Kesim: {kart.cutoff_day}'i</small>
+              </div>
+
+              <div className="kmc-actions-box">
+                <button className="kmc-action-btn" onClick={(e) => { e.stopPropagation(); setEditingKart(kart); }}>
+                  <Edit size={14} />
+                </button>
+                <button className="kmc-action-btn del" onClick={(e) => { e.stopPropagation(); setDeletingKartId(kart.id); }}>
+                  <Trash2 size={14} />
+                </button>
               </div>
               <div className="kmc-beklenen">
                 <small>Beklenen</small>
@@ -385,8 +396,30 @@ const KrediTab = React.memo(({ finans, prv }) => {
         );
       })}
 
-      <KartYonetimModal isOpen={showKartModal} onClose={() => setShowKartModal(false)} finans={finans} updateFinansData={updateFinansData} />
+      <KartYonetimModal 
+        isOpen={showKartModal || !!editingKart} 
+        onClose={() => { setShowKartModal(false); setEditingKart(null); }} 
+        finans={finans} 
+        updateFinansData={updateFinansData} 
+        initialData={editingKart}
+      />
       <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
+
+      <ConfirmModal 
+        isOpen={!!deletingKartId}
+        title="Kartı Sil"
+        message="Bu kredi kartını silmek istediğine emin misin? Bu karta bağlı tüm mutabakat verileri de silinecektir."
+        onConfirm={() => {
+          const newKartlar = kartlar.filter(k => k.id !== deletingKartId);
+          updateFinansData('kartlar', newKartlar);
+          toast.success('Kart silindi!');
+          setDeletingKartId(null);
+        }}
+        onCancel={() => setDeletingKartId(null)}
+        confirmText="Evet, Sil"
+        cancelText="Vazgeç"
+        icon="🗑️"
+      />
     </div>
   );
 });
@@ -695,63 +728,59 @@ export default function Finans() {
 
 // ── Yönetim Modalları ─────────────────────────────────────────
 
-function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
+function KartYonetimModal({ isOpen, onClose, finans, updateFinansData, initialData }) {
   const kartlar = finans?.kartlar || [];
-  const [yeniKart, setYeniKart] = useState({ id: '', name: '', limit: '', cutoff_day: '', due_day_offset: 10, min_pct: 20, owner: 'ortak', color: '#6366f1' });
+  const defaults = { id: '', name: '', limit: '', cutoff_day: '', due_day_offset: 10, min_pct: 20, owner: 'ortak', color: '#6366f1' };
+  const [yeniKart, setYeniKart] = useState(defaults);
 
-  const handleEkle = () => {
+  useEffect(() => {
+    if (initialData) setYeniKart(initialData);
+    else setYeniKart(defaults);
+  }, [initialData, isOpen]);
+
+  const handleSave = () => {
     if (!yeniKart.name || !yeniKart.limit || !yeniKart.cutoff_day) return toast.error('Eksik alanları doldurun!');
-    const kartId = yeniKart.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
-    const newKartlar = [...kartlar, { 
-      ...yeniKart, 
-      id: kartId, 
-      limit: Number(yeniKart.limit), 
-      cutoff_day: Number(yeniKart.cutoff_day), 
-      due_day_offset: Number(yeniKart.due_day_offset),
-      min_pct: Number(yeniKart.min_pct),
-      balance: 0 
-    }];
-    updateFinansData('kartlar', newKartlar);
-    setYeniKart({ id: '', name: '', limit: '', cutoff_day: '', due_day_offset: 10, min_pct: 20, owner: 'ortak', color: '#6366f1' });
-    toast.success('Kart eklendi!');
-  };
-
-  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
-
-  const handleSil = (id) => {
-    setDeleteModal({ open: true, id });
-  };
-
-  const confirmSil = () => {
-    if (deleteModal.id) {
-      const newKartlar = kartlar.filter(k => k.id !== deleteModal.id);
+    
+    if (initialData) {
+      const newKartlar = kartlar.map(k => k.id === initialData.id ? { 
+        ...yeniKart, 
+        limit: Number(yeniKart.limit), 
+        cutoff_day: Number(yeniKart.cutoff_day), 
+        due_day_offset: Number(yeniKart.due_day_offset),
+        min_pct: Number(yeniKart.min_pct)
+      } : k);
       updateFinansData('kartlar', newKartlar);
-      toast.success('Kart silindi!');
-      setDeleteModal({ open: false, id: null });
+      toast.success('Kart güncellendi!');
+    } else {
+      const kartId = yeniKart.name.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now();
+      const newKartlar = [...kartlar, { 
+        ...yeniKart, 
+        id: kartId, 
+        limit: Number(yeniKart.limit), 
+        cutoff_day: Number(yeniKart.cutoff_day), 
+        due_day_offset: Number(yeniKart.due_day_offset),
+        min_pct: Number(yeniKart.min_pct),
+        balance: 0 
+      }];
+      updateFinansData('kartlar', newKartlar);
+      toast.success('Kart eklendi!');
     }
+    onClose();
   };
+
 
   return (
-    <ActionSheet isOpen={isOpen} onClose={onClose} title="💳 Kart Yönetimi">
+    <ActionSheet isOpen={isOpen} onClose={onClose} title={initialData ? "✏️ Kart Düzenle" : "💳 Kart Yönetimi"}>
       <div className="modal-body" style={{ padding: 0 }}>
-        {kartlar.map(k => (
-          <div key={k.id} className="glass" style={{ padding: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#1e293b', borderRadius: '14px' }}>
-            <div>
-              <strong style={{ fontSize: '14px' }}>{k.name}</strong>
-              <div style={{ fontSize: '11px', opacity: 0.8 }}>
-                Limit: ₺{k.limit} · Kesim: {k.cutoff_day} · Asgari: %{k.min_pct}
-              </div>
-            </div>
-            <button className="icon-btn-mini del" onClick={() => handleSil(k.id)}><Trash2 size={14} /></button>
-          </div>
-        ))}
 
         <div className="premium-form-card glass" style={{ padding: '20px', marginTop: '24px', color: '#1e293b', borderRadius: '16px', background: 'rgba(255,255,255,0.4)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
             <div style={{ background: 'var(--finans, #10b981)', padding: '6px', borderRadius: '8px', color: 'white' }}>
-              <Plus size={18} />
+              {initialData ? <Edit size={18} /> : <Plus size={18} />}
             </div>
-            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800' }}>Yeni Kart Ekle</h4>
+            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800' }}>
+              {initialData ? 'Kart Bilgilerini Güncelle' : 'Yeni Kart Ekle'}
+            </h4>
           </div>
 
           <div className="form-grid-v2">
@@ -798,22 +827,15 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
             </div>
           </div>
 
-          <button className="premium-submit-btn" style={{ width: '100%', borderRadius: '50px', padding: '14px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', marginTop: '24px', fontSize: '16px', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }} onClick={handleEkle}>
-            Kartı Kaydet
+          <button 
+            className="premium-submit-btn" 
+            style={{ width: '100%', marginTop: '24px' }} 
+            onClick={handleSave}
+          >
+            {initialData ? 'Değişiklikleri Kaydet' : 'Kartı Sisteme Tanımla'}
           </button>
         </div>
       </div>
-
-      <ConfirmModal 
-        isOpen={deleteModal.open}
-        title="Kartı Siliyorsun"
-        message="Bu kredi kartını silmek istediğine emin misin? Tüm limit ve borç verileri etkilenebilir."
-        onConfirm={confirmSil}
-        onCancel={() => setDeleteModal({ open: false, id: null })}
-        confirmText="Evet, Sil"
-        cancelText="Vazgeç"
-        icon="💳"
-      />
     </ActionSheet>
   );
 }
@@ -867,19 +889,47 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
           </div>
         ))}
 
-        <div className="glass" style={{ padding: '20px', marginTop: '20px', color: '#1e293b', borderRadius: '16px' }}>
-          <h4 style={{ margin: '0 0 16px 0', fontSize: '15px', fontWeight: '800' }}>Yeni Kredi Ekle</h4>
-          <input type="text" placeholder="Borç/Kredi Adı" value={yeniBorc.name} onChange={e => setYeniBorc({...yeniBorc, name: e.target.value})} style={{ width: '100%', marginBottom: '12px', padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
-            <input type="number" placeholder="Toplam Tutar" value={yeniBorc.total} onChange={e => setYeniBorc({...yeniBorc, total: e.target.value})} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-            <input type="number" placeholder="Kalan Tutar" value={yeniBorc.remaining} onChange={e => setYeniBorc({...yeniBorc, remaining: e.target.value})} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+        <div className="premium-form-card glass" style={{ padding: '20px', marginTop: '24px', color: '#1e293b', borderRadius: '16px', background: 'rgba(255,255,255,0.4)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+            <div style={{ background: 'var(--finans, #10b981)', padding: '6px', borderRadius: '8px', color: 'white' }}>
+              <Plus size={18} />
+            </div>
+            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '800' }}>Yeni Kredi Ekle</h4>
           </div>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-            <input type="number" placeholder="Aylık Taksit" value={yeniBorc.monthly} onChange={e => setYeniBorc({...yeniBorc, monthly: e.target.value})} style={{ flex: 1, padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
-            <input type="number" placeholder="Ödeme Günü" value={yeniBorc.due_day} onChange={e => setYeniBorc({...yeniBorc, due_day: e.target.value})} style={{ width: '110px', padding: '12px', borderRadius: '12px', border: '1px solid #cbd5e1', color: '#1e293b', background: '#f8fafc' }} />
+
+          <div className="form-grid-v2">
+            <div className="form-field-v2 full">
+              <label>Borç/Kredi Adı</label>
+              <input type="text" placeholder="Örn: Konut Kredisi" value={yeniBorc.name} onChange={e => setYeniBorc({...yeniBorc, name: e.target.value})} />
+            </div>
+            
+            <div className="form-field-v2">
+              <label>Toplam Tutar</label>
+              <input type="number" placeholder="0" value={yeniBorc.total} onChange={e => setYeniBorc({...yeniBorc, total: e.target.value})} />
+            </div>
+
+            <div className="form-field-v2">
+              <label>Kalan Tutar</label>
+              <input type="number" placeholder="0" value={yeniBorc.remaining} onChange={e => setYeniBorc({...yeniBorc, remaining: e.target.value})} />
+            </div>
+
+            <div className="form-field-v2">
+              <label>Aylık Taksit</label>
+              <input type="number" placeholder="0" value={yeniBorc.monthly} onChange={e => setYeniBorc({...yeniBorc, monthly: e.target.value})} />
+            </div>
+
+            <div className="form-field-v2">
+              <label>Ödeme Günü</label>
+              <input type="number" placeholder="1-31" value={yeniBorc.due_day} onChange={e => setYeniBorc({...yeniBorc, due_day: e.target.value})} />
+            </div>
           </div>
-          <button className="premium-submit-btn" style={{ width: '100%', borderRadius: '50px', padding: '14px', background: 'var(--finans, #10b981)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer' }} onClick={handleEkle}>
-            Kredi Kaydet
+
+          <button 
+            className="premium-submit-btn" 
+            style={{ width: '100%', marginTop: '24px' }} 
+            onClick={handleEkle}
+          >
+            Borcu Kaydet
           </button>
         </div>
       </div>

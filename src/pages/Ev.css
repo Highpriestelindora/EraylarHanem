@@ -1664,9 +1664,13 @@
   font-family: 'Fraunces', serif;
   font-style: italic;
   font-size: 16px;
-  color: #1e293b;
+  color: white;
   font-weight: 800;
   letter-spacing: 0.5px;
+}
+
+.premium-wifi-card.guest .handwriting-pass {
+  color: #1e293b;
 }
 
 .guest-ssid { color: var(--txt); font-size: 15px; font-weight: 900; }
@@ -3682,6 +3686,11 @@
   padding: 8px 16px;
   border-radius: 12px;
   margin-top: 6px;
+}
+
+.premium-wifi-card.main .wifi-pass-container svg {
+  color: white !important;
+  opacity: 0.8 !important;
 }
 
 .wifi-peek-btn {
