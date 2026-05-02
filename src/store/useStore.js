@@ -4407,7 +4407,18 @@ const useStore = create(
             };
           }
         }
-        if (merged.pet && !Array.isArray(merged.pet.vaccines)) merged.pet.vaccines = [];
+        if (merged.pet) {
+          if (merged.pet.vaccines && !Array.isArray(merged.pet.vaccines) && typeof merged.pet.vaccines === 'object') {
+            // Already correct object structure
+          } else {
+            merged.pet.vaccines = initialState.pet.vaccines;
+          }
+          if (merged.pet.weights && !Array.isArray(merged.pet.weights) && typeof merged.pet.weights === 'object') {
+            // Already correct object structure
+          } else {
+            merged.pet.weights = initialState.pet.weights;
+          }
+        }
         if (!Array.isArray(merged.logs)) merged.logs = [];
 
         return merged;
