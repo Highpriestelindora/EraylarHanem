@@ -5,7 +5,8 @@ import {
   Trash2, Edit2, Search, Filter, AlertCircle, 
   CheckCircle2, ChevronRight, ChevronDown, Clock,
   ExternalLink, Info, Calculator, Ruler, ArrowRightLeft,
-  Pill, FileText, Activity
+  Pill, FileText, Activity, Users, Briefcase, CalendarCheck, 
+  ListTodo, Target, X, Heart, Star, Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -19,9 +20,9 @@ import './Muhendislik.css';
 const TABS = [
   { id: 'muhendislik', label: 'Mühendislik', icon: Cpu },
   { id: 'karar', label: 'Karar Günlüğü', icon: GitBranch },
-  { id: 'projeler', label: 'Projeler', icon: Code2 },
+  { id: 'crm', label: 'CRM', icon: Users },
   { id: 'arsiv', label: 'Arşiv', icon: Library },
-  { id: 'notlar', label: 'Notlar', icon: StickyNote }
+  { id: 'hayat', label: 'Hayat', icon: CalendarCheck }
 ];
 
 const CRITICALITY_LEVELS = {
@@ -308,6 +309,222 @@ const DecisionLog = ({ decisions, onAdd, onDelete }) => {
   );
 };
 
+const CRMView = ({ crm, onAddCustomer, onUpdateCustomer, onDeleteCustomer, onAddDeal, onUpdateDeal, onDeleteDeal }) => {
+  const [showAddCustomer, setShowAddCustomer] = useState(false);
+  const [showAddDeal, setShowAddDeal] = useState(false);
+  const [newCust, setNewCust] = useState({ name: '', company: '', phone: '', status: 'lead', notes: '' });
+  const [newDeal, setNewDeal] = useState({ customerId: '', title: '', amount: '', status: 'proposal' });
+
+  const customers = crm?.customers || [];
+  const deals = crm?.deals || [];
+
+  const getCustomerName = (id) => customers.find(c => c.id === id)?.name || 'Bilinmeyen Müşteri';
+
+  return (
+    <div className="crm-view animate-fadeIn">
+      <div className="section-header-v2">
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <h3>💼 Mini CRM (Faz 3)</h3>
+          <p className="am-sub">Eraylar Mühendislik Müşteri & Teklif Takibi</p>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="add-btn-mini" onClick={() => setShowAddCustomer(true)} title="Yeni Müşteri"><Users size={14} /></button>
+          <button className="add-btn-mini" onClick={() => setShowAddDeal(true)} title="Yeni Teklif"><Briefcase size={14} /></button>
+        </div>
+      </div>
+
+      <div className="crm-grid mt-20">
+        <div className="crm-column">
+          <div className="col-header"><Users size={16} /> Müşteriler</div>
+          <div className="cust-list">
+            {customers.length === 0 ? <div className="empty-mini-state">Müşteri kaydı yok.</div> : 
+              customers.map(c => (
+                <div key={c.id} className="cust-card glass">
+                  <div className="cc-header">
+                    <strong>{c.name}</strong>
+                    <button className="delete-btn-tiny" onClick={() => onDeleteCustomer(c.id)}><Trash2 size={12} /></button>
+                  </div>
+                  <small>{c.company} · {c.phone}</small>
+                  <div className={`status-badge ${c.status}`}>{c.status.toUpperCase()}</div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        <div className="crm-column">
+          <div className="col-header"><Briefcase size={16} /> Teklifler & Projeler</div>
+          <div className="deal-list">
+            {deals.length === 0 ? <div className="empty-mini-state">Aktif teklif yok.</div> : 
+              deals.map(d => (
+                <div key={d.id} className="deal-card glass">
+                  <div className="dc-header">
+                    <strong>{d.title}</strong>
+                    <button className="delete-btn-tiny" onClick={() => onDeleteDeal(d.id)}><Trash2 size={12} /></button>
+                  </div>
+                  <div className="dc-info">
+                    <span>{getCustomerName(d.customerId)}</span>
+                    <strong className="amount">{d.amount}₺</strong>
+                  </div>
+                  <div className={`status-badge deal ${d.status}`}>{d.status.toUpperCase()}</div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+
+      {showAddCustomer && (
+        <ActionSheet title="Yeni Müşteri Kaydı" onClose={() => setShowAddCustomer(false)}>
+          <div className="tech-form">
+            <input placeholder="Müşteri Adı Soyadı" value={newCust.name} onChange={e => setNewCust({...newCust, name: e.target.value})} />
+            <input placeholder="Firma / Kurum" value={newCust.company} onChange={e => setNewCust({...newCust, company: e.target.value})} />
+            <input placeholder="Telefon" value={newCust.phone} onChange={e => setNewCust({...newCust, phone: e.target.value})} />
+            <select value={newCust.status} onChange={e => setNewCust({...newCust, status: e.target.value})}>
+              <option value="lead">Aday (Lead)</option>
+              <option value="active">Aktif Müşteri</option>
+              <option value="passive">Pasif</option>
+            </select>
+            <textarea placeholder="Notlar" value={newCust.notes} onChange={e => setNewCust({...newCust, notes: e.target.value})} />
+            <button className="submit-btn-tech" onClick={() => {
+              if(!newCust.name) return toast.error('İsim gerekli');
+              onAddCustomer(newCust);
+              setShowAddCustomer(false);
+              setNewCust({ name: '', company: '', phone: '', status: 'lead', notes: '' });
+            }}>KAYDET</button>
+          </div>
+        </ActionSheet>
+      )}
+
+      {showAddDeal && (
+        <ActionSheet title="Yeni Teklif Girişi" onClose={() => setShowAddDeal(false)}>
+          <div className="tech-form">
+            <select value={newDeal.customerId} onChange={e => setNewDeal({...newDeal, customerId: e.target.value})}>
+              <option value="">Müşteri Seçin</option>
+              {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <input placeholder="Teklif/Proje Başlığı" value={newDeal.title} onChange={e => setNewDeal({...newDeal, title: e.target.value})} />
+            <input type="number" placeholder="Tutar (₺)" value={newDeal.amount} onChange={e => setNewDeal({...newDeal, amount: e.target.value})} />
+            <select value={newDeal.status} onChange={e => setNewDeal({...newDeal, status: e.target.value})}>
+              <option value="proposal">Teklif Verildi</option>
+              <option value="negotiation">Görüşme Aşamasında</option>
+              <option value="won">Kazanıldı</option>
+              <option value="lost">Kaybedildi</option>
+            </select>
+            <button className="submit-btn-tech" onClick={() => {
+              if(!newDeal.customerId || !newDeal.title) return toast.error('Müşteri ve Başlık gerekli');
+              onAddDeal(newDeal);
+              setShowAddDeal(false);
+              setNewDeal({ customerId: '', title: '', amount: '', status: 'proposal' });
+            }}>TEKLİFİ KAYDET</button>
+          </div>
+        </ActionSheet>
+      )}
+    </div>
+  );
+};
+
+const LifeView = ({ life, onAddRoutine, onToggleRoutine, onDeleteRoutine, onAddProgram, onDeleteProgram }) => {
+  const [showAddRoutine, setShowAddRoutine] = useState(false);
+  const [showAddProgram, setShowAddProgram] = useState(false);
+  const [newRoutine, setNewRoutine] = useState({ task: '', time: '09:00', days: 'Her gün' });
+  const [newProg, setNewProg] = useState({ title: '', content: '', type: 'diet' });
+
+  const routines = life?.routines || [];
+  const programs = life?.programs || [];
+
+  return (
+    <div className="life-view animate-fadeIn">
+      <div className="section-header-v2">
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <h3>⏳ Hayat Yönetimi (Faz 3)</h3>
+          <p className="am-sub">Günlük rutinler ve gelişim programları</p>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button className="add-btn-mini" onClick={() => setShowAddRoutine(true)} title="Yeni Rutin"><ListTodo size={14} /></button>
+          <button className="add-btn-mini" onClick={() => setShowAddProgram(true)} title="Yeni Program"><Sparkles size={14} /></button>
+        </div>
+      </div>
+
+      <div className="life-grid mt-20">
+        <div className="life-column routines">
+          <div className="col-header"><CalendarCheck size={16} /> Günlük Rutin Takibi</div>
+          <div className="routine-list">
+            {routines.length === 0 ? <div className="empty-mini-state">Rutin tanımlanmamış.</div> : 
+              routines.map(r => (
+                <div key={r.id} className={`routine-item glass ${r.completed ? 'done' : ''}`} onClick={() => onToggleRoutine(r.id)}>
+                  <div className="ri-check">{r.completed ? <CheckCircle2 size={18} color="#10b981" /> : <div className="ri-circle"></div>}</div>
+                  <div className="ri-info">
+                    <strong>{r.task}</strong>
+                    <small>{r.time} · {r.days}</small>
+                  </div>
+                  <button className="delete-btn-tiny" onClick={(e) => { e.stopPropagation(); onDeleteRoutine(r.id); }}><X size={12} /></button>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+
+        <div className="life-column programs">
+          <div className="col-header"><Target size={16} /> Programlar & Planlar</div>
+          <div className="prog-list">
+            {programs.length === 0 ? <div className="empty-mini-state">Aktif program yok.</div> : 
+              programs.map(p => (
+                <div key={p.id} className="prog-card glass">
+                  <div className="pc-header">
+                    <div className="pc-title">
+                      {p.type === 'diet' ? <Pill size={14} /> : <Activity size={14} />}
+                      <strong>{p.title}</strong>
+                    </div>
+                    <button className="delete-btn-tiny" onClick={() => onDeleteProgram(p.id)}><Trash2 size={12} /></button>
+                  </div>
+                  <p className="pc-body">{p.content}</p>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+
+      {showAddRoutine && (
+        <ActionSheet title="Yeni Rutin Ekle" onClose={() => setShowAddRoutine(false)}>
+          <div className="tech-form">
+            <input placeholder="Görev/Aktivite" value={newRoutine.task} onChange={e => setNewRoutine({...newRoutine, task: e.target.value})} />
+            <input type="time" value={newRoutine.time} onChange={e => setNewRoutine({...newRoutine, time: e.target.value})} />
+            <input placeholder="Günler (Örn: Pzt, Sal veya Her gün)" value={newRoutine.days} onChange={e => setNewRoutine({...newRoutine, days: e.target.value})} />
+            <button className="submit-btn-tech" onClick={() => {
+              if(!newRoutine.task) return toast.error('Görev adı gerekli');
+              onAddRoutine(newRoutine);
+              setShowAddRoutine(false);
+              setNewRoutine({ task: '', time: '09:00', days: 'Her gün' });
+            }}>EKLE</button>
+          </div>
+        </ActionSheet>
+      )}
+
+      {showAddProgram && (
+        <ActionSheet title="Yeni Program Oluştur" onClose={() => setShowAddProgram(false)}>
+          <div className="tech-form">
+            <input placeholder="Program Başlığı" value={newProg.title} onChange={e => setNewProg({...newProg, title: e.target.value})} />
+            <select value={newProg.type} onChange={e => setNewProg({...newProg, type: e.target.value})}>
+              <option value="diet">Beslenme / Diyet</option>
+              <option value="work">Çalışma Planı</option>
+              <option value="training">Antrenman</option>
+            </select>
+            <textarea placeholder="Program İçeriği / Detaylar" value={newProg.content} onChange={e => setNewProg({...newProg, content: e.target.value})} />
+            <button className="submit-btn-tech" onClick={() => {
+              if(!newProg.title) return toast.error('Başlık gerekli');
+              onAddProgram(newProg);
+              setShowAddProgram(false);
+              setNewProg({ title: '', content: '', type: 'diet' });
+            }}>OLUŞTUR</button>
+          </div>
+        </ActionSheet>
+      )}
+    </div>
+  );
+};
+
 // --- Main Component ---
 
 const Muhendislik = () => {
@@ -316,7 +533,11 @@ const Muhendislik = () => {
     muhendislik, 
     addEngineeringProblem, deleteEngineeringProblem,
     addEngineeringDecision, deleteEngineeringDecision,
-    updatePinnedConversion
+    updatePinnedConversion,
+    addCrmCustomer, updateCrmCustomer, deleteCrmCustomer,
+    addCrmDeal, updateCrmDeal, deleteCrmDeal,
+    addLifeRoutine, toggleLifeRoutine, deleteLifeRoutine,
+    addLifeProgram, deleteLifeProgram
   } = useStore();
 
   const [activeTab, setActiveTab] = useState('muhendislik');
@@ -390,13 +611,52 @@ const Muhendislik = () => {
           />
         )}
 
-        {['projeler', 'arsiv', 'notlar'].includes(activeTab) && (
+        {activeTab === 'crm' && (
+          <CRMView 
+            crm={currentModule.crm}
+            onAddCustomer={addCrmCustomer}
+            onUpdateCustomer={updateCrmCustomer}
+            onDeleteCustomer={(id) => setShowConfirm({
+              open: true,
+              message: 'Müşteri kaydını silmek istediğinize emin misiniz?',
+              onConfirm: () => deleteCrmCustomer(id)
+            })}
+            onAddDeal={addCrmDeal}
+            onUpdateDeal={updateCrmDeal}
+            onDeleteDeal={(id) => setShowConfirm({
+              open: true,
+              message: 'Teklif kaydını silmek istediğinize emin misiniz?',
+              onConfirm: () => deleteCrmDeal(id)
+            })}
+          />
+        )}
+
+        {activeTab === 'hayat' && (
+          <LifeView 
+            life={currentModule.life}
+            onAddRoutine={addLifeRoutine}
+            onToggleRoutine={toggleLifeRoutine}
+            onDeleteRoutine={(id) => setShowConfirm({
+              open: true,
+              message: 'Rutin kaydını silmek istediğinize emin misiniz?',
+              onConfirm: () => deleteLifeRoutine(id)
+            })}
+            onAddProgram={addLifeProgram}
+            onDeleteProgram={(id) => setShowConfirm({
+              open: true,
+              message: 'Programı silmek istediğinize emin misiniz?',
+              onConfirm: () => deleteLifeProgram(id)
+            })}
+          />
+        )}
+
+        {activeTab === 'arsiv' && (
           <div className="placeholder-view glass animate-fadeIn">
             <div className="empty-icon-circle-tech">
-              <Terminal size={48} color="#6366f1" />
+              <Library size={48} color="#64748b" />
             </div>
-            <h2>Bu Sekme Hazırlanıyor...</h2>
-            <p>Seçtiğiniz modül şu an geliştirme aşamasındadır. Yakında aktif olacaktır. 🛠️</p>
+            <h2>Arşiv Sekmesi Boş</h2>
+            <p>Bu sekme isteğiniz üzerine şimdilik boş bırakılmıştır. 📦</p>
           </div>
         )}
       </div>

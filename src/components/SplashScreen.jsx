@@ -13,6 +13,8 @@ const SplashScreen = ({ finishLoading }) => {
     { t: 'Esra "Bugün ne pişirsem?" diye düşünüyor... 🥘', m: '🥘' },
     { t: 'Fatura canavarları evden kovuluyor... 💸', m: '💸' },
     { t: 'Vizyoner asistan hesaplamaları bitiriyor... 🧠', m: '🧠' },
+    { t: 'Mühendislik CRM fazları senkronize ediliyor... 💼', m: '💼' },
+    { t: 'Hayat modülü rutinleri optimize ediliyor... ⏳', m: '⏳' },
     { t: 'Eraylar Hanem %100 Sevgiyle Yükleniyor... ❤️', m: '❤️' }
   ];
 
@@ -30,7 +32,7 @@ const SplashScreen = ({ finishLoading }) => {
         clearInterval(interval);
         setTimeout(finishLoading, 500);
       }
-    }, 1200); // 1.2s * 6 = 7.2s + 0.5s = 7.7s total
+    }, 1100); // Slightly faster for more items
     
     return () => {
       clearInterval(interval);
@@ -111,7 +113,7 @@ const SplashScreen = ({ finishLoading }) => {
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: '100%' }}
-          transition={{ duration: 7.5, ease: "linear" }}
+          transition={{ duration: 9, ease: "linear" }}
           style={{ height: '100%', background: 'white', boxShadow: '0 0 10px white' }}
         />
       </div>
@@ -176,7 +178,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v3.1.5 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"VIZYONER"</span>
+            v3.2.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"FAZ 3"</span>
           </span>
         </div>
         <span style={{

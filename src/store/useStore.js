@@ -385,16 +385,24 @@ const DEFAULT_STATE = {
     isModalOpen: false
   },
   currentUser: null, // { name: 'Görkem', emoji: '👨‍💻' } or { name: 'Esra', emoji: '👩‍🍳' }
-  muhendislik: {
-    activeTab: 'muhendislik',
-    pinnedConversions: [
-      { id: '1', from: 'lt/min', to: 'gpm', active: true },
-      { id: '2', from: 'bar', to: 'psi', active: true },
-      { id: '3', from: 'kg', to: 'lb', active: true }
-    ],
-    problemBank: [], // { id, title, definition, solution, alternatives, date, tags }
-    decisionLog: [], // { id, title, rationale, data, outcome, lesson, status, date, tags, criticality }
-  },
+    muhendislik: {
+      activeTab: 'muhendislik',
+      pinnedConversions: [
+        { id: '1', from: 'lt/min', to: 'gpm', active: true },
+        { id: '2', from: 'bar', to: 'psi', active: true },
+        { id: '3', from: 'kg', to: 'lb', active: true }
+      ],
+      problemBank: [],
+      decisionLog: [],
+      crm: {
+        customers: [],
+        deals: []
+      },
+      life: {
+        routines: [],
+        programs: []
+      }
+    },
   family_id: 'eraylar-family-shared-id', // Fixed family ID for production consistency
 };
 
@@ -862,6 +870,83 @@ const useStore = create(
         const state = get();
         const updated = state.muhendislik.pinnedConversions.map(c => c.id === id ? { ...c, ...updates } : c);
         set({ muhendislik: { ...state.muhendislik, pinnedConversions: updated } });
+        get().saveToSupabase();
+      },
+
+      // --- Engineering CRM Actions ---
+      addCrmCustomer: (customer) => {
+        const state = get();
+        const newCustomer = { id: Date.now(), ...customer, date: new Date().toISOString() };
+        const updatedCrm = { ...state.muhendislik.crm, customers: [newCustomer, ...(state.muhendislik.crm.customers || [])] };
+        set({ muhendislik: { ...state.muhendislik, crm: updatedCrm } });
+        get().saveToSupabase();
+      },
+      updateCrmCustomer: (id, updates) => {
+        const state = get();
+        const updatedCustomers = (state.muhendislik.crm.customers || []).map(c => c.id === id ? { ...c, ...updates } : c);
+        set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, customers: updatedCustomers } } });
+        get().saveToSupabase();
+      },
+      deleteCrmCustomer: (id) => {
+        const state = get();
+        const updatedCustomers = (state.muhendislik.crm.customers || []).filter(c => c.id !== id);
+        const updatedDeals = (state.muhendislik.crm.deals || []).filter(d => d.customerId !== id);
+        set({ muhendislik: { ...state.muhendislik, crm: { customers: updatedCustomers, deals: updatedDeals } } });
+        get().saveToSupabase();
+      },
+      addCrmDeal: (deal) => {
+        const state = get();
+        const newDeal = { id: Date.now(), ...deal, date: new Date().toISOString() };
+        const updatedDeals = [newDeal, ...(state.muhendislik.crm.deals || [])];
+        set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
+        get().saveToSupabase();
+      },
+      updateCrmDeal: (id, updates) => {
+        const state = get();
+        const updatedDeals = (state.muhendislik.crm.deals || []).map(d => d.id === id ? { ...d, ...updates } : d);
+        set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
+        get().saveToSupabase();
+      },
+      deleteCrmDeal: (id) => {
+        const state = get();
+        const updatedDeals = (state.muhendislik.crm.deals || []).filter(d => d.id !== id);
+        set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
+        get().saveToSupabase();
+      },
+
+      // --- Engineering Life Actions ---
+      addLifeRoutine: (routine) => {
+        const state = get();
+        const newRoutine = { id: Date.now(), ...routine, completed: false };
+        const updatedLife = { ...state.muhendislik.life, routines: [newRoutine, ...(state.muhendislik.life.routines || [])] };
+        set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
+        get().saveToSupabase();
+      },
+      toggleLifeRoutine: (id) => {
+        const state = get();
+        const updatedRoutines = (state.muhendislik.life.routines || []).map(r => 
+          r.id === id ? { ...r, completed: !r.completed } : r
+        );
+        set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, routines: updatedRoutines } } });
+        get().saveToSupabase();
+      },
+      deleteLifeRoutine: (id) => {
+        const state = get();
+        const updatedRoutines = (state.muhendislik.life.routines || []).filter(r => r.id !== id);
+        set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, routines: updatedRoutines } } });
+        get().saveToSupabase();
+      },
+      addLifeProgram: (program) => {
+        const state = get();
+        const newProgram = { id: Date.now(), ...program, date: new Date().toISOString() };
+        const updatedLife = { ...state.muhendislik.life, programs: [newProgram, ...(state.muhendislik.life.programs || [])] };
+        set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
+        get().saveToSupabase();
+      },
+      deleteLifeProgram: (id) => {
+        const state = get();
+        const updatedPrograms = (state.muhendislik.life.programs || []).filter(p => p.id !== id);
+        set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, programs: updatedPrograms } } });
         get().saveToSupabase();
       },
 

@@ -379,4 +379,165 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
+}
+
+.delete-btn-tiny:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* CRM View */
+.crm-grid, .life-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.col-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--txt-light);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--brd);
+}
+
+.cust-list, .deal-list, .routine-list, .prog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cust-card, .deal-card, .prog-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--brd);
+  transition: transform 0.2s;
+}
+
+.cust-card:hover, .deal-card:hover {
+  transform: translateY(-2px);
+  border-color: #6366f150;
+}
+
+.cc-header, .dc-header, .pc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.cc-header strong, .dc-header strong {
+  font-size: 15px;
+  color: var(--txt);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+.status-badge.lead { background: #64748b20; color: #64748b; }
+.status-badge.active { background: #10b98120; color: #10b981; }
+.status-badge.passive { background: #f59e0b20; color: #f59e0b; }
+
+.status-badge.deal.proposal { background: #3b82f620; color: #3b82f6; }
+.status-badge.deal.negotiation { background: #8b5cf620; color: #8b5cf6; }
+.status-badge.deal.won { background: #10b98120; color: #10b981; }
+.status-badge.deal.lost { background: #ef444420; color: #ef4444; }
+
+.dc-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--txt-light);
+}
+
+.dc-info .amount {
+  color: #10b981;
+  font-weight: 700;
+}
+
+/* Life View */
+.routine-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.routine-item:hover {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.routine-item.done {
+  opacity: 0.6;
+}
+
+.routine-item.done .ri-info strong {
+  text-decoration: line-through;
+}
+
+.ri-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--brd);
+}
+
+.ri-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ri-info strong {
+  font-size: 14px;
+  color: var(--txt);
+}
+
+.ri-info small {
+  font-size: 11px;
+  color: var(--txt-light);
+}
+
+.prog-card {
+  border-left: 4px solid #6366f1;
+}
+
+.pc-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6366f1;
+}
+
+.pc-body {
+  font-size: 13px;
+  color: var(--txt-light);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.empty-mini-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--txt-light);
+  font-size: 12px;
+  font-style: italic;
+  border: 1px dashed var(--brd);
+  border-radius: 16px;
 }
