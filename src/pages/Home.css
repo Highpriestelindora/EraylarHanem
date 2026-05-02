@@ -485,3 +485,117 @@
   font-size: 16px;
 }
 
+
+/* Wellness Mood Check */
+.modal-overlay.wellness-check {
+  z-index: 1000;
+  background: rgba(46, 16, 101, 0.4);
+}
+
+.mood-check-card {
+  width: 90vw;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 35px;
+  padding: 30px 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.mcc-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.mcc-icon-box {
+  width: 60px;
+  height: 60px;
+  background: #fff;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px;
+  box-shadow: 0 10px 20px rgba(236, 72, 153, 0.15);
+}
+
+.mcc-header h3 {
+  font-size: 22px;
+  color: #2E1065;
+  margin: 0 0 8px;
+  font-family: 'Fraunces', serif;
+}
+
+.mcc-header p {
+  font-size: 14px;
+  color: #7E61AF;
+  margin: 0;
+  font-weight: 600;
+}
+
+.mcc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.mcc-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 10px;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background: var(--mood-color);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mcc-btn.active {
+  border-color: #EC4899;
+  transform: scale(1.08);
+  box-shadow: 0 12px 20px -5px rgba(236, 72, 153, 0.3);
+}
+
+.mcc-emoji { font-size: 28px; }
+.mcc-label { font-size: 11px; font-weight: 800; color: #2E1065; }
+
+.mcc-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.mcc-skip {
+  flex: 1;
+  padding: 16px;
+  border-radius: 18px;
+  border: none;
+  background: #F3E8FF;
+  color: #6d28d9;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.mcc-submit {
+  flex: 2;
+  padding: 16px;
+  border-radius: 18px;
+  border: none;
+  background: linear-gradient(135deg, #2E1065 0%, #4C1D95 100%);
+  color: white;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 10px 20px rgba(46, 16, 101, 0.2);
+  cursor: pointer;
+}
+
+.mcc-submit:disabled {
+  opacity: 0.5;
+  filter: grayscale(1);
+  cursor: not-allowed;
+}
