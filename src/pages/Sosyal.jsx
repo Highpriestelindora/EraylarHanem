@@ -928,7 +928,11 @@ function ActivityDetailsModal({ activity, onClose, allActivities }) {
 }
 
 function CompleteActivityModal({ activity, onClose }) {
-  const { completeSocialActivity } = useStore();
+  const { completeSocialActivity, currentUser } = useStore();
+  const [activeReviewer, setActiveReviewer] = useState(
+    currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem'
+  );
+
   const [pGorkem, setPGorkem] = useState(5);
   const [pEsra, setPEsra] = useState(5);
   const [cost, setCost] = useState(activity.harcama || 0);
@@ -942,48 +946,77 @@ function CompleteActivityModal({ activity, onClose }) {
   };
 
   return (
-    <div className="modal-form">
-      <div className="form-group">
-        <label>Puanlar (1-10)</label>
-        <div className="form-row">
-          <div className="rate-box glass" style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', textAlign: 'center' }}>
-             <label style={{ marginBottom: '4px' }}>👨 Görkem</label>
-             <input 
-              type="number" min="1" max="10" value={pGorkem} onChange={e => setPGorkem(e.target.value)}
-              style={{ border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
-             />
+    <div className="modal-form personalized-review">
+      {/* User Switcher */}
+      <div className="review-user-tabs glass">
+        <button 
+          className={`rut-btn gorkem ${activeReviewer === 'gorkem' ? 'active' : ''}`}
+          onClick={() => setActiveReviewer('gorkem')}
+        >
+          <span className="rut-emoji">👨</span>
+          <div className="rut-info">
+            <span className="rut-name">Görkem</span>
+            <span className="rut-status">{commentGorkem ? '✅ Hazır' : '✍️ Bekliyor'}</span>
           </div>
-          <div className="rate-box glass" style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', textAlign: 'center' }}>
-             <label style={{ marginBottom: '4px' }}>👩 Esra</label>
-             <input 
-              type="number" min="1" max="10" value={pEsra} onChange={e => setPEsra(e.target.value)}
-              style={{ border: 'none', background: 'transparent', textAlign: 'center', fontSize: '18px', fontWeight: '900' }}
-             />
+        </button>
+        <button 
+          className={`rut-btn esra ${activeReviewer === 'esra' ? 'active' : ''}`}
+          onClick={() => setActiveReviewer('esra')}
+        >
+          <span className="rut-emoji">👩</span>
+          <div className="rut-info">
+            <span className="rut-name">Esra</span>
+            <span className="rut-status">{commentEsra ? '✅ Hazır' : '✍️ Bekliyor'}</span>
           </div>
+        </button>
+      </div>
+
+      <div className="form-group mt-20">
+        <label>💵 Gerçekleşen Harcama</label>
+        <div className="cost-input-wrapper">
+          <input 
+            type="number" 
+            value={cost} 
+            onChange={e => setCost(e.target.value)}
+            placeholder="0"
+          />
+          <span className="currency-suffix">₺</span>
         </div>
       </div>
-      <div className="form-group">
-        <label>Gerçekleşen Harcama (₺)</label>
-        <input 
-          type="number" value={cost} onChange={e => setCost(e.target.value)}
-        />
+
+      <div className="reviewer-section animate-fadeIn" key={activeReviewer}>
+        <div className="form-group">
+          <label>🌟 {activeReviewer === 'gorkem' ? 'Görkem' : 'Esra'}'in Puanı (1-10)</label>
+          <div className="score-selector">
+            {[1,2,3,4,5,6,7,8,9,10].map(num => (
+              <button 
+                key={num}
+                className={`score-btn ${ (activeReviewer === 'gorkem' ? pGorkem : pEsra) == num ? 'active' : ''}`}
+                onClick={() => activeReviewer === 'gorkem' ? setPGorkem(num) : setPEsra(num)}
+              >
+                {num}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>📝 {activeReviewer === 'gorkem' ? 'Görkem' : 'Esra'}'in Yorumu</label>
+          <textarea 
+            value={activeReviewer === 'gorkem' ? commentGorkem : commentEsra} 
+            onChange={e => activeReviewer === 'gorkem' ? setCommentGorkem(e.target.value) : setCommentEsra(e.target.value)} 
+            placeholder={`${activeReviewer === 'gorkem' ? 'Görkem' : 'Esra'}, nasıl geçti?`} 
+            rows={3}
+            style={{ resize: 'none' }}
+          />
+        </div>
       </div>
-      <div className="form-group">
-        <label>👨 Görkem'in Yorumu</label>
-        <textarea 
-          value={commentGorkem} onChange={e => setCommentGorkem(e.target.value)} placeholder="Nasıl geçti Görkem?" rows={2}
-          style={{ resize: 'none' }}
-        />
-      </div>
-      <div className="form-group">
-        <label>👩 Esra'nın Yorumu</label>
-        <textarea 
-          value={commentEsra} onChange={e => setCommentEsra(e.target.value)} placeholder="Nasıl geçti Esra?" rows={2}
-          style={{ resize: 'none' }}
-        />
-      </div>
-      <button className="submit-btn social" onClick={handleComplete}>
-        Tamamla & Arşivle
+
+      <button className="submit-btn social premium-complete mt-10" onClick={handleComplete}>
+        <div className="btn-content">
+          <span>Tamamla & Arşivle</span>
+          <ArrowRight size={18} />
+        </div>
       </button>
     </div>
   );
