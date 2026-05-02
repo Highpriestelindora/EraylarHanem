@@ -3,7 +3,7 @@ import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import { 
   Plus, Trash2, Heart, 
-  Activity, Scale, ArrowLeft, Camera, ShieldCheck, Edit2, Check
+  Activity, Scale, ArrowLeft, Camera, Edit2, Check
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -51,82 +51,6 @@ export default function Pet() {
 
   const { meta, vaccines, history, weights } = pet || { meta: {}, vaccines: {}, history: [], weights: {} };
 
-  const handleBatchSync = () => {
-    const currentPetState = { ...pet };
-    
-    // 1. Aşıları sistem kayıtlarına (Takvim'e) işle
-    const newVaccines = JSON.parse(JSON.stringify(currentPetState.vaccines || {}));
-    
-    Object.entries(VACCINES).forEach(([pId, vList]) => {
-      if (!newVaccines[pId]) newVaccines[pId] = [];
-      
-      vList.forEach(sourceV => {
-        let targetV = newVaccines[pId].find(v => v.n === sourceV.n);
-        if (!targetV) {
-          targetV = { ...sourceV, h: [] };
-          newVaccines[pId].push(targetV);
-        }
-        
-        // Geçmiş tarihleri birleştir (Duplicate engelle)
-        const existingDates = new Set(targetV.h || []);
-        (sourceV.h || []).forEach(d => existingDates.add(d));
-        
-        targetV.h = Array.from(existingDates).sort((a, b) => {
-           const parse = (dt) => { 
-             const p = dt.split('.'); 
-             return new Date(`${p[2]}-${p[1]}-${p[0]}`).getTime(); 
-           };
-           return parse(a) - parse(b);
-        });
-        
-        // En son aşı tarihini güncelle (Takvim için kritik)
-        if (targetV.h.length > 0) {
-          targetV.last = targetV.h[targetV.h.length - 1];
-        }
-      });
-    });
-
-    // 2. Kiloları ve Notları Günlüğe (History) işle
-    // Aşıları günlükten temizle (Kullanıcı isteği: Aşılar günlükte olmasın)
-    const cleanHistory = (currentPetState.history || []).filter(h => h.type !== 'vaccine');
-    let addedWeights = [];
-    
-    Object.entries(INITIAL_WEIGHTS).forEach(([pId, wList]) => {
-      wList.forEach(w => {
-        const actionText = `Kilo güncellendi: ${w.w} kg`;
-        const exists = cleanHistory.some(h => h.pet === pId && h.action === actionText && h.dt === w.dt);
-        if (!exists) {
-          addedWeights.push({
-            id: `w_${pId}_${w.id}_${w.dt.replace(/\./g, '')}_${Date.now()}`,
-            pet: pId,
-            action: actionText,
-            dt: w.dt,
-            type: 'weight'
-          });
-        }
-      });
-    });
-
-    const finalHistory = [...addedWeights, ...cleanHistory].sort((a, b) => {
-        const parse = (dt) => { 
-          const p = dt.split('.'); 
-          if(p.length !== 3) return 0;
-          return new Date(`${p[2]}-${p[1]}-${p[0]}`).getTime(); 
-        };
-        return parse(b.dt) - parse(a.dt);
-    });
-
-    setModuleData('pet', { 
-      ...currentPetState, 
-      vaccines: newVaccines, 
-      history: finalHistory 
-    });
-    
-    toast.success("Tüm aşı kayıtları takvime, kilolar ise günlüğe başarıyla işlendi! 🐾", {
-      duration: 5000,
-      style: { background: '#1e3a8a', color: '#fff', border: '1px solid #3b82f6' }
-    });
-  };
   const currentPet = meta[activePet];
   const petVaccines = vaccines[activePet] || [];
   const petWeights = weights[activePet] || [];
@@ -196,9 +120,6 @@ export default function Pet() {
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn-v2" onClick={handleBatchSync} title="Veri Sihirbazı" style={{ background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)' }}>
-              <ShieldCheck size={20} />
-            </button>
             <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
           </div>
         </div>
