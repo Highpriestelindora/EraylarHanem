@@ -103,35 +103,29 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
   const ev = useStore(state => state.ev);
   const buAyHarcamalar = finans?.buAyHarcamalar || [];
   
-  // FAZ 4: Rekuranslar Ev modülünden okunur
-  const evAbonelikleri = (ev?.abonelikler || []).map(a => ({
-    id: `abn-${a.id}`,
-    title: a.name,
-    amount: a.amount,
-    gun: a.date,
-    icon: a.icon || '📺'
-  }));
-
-  const evDuzenli = (ev?.duzenliOdemeler || []).map(d => ({
-    id: `duz-${d.id}`,
-    title: d.name,
-    amount: d.amount,
-    gun: d.date,
-    icon: d.icon || '🏢'
-  }));
-
-  const rekuranslar = [...evAbonelikleri, ...evDuzenli];
+  const rekuranslar = [
+    ...(ev?.abonelikler || []).map(a => ({ ...a, id: `abn-${a.id}`, title: a.name, gun: a.date, type: 'abn' })),
+    ...(ev?.duzenliOdemeler || []).map(d => ({ ...d, id: `duz-${d.id}`, title: d.name, gun: d.date, type: 'duz' }))
+  ];
 
   const bugun = new Date();
   const buAy = bugun.getMonth();
   const buYil = bugun.getFullYear();
+
+  const { addHarcama } = useStore();
 
   const bulunanRekuranslar = rekuranslar.map(r => {
     const gun = r.gun || parseInt((r.date || '').split('-')[2]) || 0;
     const dueDate = new Date(buYil, buAy, gun);
     const gecti = dueDate < bugun;
     const buHafta = (dueDate - bugun) / 86400000 <= 7 && !gecti;
-    return { ...r, gun, dueDate, gecti, buHafta };
+    
+    // Gerçekten ödendi mi? (Harcamalarda var mı?)
+    const isPaid = buAyHarcamalar.some(h => 
+      h.baslik.toLowerCase().includes(r.title.toLowerCase())
+    );
+
+    return { ...r, gun, dueDate, gecti, buHafta, isPaid };
   }).sort((a, b) => a.gun - b.gun);
 
   const kategoriler = ['hepsi', ...new Set(buAyHarcamalar.map(h => h.kategori).filter(Boolean))];
@@ -146,15 +140,37 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
         <>
           <div className="ozet-section-title">⏰ Bu Ay Gelmesi Beklenenler</div>
           {bulunanRekuranslar.map(r => (
-            <div key={r.id} className={`rekurans-row glass ${r.gecti ? 'gecti' : r.buHafta ? 'bu-hafta' : ''}`}>
+            <div key={r.id} className={`rekurans-row glass ${r.isPaid ? 'paid' : r.gecti ? 'overdue' : r.buHafta ? 'bu-hafta' : ''}`}>
               <div className="rr-left">
                 <span className="rr-icon">{r.icon || '📅'}</span>
                 <div>
                   <strong>{r.title}</strong>
-                  <small>Her ayın {r.gun}'inde {r.gecti ? '· ✅ İşlendi' : r.buHafta ? '· Bu hafta!' : ''}</small>
+                  <small>
+                    Her ayın {r.gun}'inde {r.isPaid ? '· ✅ Ödendi' : r.gecti ? '· ⌛ Günü Geçti' : r.buHafta ? '· Bu hafta!' : ''}
+                  </small>
                 </div>
               </div>
-              <span className="rr-amount">{fmt(r.amount, prv)}</span>
+              <div className="rr-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span className="rr-amount">{fmt(r.amount, prv)}</span>
+                {!r.isPaid && (
+                  <button 
+                    className="rr-pay-btn" 
+                    onClick={() => {
+                      addHarcama({
+                        baslik: r.title,
+                        tutar: r.amount,
+                        kategori: r.type === 'abn' ? 'Abonelik' : 'Düzenli Ödeme',
+                        kart_id: r.linkedCardId || null,
+                        kaynak: 'Sistem',
+                        tarih: new Date().toISOString().split('T')[0]
+                      });
+                      toast.success(`${r.title} ödendi olarak kaydedildi! 💸`);
+                    }}
+                  >
+                    ÖDE
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </>

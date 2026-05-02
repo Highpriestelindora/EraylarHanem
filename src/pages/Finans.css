@@ -205,8 +205,40 @@
   border-radius: 16px;
   margin-bottom: 8px;
 }
-.rekurans-row.gecti { opacity: 0.5; }
-.rekurans-row.bu-hafta { border: 1.5px solid #f59e0b; background: #fffbeb; }
+.rekurans-row.overdue {
+  border-left: 4px solid #f59e0b;
+}
+
+.rekurans-row.paid {
+  border-left: 4px solid #10b981;
+  opacity: 0.8;
+}
+
+.rekurans-row.bu-hafta { 
+  border: 1.5px solid #f59e0b; 
+  background: #fffbeb; 
+}
+
+.rr-pay-btn {
+  background: #2E1065;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.rr-pay-btn:hover {
+  background: #4C1D95;
+  transform: scale(1.05);
+}
+
+.rr-pay-btn:active {
+  transform: scale(0.95);
+}
 
 .rr-left { display: flex; align-items: center; gap: 12px; }
 .rr-icon { font-size: 22px; }
