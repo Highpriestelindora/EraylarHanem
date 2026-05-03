@@ -102,7 +102,7 @@
   position: relative;
   padding-top: 25px;
   overflow: hidden;
-  margin-bottom: -45px; /* Pull into safe zone */
+  margin-bottom: 0; 
   pointer-events: auto;
 }
 
