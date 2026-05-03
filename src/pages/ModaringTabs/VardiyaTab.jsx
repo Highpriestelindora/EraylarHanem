@@ -2,13 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
-  LayoutGrid, CalendarDays, TrendingUp, DollarSign, Share2, MessageCircle
+  LayoutGrid, CalendarDays, TrendingUp, DollarSign, MessageCircle
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const VardiyaTab = () => {
-  const { modaring, setModuleData } = useStore();
+  const { modaring, setModuleData, forceSaveToSupabase } = useStore();
   const personel = modaring?.personel || [];
   const shifts = modaring?.vardiya || [];
   
@@ -19,16 +19,16 @@ const VardiyaTab = () => {
 
   const formattedDateStr = selectedDate.toISOString().split('T')[0];
 
-  // --- MOCK DATA FOR NEXT WEEK ---
+  // --- MOCK DATA INJECTION (FIXED & SAFE) ---
   useEffect(() => {
-    // Only inject if next week is empty (for testing)
-    const nextWeekStart = "2026-05-11";
-    const hasNextWeek = shifts.some(s => s.date.startsWith("2026-05-11"));
+    const nextWeekDate = "2026-05-11";
+    // Added safety check with ?. to prevent 'startsWith' error
+    const hasNextWeek = shifts.some(s => s?.date?.startsWith?.("2026-05-11"));
     
     if (!hasNextWeek && personel.length >= 2) {
       const azraId = personel.find(p => p.name.includes("Azra"))?.id || personel[0].id;
       const gozdeId = personel.find(p => p.name.includes("Gözde"))?.id || personel[1].id;
-      const zeynepId = personel.find(p => p.name.includes("Zeynep"))?.id || personel[2]?.id;
+      const zeynepId = personel.find(p => p.name.includes("Zeynep"))?.id || (personel[2]?.id || personel[0].id);
 
       const mockNextWeek = [
         { id: 'm1', date: '2026-05-11', personelId: azraId, startTime: "10", endTime: "18", totalPay: 1200 },
@@ -37,10 +37,14 @@ const VardiyaTab = () => {
         { id: 'm4', date: '2026-05-12', personelId: azraId, startTime: "14", endTime: "22", totalPay: 1200 },
         { id: 'm5', date: '2026-05-13', personelId: azraId, startTime: "10", endTime: "18", totalPay: 1200 },
         { id: 'm6', date: '2026-05-14', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 900 },
+        { id: 'm7', date: '2026-05-15', personelId: gozdeId, startTime: "10", endTime: "17", totalPay: 1050 },
+        { id: 'm8', date: '2026-05-16', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 900 },
+        { id: 'm9', date: '2026-05-17', personelId: zeynepId, startTime: "10", endTime: "16", totalPay: 900 },
+        { id: 'm10', date: '2026-05-17', personelId: azraId, startTime: "14", endTime: "22", totalPay: 1200 },
       ];
-      // setModuleData('modaring', { vardiya: [...shifts, ...mockNextWeek] });
+      setModuleData('modaring', { vardiya: [...shifts, ...mockNextWeek] });
     }
-  }, [personel]);
+  }, [personel.length]);
 
   const changeDate = (days) => {
     const d = new Date(selectedDate);
@@ -51,7 +55,6 @@ const VardiyaTab = () => {
     setSelectedDate(d);
   };
 
-  // --- PERSPECTIVE HELPERS ---
   const getWeekRange = (date) => {
     const start = new Date(date);
     start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
@@ -69,7 +72,6 @@ const VardiyaTab = () => {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   };
 
-  // --- WHATSAPP EXPORT ---
   const copyWeeklyToWhatsApp = () => {
     const week = getWeekRange(selectedDate);
     const emojis = ['💫', '🎀', '💜', '👀', '🍓', '🌼', '🌺'];
@@ -80,22 +82,21 @@ const VardiyaTab = () => {
       const dayName = d.toLocaleDateString('tr-TR', { weekday: 'long' });
       text += `\n${emojis[i]}${dayName}\n`;
       
-      const dayShifts = shifts.filter(s => s.date === dStr);
+      const dayShifts = shifts.filter(s => s?.date === dStr);
       if (dayShifts.length === 0) {
         text += "Plan yok veya izinli 🏖️\n";
       } else {
         dayShifts.forEach(s => {
           const p = personel.find(x => x.id === s.personelId);
-          text += `${p?.name.split(' ')[0]} ${s.startTime}:00 - ${s.endTime}:00\n`;
+          text += `${p?.name?.split(' ')[0] || 'Personel'} ${s.startTime}:00 - ${s.endTime}:00\n`;
         });
       }
     });
 
     navigator.clipboard.writeText(text);
-    toast.success("WhatsApp planı kopyalandı! 🎀", { icon: '📱' });
+    toast.success("WhatsApp planı kopyalandı!", { icon: '📱' });
   };
 
-  // --- STATS ---
   const currentViewStats = useMemo(() => {
     const month = selectedDate.getMonth();
     const year = selectedDate.getFullYear();
@@ -104,29 +105,38 @@ const VardiyaTab = () => {
 
     return personel.map(p => {
       let filtered = [];
-      if (viewMode === 'daily') filtered = shifts.filter(s => s.date === formattedDateStr && s.personelId === p.id);
-      else if (viewMode === 'weekly') filtered = shifts.filter(s => weekStrs.includes(s.date) && s.personelId === p.id);
-      else if (viewMode === 'monthly') filtered = shifts.filter(s => { const d = new Date(s.date); return d.getMonth() === month && d.getFullYear() === year && s.personelId === p.id; });
-      else if (viewMode === 'yearly') filtered = shifts.filter(s => new Date(s.date).getFullYear() === year && s.personelId === p.id);
+      if (viewMode === 'daily') filtered = shifts.filter(s => s?.date === formattedDateStr && s?.personelId === p.id);
+      else if (viewMode === 'weekly') filtered = shifts.filter(s => weekStrs.includes(s?.date) && s?.personelId === p.id);
+      else if (viewMode === 'monthly') filtered = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === month && d.getFullYear() === year && s?.personelId === p.id; });
+      else if (viewMode === 'yearly') filtered = shifts.filter(s => new Date(s?.date).getFullYear() === year && s?.personelId === p.id);
 
       const hours = filtered.reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
-      const earned = filtered.reduce((acc, s) => acc + s.totalPay, 0);
+      const earned = filtered.reduce((acc, s) => acc + (s.totalPay || 0), 0);
       return { ...p, hours, earned, count: filtered.length };
     });
   }, [viewMode, selectedDate, shifts, personel, formattedDateStr]);
 
   const totalGider = useMemo(() => currentViewStats.reduce((acc, s) => acc + s.earned, 0), [currentViewStats]);
 
-  // --- RENDERS ---
+  const handleManualSave = async () => {
+    if (!forceSaveToSupabase) return toast.error("Kayıt fonksiyonu bulunamadı");
+    try {
+      await forceSaveToSupabase();
+      toast.success("Buluta kaydedildi! ☁️");
+    } catch (err) {
+      toast.error("Kayıt sırasında hata");
+    }
+  };
+
   const renderDaily = () => (
     <div className="compact-gantt-view glass animate-fadeIn">
       <div className="cg-header"><div className="cg-label-space"></div><div className="cg-timeline-labels"><span>10</span><span>13</span><span>16</span><span>19</span><span>22</span></div></div>
       <div className="cg-body">
         {personel.map(p => {
-          const shift = shifts.find(s => s.personelId === p.id && s.date === formattedDateStr);
+          const shift = shifts.find(s => s?.personelId === p.id && s?.date === formattedDateStr);
           return (
             <div key={p.id} className="cg-row" onClick={() => setEditingShift({ personelId: p.id, date: formattedDateStr, startTime: shift?.startTime || "10", endTime: shift?.endTime || "22" })}>
-              <div className="cg-user-col"><span className="gt-avatar" style={{ background: p.color }}>{p.emoji}</span><strong>{p.name.split(' ')[0]}</strong></div>
+              <div className="cg-user-col"><span className="gt-avatar" style={{ background: p.color }}>{p.emoji}</span><strong>{p.name?.split(' ')[0]}</strong></div>
               <div className="cg-track-col">
                 <div className="cg-track-bg"><div className="cg-tick"></div><div className="cg-tick"></div><div className="cg-tick"></div></div>
                 {shift && <div className="cg-shift-bar" style={{ left: `${((parseInt(shift.startTime) - 10) / 12) * 100}%`, width: `${((parseInt(shift.endTime) - parseInt(shift.startTime)) / 12) * 100}%`, background: p.color }}><small>{shift.startTime}-{shift.endTime}</small></div>}
@@ -143,10 +153,11 @@ const VardiyaTab = () => {
        <div className="ws-grid">
           {personel.map(p => (
             <div key={p.id} className="ws-compact-row">
-               <div className="wsc-user"><span style={{ background: p.color }}>{p.emoji}</span><strong>{p.name.split(' ')[0]}</strong></div>
+               <div className="wsc-user"><span style={{ background: p.color }}>{p.emoji}</span><strong>{p.name?.split(' ')[0]}</strong></div>
                <div className="wsc-days">
                   {getWeekRange(selectedDate).map((d, i) => {
-                    const shift = shifts.find(s => s.personelId === p.id && s.date === d.toISOString().split('T')[0]);
+                    const dStr = d.toISOString().split('T')[0];
+                    const shift = shifts.find(s => s?.personelId === p.id && s?.date === dStr);
                     return <div key={i} className={`wsc-dot ${shift ? 'active' : ''}`} style={{ '--p-color': p.color }}></div>
                   })}
                </div>
@@ -162,7 +173,7 @@ const VardiyaTab = () => {
       <div className="yearly-summary-view glass animate-fadeIn">
         <div className="yearly-list">
           {months.map((m, idx) => {
-            const monthlyTotal = shifts.filter(s => { const d = new Date(s.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); }).reduce((acc, s) => acc + s.totalPay, 0);
+            const monthlyTotal = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); }).reduce((acc, s) => acc + (s.totalPay || 0), 0);
             return (
               <div key={m} className="yearly-row">
                 <div className="yr-month">{m}</div>
@@ -178,7 +189,6 @@ const VardiyaTab = () => {
 
   return (
     <div className="tab-view-content animate-fadeIn">
-      {/* Switcher & Copy Action */}
       <div className="view-mode-header mb-12">
         <div className="view-mode-switcher glass">
           <button className={viewMode === 'daily' ? 'active' : ''} onClick={() => setViewMode('daily')}><Clock size={16} /></button>
@@ -187,7 +197,7 @@ const VardiyaTab = () => {
           <button className={viewMode === 'yearly' ? 'active' : ''} onClick={() => setViewMode('yearly')}><TrendingUp size={16} /></button>
         </div>
         {viewMode === 'weekly' && (
-          <button className="whatsapp-copy-btn glass animate-pop" onClick={copyWeeklyToWhatsApp}>
+          <button className="whatsapp-copy-btn glass animate-pop" onClick={copyWeeklyToWhatsApp} title="WhatsApp Kopyala">
             <MessageCircle size={18} />
           </button>
         )}
@@ -212,7 +222,7 @@ const VardiyaTab = () => {
           <div className="ss-text"><small>Toplam Gider</small><strong>{totalGider.toLocaleString('tr-TR')} TL</strong></div>
         </div>
         <div className="ss-actions">
-           <button className="ss-action-btn-primary" onClick={() => toast.success("Sistem kaydedildi!")}><Save size={18} /></button>
+           <button className="ss-action-btn-primary" onClick={handleManualSave}><Save size={18} /></button>
            <button className="ss-action-btn" onClick={() => setShowStaffModal(true)}><UserPlus size={18} /></button>
         </div>
       </div>
@@ -241,13 +251,13 @@ const VardiyaTab = () => {
           onClose={() => setEditingShift(null)}
           onSave={(data) => {
             const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (personel.find(px => px.id === data.personelId)?.hourlyRate || 0);
-            const otherShifts = shifts.filter(s => !(s.personelId === data.personelId && s.date === data.date));
+            const otherShifts = shifts.filter(s => !(s?.personelId === data.personelId && s?.date === data.date));
             setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: Date.now().toString(), totalPay: wage }] });
             setEditingShift(null);
             toast.success('Kaydedildi');
           }}
           onDelete={() => {
-            setModuleData('modaring', { vardiya: shifts.filter(s => !(s.personelId === editingShift.personelId && s.date === editingShift.date)) });
+            setModuleData('modaring', { vardiya: shifts.filter(s => !(s?.personelId === editingShift.personelId && s?.date === editingShift.date)) });
             setEditingShift(null);
             toast.error('Silindi');
           }}
@@ -258,7 +268,7 @@ const VardiyaTab = () => {
   );
 };
 
-// ... ShiftEditModal and StaffAddModal remain same ...
+// ... ShiftEditModal and StaffAddModal ...
 const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
   const [times, setTimes] = useState({ startTime: shift.startTime || "10", endTime: shift.endTime || "22" });
   const hoursArr = Array.from({ length: 13 }, (_, i) => (i + 10).toString());
