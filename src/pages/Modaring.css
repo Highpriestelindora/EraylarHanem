@@ -1380,3 +1380,151 @@
   font-weight: 800;
   color: var(--modaring-accent);
 }
+
+/* Compact Single-Screen Gantt (iPhone Optimization) */
+.compact-gantt-view {
+  padding: 16px;
+  border-radius: 28px;
+}
+
+.cg-header {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.cg-label-space {
+  width: 80px;
+}
+
+.cg-timeline-labels {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.cg-timeline-labels span {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--txt-light);
+  width: 20px;
+  text-align: center;
+}
+
+.cg-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cg-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.cg-user-col {
+  width: 80px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cg-user-col strong {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cg-track-col {
+  flex: 1;
+  height: 24px;
+  position: relative;
+  background: var(--bg);
+  border-radius: 12px;
+  border: 1px solid var(--brd);
+  overflow: hidden;
+}
+
+.cg-track-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  opacity: 0.1;
+}
+
+.cg-tick {
+  width: 1px;
+  height: 12px;
+  background: var(--txt);
+}
+
+.cg-shift-bar {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 5;
+}
+
+.cg-shift-bar small {
+  font-size: 8px;
+  font-weight: 900;
+  color: white;
+  white-space: nowrap;
+}
+
+/* Weekly Compact View */
+.ws-compact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--brd);
+}
+
+.wsc-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wsc-user span {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.wsc-user strong { font-size: 12px; }
+
+.wsc-days {
+  display: flex;
+  gap: 6px;
+}
+
+.wsc-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--brd);
+}
+
+.wsc-dot.active {
+  background: var(--p-color);
+  border-color: var(--p-color);
+  box-shadow: 0 0 8px var(--p-color);
+  opacity: 0.6;
+}
