@@ -1591,3 +1591,62 @@
 .scp-metric svg {
   opacity: 0.7;
 }
+
+/* WhatsApp & Save Actions */
+.view-mode-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.view-mode-header .view-mode-switcher {
+  flex: 1;
+}
+
+.whatsapp-copy-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #25D366; /* WhatsApp Green */
+  border: 1px solid rgba(37, 211, 102, 0.2);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.whatsapp-copy-btn:hover {
+  background: #25D366;
+  color: white;
+  transform: scale(1.05);
+}
+
+.ss-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ss-action-btn-primary {
+  background: var(--modaring-gradient);
+  color: white;
+  border: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.2);
+  transition: 0.3s;
+}
+
+.ss-action-btn-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.pb-80 {
+  padding-bottom: 80px;
+}

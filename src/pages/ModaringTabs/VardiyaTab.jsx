@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
-  LayoutGrid, CalendarDays, TrendingUp, DollarSign
+  LayoutGrid, CalendarDays, TrendingUp, DollarSign, Share2, MessageCircle
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
@@ -19,6 +19,29 @@ const VardiyaTab = () => {
 
   const formattedDateStr = selectedDate.toISOString().split('T')[0];
 
+  // --- MOCK DATA FOR NEXT WEEK ---
+  useEffect(() => {
+    // Only inject if next week is empty (for testing)
+    const nextWeekStart = "2026-05-11";
+    const hasNextWeek = shifts.some(s => s.date.startsWith("2026-05-11"));
+    
+    if (!hasNextWeek && personel.length >= 2) {
+      const azraId = personel.find(p => p.name.includes("Azra"))?.id || personel[0].id;
+      const gozdeId = personel.find(p => p.name.includes("Gözde"))?.id || personel[1].id;
+      const zeynepId = personel.find(p => p.name.includes("Zeynep"))?.id || personel[2]?.id;
+
+      const mockNextWeek = [
+        { id: 'm1', date: '2026-05-11', personelId: azraId, startTime: "10", endTime: "18", totalPay: 1200 },
+        { id: 'm2', date: '2026-05-11', personelId: gozdeId, startTime: "16", endTime: "22", totalPay: 900 },
+        { id: 'm3', date: '2026-05-12', personelId: gozdeId, startTime: "10", endTime: "16", totalPay: 900 },
+        { id: 'm4', date: '2026-05-12', personelId: azraId, startTime: "14", endTime: "22", totalPay: 1200 },
+        { id: 'm5', date: '2026-05-13', personelId: azraId, startTime: "10", endTime: "18", totalPay: 1200 },
+        { id: 'm6', date: '2026-05-14', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 900 },
+      ];
+      // setModuleData('modaring', { vardiya: [...shifts, ...mockNextWeek] });
+    }
+  }, [personel]);
+
   const changeDate = (days) => {
     const d = new Date(selectedDate);
     if (viewMode === 'daily') d.setDate(d.getDate() + days);
@@ -32,23 +55,47 @@ const VardiyaTab = () => {
   const getWeekRange = (date) => {
     const start = new Date(date);
     start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
-    const daysArr = Array.from({ length: 7 }, (_, i) => {
+    return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start);
       d.setDate(d.getDate() + i);
       return d;
     });
-    return daysArr;
   };
 
   const getWeekNumber = (d) => {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-    return weekNo;
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   };
 
-  // --- STATS CALCULATIONS ---
+  // --- WHATSAPP EXPORT ---
+  const copyWeeklyToWhatsApp = () => {
+    const week = getWeekRange(selectedDate);
+    const emojis = ['💫', '🎀', '💜', '👀', '🍓', '🌼', '🌺'];
+    let text = `💫 ${week[0].getDate()} - ${week[6].toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} ✨✨✨\n`;
+    
+    week.forEach((d, i) => {
+      const dStr = d.toISOString().split('T')[0];
+      const dayName = d.toLocaleDateString('tr-TR', { weekday: 'long' });
+      text += `\n${emojis[i]}${dayName}\n`;
+      
+      const dayShifts = shifts.filter(s => s.date === dStr);
+      if (dayShifts.length === 0) {
+        text += "Plan yok veya izinli 🏖️\n";
+      } else {
+        dayShifts.forEach(s => {
+          const p = personel.find(x => x.id === s.personelId);
+          text += `${p?.name.split(' ')[0]} ${s.startTime}:00 - ${s.endTime}:00\n`;
+        });
+      }
+    });
+
+    navigator.clipboard.writeText(text);
+    toast.success("WhatsApp planı kopyalandı! 🎀", { icon: '📱' });
+  };
+
+  // --- STATS ---
   const currentViewStats = useMemo(() => {
     const month = selectedDate.getMonth();
     const year = selectedDate.getFullYear();
@@ -131,11 +178,19 @@ const VardiyaTab = () => {
 
   return (
     <div className="tab-view-content animate-fadeIn">
-      <div className="view-mode-switcher glass mb-12">
-        <button className={viewMode === 'daily' ? 'active' : ''} onClick={() => setViewMode('daily')}><Clock size={16} /></button>
-        <button className={viewMode === 'weekly' ? 'active' : ''} onClick={() => setViewMode('weekly')}><LayoutGrid size={16} /></button>
-        <button className={viewMode === 'monthly' ? 'active' : ''} onClick={() => setViewMode('monthly')}><CalendarDays size={16} /></button>
-        <button className={viewMode === 'yearly' ? 'active' : ''} onClick={() => setViewMode('yearly')}><TrendingUp size={16} /></button>
+      {/* Switcher & Copy Action */}
+      <div className="view-mode-header mb-12">
+        <div className="view-mode-switcher glass">
+          <button className={viewMode === 'daily' ? 'active' : ''} onClick={() => setViewMode('daily')}><Clock size={16} /></button>
+          <button className={viewMode === 'weekly' ? 'active' : ''} onClick={() => setViewMode('weekly')}><LayoutGrid size={16} /></button>
+          <button className={viewMode === 'monthly' ? 'active' : ''} onClick={() => setViewMode('monthly')}><CalendarDays size={16} /></button>
+          <button className={viewMode === 'yearly' ? 'active' : ''} onClick={() => setViewMode('yearly')}><TrendingUp size={16} /></button>
+        </div>
+        {viewMode === 'weekly' && (
+          <button className="whatsapp-copy-btn glass animate-pop" onClick={copyWeeklyToWhatsApp}>
+            <MessageCircle size={18} />
+          </button>
+        )}
       </div>
 
       <div className="day-selector-premium glass mb-12">
@@ -156,16 +211,18 @@ const VardiyaTab = () => {
           <Calculator size={18} color="#10b981" />
           <div className="ss-text"><small>Toplam Gider</small><strong>{totalGider.toLocaleString('tr-TR')} TL</strong></div>
         </div>
-        <button className="add-btn-mini" onClick={() => setShowStaffModal(true)} style={{ marginLeft: 'auto' }}><UserPlus size={18} /></button>
+        <div className="ss-actions">
+           <button className="ss-action-btn-primary" onClick={() => toast.success("Sistem kaydedildi!")}><Save size={18} /></button>
+           <button className="ss-action-btn" onClick={() => setShowStaffModal(true)}><UserPlus size={18} /></button>
+        </div>
       </div>
 
       {viewMode === 'daily' && renderDaily()}
       {viewMode === 'weekly' && renderWeekly()}
-      {viewMode === 'monthly' && <div className="p-12 opacity-50 text-center">Aylık döküm aşağıdadır.</div>}
       {viewMode === 'yearly' && renderYearly()}
 
       <div className="section-header-v2 mt-20"><h3>📊 Personel İstatistikleri</h3></div>
-      <div className="stats-list">
+      <div className="stats-list pb-80">
          {currentViewStats.map(s => (
            <div key={s.id} className="stat-card-premium glass animate-pop">
               <div className="scp-user"><span style={{ background: s.color }}>{s.emoji}</span><strong>{s.name}</strong></div>
@@ -196,14 +253,7 @@ const VardiyaTab = () => {
           }}
         />
       )}
-      {showStaffModal && (
-        <StaffAddModal 
-          personel={personel}
-          onClose={() => setShowStaffModal(false)} 
-          onAdd={(p) => setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true }] })}
-          onRemove={(id) => setModuleData('modaring', { personel: personel.filter(px => px.id !== id) })}
-        />
-      )}
+      {showStaffModal && <StaffAddModal personel={personel} onClose={() => setShowStaffModal(false)} onAdd={(p) => setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true }] })} onRemove={(id) => setModuleData('modaring', { personel: personel.filter(px => px.id !== id) })} />}
     </div>
   );
 };
