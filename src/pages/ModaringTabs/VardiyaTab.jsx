@@ -21,7 +21,9 @@ const VardiyaTab = () => {
   const [selectedPersonDetail, setSelectedPersonDetail] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  // TIMEZONE SAFE DATE STR (YYYY-MM-DD)
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null });
+
   const getLocalDateStr = useCallback((date) => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -140,45 +142,49 @@ const VardiyaTab = () => {
     setTimeout(() => forceSaveToSupabase(), 500);
   }, [setModuleData, forceSaveToSupabase]);
 
-  const handleClear = useCallback(async () => {
+  const executeClear = useCallback(() => {
     const currentModaring = useStore.getState().modaring;
     const currentShifts = currentModaring.vardiya || [];
     let remainingShifts = [];
     let msg = "";
 
     if (viewMode === 'daily') {
-      if (!window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) return;
-      
       const targetDate = String(formattedDateStr).trim();
       remainingShifts = currentShifts.filter(s => String(s?.date || "").trim() !== targetDate);
-      
       const deletedCount = currentShifts.length - remainingShifts.length;
-      if (deletedCount === 0) {
-        toast.error(`Silecek kayıt bulunamadı! (Seçili: ${targetDate})`);
-        return;
-      }
       msg = `${deletedCount} vardiya temizlendi 🧹`;
     } else if (viewMode === 'weekly') {
-      if (!window.confirm("Bu haftanın TÜM vardiyalarını silmek istediğinize emin misiniz?")) return;
-      
       const weekStrs = getWeekRange(selectedDate).map(d => getLocalDateStr(d).trim());
       remainingShifts = currentShifts.filter(s => !weekStrs.includes(String(s?.date || "").trim()));
-      
       const deletedCount = currentShifts.length - remainingShifts.length;
-      if (deletedCount === 0) {
-        toast.error("Bu hafta için silecek kayıt bulunamadı!");
-        return;
-      }
       msg = `${deletedCount} haftalık vardiya temizlendi 🧹`;
-    } else {
-      toast.error("Bu görünümde toplu temizleme yapılamaz");
-      return;
     }
 
     setModuleData('modaring', { vardiya: remainingShifts });
     toast.success(msg);
+    setConfirmModal({ show: false, title: '', message: '', onConfirm: null });
     setTimeout(() => forceSaveToSupabase(), 500);
   }, [viewMode, formattedDateStr, getWeekRange, getLocalDateStr, selectedDate, setModuleData, forceSaveToSupabase]);
+
+  const handleClear = useCallback(() => {
+    if (viewMode === 'daily') {
+      setConfirmModal({ 
+        show: true, 
+        title: 'Günü Temizle', 
+        message: `${formattedDateStr} tarihindeki tüm vardiyaları silmek istediğinize emin misiniz?`, 
+        onConfirm: executeClear 
+      });
+    } else if (viewMode === 'weekly') {
+      setConfirmModal({ 
+        show: true, 
+        title: 'Haftayı Temizle', 
+        message: 'Bu haftanın tüm planlarını silmek istediğinize emin misiniz?', 
+        onConfirm: executeClear 
+      });
+    } else {
+      toast.error("Bu görünümde toplu temizleme yapılamaz");
+    }
+  }, [viewMode, formattedDateStr, executeClear]);
 
   const handleDeleteShift = useCallback(async (shiftId) => {
     const currentShifts = useStore.getState().modaring.vardiya || [];
@@ -360,11 +366,47 @@ const VardiyaTab = () => {
         <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => handleDeleteShift(editingShift.id)} />
       )}
 
-      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); setTimeout(() => forceSaveToSupabase(), 500); }} onDelete={() => { if(window.confirm("Personeli sil?")) { const curModaring = useStore.getState().modaring; const curP = curModaring.personel; const curV = curModaring.vardiya; setModuleData('modaring', { personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) }); setSelectedPersonDetail(null); toast.error('Personel silindi'); setTimeout(() => forceSaveToSupabase(), 500); } }} />}
+      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); setTimeout(() => forceSaveToSupabase(), 500); }} onDelete={() => { 
+        setConfirmModal({ 
+          show: true, 
+          title: 'Personeli Sil', 
+          message: `${selectedPersonDetail.name} isimli personeli ve tüm vardiyalarını silmek istediğinize emin misiniz?`, 
+          onConfirm: () => {
+            const curModaring = useStore.getState().modaring;
+            const curP = curModaring.personel;
+            const curV = curModaring.vardiya;
+            setModuleData('modaring', { personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) });
+            setSelectedPersonDetail(null);
+            setConfirmModal({ show: false, title: '', message: '', onConfirm: null });
+            toast.error('Personel silindi');
+            setTimeout(() => forceSaveToSupabase(), 500);
+          }
+        });
+      }} />}
+      
       {showAddStaffModal && <StaffAddOnlyModal onClose={() => setShowAddStaffModal(false)} onAdd={(p) => { setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] }); setShowAddStaffModal(false); toast.success('Personel eklendi!'); setTimeout(() => forceSaveToSupabase(), 500); }} />}
+
+      {confirmModal.show && <ConfirmModal title={confirmModal.title} message={confirmModal.message} onConfirm={confirmModal.onConfirm} onCancel={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null })} />}
     </div>
   );
 };
+
+// YAKIŞIKLI PENCERE (CONFIRM MODAL)
+const ConfirmModal = ({ title, message, onConfirm, onCancel }) => (
+  <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={onCancel}>
+    <div className="modal-content glass animate-pop" style={{ maxWidth: '320px', textAlign: 'center', padding: '24px' }} onClick={e => e.stopPropagation()}>
+      <div className="confirm-icon-box mb-16" style={{ background: '#fee2e2', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
+        <AlertTriangle size={28} color="#ef4444" />
+      </div>
+      <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>{title}</h3>
+      <p style={{ fontSize: '14px', color: 'var(--txt-light)', lineHeight: '1.5', marginBottom: '24px' }}>{message}</p>
+      <div className="modal-actions-v2" style={{ gap: '12px' }}>
+        <button className="premium-btn-secondary" style={{ flex: 1 }} onClick={onCancel}>İptal</button>
+        <button className="premium-btn-danger" style={{ flex: 1, background: '#ef4444', color: 'white' }} onClick={onConfirm}>Evet, Sil</button>
+      </div>
+    </div>
+  </div>
+);
 
 const StaffAddOnlyModal = ({ onClose, onAdd }) => {
   const [form, setForm] = useState({ name: '', hourlyRate: '', emoji: '👤', color: '#fb7185' });
