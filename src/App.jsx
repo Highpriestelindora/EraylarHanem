@@ -97,7 +97,7 @@ function App() {
         
         <Toaster 
           position="top-center"
-          containerStyle={{ top: 'calc(env(safe-area-inset-top, 40px) + 10px)', zIndex: 99999999 }}
+          containerStyle={{ top: '50px', zIndex: 99999999 }}
           toastOptions={{
             style: {
               borderRadius: '14px',

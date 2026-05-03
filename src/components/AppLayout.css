@@ -9,7 +9,7 @@
 }
 
 .app-header {
-  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 12px;
+  padding: 12px 20px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -108,7 +108,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: calc(80px + env(safe-area-inset-bottom, 0px));
+  height: 80px;
   display: flex;
   justify-content: space-around;
   align-items: flex-start;

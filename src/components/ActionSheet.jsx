@@ -9,7 +9,7 @@ export default function ActionSheet({
   title, 
   children, 
   footer, 
-  maxHeight = '60vh',
+  maxHeight = '85vh',
   fullHeight = false 
 }) {
   // Prevent scrolling on body when open
@@ -126,7 +126,7 @@ export default function ActionSheet({
                 flex: 1, 
                 overflowY: 'auto', 
                 overflowX: 'hidden', 
-                padding: '16px 16px calc(40px + env(safe-area-inset-bottom, 20px))',
+                padding: '16px 16px 40px',
                 width: '100%',
                 WebkitOverflowScrolling: 'touch'
               }}>
@@ -136,7 +136,7 @@ export default function ActionSheet({
               {/* Footer */}
               {footer && (
                 <div style={{ 
-                  padding: '16px 16px calc(16px + env(safe-area-inset-bottom, 20px))', 
+                  padding: '16px 16px 36px', 
                   borderTop: '1px solid var(--brd)',
                   background: 'var(--card)'
                 }}>
