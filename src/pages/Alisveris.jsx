@@ -543,6 +543,7 @@ function ConfirmPurchaseModal({ item, onClose, onConfirm }) {
 
 function AddItemModal({ onClose, onAdd, initialOwner, initialData }) {
   const [form, setForm] = useState(initialData ? { ...initialData, owner: initialOwner } : { nm: '', mk: 'Market', loc: initialOwner === 'market' ? 'buz' : 'depo', pr: '', qt: '1 adet', isWish: false, owner: initialOwner || 'ev' });
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { alisveris, setModuleData } = useStore();
 
   React.useEffect(() => {
@@ -571,7 +572,7 @@ function AddItemModal({ onClose, onAdd, initialOwner, initialData }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} style={{ zIndex: 10000 }}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>🛒 Yeni Ürün Ekle</h3>
@@ -591,42 +592,49 @@ function AddItemModal({ onClose, onAdd, initialOwner, initialData }) {
           </div>
 
           <div className="form-group">
-            <label>Liste Seçimi</label>
-            <select value={form.owner} onChange={e => setForm({...form, owner: e.target.value})}>
-              <option value="gorkem">👨 Görkem</option>
-              <option value="esra">👩 Esra</option>
-              <option value="ev">🏡 Ev</option>
-              <option value="market">🛒 Market (Mutfak)</option>
-            </select>
+            <label>Miktar</label>
+            <input type="text" value={form.qt} onChange={e => setForm({...form, qt: e.target.value})} />
           </div>
 
           <div className="form-group">
-             <label>Hemen Alınacak mı?</label>
-             <div style={{ display: 'flex', gap: '10px' }}>
-                <button type="button" className={`toggle-btn ${!form.isWish ? 'active' : ''}`} onClick={() => setForm({...form, isWish: false})} style={{ flex: 1, padding: '10px', borderRadius: '12px', border: '1px solid var(--brd)', background: !form.isWish ? 'var(--alisveris)' : 'white', color: !form.isWish ? 'white' : 'var(--txt)', fontWeight: '800' }}>ŞİMDİ</button>
-                <button type="button" className={`toggle-btn ${form.isWish ? 'active' : ''}`} onClick={() => setForm({...form, isWish: true})} style={{ flex: 1, padding: '10px', borderRadius: '12px', border: '1px solid var(--brd)', background: form.isWish ? '#eab308' : 'white', color: form.isWish ? 'white' : 'var(--txt)', fontWeight: '800' }}>İSTEK</button>
+             <label>Aciliyet</label>
+             <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="button" className={`toggle-btn ${!form.isWish ? 'active' : ''}`} onClick={() => setForm({...form, isWish: false})} style={{ flex: 1, padding: '12px', borderRadius: '16px', border: '1px solid var(--brd)', background: !form.isWish ? 'var(--alisveris)' : 'white', color: !form.isWish ? 'white' : 'var(--txt)', fontWeight: '800', fontSize: '13px' }}>ŞİMDİ</button>
+                <button type="button" className={`toggle-btn ${form.isWish ? 'active' : ''}`} onClick={() => setForm({...form, isWish: true})} style={{ flex: 1, padding: '12px', borderRadius: '16px', border: '1px solid var(--brd)', background: form.isWish ? '#eab308' : 'white', color: form.isWish ? 'white' : 'var(--txt)', fontWeight: '800', fontSize: '13px' }}>İSTEK</button>
              </div>
           </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '5px 0' }}>
+            <button 
+              type="button" 
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              style={{ background: 'none', border: 'none', color: 'var(--txt-light)', fontSize: '12px', fontWeight: '700', textDecoration: 'underline', cursor: 'pointer' }}
+            >
+              {showAdvanced ? 'Daha Az Bilgi' : 'Detaylı Bilgi Ekle (Market, Konum...)'}
+            </button>
+          </div>
           
-          {!form.isWish && (
-            <>
+          {showAdvanced && (
+            <div className="animate-fadeIn" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="form-row">
+                {!form.isWish && (
+                  <div className="form-group">
+                    <label>Market</label>
+                    <select value={form.mk} onChange={e => setForm({...form, mk: e.target.value})}>
+                      {MARKETS.map(m => <option key={m.id} value={m.id}>{m.icon} {m.id}</option>)}
+                      <option value="Diğer">❔ Diğer</option>
+                    </select>
+                  </div>
+                )}
                 <div className="form-group">
-                  <label>Market</label>
-                  <select value={form.mk} onChange={e => setForm({...form, mk: e.target.value})}>
-                    {MARKETS.map(m => <option key={m.id} value={m.id}>{m.icon} {m.id}</option>)}
-                    <option value="Diğer">❔ Diğer</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Miktar</label>
-                  <input type="text" value={form.qt} onChange={e => setForm({...form, qt: e.target.value})} />
+                  <label>Tahmini Fiyat (₺)</label>
+                  <input type="number" value={form.pr} onChange={e => setForm({...form, pr: e.target.value})} />
                 </div>
               </div>
 
-              <div className="form-row">
+              {!form.isWish && (
                 <div className="form-group">
-                  <label>Konum</label>
+                  <label>Saklama Konumu</label>
                   <select value={form.loc} onChange={e => setForm({...form, loc: e.target.value})}>
                     {form.owner === 'market' ? (
                       <>
@@ -639,22 +647,11 @@ function AddItemModal({ onClose, onAdd, initialOwner, initialData }) {
                     )}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label>Tahmini Fiyat (₺)</label>
-                  <input type="number" value={form.pr} onChange={e => setForm({...form, pr: e.target.value})} />
-                </div>
-              </div>
-            </>
+              )}
+            </div>
           )}
 
-          {form.isWish && (
-             <div className="form-group">
-               <label>Tahmini Fiyat (₺)</label>
-               <input type="number" value={form.pr} onChange={e => setForm({...form, pr: e.target.value})} />
-             </div>
-          )}
-
-          <button type="submit" className="submit-btn shopping-header-grad">
+          <button type="submit" className="submit-btn shopping-header-grad" style={{ marginTop: '5px' }}>
             <Plus size={18} /> {form.isWish ? 'İsteklere Ekle' : 'Listeye Ekle'}
           </button>
         </form>

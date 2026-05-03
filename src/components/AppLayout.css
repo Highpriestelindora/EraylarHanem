@@ -9,7 +9,7 @@
 }
 
 .app-header {
-  padding: 12px 20px 12px;
+  padding: 50px 20px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -112,7 +112,7 @@
   display: flex;
   justify-content: space-around;
   align-items: flex-start;
-  padding: 12px 10px 0;
+  padding: 12px 10px 30px;
   border-radius: 32px 32px 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.3);
 }
