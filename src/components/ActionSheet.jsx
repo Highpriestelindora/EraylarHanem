@@ -9,7 +9,7 @@ export default function ActionSheet({
   title, 
   children, 
   footer, 
-  maxHeight = 'calc(100vh - env(safe-area-inset-top, 44px) - 12px)',
+  maxHeight = '60vh',
   fullHeight = false 
 }) {
   // Prevent scrolling on body when open
@@ -126,7 +126,7 @@ export default function ActionSheet({
                 flex: 1, 
                 overflowY: 'auto', 
                 overflowX: 'hidden', 
-                padding: '16px 16px 40px',
+                padding: '16px 16px calc(40px + env(safe-area-inset-bottom, 20px))',
                 width: '100%',
                 WebkitOverflowScrolling: 'touch'
               }}>
