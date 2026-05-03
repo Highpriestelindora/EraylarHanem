@@ -21,7 +21,15 @@ const VardiyaTab = () => {
   const [selectedPersonDetail, setSelectedPersonDetail] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const formattedDateStr = selectedDate.toISOString().split('T')[0];
+  // TIMEZONE SAFE DATE STR (YYYY-MM-DD)
+  const getLocalDateStr = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
+  const formattedDateStr = getLocalDateStr(selectedDate);
 
   const handleSync = async () => {
     setIsSyncing(true);
@@ -66,7 +74,7 @@ const VardiyaTab = () => {
     const emojis = ['💫', '🎀', '💜', '👀', '🍓', '🌼', '🌺'];
     let text = `💫 ${week[0].getDate()} - ${week[6].toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} ✨✨✨\n`;
     week.forEach((d, i) => {
-      const dStr = d.toISOString().split('T')[0];
+      const dStr = getLocalDateStr(d);
       const dayName = d.toLocaleDateString('tr-TR', { weekday: 'long' });
       text += `\n${emojis[i]}${dayName}\n`;
       const dayShifts = useStore.getState().modaring.vardiya.filter(s => s?.date === dStr);
@@ -92,7 +100,7 @@ const VardiyaTab = () => {
     const month = selectedDate.getMonth();
     const year = selectedDate.getFullYear();
     const week = getWeekRange(selectedDate);
-    const weekStrs = week.map(d => d.toISOString().split('T')[0]);
+    const weekStrs = week.map(d => getLocalDateStr(d));
 
     const baseStats = personel.map(p => {
       let filtered = [];
@@ -117,22 +125,34 @@ const VardiyaTab = () => {
     
     const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (personel.find(px => px.id === data.personelId)?.hourlyRate || 0);
     const otherShifts = currentShifts.filter(s => !(s?.id === data.id));
-    setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
+    setModuleData('modaring', { ...modaring, vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
     setEditingShift(null);
     toast.success('Kaydedildi');
-    // Force cloud sync
     setTimeout(() => forceSaveToSupabase(), 500);
   };
 
-  const handleClearDay = async () => {
-    if (window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) {
-      const currentShifts = useStore.getState().modaring.vardiya || [];
-      const remainingShifts = currentShifts.filter(s => s?.date !== formattedDateStr);
-      // Hard reset to bypass object merging
-      setModuleData('modaring', { ...modaring, vardiya: remainingShifts });
-      toast.success("Gün temizlendi 🧹");
-      setTimeout(() => forceSaveToSupabase(), 500);
+  const handleClear = async () => {
+    const currentShifts = useStore.getState().modaring.vardiya || [];
+    let remainingShifts = [];
+    let msg = "";
+
+    if (viewMode === 'daily') {
+      if (!window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) return;
+      remainingShifts = currentShifts.filter(s => s?.date !== formattedDateStr);
+      msg = "Gün temizlendi 🧹";
+    } else if (viewMode === 'weekly') {
+      if (!window.confirm("Bu haftanın TÜM vardiyalarını silmek istediğinize emin misiniz?")) return;
+      const weekStrs = getWeekRange(selectedDate).map(d => getLocalDateStr(d));
+      remainingShifts = currentShifts.filter(s => !weekStrs.includes(s?.date));
+      msg = "Hafta temizlendi 🧹";
+    } else {
+      toast.error("Bu görünümde toplu temizleme yapılamaz");
+      return;
     }
+
+    setModuleData('modaring', { ...modaring, vardiya: remainingShifts });
+    toast.success(msg);
+    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const handleDeleteShift = async (shiftId) => {
@@ -178,7 +198,7 @@ const VardiyaTab = () => {
         {currentViewStats.map(p => (
           <div key={p.id} className="ws-compact-row">
             <div className="wsc-user"><span style={{ background: p.color }}>{p.emoji}</span><strong>{p.name?.split(' ')[0]}</strong></div>
-            <div className="wsc-days">{getWeekRange(selectedDate).map((d, i) => { const dStr = d.toISOString().split('T')[0]; const shift = shifts.find(s => s?.personelId === p.id && s?.date === dStr); return <div key={i} className={`wsc-dot ${shift ? 'active' : ''}`} style={{ '--p-color': p.color }}></div> })}</div>
+            <div className="wsc-days">{getWeekRange(selectedDate).map((d, i) => { const dStr = getLocalDateStr(d); const shift = shifts.find(s => s?.personelId === p.id && s?.date === dStr); return <div key={i} className={`wsc-dot ${shift ? 'active' : ''}`} style={{ '--p-color': p.color }}></div> })}</div>
           </div>
         ))}
       </div>
@@ -193,7 +213,7 @@ const VardiyaTab = () => {
       <div className="monthly-visual-view glass animate-fadeIn">
          <div className="mv-heatmap">
             {daysArr.map(day => {
-              const dStr = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day).toISOString().split('T')[0];
+              const dStr = getLocalDateStr(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day));
               const dayShifts = shifts.filter(s => s?.date === dStr);
               const dayHours = dayShifts.reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
               const intensity = Math.min(1, dayHours / 24);
@@ -215,7 +235,11 @@ const VardiyaTab = () => {
       <div className="yearly-summary-view glass animate-fadeIn">
         <div className="yearly-list">
           {months.map((m, idx) => {
-            const monthlyShifts = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); });
+            const monthlyShifts = shifts.filter(s => { 
+              const parts = s?.date?.split('-');
+              if (!parts) return false;
+              return parseInt(parts[1]) === (idx + 1) && parseInt(parts[0]) === selectedDate.getFullYear();
+            });
             const monthTotalHours = monthlyShifts.reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
             
             return (
@@ -276,7 +300,7 @@ const VardiyaTab = () => {
         </div>
         <div className="ss-actions">
            <button className={`ss-action-btn-sync ${isSyncing ? 'animate-spin' : ''}`} onClick={handleSync} title="Bulutla Eşitle"><RefreshCw size={20} /></button>
-           <button className="ss-action-btn-danger" onClick={handleClearDay} title="Günü Temizle"><Eraser size={20} /></button>
+           <button className="ss-action-btn-danger" onClick={handleClear} title={viewMode === 'weekly' ? 'Haftayı Temizle' : 'Günü Temizle'}><Eraser size={20} /></button>
            <button className="ss-action-btn-cute" onClick={() => setShowAddStaffModal(true)} title="Yeni Personel Ekle">
               <Sparkles size={16} />
               <span>Personel</span>
