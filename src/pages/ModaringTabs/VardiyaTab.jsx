@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
-  LayoutGrid, CalendarDays, TrendingUp, DollarSign, MessageCircle
+  LayoutGrid, CalendarDays, TrendingUp, DollarSign, MessageCircle, Eraser, Sparkles
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
@@ -18,44 +18,6 @@ const VardiyaTab = () => {
   const [editingShift, setEditingShift] = useState(null);
 
   const formattedDateStr = selectedDate.toISOString().split('T')[0];
-
-  // --- ORIGINAL DATA INJECTION (04-10 MAYIS) ---
-  useEffect(() => {
-    const targetDate = "2026-05-04";
-    const hasData = shifts.some(s => s?.date === targetDate);
-    
-    if (!hasData && personel.length >= 2) {
-      const azraId = personel.find(p => p.name.includes("Azra"))?.id || personel[0].id;
-      const gozdeId = personel.find(p => p.name.includes("Gözde"))?.id || personel[1].id;
-      const zeynepId = personel.find(p => p.name.includes("Zeynep"))?.id || (personel[2]?.id || personel[0].id);
-
-      const originalPlan = [
-        // Pazartesi
-        { id: 'o1', date: '2026-05-04', personelId: azraId, startTime: "10", endTime: "18", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
-        { id: 'o2', date: '2026-05-04', personelId: gozdeId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
-        // Salı
-        { id: 'o3', date: '2026-05-05', personelId: gozdeId, startTime: "10", endTime: "16", totalPay: 6 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
-        { id: 'o4', date: '2026-05-05', personelId: azraId, startTime: "14", endTime: "22", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
-        // Çarşamba
-        { id: 'o5', date: '2026-05-06', personelId: azraId, startTime: "10", endTime: "18", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
-        { id: 'o6', date: '2026-05-06', personelId: gozdeId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
-        // Perşembe
-        { id: 'o7', date: '2026-05-07', personelId: azraId, startTime: "10", endTime: "18", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
-        { id: 'o8', date: '2026-05-07', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === zeynepId)?.hourlyRate || 0) },
-        // Cuma
-        { id: 'o9', date: '2026-05-08', personelId: gozdeId, startTime: "10", endTime: "17", totalPay: 7 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
-        { id: 'o10', date: '2026-05-08', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === zeynepId)?.hourlyRate || 0) },
-        // Cumartesi
-        { id: 'o11', date: '2026-05-09', personelId: gozdeId, startTime: "10", endTime: "17", totalPay: 7 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
-        { id: 'o12', date: '2026-05-09', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === zeynepId)?.hourlyRate || 0) },
-        // Pazar
-        { id: 'o13', date: '2026-05-10', personelId: zeynepId, startTime: "10", endTime: "16", totalPay: 6 * (personel.find(px => px.id === zeynepId)?.hourlyRate || 0) },
-        { id: 'o14', date: '2026-05-10', personelId: azraId, startTime: "14", endTime: "22", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
-      ];
-      
-      setModuleData('modaring', { vardiya: [...shifts, ...originalPlan] });
-    }
-  }, [personel.length]);
 
   const changeDate = (days) => {
     const d = new Date(selectedDate);
@@ -81,6 +43,14 @@ const VardiyaTab = () => {
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  };
+
+  const clearDay = () => {
+    if (window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) {
+      const updatedShifts = shifts.filter(s => s?.date !== formattedDateStr);
+      setModuleData('modaring', { vardiya: updatedShifts });
+      toast.success("Gün temizlendi 🧹");
+    }
   };
 
   const copyWeeklyToWhatsApp = () => {
@@ -128,15 +98,6 @@ const VardiyaTab = () => {
   }, [viewMode, selectedDate, shifts, personel, formattedDateStr]);
 
   const totalGider = useMemo(() => currentViewStats.reduce((acc, s) => acc + s.earned, 0), [currentViewStats]);
-
-  const handleManualSave = async () => {
-    try {
-      await forceSaveToSupabase();
-      toast.success("Buluta kaydedildi! ☁️");
-    } catch (err) {
-      toast.error("Kayıt hatası");
-    }
-  };
 
   const renderDaily = () => (
     <div className="compact-gantt-view glass animate-fadeIn">
@@ -199,6 +160,7 @@ const VardiyaTab = () => {
 
   return (
     <div className="tab-view-content animate-fadeIn">
+      {/* Switcher & Copy Action */}
       <div className="view-mode-header mb-12">
         <div className="view-mode-switcher glass">
           <button className={viewMode === 'daily' ? 'active' : ''} onClick={() => setViewMode('daily')}><Clock size={16} /></button>
@@ -229,11 +191,14 @@ const VardiyaTab = () => {
       <div className="shift-summary glass mb-16">
         <div className="ss-item">
           <Calculator size={18} color="#10b981" />
-          <div className="ss-text"><small>Toplam Gider ({viewMode})</small><strong>{totalGider.toLocaleString('tr-TR')} TL</strong></div>
+          <div className="ss-text"><small>Dönem Gideri</small><strong>{totalGider.toLocaleString('tr-TR')} TL</strong></div>
         </div>
         <div className="ss-actions">
-           <button className="ss-action-btn-primary" onClick={handleManualSave}><Save size={18} /></button>
-           <button className="ss-action-btn" onClick={() => setShowStaffModal(true)}><UserPlus size={18} /></button>
+           <button className="ss-action-btn-danger" onClick={clearDay} title="Günü Temizle"><Eraser size={18} /></button>
+           <button className="ss-action-btn-cute animate-bounce-subtle" onClick={() => setShowStaffModal(true)} title="Personel Ekle">
+              <Sparkles size={16} />
+              <span>Personel</span>
+           </button>
         </div>
       </div>
 
@@ -241,14 +206,25 @@ const VardiyaTab = () => {
       {viewMode === 'weekly' && renderWeekly()}
       {viewMode === 'yearly' && renderYearly()}
 
-      <div className="section-header-v2 mt-20"><h3>📊 Personel İstatistikleri</h3></div>
+      <div className="section-header-v2 mt-20"><h3>📊 Personel Analizi</h3></div>
       <div className="stats-list pb-80">
          {currentViewStats.map(s => (
-           <div key={s.id} className="stat-card-premium glass animate-pop">
-              <div className="scp-user"><span style={{ background: s.color }}>{s.emoji}</span><strong>{s.name}</strong></div>
-              <div className="scp-metrics">
-                 <div className="scp-metric"><Clock size={12} /><span>{s.hours}s</span></div>
-                 <div className="scp-metric highlight"><DollarSign size={12} /><span>{s.earned.toLocaleString()} ₺</span></div>
+           <div key={s.id} className="stat-card-visual glass animate-pop">
+              <div className="scv-header">
+                 <div className="scv-user">
+                    <span className="scv-emoji" style={{ background: s.color }}>{s.emoji}</span>
+                    <div className="scv-info">
+                       <strong>{s.name}</strong>
+                       <small>{s.hours} saat mesai</small>
+                    </div>
+                 </div>
+                 <div className="scv-earned">
+                    <small>Hakediş</small>
+                    <strong>{s.earned.toLocaleString()} ₺</strong>
+                 </div>
+              </div>
+              <div className="scv-progress-track">
+                 <div className="scv-progress-bar" style={{ width: `${Math.min(100, (s.hours / 12) * 100)}%`, background: s.color }}></div>
               </div>
            </div>
          ))}
@@ -264,7 +240,7 @@ const VardiyaTab = () => {
             const otherShifts = shifts.filter(s => !(s?.personelId === data.personelId && s?.date === data.date));
             setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: Date.now().toString(), totalPay: wage }] });
             setEditingShift(null);
-            toast.success('Kaydedildi');
+            toast.success('Güncellendi');
           }}
           onDelete={() => {
             setModuleData('modaring', { vardiya: shifts.filter(s => !(s?.personelId === editingShift.personelId && s?.date === editingShift.date)) });

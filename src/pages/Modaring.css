@@ -1650,3 +1650,115 @@
 .pb-80 {
   padding-bottom: 80px;
 }
+
+/* Cute & Visual Actions */
+.ss-action-btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.ss-action-btn-danger:hover {
+  background: #ef4444;
+  color: white;
+  transform: rotate(15deg);
+}
+
+.ss-action-btn-cute {
+  background: var(--modaring-gradient);
+  color: white;
+  border: none;
+  padding: 0 16px;
+  height: 42px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(225, 29, 72, 0.3);
+  transition: 0.3s;
+}
+
+.ss-action-btn-cute:active {
+  transform: scale(0.95);
+}
+
+/* Visual Stat Cards */
+.stat-card-visual {
+  padding: 16px;
+  border-radius: 24px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.scv-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.scv-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.scv-emoji {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.scv-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.scv-info strong { font-size: 14px; }
+.scv-info small { font-size: 10px; color: var(--txt-light); }
+
+.scv-earned {
+  text-align: right;
+}
+
+.scv-earned small { display: block; font-size: 8px; color: var(--txt-light); text-transform: uppercase; }
+.scv-earned strong { font-size: 16px; color: #10b981; }
+
+.scv-progress-track {
+  height: 6px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.scv-progress-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease-in-out;
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 3s infinite ease-in-out;
+}
