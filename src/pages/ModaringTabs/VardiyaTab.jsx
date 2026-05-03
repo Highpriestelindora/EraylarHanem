@@ -185,11 +185,10 @@ const VardiyaTab = () => {
 
       <div className="shift-summary glass mb-16">
         <div className="ss-item">
-          <Calculator size={18} color="#10b981" />
+          <button className="ss-action-btn-eye mr-12" onClick={() => setHideEarnings(!hideEarnings)} title="Giderleri Gizle/Göster">{hideEarnings ? <EyeOff size={24} /> : <Eye size={24} />}</button>
           <div className="ss-text"><small>{hideEarnings ? 'Toplam Mesai' : 'Dönem Gideri'}</small><strong>{hideEarnings ? totalHours+' saat' : currentViewStats.reduce((acc,s)=>acc+s.earned,0).toLocaleString('tr-TR')+' TL'}</strong></div>
         </div>
         <div className="ss-actions">
-           <button className="ss-action-btn-eye" onClick={() => setHideEarnings(!hideEarnings)} title="Giderleri Gizle/Göster">{hideEarnings ? <EyeOff size={24} /> : <Eye size={24} />}</button>
            <button className="ss-action-btn-danger" onClick={handleClearDay} title="Günü Temizle"><Eraser size={20} /></button>
            <button className="ss-action-btn-cute" onClick={() => setShowAddStaffModal(true)} title="Yeni Personel Ekle">
               <Sparkles size={16} />
@@ -227,7 +226,7 @@ const VardiyaTab = () => {
         </div>
       )}
 
-      <div className="section-header-v2 mt-20"><h3>📊 Planlama Analizi (Sıralı)</h3></div>
+      <div className="section-header-v2 mt-20"><h3>👥 Çalışanlar Listesi</h3></div>
       <div className="stats-list pb-80">
          {currentViewStats.map(s => (
            <div key={s.id} className="stat-card-visual glass animate-pop" onClick={() => setSelectedPersonDetail(s)}>
