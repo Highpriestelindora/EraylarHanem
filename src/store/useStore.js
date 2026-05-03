@@ -1079,6 +1079,7 @@ const useStore = create(
             selectedVehicleId: remote.selectedVehicleId || 'v1',
             tatil: { ...DEFAULT_STATE.tatil, ...remote.tatil },
             achievements: remote.achievements || DEFAULT_STATE.achievements,
+            modaring: remote.modaring || DEFAULT_STATE.modaring,
             logs: remote.logs || DEFAULT_STATE.logs,
             system: { ...get().system, isCloudReady: true },
             isOnline: true
