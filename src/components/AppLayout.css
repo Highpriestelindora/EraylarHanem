@@ -3,9 +3,9 @@
   flex-direction: column;
   height: 100%;
   min-height: 100dvh;
-  background: #ffffff;
+  background: #F8FAFC;
   position: relative;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(120px + env(safe-area-inset-bottom)); /* Reserve space for Floating Hub */
 }
 
 .app-header {
