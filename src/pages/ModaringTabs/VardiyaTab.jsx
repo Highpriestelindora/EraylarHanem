@@ -3,7 +3,7 @@ import {
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
   LayoutGrid, CalendarDays, TrendingUp, DollarSign, MessageCircle, Eraser, Sparkles,
-  Eye, EyeOff, FileText, Info, Phone, Calendar as CalendarIcon, Zap
+  Eye, EyeOff, FileText, Info, Phone, Calendar as CalendarIcon, Zap, AlertTriangle
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
@@ -48,14 +48,6 @@ const VardiyaTab = () => {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   };
 
-  const clearDay = () => {
-    if (window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) {
-      const updatedShifts = shifts.filter(s => s?.date !== formattedDateStr);
-      setModuleData('modaring', { vardiya: updatedShifts });
-      toast.success("Gün temizlendi");
-    }
-  };
-
   const currentViewStats = useMemo(() => {
     const month = selectedDate.getMonth();
     const year = selectedDate.getFullYear();
@@ -75,7 +67,39 @@ const VardiyaTab = () => {
     });
   }, [viewMode, selectedDate, shifts, personel, formattedDateStr]);
 
-  const totalGider = useMemo(() => currentViewStats.reduce((acc, s) => acc + s.earned, 0), [currentViewStats]);
+  const totalHours = useMemo(() => currentViewStats.reduce((acc,s)=>acc+s.hours,0), [currentViewStats]);
+
+  const handleSaveShift = (data) => {
+    // 1. Overlap Check
+    const isOverlap = shifts.some(s => 
+      s.personelId === data.personelId && 
+      s.date === data.date && 
+      s.id !== data.id &&
+      ((parseInt(data.startTime) < parseInt(s.endTime) && parseInt(data.endTime) > parseInt(s.startTime)))
+    );
+
+    if (isOverlap) {
+      toast.error("Vardiya Çakışması! Bu saatlerde personel zaten çalışıyor.", { icon: '⚠️' });
+      return;
+    }
+
+    // 2. Weekly Hour Check
+    const week = getWeekRange(new Date(data.date));
+    const weekStrs = week.map(d => d.toISOString().split('T')[0]);
+    const weekHours = shifts
+      .filter(s => s.personelId === data.personelId && weekStrs.includes(s.date) && s.id !== data.id)
+      .reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0) + (parseInt(data.endTime) - parseInt(data.startTime));
+
+    if (weekHours > 50) {
+      toast("Dikkat: Personel haftalık 50 saat sınırını aşıyor!", { icon: '🚨', duration: 4000 });
+    }
+
+    const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (personel.find(px => px.id === data.personelId)?.hourlyRate || 0);
+    const otherShifts = shifts.filter(s => !(s?.id === data.id));
+    setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
+    setEditingShift(null);
+    toast.success('Shift planlandı');
+  };
 
   const renderDaily = () => (
     <div className="compact-gantt-view glass animate-fadeIn">
@@ -84,7 +108,7 @@ const VardiyaTab = () => {
         {personel.map(p => {
           const shift = shifts.find(s => s?.personelId === p.id && s?.date === formattedDateStr);
           return (
-            <div key={p.id} className="cg-row" onClick={() => setEditingShift({ personelId: p.id, date: formattedDateStr, startTime: shift?.startTime || "10", endTime: shift?.endTime || "22", note: shift?.note || "" })}>
+            <div key={p.id} className="cg-row" onClick={() => setEditingShift({ id: shift?.id || null, personelId: p.id, date: formattedDateStr, startTime: shift?.startTime || "10", endTime: shift?.endTime || "22", note: shift?.note || "" })}>
               <div className="cg-user-col" onClick={(e) => { e.stopPropagation(); setSelectedPersonDetail(p); }}>
                 <span className="gt-avatar" style={{ background: p.color }}>{p.emoji}</span>
                 <strong>{p.name?.split(' ')[0]}</strong>
@@ -132,12 +156,12 @@ const VardiyaTab = () => {
       <div className="shift-summary glass mb-16">
         <div className="ss-item">
           <Calculator size={18} color="#10b981" />
-          <div className="ss-text"><small>{hideEarnings ? 'Toplam Mesai' : 'Dönem Gideri'}</small><strong>{hideEarnings ? currentViewStats.reduce((acc,s)=>acc+s.hours,0)+' saat' : totalGider.toLocaleString('tr-TR')+' TL'}</strong></div>
+          <div className="ss-text"><small>{hideEarnings ? 'Toplam Mesai' : 'Dönem Gideri'}</small><strong>{hideEarnings ? totalHours+' saat' : currentViewStats.reduce((acc,s)=>acc+s.earned,0).toLocaleString('tr-TR')+' TL'}</strong></div>
         </div>
         <div className="ss-actions">
-           <button className="ss-action-btn" onClick={() => setHideEarnings(!hideEarnings)} title="Giderleri Gizle/Göster">{hideEarnings ? <EyeOff size={18} /> : <Eye size={18} />}</button>
-           <button className="ss-action-btn-danger" onClick={clearDay} title="Günü Temizle"><Eraser size={18} /></button>
-           <button className="ss-action-btn-cute" onClick={() => setShowStaffModal(true)} title="Personel Yönetimi"><Users size={16} /></button>
+           <button className="ss-action-btn" onClick={() => setHideEarnings(!hideEarnings)}>{hideEarnings ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+           <button className="ss-action-btn-danger" onClick={() => { if(window.confirm("Günü temizle?")) setModuleData('modaring', { vardiya: shifts.filter(s => s?.date !== formattedDateStr) }); toast.success("Temizlendi"); }}><Eraser size={18} /></button>
+           <button className="ss-action-btn-cute" onClick={() => setShowStaffModal(true)}><Users size={16} /></button>
         </div>
       </div>
 
@@ -152,14 +176,19 @@ const VardiyaTab = () => {
               <div className="scv-header">
                  <div className="scv-user">
                     <span className="scv-emoji" style={{ background: s.color }}>{s.emoji}</span>
-                    <div className="scv-info"><strong>{s.name}</strong><small>{s.hours} saat planlandı</small></div>
+                    <div className="scv-info">
+                       <strong>{s.name}</strong>
+                       <small style={{ color: s.hours > 50 ? '#ef4444' : 'inherit', fontWeight: s.hours > 50 ? 'bold' : 'normal' }}>
+                         {s.hours} saat planlandı {s.hours > 50 && <AlertTriangle size={10} style={{ display: 'inline', marginLeft: 4 }} />}
+                       </small>
+                    </div>
                  </div>
                  {!hideEarnings && (
                    <div className="scv-earned"><small>Hakediş</small><strong>{s.earned.toLocaleString()} ₺</strong></div>
                  )}
-                 {hideEarnings && <Info size={16} className="opacity-20" />}
+                 {s.hours > 50 && <div className="overtime-badge">OVERTIME</div>}
               </div>
-              <div className="scv-progress-track"><div className="scv-progress-bar" style={{ width: `${Math.min(100, (s.hours / 40) * 100)}%`, background: s.color }}></div></div>
+              <div className="scv-progress-track"><div className="scv-progress-bar" style={{ width: `${Math.min(100, (s.hours / 50) * 100)}%`, background: s.hours > 50 ? '#ef4444' : s.color }}></div></div>
               {s.lastNote && <div className="scv-note"><FileText size={10} /><span>{s.lastNote}</span></div>}
            </div>
          ))}
@@ -170,60 +199,40 @@ const VardiyaTab = () => {
           shift={editingShift}
           personel={personel.find(p => p.id === editingShift.personelId)}
           onClose={() => setEditingShift(null)}
-          onSave={(data) => {
-            const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (personel.find(px => px.id === data.personelId)?.hourlyRate || 0);
-            const otherShifts = shifts.filter(s => !(s?.personelId === data.personelId && s?.date === data.date));
-            setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: Date.now().toString(), totalPay: wage }] });
-            setEditingShift(null);
-            toast.success('Shift güncellendi');
-          }}
+          onSave={handleSaveShift}
           onDelete={() => {
-            setModuleData('modaring', { vardiya: shifts.filter(s => !(s?.personelId === editingShift.personelId && s?.date === editingShift.date)) });
+            setModuleData('modaring', { vardiya: shifts.filter(s => s?.id !== editingShift.id) });
             setEditingShift(null);
             toast.error('Shift silindi');
           }}
         />
       )}
 
-      {selectedPersonDetail && (
-        <PersonDetailModal 
-          person={selectedPersonDetail} 
-          onClose={() => setSelectedPersonDetail(null)} 
-          onUpdate={(updates) => {
-            const updated = personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p);
-            setModuleData('modaring', { personel: updated });
-            setSelectedPersonDetail(null);
-            toast.success('Personel güncellendi');
-          }}
-        />
-      )}
-
+      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); }} />}
       {showStaffModal && <StaffAddModal personel={personel} onClose={() => setShowStaffModal(false)} onAdd={(p) => setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] })} onRemove={(id) => setModuleData('modaring', { personel: personel.filter(px => px.id !== id) })} />}
     </div>
   );
 };
 
 const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
-  const [data, setData] = useState({ startTime: shift.startTime || "10", endTime: shift.endTime || "22", note: shift.note || "" });
+  const [data, setData] = useState({ id: shift.id, personelId: shift.personelId, date: shift.date, startTime: shift.startTime || "10", endTime: shift.endTime || "22", note: shift.note || "" });
   const hoursArr = Array.from({ length: 13 }, (_, i) => (i + 10).toString());
-  const applyTemplate = (start, end) => setData({...data, startTime: start, endTime: end});
-
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" style={{ maxWidth: '320px' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Yaz</h3><small>{personel.name}</small></div></div>
+        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Planla</h3><small>{personel.name}</small></div></div>
         <div className="modal-body-v2">
           <div className="template-row mb-12">
-             <button className="template-btn" onClick={() => applyTemplate("10", "18")}>🌅 10-18</button>
-             <button className="template-btn" onClick={() => applyTemplate("14", "22")}>🌙 14-22</button>
-             <button className="template-btn" onClick={() => applyTemplate("10", "22")}>💎 Tam</button>
+             <button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "18"})}>🌅 10-18</button>
+             <button className="template-btn" onClick={() => setData({...data, startTime: "14", endTime: "22"})}>🌙 14-22</button>
+             <button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "22"})}>💎 Tam</button>
           </div>
           <div className="form-grid-v2">
             <div className="form-group-v2"><label>Giriş</label><select className="premium-select" value={data.startTime} onChange={e => setData({...data, startTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div>
             <div className="form-group-v2"><label>Çıkış</label><select className="premium-select" value={data.endTime} onChange={e => setData({...data, endTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div>
           </div>
-          <div className="form-group-v2 mt-12"><label>Vardiya Notu</label><textarea className="premium-input" style={{ height: '60px', padding: '10px' }} value={data.note} onChange={e => setData({...data, note: e.target.value})} placeholder="Örn: Erken çıkacak..." /></div>
-          <div className="modal-actions-v2 mt-20"><button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button><button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave({...shift, ...data})}>Planı Kaydet</button></div>
+          <div className="form-group-v2 mt-12"><label>Not</label><textarea className="premium-input" style={{ height: '60px', padding: '10px' }} value={data.note} onChange={e => setData({...data, note: e.target.value})} placeholder="Vardiya notu..." /></div>
+          <div className="modal-actions-v2 mt-20">{shift.id && <button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button>}<button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave(data)}>Planla</button></div>
         </div>
       </div>
     </div>
@@ -237,10 +246,10 @@ const PersonDetailModal = ({ person, onClose, onUpdate }) => {
       <div className="modal-content glass animate-slideUp staff-modal-v2" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2"><span style={{ background: person.color, width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{person.emoji}</span><h3>{person.name} Profili</h3><button className="icon-btn-small" onClick={onClose}><X size={20} /></button></div>
         <div className="modal-body-v2">
-          <div className="form-group-v2"><label>Tam Adı</label><input className="premium-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
-          <div className="form-grid-v2 mt-12"><div className="form-group-v2"><label>Rol</label><input className="premium-input" value={form.role} onChange={e => setForm({...form, role: e.target.value})} /></div><div className="form-group-v2"><label>Saatlik Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} /></div></div>
-          <div className="form-group-v2 mt-12"><label>Telefon</label><div style={{ display: 'flex', gap: 8 }}><input className="premium-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="05xx..." /><a href={`tel:${form.phone}`} className="icon-btn-small" style={{ background: '#10b981', color: 'white' }}><Phone size={16} /></a></div></div>
-          <div className="form-group-v2 mt-12"><label>Personel Notları</label><textarea className="premium-input" style={{ height: '80px', padding: '10px' }} value={form.note} onChange={e => setForm({...form, note: e.target.value})} placeholder="İzin günleri, performans vb..." /></div>
+          <div className="form-group-v2"><label>Adı Soyadı</label><input className="premium-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
+          <div className="form-grid-v2 mt-12"><div className="form-group-v2"><label>Rol</label><input className="premium-input" value={form.role} onChange={e => setForm({...form, role: e.target.value})} /></div><div className="form-group-v2"><label>Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} /></div></div>
+          <div className="form-group-v2 mt-12"><label>Telefon</label><div style={{ display: 'flex', gap: 8 }}><input className="premium-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /><a href={`tel:${form.phone}`} className="icon-btn-small" style={{ background: '#10b981', color: 'white' }}><Phone size={16} /></a></div></div>
+          <div className="form-group-v2 mt-12"><label>Personel Notu</label><textarea className="premium-input" style={{ height: '80px', padding: '10px' }} value={form.note} onChange={e => setForm({...form, note: e.target.value})} /></div>
           <button className="submit-btn-premium mt-24" onClick={() => onUpdate(form)}>Güncelle</button>
         </div>
       </div>

@@ -1813,3 +1813,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Overtime Warnings */
+.overtime-badge {
+  background: #fee2e2;
+  color: #ef4444;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
