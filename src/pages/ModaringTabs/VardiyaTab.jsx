@@ -70,7 +70,6 @@ const VardiyaTab = () => {
   const totalHours = useMemo(() => currentViewStats.reduce((acc,s)=>acc+s.hours,0), [currentViewStats]);
 
   const handleSaveShift = (data) => {
-    // 1. Overlap Check
     const isOverlap = shifts.some(s => 
       s.personelId === data.personelId && 
       s.date === data.date && 
@@ -79,11 +78,10 @@ const VardiyaTab = () => {
     );
 
     if (isOverlap) {
-      toast.error("Vardiya Çakışması! Bu saatlerde personel zaten çalışıyor.", { icon: '⚠️' });
+      toast.error("Çakışma! Personel zaten çalışıyor.", { icon: '⚠️' });
       return;
     }
 
-    // 2. Weekly Hour Check
     const week = getWeekRange(new Date(data.date));
     const weekStrs = week.map(d => d.toISOString().split('T')[0]);
     const weekHours = shifts
@@ -91,14 +89,14 @@ const VardiyaTab = () => {
       .reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0) + (parseInt(data.endTime) - parseInt(data.startTime));
 
     if (weekHours > 50) {
-      toast("Dikkat: Personel haftalık 50 saat sınırını aşıyor!", { icon: '🚨', duration: 4000 });
+      toast("Haftalık 50 saat sınırı aşıldı!", { icon: '🚨' });
     }
 
     const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (personel.find(px => px.id === data.personelId)?.hourlyRate || 0);
     const otherShifts = shifts.filter(s => !(s?.id === data.id));
     setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
     setEditingShift(null);
-    toast.success('Shift planlandı');
+    toast.success('Kaydedildi');
   };
 
   const renderDaily = () => (
@@ -128,6 +126,45 @@ const VardiyaTab = () => {
       </div>
     </div>
   );
+
+  const renderWeekly = () => (
+    <div className="weekly-summary-view glass animate-fadeIn">
+       <div className="ws-grid">
+          {personel.map(p => (
+            <div key={p.id} className="ws-compact-row">
+               <div className="wsc-user"><span style={{ background: p.color }}>{p.emoji}</span><strong>{p.name?.split(' ')[0]}</strong></div>
+               <div className="wsc-days">
+                  {getWeekRange(selectedDate).map((d, i) => {
+                    const dStr = d.toISOString().split('T')[0];
+                    const shift = shifts.find(s => s?.personelId === p.id && s?.date === dStr);
+                    return <div key={i} className={`wsc-dot ${shift ? 'active' : ''}`} style={{ '--p-color': p.color }}></div>
+                  })}
+               </div>
+            </div>
+          ))}
+       </div>
+    </div>
+  );
+
+  const renderYearly = () => {
+    const months = ['Ocak','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+    return (
+      <div className="yearly-summary-view glass animate-fadeIn">
+        <div className="yearly-list">
+          {months.map((m, idx) => {
+            const monthlyTotal = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); }).reduce((acc, s) => acc + (s.totalPay || 0), 0);
+            return (
+              <div key={m} className="yearly-row">
+                <div className="yr-month">{m}</div>
+                <div className="yr-bar-container"><div className="yr-bar" style={{ width: `${Math.min(100, (monthlyTotal / 50000) * 100)}%` }}></div></div>
+                <div className="yr-total">{monthlyTotal > 0 ? monthlyTotal.toLocaleString() + ' ₺' : '-'}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="tab-view-content animate-fadeIn">
@@ -220,7 +257,7 @@ const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" style={{ maxWidth: '320px' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Planla</h3><small>{personel.name}</small></div></div>
+        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Yaz</h3><small>{personel.name}</small></div></div>
         <div className="modal-body-v2">
           <div className="template-row mb-12">
              <button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "18"})}>🌅 10-18</button>
