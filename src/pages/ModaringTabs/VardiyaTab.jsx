@@ -3,7 +3,7 @@ import {
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
   LayoutGrid, CalendarDays, TrendingUp, DollarSign, MessageCircle, Eraser, Sparkles,
-  Eye, EyeOff, FileText, Info, Phone, Calendar as CalendarIcon, Zap, AlertTriangle, RefreshCw, CloudUpload
+  Eye, EyeOff, FileText, Info, Phone, Calendar as CalendarIcon, Zap, AlertTriangle, CloudUpload
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
@@ -19,7 +19,6 @@ const VardiyaTab = () => {
   const [editingShift, setEditingShift] = useState(null);
   const [hideEarnings, setHideEarnings] = useState(true);
   const [selectedPersonDetail, setSelectedPersonDetail] = useState(null);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   // Confirm Modal State
   const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null });
@@ -33,17 +32,6 @@ const VardiyaTab = () => {
 
   const formattedDateStr = useMemo(() => getLocalDateStr(selectedDate), [selectedDate, getLocalDateStr]);
 
-  const handleSync = useCallback(async () => {
-    setIsSyncing(true);
-    try {
-      await loadFromSupabase();
-      toast.success("Veriler güncellendi", { icon: '☁️' });
-    } catch (e) {
-      toast.error("Eşitleme hatası");
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [loadFromSupabase]);
 
   const changeDate = (days) => {
     const d = new Date(selectedDate);
@@ -330,7 +318,6 @@ const VardiyaTab = () => {
           <div className="ss-text"><small>{hideEarnings ? 'Toplam Mesai' : 'Dönem Gideri'}</small><strong>{hideEarnings ? totalHours+' saat' : currentViewStats.reduce((acc,s)=>acc+s.earned,0).toLocaleString('tr-TR')+' TL'}</strong></div>
         </div>
         <div className="ss-actions">
-           <button className={`ss-action-btn-sync ${isSyncing ? 'animate-spin' : ''}`} onClick={handleSync} title="Bulutla Eşitle"><RefreshCw size={20} /></button>
            <button className="ss-action-btn-danger" onClick={handleClear} title={viewMode === 'weekly' ? 'Haftayı Temizle' : 'Günü Temizle'}><Eraser size={20} /></button>
            <button className="ss-action-btn-cute" onClick={() => setShowAddStaffModal(true)} title="Yeni Personel Ekle">
               <Sparkles size={16} />
