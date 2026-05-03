@@ -48,6 +48,15 @@ const VardiyaTab = () => {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   };
 
+  // Dynamic Overtime Thresholds
+  const overtimeThreshold = useMemo(() => {
+    if (viewMode === 'daily') return 12;
+    if (viewMode === 'weekly') return 50;
+    if (viewMode === 'monthly') return 215; // 50 * 4.3
+    if (viewMode === 'yearly') return 2600; // 50 * 52
+    return 50;
+  }, [viewMode]);
+
   const currentViewStats = useMemo(() => {
     const month = selectedDate.getMonth();
     const year = selectedDate.getFullYear();
@@ -78,7 +87,7 @@ const VardiyaTab = () => {
     );
 
     if (isOverlap) {
-      toast.error("Çakışma! Personel zaten çalışıyor.", { icon: '⚠️' });
+      toast.error("Vardiya Çakışması!", { icon: '⚠️' });
       return;
     }
 
@@ -96,7 +105,7 @@ const VardiyaTab = () => {
     const otherShifts = shifts.filter(s => !(s?.id === data.id));
     setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
     setEditingShift(null);
-    toast.success('Kaydedildi');
+    toast.success('Shift kaydedildi');
   };
 
   const renderDaily = () => (
@@ -152,12 +161,12 @@ const VardiyaTab = () => {
       <div className="yearly-summary-view glass animate-fadeIn">
         <div className="yearly-list">
           {months.map((m, idx) => {
-            const monthlyTotal = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); }).reduce((acc, s) => acc + (s.totalPay || 0), 0);
+            const monthlyTotalHours = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); }).reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
             return (
               <div key={m} className="yearly-row">
                 <div className="yr-month">{m}</div>
-                <div className="yr-bar-container"><div className="yr-bar" style={{ width: `${Math.min(100, (monthlyTotal / 50000) * 100)}%` }}></div></div>
-                <div className="yr-total">{monthlyTotal > 0 ? monthlyTotal.toLocaleString() + ' ₺' : '-'}</div>
+                <div className="yr-bar-container"><div className="yr-bar" style={{ width: `${Math.min(100, (monthlyTotalHours / 215) * 100)}%`, background: monthlyTotalHours > 215 ? '#ef4444' : 'var(--modaring-gradient)' }}></div></div>
+                <div className="yr-total">{monthlyTotalHours > 0 ? monthlyTotalHours + ' s' : '-'}</div>
               </div>
             );
           })}
@@ -215,17 +224,19 @@ const VardiyaTab = () => {
                     <span className="scv-emoji" style={{ background: s.color }}>{s.emoji}</span>
                     <div className="scv-info">
                        <strong>{s.name}</strong>
-                       <small style={{ color: s.hours > 50 ? '#ef4444' : 'inherit', fontWeight: s.hours > 50 ? 'bold' : 'normal' }}>
-                         {s.hours} saat planlandı {s.hours > 50 && <AlertTriangle size={10} style={{ display: 'inline', marginLeft: 4 }} />}
+                       <small style={{ color: s.hours > overtimeThreshold ? '#ef4444' : 'inherit', fontWeight: s.hours > overtimeThreshold ? 'bold' : 'normal' }}>
+                         {s.hours} saat planlandı {s.hours > overtimeThreshold && <AlertTriangle size={10} style={{ display: 'inline', marginLeft: 4 }} />}
                        </small>
                     </div>
                  </div>
                  {!hideEarnings && (
                    <div className="scv-earned"><small>Hakediş</small><strong>{s.earned.toLocaleString()} ₺</strong></div>
                  )}
-                 {s.hours > 50 && <div className="overtime-badge">OVERTIME</div>}
+                 {s.hours > overtimeThreshold && <div className="overtime-badge">OVERTIME</div>}
               </div>
-              <div className="scv-progress-track"><div className="scv-progress-bar" style={{ width: `${Math.min(100, (s.hours / 50) * 100)}%`, background: s.hours > 50 ? '#ef4444' : s.color }}></div></div>
+              <div className="scv-progress-track">
+                <div className="scv-progress-bar" style={{ width: `${Math.min(100, (s.hours / overtimeThreshold) * 100)}%`, background: s.hours > overtimeThreshold ? '#ef4444' : s.color }}></div>
+              </div>
               {s.lastNote && <div className="scv-note"><FileText size={10} /><span>{s.lastNote}</span></div>}
            </div>
          ))}
@@ -257,7 +268,7 @@ const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" style={{ maxWidth: '320px' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Yaz</h3><small>{personel.name}</small></div></div>
+        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Planla</h3><small>{personel.name}</small></div></div>
         <div className="modal-body-v2">
           <div className="template-row mb-12">
              <button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "18"})}>🌅 10-18</button>
