@@ -1925,3 +1925,30 @@
   width: 100%;
   background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.02) 5px, rgba(0,0,0,0.02) 10px);
 }
+
+/* Sync Button */
+.ss-action-btn-sync {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: white;
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: 0.3s;
+}
+
+.ss-action-btn-sync:active { transform: scale(0.9); }
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

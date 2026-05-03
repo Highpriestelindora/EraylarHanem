@@ -3,13 +3,13 @@ import {
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
   LayoutGrid, CalendarDays, TrendingUp, DollarSign, MessageCircle, Eraser, Sparkles,
-  Eye, EyeOff, FileText, Info, Phone, Calendar as CalendarIcon, Zap, AlertTriangle
+  Eye, EyeOff, FileText, Info, Phone, Calendar as CalendarIcon, Zap, AlertTriangle, RefreshCw, CloudUpload
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const VardiyaTab = () => {
-  const { modaring, setModuleData } = useStore();
+  const { modaring, setModuleData, forceSaveToSupabase, loadFromSupabase } = useStore();
   const personel = modaring?.personel || [];
   const shifts = modaring?.vardiya || [];
   
@@ -19,8 +19,21 @@ const VardiyaTab = () => {
   const [editingShift, setEditingShift] = useState(null);
   const [hideEarnings, setHideEarnings] = useState(true);
   const [selectedPersonDetail, setSelectedPersonDetail] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const formattedDateStr = selectedDate.toISOString().split('T')[0];
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await loadFromSupabase();
+      toast.success("Veriler güncellendi", { icon: '☁️' });
+    } catch (e) {
+      toast.error("Eşitleme hatası");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const changeDate = (days) => {
     const d = new Date(selectedDate);
@@ -97,7 +110,7 @@ const VardiyaTab = () => {
 
   const totalHours = useMemo(() => currentViewStats.reduce((acc,s)=>acc+s.hours,0), [currentViewStats]);
 
-  const handleSaveShift = (data) => {
+  const handleSaveShift = async (data) => {
     const currentShifts = useStore.getState().modaring.vardiya || [];
     const isOverlap = currentShifts.some(s => s.personelId === data.personelId && s.date === data.date && s.id !== data.id && ((parseInt(data.startTime) < parseInt(s.endTime) && parseInt(data.endTime) > parseInt(s.startTime))));
     if (isOverlap) { toast.error("Vardiya Çakışması!"); return; }
@@ -107,15 +120,28 @@ const VardiyaTab = () => {
     setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
     setEditingShift(null);
     toast.success('Kaydedildi');
+    // Force cloud sync
+    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
-  const handleClearDay = () => {
+  const handleClearDay = async () => {
     if (window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) {
       const currentShifts = useStore.getState().modaring.vardiya || [];
       const remainingShifts = currentShifts.filter(s => s?.date !== formattedDateStr);
-      setModuleData('modaring', { vardiya: remainingShifts });
+      // Hard reset to bypass object merging
+      setModuleData('modaring', { ...modaring, vardiya: remainingShifts });
       toast.success("Gün temizlendi 🧹");
+      setTimeout(() => forceSaveToSupabase(), 500);
     }
+  };
+
+  const handleDeleteShift = async (shiftId) => {
+    const currentShifts = useStore.getState().modaring.vardiya || [];
+    const updated = currentShifts.filter(s => s?.id !== shiftId);
+    setModuleData('modaring', { ...modaring, vardiya: updated });
+    setEditingShift(null);
+    toast.error('Vardiya silindi');
+    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const renderDaily = () => (
@@ -249,6 +275,7 @@ const VardiyaTab = () => {
           <div className="ss-text"><small>{hideEarnings ? 'Toplam Mesai' : 'Dönem Gideri'}</small><strong>{hideEarnings ? totalHours+' saat' : currentViewStats.reduce((acc,s)=>acc+s.earned,0).toLocaleString('tr-TR')+' TL'}</strong></div>
         </div>
         <div className="ss-actions">
+           <button className={`ss-action-btn-sync ${isSyncing ? 'animate-spin' : ''}`} onClick={handleSync} title="Bulutla Eşitle"><RefreshCw size={20} /></button>
            <button className="ss-action-btn-danger" onClick={handleClearDay} title="Günü Temizle"><Eraser size={20} /></button>
            <button className="ss-action-btn-cute" onClick={() => setShowAddStaffModal(true)} title="Yeni Personel Ekle">
               <Sparkles size={16} />
@@ -281,11 +308,11 @@ const VardiyaTab = () => {
       </div>
 
       {editingShift && (
-        <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => { setModuleData('modaring', { vardiya: useStore.getState().modaring.vardiya.filter(s => s?.id !== editingShift.id) }); setEditingShift(null); toast.error('Vardiya silindi'); }} />
+        <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => handleDeleteShift(editingShift.id)} />
       )}
 
-      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); }} onDelete={() => { if(window.confirm("Personeli sil?")) { const curP = useStore.getState().modaring.personel; const curV = useStore.getState().modaring.vardiya; setModuleData('modaring', { personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) }); setSelectedPersonDetail(null); toast.error('Personel silindi'); } }} />}
-      {showAddStaffModal && <StaffAddOnlyModal onClose={() => setShowAddStaffModal(false)} onAdd={(p) => { setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] }); setShowAddStaffModal(false); toast.success('Personel eklendi!'); }} />}
+      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); setTimeout(() => forceSaveToSupabase(), 500); }} onDelete={() => { if(window.confirm("Personeli sil?")) { const curP = useStore.getState().modaring.personel; const curV = useStore.getState().modaring.vardiya; setModuleData('modaring', { ...modaring, personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) }); setSelectedPersonDetail(null); toast.error('Personel silindi'); setTimeout(() => forceSaveToSupabase(), 500); } }} />}
+      {showAddStaffModal && <StaffAddOnlyModal onClose={() => setShowAddStaffModal(false)} onAdd={(p) => { setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] }); setShowAddStaffModal(false); toast.success('Personel eklendi!'); setTimeout(() => forceSaveToSupabase(), 500); }} />}
     </div>
   );
 };
