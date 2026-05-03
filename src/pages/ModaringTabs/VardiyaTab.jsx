@@ -9,7 +9,7 @@ import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const VardiyaTab = () => {
-  const { modaring, setModuleData, forceSaveToSupabase } = useStore();
+  const { modaring, setModuleData } = useStore();
   const personel = modaring?.personel || [];
   const shifts = modaring?.vardiya || [];
   
@@ -56,7 +56,7 @@ const VardiyaTab = () => {
       const dStr = d.toISOString().split('T')[0];
       const dayName = d.toLocaleDateString('tr-TR', { weekday: 'long' });
       text += `\n${emojis[i]}${dayName}\n`;
-      const dayShifts = shifts.filter(s => s?.date === dStr);
+      const dayShifts = useStore.getState().modaring.vardiya.filter(s => s?.date === dStr);
       if (dayShifts.length === 0) text += "Plan yok 🏖️\n";
       else dayShifts.forEach(s => {
         const p = personel.find(x => x.id === s.personelId);
@@ -92,18 +92,18 @@ const VardiyaTab = () => {
       const earned = filtered.reduce((acc, s) => acc + (s.totalPay || 0), 0);
       return { ...p, hours, earned, count: filtered.length, lastNote: filtered[filtered.length-1]?.note };
     });
-
-    // SORT BY HOURS WORKED (DESCENDING)
     return baseStats.sort((a, b) => b.hours - a.hours);
   }, [viewMode, selectedDate, shifts, personel, formattedDateStr]);
 
   const totalHours = useMemo(() => currentViewStats.reduce((acc,s)=>acc+s.hours,0), [currentViewStats]);
 
   const handleSaveShift = (data) => {
-    const isOverlap = shifts.some(s => s.personelId === data.personelId && s.date === data.date && s.id !== data.id && ((parseInt(data.startTime) < parseInt(s.endTime) && parseInt(data.endTime) > parseInt(s.startTime))));
+    const currentShifts = useStore.getState().modaring.vardiya || [];
+    const isOverlap = currentShifts.some(s => s.personelId === data.personelId && s.date === data.date && s.id !== data.id && ((parseInt(data.startTime) < parseInt(s.endTime) && parseInt(data.endTime) > parseInt(s.startTime))));
     if (isOverlap) { toast.error("Vardiya Çakışması!"); return; }
+    
     const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (personel.find(px => px.id === data.personelId)?.hourlyRate || 0);
-    const otherShifts = shifts.filter(s => !(s?.id === data.id));
+    const otherShifts = currentShifts.filter(s => !(s?.id === data.id));
     setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
     setEditingShift(null);
     toast.success('Kaydedildi');
@@ -111,10 +111,19 @@ const VardiyaTab = () => {
 
   const handleClearDay = () => {
     if (window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) {
-      const remainingShifts = shifts.filter(s => s?.date !== formattedDateStr);
+      const currentShifts = useStore.getState().modaring.vardiya || [];
+      const remainingShifts = currentShifts.filter(s => s?.date !== formattedDateStr);
       setModuleData('modaring', { vardiya: remainingShifts });
       toast.success("Gün temizlendi 🧹");
     }
+  };
+
+  const handleDeleteShift = (shiftId) => {
+    const currentShifts = useStore.getState().modaring.vardiya || [];
+    const updated = currentShifts.filter(s => s?.id !== shiftId);
+    setModuleData('modaring', { vardiya: updated });
+    setEditingShift(null);
+    toast.error('Vardiya silindi');
   };
 
   const renderDaily = () => (
@@ -237,10 +246,10 @@ const VardiyaTab = () => {
       </div>
 
       {editingShift && (
-        <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => { setModuleData('modaring', { vardiya: shifts.filter(s => s?.id !== editingShift.id) }); setEditingShift(null); toast.error('Silindi'); }} />
+        <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => handleDeleteShift(editingShift.id)} />
       )}
 
-      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); }} onDelete={() => { if(window.confirm("Personeli sil?")) setModuleData('modaring', { personel: personel.filter(p => p.id !== selectedPersonDetail.id), vardiya: shifts.filter(s => s.personelId !== selectedPersonDetail.id) }); setSelectedPersonDetail(null); }} />}
+      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); }} onDelete={() => { if(window.confirm("Personeli sil?")) { const curP = useStore.getState().modaring.personel; const curV = useStore.getState().modaring.vardiya; setModuleData('modaring', { personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) }); setSelectedPersonDetail(null); toast.error('Personel silindi'); } }} />}
       
       {showAddStaffModal && <StaffAddOnlyModal onClose={() => setShowAddStaffModal(false)} onAdd={(p) => { setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] }); setShowAddStaffModal(false); toast.success('Personel eklendi!'); }} />}
     </div>
@@ -274,7 +283,7 @@ const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
           <div className="template-row mb-12"><button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "18"})}>🌅 10-18</button><button className="template-btn" onClick={() => setData({...data, startTime: "14", endTime: "22"})}>🌙 14-22</button><button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "22"})}>💎 Tam</button></div>
           <div className="form-grid-v2"><div className="form-group-v2"><label>Giriş</label><select className="premium-select" value={data.startTime} onChange={e => setData({...data, startTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div><div className="form-group-v2"><label>Çıkış</label><select className="premium-select" value={data.endTime} onChange={e => setData({...data, endTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div></div>
           <div className="form-group-v2 mt-12"><label>Not</label><textarea className="premium-input" style={{ height: '60px', padding: '10px' }} value={data.note} onChange={e => setData({...data, note: e.target.value})} placeholder="Vardiya notu..." /></div>
-          <div className="modal-actions-v2 mt-20">{shift.id && <button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button>}<button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave(data)}>Planla</button></div>
+          <div className="modal-actions-v2 mt-20">{shift.id && <button className="icon-btn-danger" onClick={() => onDelete(shift.id)}><Trash2 size={18} /></button>}<button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave(data)}>Planla</button></div>
         </div>
       </div>
     </div>
