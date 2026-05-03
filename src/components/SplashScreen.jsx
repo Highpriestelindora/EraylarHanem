@@ -12,6 +12,7 @@ const SplashScreen = ({ finishLoading }) => {
     { t: 'Görkem gizlice mutfaktan atıştırıyor... 🥪', m: '🥪' },
     { t: 'Esra "Bugün ne pişirsem?" diye düşünüyor... 🥘', m: '🥘' },
     { t: 'Fatura canavarları evden kovuluyor... 💸', m: '💸' },
+    { t: 'Modaring vardiya sistemi senkronize ediliyor... 📊', m: '📊' },
     { t: 'Vizyoner asistan hesaplamaları bitiriyor... 🧠', m: '🧠' },
     { t: 'Mühendislik CRM fazları senkronize ediliyor... 💼', m: '💼' },
     { t: 'Hayat modülü rutinleri optimize ediliyor... ⏳', m: '⏳' },
@@ -113,7 +114,7 @@ const SplashScreen = ({ finishLoading }) => {
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: '100%' }}
-          transition={{ duration: 9, ease: "linear" }}
+          transition={{ duration: 10, ease: "linear" }}
           style={{ height: '100%', background: 'white', boxShadow: '0 0 10px white' }}
         />
       </div>
@@ -178,7 +179,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v3.3.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"KONUM HUB"</span>
+            v3.5.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"DİNAMİK VARDİYA"</span>
           </span>
         </div>
         <span style={{
