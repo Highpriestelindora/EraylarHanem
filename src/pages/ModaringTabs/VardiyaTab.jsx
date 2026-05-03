@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
@@ -22,16 +22,16 @@ const VardiyaTab = () => {
   const [isSyncing, setIsSyncing] = useState(false);
 
   // TIMEZONE SAFE DATE STR (YYYY-MM-DD)
-  const getLocalDateStr = (date) => {
+  const getLocalDateStr = useCallback((date) => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
-  };
+  }, []);
 
-  const formattedDateStr = getLocalDateStr(selectedDate);
+  const formattedDateStr = useMemo(() => getLocalDateStr(selectedDate), [selectedDate, getLocalDateStr]);
 
-  const handleSync = async () => {
+  const handleSync = useCallback(async () => {
     setIsSyncing(true);
     try {
       await loadFromSupabase();
@@ -41,7 +41,7 @@ const VardiyaTab = () => {
     } finally {
       setIsSyncing(false);
     }
-  };
+  }, [loadFromSupabase]);
 
   const changeDate = (days) => {
     const d = new Date(selectedDate);
@@ -52,7 +52,7 @@ const VardiyaTab = () => {
     setSelectedDate(d);
   };
 
-  const getWeekRange = (date) => {
+  const getWeekRange = useCallback((date) => {
     const start = new Date(date);
     start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
     return Array.from({ length: 7 }, (_, i) => {
@@ -60,7 +60,7 @@ const VardiyaTab = () => {
       d.setDate(d.getDate() + i);
       return d;
     });
-  };
+  }, []);
 
   const getWeekNumber = (d) => {
     d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -69,7 +69,7 @@ const VardiyaTab = () => {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   };
 
-  const copyWeeklyToWhatsApp = () => {
+  const copyWeeklyToWhatsApp = useCallback(() => {
     const week = getWeekRange(selectedDate);
     const emojis = ['💫', '🎀', '💜', '👀', '🍓', '🌼', '🌺'];
     let text = `💫 ${week[0].getDate()} - ${week[6].toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} ✨✨✨\n`;
@@ -86,7 +86,7 @@ const VardiyaTab = () => {
     });
     navigator.clipboard.writeText(text);
     toast.success("Kopyalandı!", { icon: '📱' });
-  };
+  }, [getWeekRange, selectedDate, getLocalDateStr, personel]);
 
   const overtimeThreshold = useMemo(() => {
     if (viewMode === 'daily') return 12;
@@ -106,35 +106,47 @@ const VardiyaTab = () => {
       let filtered = [];
       if (viewMode === 'daily') filtered = shifts.filter(s => s?.date === formattedDateStr && s?.personelId === p.id);
       else if (viewMode === 'weekly') filtered = shifts.filter(s => weekStrs.includes(s?.date) && s?.personelId === p.id);
-      else if (viewMode === 'monthly') filtered = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === month && d.getFullYear() === year && s?.personelId === p.id; });
-      else if (viewMode === 'yearly') filtered = shifts.filter(s => new Date(s?.date).getFullYear() === year && s?.personelId === p.id);
+      else if (viewMode === 'monthly') filtered = shifts.filter(s => { 
+        const parts = s?.date?.split('-');
+        return parts && parseInt(parts[0]) === year && parseInt(parts[1]) === (month + 1) && s?.personelId === p.id;
+      });
+      else if (viewMode === 'yearly') filtered = shifts.filter(s => {
+        const parts = s?.date?.split('-');
+        return parts && parseInt(parts[0]) === year && s?.personelId === p.id;
+      });
 
       const hours = filtered.reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
       const earned = filtered.reduce((acc, s) => acc + (s.totalPay || 0), 0);
       return { ...p, hours, earned, count: filtered.length, lastNote: filtered[filtered.length-1]?.note };
     });
     return baseStats.sort((a, b) => b.hours - a.hours);
-  }, [viewMode, selectedDate, shifts, personel, formattedDateStr]);
+  }, [viewMode, selectedDate, shifts, personel, formattedDateStr, getWeekRange, getLocalDateStr]);
 
   const totalHours = useMemo(() => currentViewStats.reduce((acc,s)=>acc+s.hours,0), [currentViewStats]);
 
-  const handleSaveShift = async (data) => {
-    const currentShifts = useStore.getState().modaring.vardiya || [];
+  const handleSaveShift = useCallback(async (data) => {
+    const currentModaring = useStore.getState().modaring;
+    const currentShifts = currentModaring.vardiya || [];
     const isOverlap = currentShifts.some(s => s.personelId === data.personelId && s.date === data.date && s.id !== data.id && ((parseInt(data.startTime) < parseInt(s.endTime) && parseInt(data.endTime) > parseInt(s.startTime))));
     if (isOverlap) { toast.error("Vardiya Çakışması!"); return; }
     
-    const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (personel.find(px => px.id === data.personelId)?.hourlyRate || 0);
+    const pInfo = currentModaring.personel.find(px => px.id === data.personelId);
+    const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (pInfo?.hourlyRate || 0);
     const otherShifts = currentShifts.filter(s => !(s?.id === data.id));
-    setModuleData('modaring', { ...modaring, vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
+    
+    setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
     setEditingShift(null);
     toast.success('Kaydedildi');
     setTimeout(() => forceSaveToSupabase(), 500);
-  };
+  }, [setModuleData, forceSaveToSupabase]);
 
-  const handleClear = async () => {
-    const currentShifts = useStore.getState().modaring.vardiya || [];
+  const handleClear = useCallback(async () => {
+    const currentModaring = useStore.getState().modaring;
+    const currentShifts = currentModaring.vardiya || [];
     let remainingShifts = [];
     let msg = "";
+
+    console.log("DEBUG: Attempting clear. Target Date:", formattedDateStr, "View Mode:", viewMode);
 
     if (viewMode === 'daily') {
       if (!window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) return;
@@ -150,19 +162,19 @@ const VardiyaTab = () => {
       return;
     }
 
-    setModuleData('modaring', { ...modaring, vardiya: remainingShifts });
+    setModuleData('modaring', { vardiya: remainingShifts });
     toast.success(msg);
     setTimeout(() => forceSaveToSupabase(), 500);
-  };
+  }, [viewMode, formattedDateStr, getWeekRange, getLocalDateStr, selectedDate, setModuleData, forceSaveToSupabase]);
 
-  const handleDeleteShift = async (shiftId) => {
+  const handleDeleteShift = useCallback(async (shiftId) => {
     const currentShifts = useStore.getState().modaring.vardiya || [];
     const updated = currentShifts.filter(s => s?.id !== shiftId);
-    setModuleData('modaring', { ...modaring, vardiya: updated });
+    setModuleData('modaring', { vardiya: updated });
     setEditingShift(null);
     toast.error('Vardiya silindi');
     setTimeout(() => forceSaveToSupabase(), 500);
-  };
+  }, [setModuleData, forceSaveToSupabase]);
 
   const renderDaily = () => (
     <div className="compact-gantt-view glass animate-fadeIn">
@@ -335,7 +347,7 @@ const VardiyaTab = () => {
         <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => handleDeleteShift(editingShift.id)} />
       )}
 
-      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); setTimeout(() => forceSaveToSupabase(), 500); }} onDelete={() => { if(window.confirm("Personeli sil?")) { const curP = useStore.getState().modaring.personel; const curV = useStore.getState().modaring.vardiya; setModuleData('modaring', { ...modaring, personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) }); setSelectedPersonDetail(null); toast.error('Personel silindi'); setTimeout(() => forceSaveToSupabase(), 500); } }} />}
+      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); setTimeout(() => forceSaveToSupabase(), 500); }} onDelete={() => { if(window.confirm("Personeli sil?")) { const curModaring = useStore.getState().modaring; const curP = curModaring.personel; const curV = curModaring.vardiya; setModuleData('modaring', { personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) }); setSelectedPersonDetail(null); toast.error('Personel silindi'); setTimeout(() => forceSaveToSupabase(), 500); } }} />}
       {showAddStaffModal && <StaffAddOnlyModal onClose={() => setShowAddStaffModal(false)} onAdd={(p) => { setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] }); setShowAddStaffModal(false); toast.success('Personel eklendi!'); setTimeout(() => forceSaveToSupabase(), 500); }} />}
     </div>
   );
