@@ -395,9 +395,11 @@ export default function MenuTab() {
                       <div key={r.id} className="recipe-item-mini glass" style={{ borderLeft: `4px solid ${statusColor}` }}>
                         <div className="ri-content">
                           <div className="ri-info">
-                            <span className="ri-emoji">{r.e}</span>
                             <div className="ri-text">
-                              <span className="ri-name">{r.n}</span>
+                              <div className="ri-name-row">
+                                <span className="ri-emoji">{r.e}</span>
+                                <span className="ri-name">{r.n}</span>
+                              </div>
                               {missing.length > 0 && (
                                 <span className="ri-missing">Eksik: {missing.join(', ')}</span>
                               )}
@@ -417,14 +419,16 @@ export default function MenuTab() {
                                 <ShoppingCart size={16} color="#d97706" />
                               </button>
                             )}
-                            <div className="select-group">
-                              <button className="recipe-select-btn ana" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>
-                                <span>+Ana</span>
-                              </button>
-                              <button className="recipe-select-btn yan" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>
-                                <span>+Yan</span>
-                              </button>
-                            </div>
+                            <button className="recipe-select-btn" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>
+                              <span className="plus">+</span>
+                              <span className="label">Ana</span>
+                              <span className="sub">menü</span>
+                            </button>
+                            <button className="recipe-select-btn" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>
+                              <span className="plus">+</span>
+                              <span className="label">Yan</span>
+                              <span className="sub">menü</span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -529,9 +533,10 @@ export default function MenuTab() {
         .recipe-scroll { max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 30px; margin-top: 10px; }
         .recipe-item-mini { padding: 8px 10px; border-radius: 16px; margin-bottom: 2px; min-height: 60px; display: flex; align-items: center; }
         .ri-content { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
-        .ri-info { display: flex; align-items: flex-start; gap: 10px; flex: 1; overflow: hidden; }
-        .ri-emoji { font-size: 18px; margin-top: 2px; flex-shrink: 0; }
+        .ri-info { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
         .ri-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+        .ri-name-row { display: flex; align-items: center; gap: 6px; }
+        .ri-emoji { font-size: 16px; flex-shrink: 0; }
         .ri-name { font-size: 13px; font-weight: 800; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .ri-missing { 
           font-size: 10px; 
@@ -541,8 +546,8 @@ export default function MenuTab() {
           -webkit-line-clamp: 2;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          line-height: 1.2;
-          max-height: 2.4em;
+          line-height: 1.1;
+          max-height: 2.2em;
         }
         .ri-btns { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         
@@ -555,25 +560,26 @@ export default function MenuTab() {
           cursor: pointer;
         }
 
-        .select-group { display: flex; flex-direction: column; gap: 4px; }
         .recipe-select-btn {
           background: white;
           border: 1px solid var(--brd);
-          border-radius: 8px;
-          width: 48px;
-          height: 24px;
+          border-radius: 12px;
+          width: 44px;
+          height: 48px;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
           cursor: pointer;
           transition: all 0.2s;
-          padding: 0;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+          padding: 4px 0;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.03);
         }
-        .recipe-select-btn span { font-size: 10px; font-weight: 800; color: #2E1065; }
-        .recipe-select-btn.ana { background: #f5f3ff; border-color: #ddd6fe; }
-        .recipe-select-btn.yan { background: #fdf2f8; border-color: #fbcfe8; }
         .recipe-select-btn:active { transform: scale(0.94); }
+        .recipe-select-btn span { line-height: 1.1; }
+        .recipe-select-btn .plus { font-size: 14px; font-weight: 400; color: #2E1065; }
+        .recipe-select-btn .label { font-size: 11px; font-weight: 800; color: #2E1065; }
+        .recipe-select-btn .sub { font-size: 9px; font-weight: 700; color: #2E1065; font-style: italic; opacity: 0.8; }
 
         .smart-pill { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 2px; border-radius: 16px; background: rgba(248, 250, 252, 0.5); border: 1px solid rgba(0,0,0,0.03); color: #64748b; font-size: 8px; font-weight: 800; }
         .smart-pill.complete { background: #f0fdf4; border-color: #10b981; color: #10b981; }
