@@ -184,6 +184,11 @@ const VardiyaTab = () => {
           <button className={viewMode === 'monthly' ? 'active' : ''} onClick={() => setViewMode('monthly')}><CalendarDays size={16} /></button>
           <button className={viewMode === 'yearly' ? 'active' : ''} onClick={() => setViewMode('yearly')}><TrendingUp size={16} /></button>
         </div>
+        {viewMode === 'weekly' && (
+          <button className="whatsapp-copy-btn glass animate-pop" onClick={copyWeeklyToWhatsApp} title="WhatsApp Kopyala">
+            <MessageCircle size={18} />
+          </button>
+        )}
       </div>
 
       <div className="day-selector-premium glass mb-12">
