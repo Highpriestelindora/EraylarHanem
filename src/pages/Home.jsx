@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  X, RefreshCcw, Settings, 
-  ChevronRight, History as HistoryIcon, Heart
-} from 'lucide-react';
+import { X, RefreshCcw, Settings, ChevronRight, Heart } from 'lucide-react';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import logo from '../assets/eraylar-logo.png';
@@ -25,7 +22,8 @@ const MOODS = [
 const Home = () => {
   // Selective Selectors for Performance
   const currentUser = useStore(state => state.currentUser);
-  const system = useStore(state => state.system) || { version: '2.31.0', globalScore: 0, weeklyReports: [], achievements: [] };
+  const system = useStore(state => state.system) || {};
+  const { achievements = [], weeklyReports = [], version = '2.31.0', globalScore = 0 } = system;
   const saglik = useStore(state => state.saglik);
   const garaj = useStore(state => state.garaj);
   const logs = useStore(state => state.logs) || [];
@@ -41,7 +39,6 @@ const Home = () => {
     [garaj, selectedVehicleId]
   );
   
-  const [showLogs, setShowLogs] = useState(false);
   const [insights, setInsights] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showMoodCheck, setShowMoodCheck] = useState(false);
@@ -67,7 +64,19 @@ const Home = () => {
       ...(store.mutfak?.kiler || []),
       ...(store.mutfak?.dondurucu || [])
     ];
-    const lowStock = allStock.filter(i => i.cr <= i.mn && i.cr > 0);
+
+    // Aggregate by name to prevent false "low stock" alerts for items in multiple locations
+    const aggregatedStock = allStock.reduce((acc, item) => {
+      const name = item.n.trim();
+      if (!acc[name]) {
+        acc[name] = { ...item, cr: 0, mn: item.mn };
+      }
+      acc[name].cr += item.cr;
+      acc[name].mn = Math.max(acc[name].mn, item.mn); // Take the highest min threshold
+      return acc;
+    }, {});
+
+    const lowStock = Object.values(aggregatedStock).filter(i => i.mn > 0 && i.cr <= i.mn);
     if (lowStock.length > 0) {
       const names = lowStock.slice(0, 3).map(i => i.n).join(', ');
       cards.push({
@@ -402,8 +411,7 @@ const Home = () => {
             </div>
           </div>
           <div className="phb-actions">
-             <button className="phb-icon-btn" onClick={() => setShowLogs(true)}><HistoryIcon size={20} /></button>
-             <button className="phb-icon-btn" onClick={() => navigate('/ayarlar')}><Settings size={20} /></button>
+            <button className="phb-icon-btn" onClick={() => navigate('/ayarlar')}><Settings size={20} /></button>
           </div>
         </div>
       </div>
@@ -477,29 +485,6 @@ const Home = () => {
 
       {/* Modals & Portals (Logs, Mood Check etc.) */}
       <AnimatePresence>
-        {showLogs && (
-          <Portal>
-            <div className="modal-overlay" onClick={() => setShowLogs(false)}>
-              <div className="logs-modal-v2 glass animate-slideUp" onClick={e => e.stopPropagation()}>
-                 <div className="modal-header logs-header">
-                   <h3><HistoryIcon size={20} /> Sistem Hareketleri</h3>
-                   <button className="modal-close-btn" onClick={() => setShowLogs(false)}><X size={20} /></button>
-                 </div>
-                 <div className="logs-list-premium">
-                    {logs.slice().reverse().slice(0, 50).map((log, i) => (
-                      <div key={log.id || i} className="log-row-premium">
-                         <div className="log-icon-circle">📝</div>
-                         <div className="log-info-main">
-                            <strong>{log.action}</strong>
-                            <p>{log.detail}</p>
-                         </div>
-                      </div>
-                    ))}
-                 </div>
-              </div>
-            </div>
-          </Portal>
-        )}
 
         {showMoodCheck && (
           <Portal>

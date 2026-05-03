@@ -115,14 +115,35 @@ const StokTab = () => {
     };
 
     let updatedItems = [...items];
+    const normalizedName = newItem.n.trim().toLowerCase();
+
+    // Check for duplicates across ALL locations
+    const allOtherItems = [
+      ...(subTab !== 'buzdolabi' ? (mutfak.buzdolabi || []) : []),
+      ...(subTab !== 'kiler' ? (mutfak.kiler || []) : []),
+      ...(subTab !== 'dondurucu' ? (mutfak.dondurucu || []) : [])
+    ];
+
+    const existsElsewhere = allOtherItems.some(i => i.n.trim().toLowerCase() === normalizedName);
+    if (existsElsewhere) {
+      toast.error(`"${newItem.n}" zaten başka bir bölümde mevcut! Lütfen mevcut kartı güncelleyin veya ismi değiştirin.`);
+      return;
+    }
+
     if (editingItem.isNew) {
-      // Check if exists
-      if (updatedItems.some(i => i.n.toLowerCase() === newItem.n.toLowerCase())) {
-         toast.error('Bu malzeme zaten var!');
+      // Check if exists in CURRENT location
+      if (items.some(i => i.n.trim().toLowerCase() === normalizedName)) {
+         toast.error('Bu malzeme bu bölümde zaten var!');
          return;
       }
       updatedItems.push(newItem);
     } else {
+      // When editing, check if new name conflicts with OTHER items in the SAME location
+      const otherItemsInSameTab = items.filter(i => i.n !== editingItem.item.n);
+      if (otherItemsInSameTab.some(i => i.n.trim().toLowerCase() === normalizedName)) {
+        toast.error('Bu isimde başka bir malzeme zaten var!');
+        return;
+      }
       updatedItems = updatedItems.map(x => x.n === editingItem.item.n ? newItem : x);
     }
 

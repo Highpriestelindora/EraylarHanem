@@ -2484,17 +2484,23 @@ const useStore = create(
 
         // Auto-add ingredients to stock if missing
         let updatedMutfak = { ...state.mutfak, tarifler: yeniTarifler };
-        const allStock = [...updatedMutfak.buzdolabi, ...updatedMutfak.kiler, ...updatedMutfak.dondurucu];
+        const allStock = [
+          ...(updatedMutfak.buzdolabi || []),
+          ...(updatedMutfak.kiler || []),
+          ...(updatedMutfak.dondurucu || [])
+        ];
         const stockNames = allStock.map(s => s.n.toLowerCase());
 
         (recipe.ig || []).forEach(igLine => {
           const name = igLine.split(':')[0].trim();
           if (name && !stockNames.includes(name.toLowerCase())) {
             updatedMutfak.kiler.push({
+              id: Date.now() + Math.floor(Math.random() * 1000000),
               n: name,
               cr: 0,
               mn: 1,
               u: 'adet',
+              ic: '📦',
               bt: new Date().toISOString()
             });
             stockNames.push(name.toLowerCase()); // prevent adding same ingredient twice within one recipe save
@@ -2511,17 +2517,23 @@ const useStore = create(
 
         // Auto-add ingredients to stock if missing
         let updatedMutfak = { ...state.mutfak, tarifler: yeniTarifler };
-        const allStock = [...updatedMutfak.buzdolabi, ...updatedMutfak.kiler, ...updatedMutfak.dondurucu];
+        const allStock = [
+          ...(updatedMutfak.buzdolabi || []),
+          ...(updatedMutfak.kiler || []),
+          ...(updatedMutfak.dondurucu || [])
+        ];
         const stockNames = allStock.map(s => s.n.toLowerCase());
 
         (updates.ig || []).forEach(igLine => {
           const name = igLine.split(':')[0].trim();
           if (name && !stockNames.includes(name.toLowerCase())) {
             updatedMutfak.kiler.push({
+              id: Date.now() + Math.floor(Math.random() * 1000000),
               n: name,
               cr: 0,
               mn: 1,
               u: 'adet',
+              ic: '📦',
               bt: new Date().toISOString()
             });
             stockNames.push(name.toLowerCase());
@@ -2967,35 +2979,46 @@ const useStore = create(
           set({ mutfak: { ...state.mutfak, priceHistory: { ...history, [item.nm]: newHistory } } });
         }
 
-        // 3. Add to Stock
-        const targetKey = loc === 'buz' ? 'buzdolabi' : loc === 'kil' ? 'kiler' : loc === 'don' ? 'dondurucu' : null;
+        // 3. Add to Stock (Check ALL locations to prevent duplicates)
+        const allLocs = ['buzdolabi', 'kiler', 'dondurucu'];
+        let foundLoc = null;
+        let foundIdx = -1;
+
+        for (const locKey of allLocs) {
+          const idx = (state.mutfak[locKey] || []).findIndex(x => x.n.toLowerCase() === item.nm.toLowerCase());
+          if (idx !== -1) {
+            foundLoc = locKey;
+            foundIdx = idx;
+            break;
+          }
+        }
+
+        const targetKey = foundLoc || (loc === 'buz' ? 'buzdolabi' : loc === 'kil' ? 'kiler' : loc === 'don' ? 'dondurucu' : 'kiler');
         let finalMutfak = { ...state.mutfak, alisveris: yeniAlisveris };
 
-        if (targetKey) {
-          const items = [...state.mutfak[targetKey]];
-          const idx = items.findIndex(x => x.n.toLowerCase() === item.nm.toLowerCase());
+        const itemsInLoc = [...(state.mutfak[targetKey] || [])];
+        const matchNum = (qt || '').match(/[\d.]+/);
+        const num = parseFloat(matchNum?.[0]) || 1;
+        const uStr = (qt || '').replace(/[\d.\s]/g, '').toLowerCase() || 'adet';
 
-          const matchNum = (qt || '').match(/[\d.]+/);
-          const num = parseFloat(matchNum?.[0]) || 1;
-          const uStr = (qt || '').replace(/[\d.\s]/g, '').toLowerCase() || 'adet';
-
-          if (idx !== -1) {
-            items[idx] = { ...items[idx], cr: items[idx].cr + num, bt: new Date().toISOString() };
-          } else {
-            items.push({
-              id: Date.now() + Math.floor(Math.random() * 1000),
-              n: item.nm,
-              u: uStr,
-              mn: 1,
-              cr: num,
-              ic: '📦',
-              ct: ct || 'Diğer',
-              mk: mk || 'BİM',
-              bt: new Date().toISOString()
-            });
-          }
-          finalMutfak[targetKey] = items;
+        if (foundIdx !== -1) {
+          // Update existing item in its current location
+          itemsInLoc[foundIdx] = { ...itemsInLoc[foundIdx], cr: itemsInLoc[foundIdx].cr + num, bt: new Date().toISOString() };
+        } else {
+          // Add new item to requested location
+          itemsInLoc.push({
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            n: item.nm,
+            u: uStr,
+            mn: 1,
+            cr: num,
+            ic: '📦',
+            ct: ct || 'Diğer',
+            mk: mk || 'BİM',
+            bt: new Date().toISOString()
+          });
         }
+        finalMutfak[targetKey] = itemsInLoc;
 
         set({ mutfak: finalMutfak });
         get().saveToSupabase();
@@ -4562,20 +4585,33 @@ const useStore = create(
         // 1. Remove from shopping list
         updatedMutfak.alisveris = updatedMutfak.alisveris.filter(i => !itemIds.includes(i.id));
 
-        // 2. Add to stock
+        // 2. Add to stock (Prevention of duplicates across all locations)
+        const allLocs = ['buzdolabi', 'kiler', 'dondurucu'];
         items.forEach(item => {
-          const targetLoc = item.loc === 'buz' ? 'buzdolabi' : (item.loc === 'don' ? 'dondurucu' : 'kiler');
-          const stock = [...updatedMutfak[targetLoc]];
-          const idx = stock.findIndex(s => s.n.toLowerCase() === item.nm.toLowerCase());
+          let foundLoc = null;
+          let foundIdx = -1;
+
+          for (const lKey of allLocs) {
+            const idx = (updatedMutfak[lKey] || []).findIndex(s => s.n.toLowerCase() === item.nm.toLowerCase());
+            if (idx !== -1) {
+              foundLoc = lKey;
+              foundIdx = idx;
+              break;
+            }
+          }
+
+          const targetLoc = foundLoc || (item.loc === 'buz' ? 'buzdolabi' : (item.loc === 'don' ? 'dondurucu' : 'kiler'));
+          const stock = [...(updatedMutfak[targetLoc] || [])];
 
           // Parse quantity (e.g. "2 adet" -> 2)
           const qtyMatch = (item.qt || '').match(/(\d+\.?\d*)/);
           const addedQty = qtyMatch ? parseFloat(qtyMatch[1]) : 1;
 
-          if (idx !== -1) {
-            stock[idx] = { ...stock[idx], cr: stock[idx].cr + addedQty, mk: market || stock[idx].mk };
+          if (foundIdx !== -1) {
+            stock[foundIdx] = { ...stock[foundIdx], cr: stock[foundIdx].cr + addedQty, mk: market || stock[foundIdx].mk, bt: new Date().toISOString() };
           } else {
             stock.push({
+              id: Date.now() + Math.floor(Math.random() * 1000000),
               n: item.nm,
               cr: addedQty,
               mn: 1,

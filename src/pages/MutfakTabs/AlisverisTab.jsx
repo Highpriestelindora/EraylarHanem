@@ -50,6 +50,12 @@ const AlisverisTab = () => {
   const addItem = (e) => {
     if (e) e.preventDefault();
     if (!newItem.trim()) return;
+    
+    const existsInList = alisveris.some(item => item.nm.toLowerCase() === newItem.trim().toLowerCase() && !item.dn);
+    if (existsInList) {
+      toast.error('Bu ürün zaten alışveriş listesinde!');
+      return;
+    }
 
     const newItemObj = {
       id: `shop-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,

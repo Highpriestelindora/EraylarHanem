@@ -8,9 +8,9 @@ import './Achievements.css';
 export default function Achievements() {
   const navigate = useNavigate();
   const { system } = useStore();
-  const { achievements } = system;
+  const achievements = system?.achievements || [];
 
-  const earnedCount = achievements.filter(a => a.earned).length;
+  const earnedCount = (achievements || []).filter(a => a.earned).length;
 
   return (
     <AnimatedPage className="achievements-container">

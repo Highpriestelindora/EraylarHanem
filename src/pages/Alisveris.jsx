@@ -77,21 +77,27 @@ const HOME_FIXES = [
 ];
 
 const GORKEM_CATS = [
-  { nm: 'Bakım', ic: '🧴', label: 'Kişisel Bakım' },
-  { nm: 'Giyim', ic: '👕', label: 'Giyim' },
-  { nm: 'Teknoloji', ic: '🎧', label: 'Elektronik' },
-  { nm: 'Spor', ic: '🏋️', label: 'Spor & Outdoor' },
-  { nm: 'Parfüm', ic: '💨', label: 'Parfüm' },
-  { nm: 'Saat', ic: '⌚', label: 'Aksesuar' }
+  { nm: 'Bakım', ic: '🧴', label: 'Kişisel Bakım', items: ['Parfüm', 'Deodorant', 'Traş Bıçağı', 'Şampuan', 'Duş Jeli', 'Yüz Temizleme'] },
+  { nm: 'Giyim', ic: '👕', label: 'Giyim', items: ['T-shirt', 'Pantolon', 'Gömlek', 'Mont', 'Ayakkabı', 'Çorap'] },
+  { nm: 'Teknoloji', ic: '🎧', label: 'Elektronik', items: ['Kulaklık', 'Kablo', 'Şarj Cihazı', 'Mouse', 'Klavye', 'Akıllı Saat'] },
+  { nm: 'Spor', ic: '🏋️', label: 'Spor & Outdoor', items: ['Protein Tozu', 'Kreatin', 'Spor Şortu', 'Dumbbell', 'Matara', 'Vitamin'] },
+  { nm: 'Parfüm', ic: '💨', label: 'Parfüm', items: ['Daily Scent', 'Winter Scent', 'Luxury Scent', 'Tester'] },
+  { nm: 'Saat', ic: '⌚', label: 'Aksesuar', items: ['Kordon', 'Saat Kutusu', 'Güneş Gözlüğü', 'Cüzdan'] },
+  { nm: 'Kitap', ic: '📚', label: 'Kitap & Hobi', items: ['Yazılım Kitabı', 'Roman', 'Dergi', 'Lego Seti'] },
+  { nm: 'Kahve', ic: '☕', label: 'Kahve & İçecek', items: ['Çekirdek Kahve', 'V60 Kağıdı', 'Şurup', 'Enerji İçeceği'] },
+  { nm: 'Araba', ic: '🚗', label: 'Garaj & Araç', items: ['Cam Suyu', 'Lastik Parlatıcı', 'Koku', 'Mikrofiber Bez'] }
 ];
 
 const ESRA_CATS = [
-  { nm: 'Bakım', ic: '🧖‍♀️', label: 'Cilt Bakımı' },
-  { nm: 'Makyaj', ic: '💄', label: 'Kozmetik' },
-  { nm: 'Moda', ic: '👗', label: 'Moda & Giyim' },
-  { nm: 'Hobi', ic: '🎨', label: 'Hobi & Sanat' },
-  { nm: 'Takı', ic: '💍', label: 'Takı & Mücevher' },
-  { nm: 'Çanta', ic: '👜', label: 'Aksesuar' }
+  { nm: 'Bakım', ic: '🧖‍♀️', label: 'Cilt Bakımı', items: ['Serum', 'Nemlendirici', 'Güneş Kremi', 'Maske', 'Tonik'] },
+  { nm: 'Makyaj', ic: '💄', label: 'Kozmetik', items: ['Ruj', 'Maskara', 'Far Paleti', 'Allık', 'Kapatıcı'] },
+  { nm: 'Moda', ic: '👗', label: 'Moda & Giyim', items: ['Elbise', 'Etek', 'Bluz', 'Kemer', 'Şal', 'Bot'] },
+  { nm: 'Hobi', ic: '🎨', label: 'Hobi & Sanat', items: ['Tuval', 'Boya Seti', 'Fırça', 'Eskiz Defteri'] },
+  { nm: 'Takı', ic: '💍', label: 'Takı & Mücevher', items: ['Kolye', 'Küpe', 'Yüzük', 'Bileklik', 'Halhal'] },
+  { nm: 'Çanta', ic: '👜', label: 'Aksesuar', items: ['Omuz Çantası', 'Sırt Çantası', 'Cüzdan', 'Kartlık'] },
+  { nm: 'Dekor', ic: '🕯️', label: 'Ev Dekorasyon', items: ['Mum', 'Vazo', 'Tablo', 'Kırlent', 'Tütsü'] },
+  { nm: 'Bitki', ic: '🪴', label: 'Çiçek & Bahçe', items: ['Toprak', 'Saksı', 'Gübre', 'Yeni Çiçek'] },
+  { nm: 'Kırtasiye', ic: '📝', label: 'Kırtasiye', items: ['Planner', 'Renkli Kalem', 'Sticker', 'Defter'] }
 ];
 
 const formatMoney = (val) =>
@@ -147,20 +153,20 @@ export default function Alisveris() {
     { id: 'market', label: 'Market', emoji: '🛒' }
   ];
 
-  const shuffleArray = (array) => [...array].sort(() => Math.random() - 0.5);
+  const shuffleAndSlice = (array, limit = 6) => [...array].sort(() => Math.random() - 0.5).slice(0, limit);
 
   const refreshCategories = () => {
-    setDisplayGorkem(shuffleArray(GORKEM_CATS));
-    setDisplayEsra(shuffleArray(ESRA_CATS));
-    setDisplayHome(shuffleArray(HOME_FIXES));
+    setDisplayGorkem(shuffleAndSlice(GORKEM_CATS));
+    setDisplayEsra(shuffleAndSlice(ESRA_CATS));
+    setDisplayHome(shuffleAndSlice(HOME_FIXES));
     toast.success('Kategoriler yenilendi ✨');
   };
 
   React.useEffect(() => {
     // Initial shuffle
-    setDisplayGorkem(shuffleArray(GORKEM_CATS));
-    setDisplayEsra(shuffleArray(ESRA_CATS));
-    setDisplayHome(shuffleArray(HOME_FIXES));
+    setDisplayGorkem(shuffleAndSlice(GORKEM_CATS));
+    setDisplayEsra(shuffleAndSlice(ESRA_CATS));
+    setDisplayHome(shuffleAndSlice(HOME_FIXES));
   }, []);
 
   const handleQuickAdd = (item, target) => {
