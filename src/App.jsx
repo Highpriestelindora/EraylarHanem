@@ -74,11 +74,30 @@ function App() {
   const [loading, setLoading] = React.useState(true);
   const initSync = useStore(state => state.initSync);
   const currentUser = useStore(state => state.currentUser);
-  
+  const loadFromSupabase = useStore(state => state.loadFromSupabase);
+  const subscribeToSupabase = useStore(state => state.subscribeToSupabase);
+
   useEffect(() => {
     initSync();
-    notificationService.requestPermission();
-  }, [initSync]); 
+    
+    // Otomatik Tazeleme: Uygulama ön plana geldiğinde veya kullanıcı değiştiğinde
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadFromSupabase();
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => window.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [initSync, loadFromSupabase]);
+
+  // Kullanıcı değiştiğinde verileri tazele
+  useEffect(() => {
+    if (currentUser) {
+      loadFromSupabase();
+      subscribeToSupabase();
+    }
+  }, [currentUser, loadFromSupabase, subscribeToSupabase]);
 
   return (
     <ErrorBoundary>
