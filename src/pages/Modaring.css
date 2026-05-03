@@ -1846,3 +1846,82 @@
   transform: scale(0.9);
   box-shadow: 0 2px 5px rgba(99, 102, 241, 0.2);
 }
+
+/* Monthly & Yearly Visuals */
+.mv-heatmap {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.mv-heat-box {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--txt);
+  transition: 0.2s;
+}
+
+.mv-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.mv-legend-bar {
+  height: 6px;
+  flex: 1;
+  max-width: 100px;
+  background: linear-gradient(to right, rgba(225,29,72,0.1), rgba(225,29,72,1));
+  border-radius: 3px;
+}
+
+.yearly-row-v2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.yr-month-v2 {
+  width: 45px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--txt-light);
+}
+
+.yr-multi-bar {
+  flex: 1;
+  height: 24px;
+  background: rgba(0,0,0,0.03);
+  border-radius: 12px;
+  display: flex;
+  overflow: hidden;
+}
+
+.yr-sub-bar {
+  height: 100%;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  transition: width 0.5s ease-out;
+}
+
+.yr-sub-bar:last-child { border-right: none; }
+
+.yr-total-v2 {
+  width: 50px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.yr-empty-bar {
+  width: 100%;
+  background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(0,0,0,0.02) 5px, rgba(0,0,0,0.02) 10px);
+}

@@ -118,14 +118,6 @@ const VardiyaTab = () => {
     }
   };
 
-  const handleDeleteShift = (shiftId) => {
-    const currentShifts = useStore.getState().modaring.vardiya || [];
-    const updated = currentShifts.filter(s => s?.id !== shiftId);
-    setModuleData('modaring', { vardiya: updated });
-    setEditingShift(null);
-    toast.error('Vardiya silindi');
-  };
-
   const renderDaily = () => (
     <div className="compact-gantt-view glass animate-fadeIn">
       <div className="cg-header"><div className="cg-label-space"></div><div className="cg-timeline-labels"><span>10</span><span>13</span><span>16</span><span>19</span><span>22</span></div></div>
@@ -153,6 +145,74 @@ const VardiyaTab = () => {
       </div>
     </div>
   );
+
+  const renderWeekly = () => (
+    <div className="weekly-summary-view glass animate-fadeIn">
+      <div className="ws-grid">
+        {currentViewStats.map(p => (
+          <div key={p.id} className="ws-compact-row">
+            <div className="wsc-user"><span style={{ background: p.color }}>{p.emoji}</span><strong>{p.name?.split(' ')[0]}</strong></div>
+            <div className="wsc-days">{getWeekRange(selectedDate).map((d, i) => { const dStr = d.toISOString().split('T')[0]; const shift = shifts.find(s => s?.personelId === p.id && s?.date === dStr); return <div key={i} className={`wsc-dot ${shift ? 'active' : ''}`} style={{ '--p-color': p.color }}></div> })}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderMonthly = () => {
+    const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
+    const daysArr = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    
+    return (
+      <div className="monthly-visual-view glass animate-fadeIn">
+         <div className="mv-heatmap">
+            {daysArr.map(day => {
+              const dStr = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day).toISOString().split('T')[0];
+              const dayShifts = shifts.filter(s => s?.date === dStr);
+              const dayHours = dayShifts.reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
+              const intensity = Math.min(1, dayHours / 24);
+              return (
+                <div key={day} className="mv-heat-box" style={{ background: dayHours > 0 ? `rgba(225, 29, 72, ${0.1 + intensity * 0.9})` : 'rgba(0,0,0,0.03)' }} onClick={() => { setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day)); setViewMode('daily'); }}>
+                   <small>{day}</small>
+                </div>
+              );
+            })}
+         </div>
+         <div className="mv-legend"><small>Az Yoğun</small><div className="mv-legend-bar"></div><small>Çok Yoğun</small></div>
+      </div>
+    );
+  };
+
+  const renderYearly = () => {
+    const months = ['Ocak','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+    return (
+      <div className="yearly-summary-view glass animate-fadeIn">
+        <div className="yearly-list">
+          {months.map((m, idx) => {
+            const monthlyShifts = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); });
+            const monthTotalHours = monthlyShifts.reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
+            
+            return (
+              <div key={m} className="yearly-row-v2">
+                <div className="yr-month-v2">{m}</div>
+                <div className="yr-multi-bar">
+                   {personel.map(p => {
+                     const pMonthHours = monthlyShifts.filter(s => s.personelId === p.id).reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
+                     if (pMonthHours === 0) return null;
+                     return (
+                       <div key={p.id} className="yr-sub-bar" style={{ width: `${(pMonthHours / 300) * 100}%`, background: p.color }} title={`${p.name}: ${pMonthHours} saat`}></div>
+                     );
+                   })}
+                   {monthTotalHours === 0 && <div className="yr-empty-bar"></div>}
+                </div>
+                <div className="yr-total-v2">{monthTotalHours > 0 ? monthTotalHours + ' s' : ''}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="tab-view-content animate-fadeIn">
@@ -185,7 +245,7 @@ const VardiyaTab = () => {
 
       <div className="shift-summary glass mb-16">
         <div className="ss-item">
-          <button className="ss-action-btn-eye mr-12" onClick={() => setHideEarnings(!hideEarnings)} title="Giderleri Gizle/Göster">{hideEarnings ? <EyeOff size={24} /> : <Eye size={24} />}</button>
+          <button className="ss-action-btn-eye mr-12" onClick={() => setHideEarnings(!hideEarnings)}>{hideEarnings ? <EyeOff size={24} /> : <Eye size={24} />}</button>
           <div className="ss-text"><small>{hideEarnings ? 'Toplam Mesai' : 'Dönem Gideri'}</small><strong>{hideEarnings ? totalHours+' saat' : currentViewStats.reduce((acc,s)=>acc+s.earned,0).toLocaleString('tr-TR')+' TL'}</strong></div>
         </div>
         <div className="ss-actions">
@@ -197,34 +257,10 @@ const VardiyaTab = () => {
         </div>
       </div>
 
-      {(viewMode === 'daily' || viewMode === 'weekly') && (viewMode === 'daily' ? renderDaily() : (
-        <div className="weekly-summary-view glass animate-fadeIn">
-          <div className="ws-grid">
-            {currentViewStats.map(p => (
-              <div key={p.id} className="ws-compact-row">
-                <div className="wsc-user"><span style={{ background: p.color }}>{p.emoji}</span><strong>{p.name?.split(' ')[0]}</strong></div>
-                <div className="wsc-days">{getWeekRange(selectedDate).map((d, i) => { const dStr = d.toISOString().split('T')[0]; const shift = shifts.find(s => s?.personelId === p.id && s?.date === dStr); return <div key={i} className={`wsc-dot ${shift ? 'active' : ''}`} style={{ '--p-color': p.color }}></div> })}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-      {viewMode === 'yearly' && (
-        <div className="yearly-summary-view glass animate-fadeIn">
-          <div className="yearly-list">
-            {['Ocak','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'].map((m, idx) => {
-              const monthlyTotalHours = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); }).reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
-              return (
-                <div key={m} className="yearly-row">
-                  <div className="yr-month">{m}</div>
-                  <div className="yr-bar-container"><div className="yr-bar" style={{ width: `${Math.min(100, (monthlyTotalHours / 215) * 100)}%`, background: monthlyTotalHours > 215 ? '#ef4444' : 'var(--modaring-gradient)' }}></div></div>
-                  <div className="yr-total">{monthlyTotalHours > 0 ? monthlyTotalHours + ' s' : '-'}</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {viewMode === 'daily' && renderDaily()}
+      {viewMode === 'weekly' && renderWeekly()}
+      {viewMode === 'monthly' && renderMonthly()}
+      {viewMode === 'yearly' && renderYearly()}
 
       <div className="section-header-v2 mt-20"><h3>👥 Çalışanlar Listesi</h3></div>
       <div className="stats-list pb-80">
@@ -245,11 +281,10 @@ const VardiyaTab = () => {
       </div>
 
       {editingShift && (
-        <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => handleDeleteShift(editingShift.id)} />
+        <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => { setModuleData('modaring', { vardiya: useStore.getState().modaring.vardiya.filter(s => s?.id !== editingShift.id) }); setEditingShift(null); toast.error('Vardiya silindi'); }} />
       )}
 
       {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); }} onDelete={() => { if(window.confirm("Personeli sil?")) { const curP = useStore.getState().modaring.personel; const curV = useStore.getState().modaring.vardiya; setModuleData('modaring', { personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) }); setSelectedPersonDetail(null); toast.error('Personel silindi'); } }} />}
-      
       {showAddStaffModal && <StaffAddOnlyModal onClose={() => setShowAddStaffModal(false)} onAdd={(p) => { setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] }); setShowAddStaffModal(false); toast.success('Personel eklendi!'); }} />}
     </div>
   );
@@ -282,7 +317,7 @@ const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
           <div className="template-row mb-12"><button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "18"})}>🌅 10-18</button><button className="template-btn" onClick={() => setData({...data, startTime: "14", endTime: "22"})}>🌙 14-22</button><button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "22"})}>💎 Tam</button></div>
           <div className="form-grid-v2"><div className="form-group-v2"><label>Giriş</label><select className="premium-select" value={data.startTime} onChange={e => setData({...data, startTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div><div className="form-group-v2"><label>Çıkış</label><select className="premium-select" value={data.endTime} onChange={e => setData({...data, endTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div></div>
           <div className="form-group-v2 mt-12"><label>Not</label><textarea className="premium-input" style={{ height: '60px', padding: '10px' }} value={data.note} onChange={e => setData({...data, note: e.target.value})} placeholder="Vardiya notu..." /></div>
-          <div className="modal-actions-v2 mt-20">{shift.id && <button className="icon-btn-danger" onClick={() => onDelete(shift.id)}><Trash2 size={18} /></button>}<button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave(data)}>Planla</button></div>
+          <div className="modal-actions-v2 mt-20">{shift.id && <button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button>}<button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave(data)}>Planla</button></div>
         </div>
       </div>
     </div>
