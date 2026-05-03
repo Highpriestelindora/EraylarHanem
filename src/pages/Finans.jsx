@@ -115,7 +115,9 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
 
   const { addHarcama, deleteHarcama, updateHarcama } = useStore();
   const [editingHarcama, setEditingHarcama] = useState(null);
+  const [payingExpense, setPayingExpense] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const kartlar = useStore(state => state.finans?.kartlar || []);
 
   const bulunanRekuranslar = rekuranslar.map(r => {
     const gun = r.gun || parseInt((r.date || '').split('-')[2]) || 0;
@@ -159,15 +161,20 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
                   <button 
                     className="rr-pay-btn" 
                     onClick={() => {
-                      addHarcama({
-                        baslik: r.title,
-                        tutar: r.amount,
-                        kategori: r.type === 'abn' ? 'Abonelik' : 'Düzenli Ödeme',
-                        kart_id: r.linkedCardId || null,
-                        kaynak: 'Sistem',
-                        tarih: new Date().toISOString().split('T')[0]
-                      });
-                      toast.success(`${r.title} ödendi olarak kaydedildi! 💸`);
+                      if (r.linkedCardId) {
+                        addHarcama({
+                          baslik: r.title,
+                          tutar: r.amount,
+                          kategori: r.type === 'abn' ? 'Abonelik' : 'Düzenli Ödeme',
+                          kart_id: r.linkedCardId,
+                          odenme_turu: 'kart',
+                          kaynak: 'Sistem',
+                          tarih: new Date().toISOString().split('T')[0]
+                        });
+                        toast.success(`${r.title} kart ile ödendi! 💳`);
+                      } else {
+                        setPayingExpense(r);
+                      }
                     }}
                   >
                     ÖDE
@@ -204,7 +211,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
             <div className="hr-icon">{KAYNAK_ICONS[h.kaynak] || '💸'}</div>
             <div className="hr-info">
               <strong>{h.baslik}</strong>
-              <small>{h.tarih} · {h.kayit_eden} · {h.kart_id ? h.kart_id.split('-').pop() : 'Nakit'}</small>
+              <small>{h.tarih} · {h.kayit_eden} · {h.kart_id ? h.kart_id.split('-').pop() : (h.banka_id ? 'Havale' : 'Nakit')}</small>
             </div>
             <div className="hr-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
               <span className="hr-amount">{fmt(h.tutar, prv)}</span>
@@ -224,6 +231,64 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
           onSave={(updates) => updateHarcama(editingHarcama.id, updates)}
         />
       )}
+
+      {/* Payment Method Selection for Recurring */}
+      <ActionSheet 
+        isOpen={!!payingExpense} 
+        onClose={() => setPayingExpense(null)} 
+        title="Ödeme Yöntemi Seçin"
+      >
+        {payingExpense && (
+          <div className="payment-select-modal" style={{ padding: '20px' }}>
+            <p style={{ marginBottom: '15px', color: '#1e293b', fontSize: '14px' }}>
+              <strong>{payingExpense.title}</strong> için ödeme yöntemi belirleyin.
+            </p>
+            <div className="payment-options" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+               <button className="premium-submit-btn" style={{ background: '#10b981' }} onClick={() => {
+                 addHarcama({
+                    baslik: payingExpense.title,
+                    tutar: payingExpense.amount,
+                    kategori: payingExpense.type === 'abn' ? 'Abonelik' : 'Düzenli Ödeme',
+                    odenme_turu: 'nakit',
+                    kaynak: 'Sistem',
+                    tarih: new Date().toISOString().split('T')[0]
+                 });
+                 setPayingExpense(null);
+                 toast.success('Nakit ödeme olarak kaydedildi! 💵');
+               }}>
+                 💵 Nakit (Kasa)
+               </button>
+
+               <div style={{ textAlign: 'center', fontSize: '12px', color: '#64748b' }}>veya</div>
+
+               <select className="hub-input" style={{ width: '100%', padding: '12px' }} onChange={(e) => {
+                 const [type, id] = e.target.value.split('|');
+                 if (!id) return;
+                 addHarcama({
+                    baslik: payingExpense.title,
+                    tutar: payingExpense.amount,
+                    kategori: payingExpense.type === 'abn' ? 'Abonelik' : 'Düzenli Ödeme',
+                    odenme_turu: type,
+                    kart_id: type === 'kart' ? id : null,
+                    banka_id: type === 'havale' ? id : null,
+                    kaynak: 'Sistem',
+                    tarih: new Date().toISOString().split('T')[0]
+                 });
+                 setPayingExpense(null);
+                 toast.success(`${type === 'kart' ? 'Kart' : 'Havale'} ile ödeme kaydedildi! 🏦`);
+               }}>
+                 <option value="">Kart veya Banka Seçin...</option>
+                 <optgroup label="💳 Kredi Kartları">
+                    {kartlar.map(k => <option key={k.id} value={`kart|${k.id}`}>{k.name}</option>)}
+                 </optgroup>
+                 <optgroup label="🏦 Banka Havalesi">
+                    {(useStore.getState().kasa?.bankaHesaplari || []).map(b => <option key={b.id} value={`havale|${b.id}`}>{b.name}</option>)}
+                 </optgroup>
+               </select>
+            </div>
+          </div>
+        )}
+      </ActionSheet>
 
       <ConfirmModal 
         isOpen={!!deletingId}
@@ -467,11 +532,18 @@ const OnayTab = React.memo(({ finans, prv }) => {
               value={kartSecim[item.id] || ''}
               onChange={e => setKartSecim(p => ({ ...p, [item.id]: e.target.value }))}
             >
-              <option value="">Kart seç...</option>
-              {kartlar.map(k => (
-                <option key={k.id} value={k.id}>{k.name}</option>
-              ))}
-              <option value="nakit">💵 Nakit</option>
+              <option value="">Ödeme türü seç...</option>
+              <option value="nakit">💵 Nakit (Kasa)</option>
+              <optgroup label="💳 Kredi Kartları">
+                {kartlar.map(k => (
+                  <option key={k.id} value={`kart|${k.id}`}>{k.name}</option>
+                ))}
+              </optgroup>
+              <optgroup label="🏦 Banka Havalesi">
+                {(useStore.getState().kasa?.bankaHesaplari || []).map(b => (
+                  <option key={b.id} value={`havale|${b.id}`}>{b.name}</option>
+                ))}
+              </optgroup>
             </select>
             <div className="onay-btns">
               <button className="onay-btn reject" onClick={() => reddetHarcama(item.id)}>
@@ -480,7 +552,15 @@ const OnayTab = React.memo(({ finans, prv }) => {
               <button
                 className="onay-btn approve"
                 disabled={!kartSecim[item.id]}
-                onClick={() => onaylaHarcama(item.id, kartSecim[item.id] === 'nakit' ? null : kartSecim[item.id])}
+                onClick={() => {
+                  const [type, id] = kartSecim[item.id].split('|');
+                  const updates = {
+                    odenme_turu: type || 'nakit',
+                    kart_id: type === 'kart' ? id : null,
+                    banka_id: type === 'havale' ? id : null
+                  };
+                  onaylaHarcama(item.id, updates);
+                }}
               >
                 <Check size={16} /> Onayla
               </button>
@@ -592,10 +672,23 @@ function GecenAyForm({ oncekiAy, onClose }) {
       <input placeholder="Başlık" value={form.baslik} onChange={e => setForm(p => ({ ...p, baslik: e.target.value }))} />
       <input type="number" placeholder="Tutar (₺)" value={form.tutar} onChange={e => setForm(p => ({ ...p, tutar: e.target.value }))} />
       <input type="date" value={form.tarih} max={`${oncekiAy}-31`} min={`${oncekiAy}-01`} onChange={e => setForm(p => ({ ...p, tarih: e.target.value }))} />
-      <select value={form.kart_id} onChange={e => setForm(p => ({ ...p, kart_id: e.target.value }))}>
-        <option value="">Kart seç (opsiyonel)</option>
-        {kartlar.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+      <select value={form.odenme_turu || 'nakit'} onChange={e => setForm({...form, odenme_turu: e.target.value, kart_id: '', banka_id: ''})}>
+        <option value="nakit">Nakit</option>
+        <option value="kart">Kredi Kartı</option>
+        <option value="havale">Banka Havalesi</option>
       </select>
+      {form.odenme_turu === 'kart' && (
+        <select value={form.kart_id} onChange={e => setForm(p => ({ ...p, kart_id: e.target.value }))}>
+          <option value="">Kart seçin...</option>
+          {kartlar.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+        </select>
+      )}
+      {form.odenme_turu === 'havale' && (
+        <select value={form.banka_id} onChange={e => setForm(p => ({ ...p, banka_id: e.target.value }))}>
+          <option value="">Banka seçin...</option>
+          {(useStore.getState().kasa?.bankaHesaplari || []).map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+      )}
       <div className="gecen-ay-form-btns">
         <button className="gaf-cancel" onClick={onClose}>İptal</button>
         <button className="gaf-save" onClick={handleSave}>Kaydet</button>
@@ -646,12 +739,36 @@ function EditHarcamaModal({ harcama, onClose, onSave }) {
               <input type="date" value={form.tarih} onChange={e => setForm({...form, tarih: e.target.value})} />
             </div>
             <div className="form-field-v2">
-              <label>Kart</label>
-              <select value={form.kart_id || ''} onChange={e => setForm({...form, kart_id: e.target.value || null})}>
-                <option value="">Nakit</option>
-                {kartlar.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+              <label>Ödeme Yöntemi</label>
+              <select 
+                value={form.odenme_turu || (form.kart_id ? 'kart' : (form.banka_id ? 'havale' : 'nakit'))} 
+                onChange={e => setForm({...form, odenme_turu: e.target.value, kart_id: null, banka_id: null})}
+              >
+                <option value="nakit">Nakit</option>
+                <option value="kart">Kredi Kartı</option>
+                <option value="havale">Banka Havalesi</option>
               </select>
             </div>
+            {form.odenme_turu === 'kart' && (
+              <div className="form-field-v2">
+                <label>Kart Seçin</label>
+                <select value={form.kart_id || ''} onChange={e => setForm({...form, kart_id: e.target.value})}>
+                  <option value="">Seçiniz...</option>
+                  {kartlar.map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
+                </select>
+              </div>
+            )}
+            {form.odenme_turu === 'havale' && (
+              <div className="form-field-v2">
+                <label>Banka Seçin</label>
+                <select value={form.banka_id || ''} onChange={e => setForm({...form, banka_id: e.target.value})}>
+                  <option value="">Seçiniz...</option>
+                  {(useStore.getState().kasa?.bankaHesaplari || []).map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <button className="premium-submit-btn" style={{ width: '100%', marginTop: '20px' }} onClick={handleSave}>Değişiklikleri Kaydet</button>
           </div>
         </div>

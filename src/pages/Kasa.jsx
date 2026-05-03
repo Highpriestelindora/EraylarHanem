@@ -258,7 +258,13 @@ export default function Kasa() {
                       <span className="bc-icon">{b.icon || '🏦'}</span>
                       <div className="bc-texts">
                         <strong>{b.name}</strong>
-                        <small>{b.bank} · {b.owner === 'gorkem' ? 'Görkem' : 'Esra'}</small>
+                        <small>
+                          {b.bank} · {
+                            b.owner === 'gorkem' ? 'Görkem' : 
+                            b.owner === 'esra' ? 'Esra' : 
+                            b.owner === 'ortak' ? 'Ortak' : 'Bilinmiyor'
+                          }
+                        </small>
                       </div>
                     </div>
                     <div className="bc-actions">
@@ -456,7 +462,11 @@ function KasaModals({ type, data, onClose }) {
     addGoal, updateGoal, deleteGoal, kasa 
   } = useStore();
 
-  const [form, setForm] = useState(data || {});
+  const [form, setForm] = useState(() => {
+    if (data) return { ...data };
+    if (type === 'addBanka') return { owner: 'gorkem', balance: '', kmh: '' };
+    return {};
+  });
 
   const handleSave = () => {
     try {

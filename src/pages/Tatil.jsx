@@ -2635,7 +2635,13 @@ function VisaItem({ v, onEdit, onDel }) {
       <div className="vi-flag">{getCountryFlag('', '', v.country)}</div>
       <div className="vi-info">
         <strong>{v.type} - {v.country}</strong>
-        <span>{v.owner === 'gorkem' ? 'Görkem' : 'Esra'} · {v.start} / {v.end}</span>
+        <span>
+          {
+            v.owner === 'gorkem' ? 'Görkem' : 
+            v.owner === 'esra' ? 'Esra' : 
+            v.owner === 'ortak' ? 'Ortak' : 'Bilinmiyor'
+          } · {v.start} / {v.end}
+        </span>
       </div>
       <div className={`vi-status ${v.end < getNowUTC().split('T')[0] ? 'expired' : 'active'}`}>
         {v.end < getNowUTC().split('T')[0] ? 'Süresi Doldu' : 'Aktif'}

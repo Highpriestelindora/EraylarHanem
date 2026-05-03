@@ -550,8 +550,24 @@ async function deleteHarcamaFromSupabase(id, familyId = DEFAULT_FID, item = null
 }
 
 async function updateHarcamaInSupabase(id, updates) {
-  const { error } = await supabase.from('finans_harcamalar').update(updates).eq('id', id);
-  if (error) throw error;
+  // Supabase'de henüz banka_id kolonu olmayabilir. 
+  // Hata almamak için şimdilik banka_id'yi sadece yerel state'de tutabiliriz 
+  // veya DB'ye gönderirken kontrollü gönderebiliriz.
+  const dbUpdates = { ...updates };
+  // banka_id'yi DB'ye göndermeyi deniyoruz, hata verirse onsuz devam edeceğiz.
+  const { error } = await supabase.from('finans_harcamalar').update(dbUpdates).eq('id', id);
+  
+  if (error) {
+    console.warn('⚠️ Supabase update error (possibly missing banka_id column):', error);
+    // Eğer hata kolondan kaynaklıysa, banka_id'yi çıkarıp tekrar dene
+    if (error.code === '42703' || error.message?.includes('column')) {
+       const { banka_id, ...safeUpdates } = dbUpdates;
+       const { error: retryError } = await supabase.from('finans_harcamalar').update(safeUpdates).eq('id', id);
+       if (retryError) throw retryError;
+    } else {
+       throw error;
+    }
+  }
 }
 
 async function fetchBuAyHarcamalar(familyId = DEFAULT_FID) {
@@ -1180,15 +1196,24 @@ const useStore = create(
         // Update Balance if not card
         const yeniBakiyeler = { ...state.kasa.bakiyeler };
         const payerKey = (item.payer || 'ortak').toLowerCase();
-        if (yeniBakiyeler[payerKey] !== undefined && !item.cardId) {
-          yeniBakiyeler[payerKey] -= Number(item.amount);
+        
+        let updatedBankaHesaplari = [...(state.kasa.bankaHesaplari || [])];
+
+        if (item.odenme_turu === 'havale' && item.banka_id) {
+          // Banka Havalesi: Seçilen bankadan düş
+          updatedBankaHesaplari = updatedBankaHesaplari.map(b => 
+            b.id === item.banka_id ? { ...b, balance: b.balance - Number(item.amount || item.tutar) } : b
+          );
+        } else if (yeniBakiyeler[payerKey] !== undefined && !item.cardId && !item.kart_id) {
+          // Nakit: Kasadan düş
+          yeniBakiyeler[payerKey] -= Number(item.amount || item.tutar);
         }
 
         set({
           finans: { ...state.finans, harcamalar: updatedHarcamalar, approvalPool: updatedPool },
-          kasa: { ...state.kasa, bakiyeler: yeniBakiyeler }
+          kasa: { ...state.kasa, bakiyeler: yeniBakiyeler, bankaHesaplari: updatedBankaHesaplari }
         });
-        get().addLog('Harcama Onaylandı', `${item.payer}: ${item.amount}₺ - ${item.title}`);
+        get().addLog('Harcama Onaylandı', `${item.payer || item.kayit_eden}: ${item.amount || item.tutar}₺ - ${item.title || item.baslik}`);
         get().saveToSupabase();
         toast.success('Harcama onaylandı! ✅');
       },
@@ -1205,7 +1230,8 @@ const useStore = create(
           tutar: Number(data.tutar || data.amount || 0),
           kategori: data.kategori || data.category || 'Diğer',
           kart_id: data.kart_id || data.kartId || null,
-          odenme_turu: data.odenme_turu || (data.kart_id ? 'kart' : 'nakit'),
+          banka_id: data.banka_id || null, // Havale yapılacak banka
+          odenme_turu: data.odenme_turu || (data.kart_id ? 'kart' : (data.banka_id ? 'havale' : 'nakit')),
           kayit_eden: data.kayit_eden || state.currentUser?.name || 'Sistem',
           kaynak: data.kaynak || data.source || 'Manuel',
           notlar: data.notlar || null,
@@ -1243,25 +1269,45 @@ const useStore = create(
           );
         }
 
+        // Kasa/Banka bakiyelerini güncelle
+        let yeniBakiyeler = { ...state.kasa.bakiyeler };
+        let yeniBankaHesaplari = [...(state.kasa.bankaHesaplari || [])];
+
+        if (harcama.odenme_turu === 'havale' && harcama.banka_id) {
+          yeniBankaHesaplari = yeniBankaHesaplari.map(b => 
+            b.id === harcama.banka_id ? { ...b, balance: b.balance - harcama.tutar } : b
+          );
+        } else if (harcama.odenme_turu === 'nakit') {
+          const payerKey = (state.currentUser?.name || 'ortak').toLowerCase();
+          if (yeniBakiyeler[payerKey] !== undefined) {
+            yeniBakiyeler[payerKey] -= harcama.tutar;
+          }
+        }
+
         set({
           finans: {
             ...state.finans,
             buAyHarcamalar: yeniBuAy,
             kartMutabakat: yeniMutabakat,
+          },
+          kasa: {
+            ...state.kasa,
+            bakiyeler: yeniBakiyeler,
+            bankaHesaplari: yeniBankaHesaplari
           }
         });
       },
 
       // Onay havuzundan alıp Supabase'e yazar
-      onaylaHarcama: async (poolId, kartId) => {
+      onaylaHarcama: async (poolId, updates = {}) => {
         const state = get();
         const item = state.finans.approvalPool.find(i => i.id === poolId);
         if (!item) return;
 
+        // updates can contain: kart_id, banka_id, odenme_turu
         await get().addHarcama({
           ...item,
-          kart_id: kartId,
-          odenme_turu: kartId ? 'kart' : 'nakit',
+          ...updates,
           kaynak: item.source || 'Onay Havuzu',
         });
 
@@ -1309,7 +1355,26 @@ const useStore = create(
             upsertKartMutabakat(item.kart_id, buAy, yeniMutabakat[item.kart_id].beklenen, current.gercek, state.family_id);
           }
           
-          set({ finans: { ...state.finans, buAyHarcamalar: updatedHarcamalar, kartMutabakat: yeniMutabakat } });
+          let yeniBakiyeler = { ...state.kasa.bakiyeler };
+          let yeniBankaHesaplari = [...(state.kasa.bankaHesaplari || [])];
+
+          if (item && item.odenme_turu === 'havale' && item.banka_id) {
+             // Havaleyi geri yükle
+             yeniBankaHesaplari = yeniBankaHesaplari.map(b => 
+               b.id === item.banka_id ? { ...b, balance: b.balance + Number(item.tutar) } : b
+             );
+          } else if (item && item.odenme_turu === 'nakit') {
+             // Nakiti geri yükle
+             const payerKey = (item.kayit_eden || '').toLowerCase();
+             if (yeniBakiyeler[payerKey] !== undefined) {
+               yeniBakiyeler[payerKey] += Number(item.tutar);
+             }
+          }
+          
+          set({ 
+            finans: { ...state.finans, buAyHarcamalar: updatedHarcamalar, kartMutabakat: yeniMutabakat },
+            kasa: { ...state.kasa, bakiyeler: yeniBakiyeler, bankaHesaplari: yeniBankaHesaplari }
+          });
           toast.success('Harcama silindi.');
           
           // Beklemeden hemen bulutu güncelle (Hayalet kayıtları engellemek için)
@@ -1322,47 +1387,72 @@ const useStore = create(
 
       updateHarcama: async (id, updates) => {
         try {
-          const oldItem = get().finans.buAyHarcamalar.find(h => h.id === id);
+          const state = get();
+          const oldItem = state.finans.buAyHarcamalar.find(h => h.id === id);
+          if (!oldItem) return;
+
           await updateHarcamaInSupabase(id, updates);
           
-          const updatedHarcamalar = (get().finans.buAyHarcamalar || []).map(h => 
+          const updatedHarcamalar = (state.finans.buAyHarcamalar || []).map(h => 
             h.id === id ? { ...h, ...updates } : h
           );
           
-          let yeniMutabakat = { ...get().finans.kartMutabakat };
           const buAy = new Date().toISOString().slice(0, 7);
+          let yeniMutabakat = { ...state.finans.kartMutabakat };
+          let yeniBakiyeler = { ...state.kasa.bakiyeler };
+          let yeniBankaHesaplari = [...(state.kasa.bankaHesaplari || [])];
 
-          // Eski karttan düş
-          if (oldItem && oldItem.kart_id && yeniMutabakat[oldItem.kart_id]) {
+          // 1. ESKİ DURUMU GERİ AL (REVERT)
+          if (oldItem.odenme_turu === 'kart' && oldItem.kart_id && yeniMutabakat[oldItem.kart_id]) {
             yeniMutabakat[oldItem.kart_id].beklenen = Math.max(0, (yeniMutabakat[oldItem.kart_id].beklenen || 0) - Number(oldItem.tutar));
+          } else if (oldItem.odenme_turu === 'havale' && oldItem.banka_id) {
+            yeniBankaHesaplari = yeniBankaHesaplari.map(b => 
+              b.id === oldItem.banka_id ? { ...b, balance: b.balance + Number(oldItem.tutar) } : b
+            );
+          } else if (oldItem.odenme_turu === 'nakit') {
+            const payerKey = (oldItem.kayit_eden || 'ortak').toLowerCase();
+            if (yeniBakiyeler[payerKey] !== undefined) {
+              yeniBakiyeler[payerKey] += Number(oldItem.tutar);
+            }
           }
-          
-          // Yeni karta (veya aynı karta yeni tutarı) ekle
-          const newKartId = updates.kart_id !== undefined ? updates.kart_id : (oldItem?.kart_id);
-          const newTutar = updates.tutar !== undefined ? Number(updates.tutar) : Number(oldItem?.tutar);
 
-          if (newKartId) {
-            const current = yeniMutabakat[newKartId] || { beklenen: 0, gercek: null, ay: buAy };
-            yeniMutabakat[newKartId] = {
-              ...current,
-              beklenen: (current.beklenen || 0) + newTutar,
-              ay: buAy
-            };
+          // 2. YENİ DURUMU UYGULA (APPLY)
+          const newItem = { ...oldItem, ...updates };
+          const newTutar = Number(newItem.tutar);
+
+          if (newItem.odenme_turu === 'kart' && newItem.kart_id) {
+            if (!yeniMutabakat[newItem.kart_id]) {
+              yeniMutabakat[newItem.kart_id] = { beklenen: 0, gercek: null, ay: buAy };
+            }
+            yeniMutabakat[newItem.kart_id].beklenen = (yeniMutabakat[newItem.kart_id].beklenen || 0) + newTutar;
+          } else if (newItem.odenme_turu === 'havale' && newItem.banka_id) {
+            yeniBankaHesaplari = yeniBankaHesaplari.map(b => 
+              b.id === newItem.banka_id ? { ...b, balance: b.balance - newTutar } : b
+            );
+          } else if (newItem.odenme_turu === 'nakit') {
+            const payerKey = (newItem.kayit_eden || 'ortak').toLowerCase();
+            if (yeniBakiyeler[payerKey] !== undefined) {
+              yeniBakiyeler[payerKey] -= newTutar;
+            }
           }
 
           // Supabase mutabakatlarını güncelle (etkilenen kartlar için)
-          if (oldItem && oldItem.kart_id) {
-             upsertKartMutabakat(oldItem.kart_id, buAy, yeniMutabakat[oldItem.kart_id].beklenen, yeniMutabakat[oldItem.kart_id].gercek, get().family_id);
+          if (oldItem.kart_id && oldItem.odenme_turu === 'kart') {
+             upsertKartMutabakat(oldItem.kart_id, buAy, yeniMutabakat[oldItem.kart_id].beklenen, yeniMutabakat[oldItem.kart_id].gercek, state.family_id);
           }
-          if (newKartId && newKartId !== oldItem?.kart_id) {
-             upsertKartMutabakat(newKartId, buAy, yeniMutabakat[newKartId].beklenen, yeniMutabakat[newKartId].gercek, get().family_id);
+          if (newItem.kart_id && newItem.odenme_turu === 'kart' && newItem.kart_id !== oldItem?.kart_id) {
+             upsertKartMutabakat(newItem.kart_id, buAy, yeniMutabakat[newItem.kart_id].beklenen, yeniMutabakat[newItem.kart_id].gercek, state.family_id);
           }
 
-          set({ finans: { ...get().finans, buAyHarcamalar: updatedHarcamalar, kartMutabakat: yeniMutabakat } });
+          set({ 
+            finans: { ...state.finans, buAyHarcamalar: updatedHarcamalar, kartMutabakat: yeniMutabakat },
+            kasa: { ...state.kasa, bakiyeler: yeniBakiyeler, bankaHesaplari: yeniBankaHesaplari }
+          });
+          
           toast.success('Harcama güncellendi.');
           get().saveToSupabase();
         } catch (err) {
-          console.error(err);
+          console.error('❌ updateHarcama error:', err);
           toast.error('Güncelleme işlemi başarısız.');
         }
       },

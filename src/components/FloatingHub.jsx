@@ -42,7 +42,10 @@ function FloatingHub() {
   const [expTitle, setExpTitle] = useState('');
   const [expAmount, setExpAmount] = useState('');
   const [expCategory, setExpCategory] = useState('Diğer');
-  const [expCard, setExpCard] = useState(''); // '' means cash
+  const [expPaymentSource, setExpPaymentSource] = useState('nakit'); // 'nakit', 'kart', 'havale'
+  const [expCard, setExpCard] = useState(''); 
+  const [expBank, setExpBank] = useState('');
+  const bankaHesaplari = useStore(state => state.kasa?.bankaHesaplari || []);
   const kartlar = useStore(state => state.finans?.kartlar || []);
 
   if (ui.isModalOpen) return null;
@@ -74,13 +77,17 @@ function FloatingHub() {
       category: expCategory,
       payer: currentUser?.name || 'Sistem',
       source: 'Hızlı Ödeme',
-      // Onay sırasında kart seçilecek ama hızlı girişte tercih edilen varsa saklayalım
-      preferredCardId: expCard || null
+      odenme_turu: expPaymentSource,
+      kart_id: expPaymentSource === 'kart' ? expCard : null,
+      banka_id: expPaymentSource === 'havale' ? expBank : null,
+      preferredCardId: expPaymentSource === 'kart' ? expCard : null
     });
 
     setExpTitle('');
     setExpAmount('');
     setExpCard('');
+    setExpBank('');
+    setExpPaymentSource('nakit');
     setActiveModal(null);
     setIsOpen(false);
     toast.success('Harcama onay havuzuna gönderildi! 📥');
@@ -272,12 +279,44 @@ function FloatingHub() {
             </div>
 
             <div className="hub-payer-select">
-              <select className="hub-input" style={{ width: '100%', marginBottom: '10px' }} value={expCard} onChange={e => setExpCard(e.target.value)}>
-                <option value="">💵 Nakit (Elden / Kasa)</option>
-                {kartlar.map(k => (
-                  <option key={k.id} value={k.id}>💳 {k.name} ({k.owner === 'gorkem' ? 'Görkem' : 'Esra'})</option>
-                ))}
+              <select 
+                className="hub-input" 
+                style={{ width: '100%', marginBottom: '10px' }} 
+                value={expPaymentSource} 
+                onChange={e => setExpPaymentSource(e.target.value)}
+              >
+                <option value="nakit">💵 Nakit (Kasa)</option>
+                <option value="kart">💳 Kredi Kartı</option>
+                <option value="havale">🏦 Banka Havalesi</option>
               </select>
+
+              {expPaymentSource === 'kart' && (
+                <select 
+                  className="hub-input animate-fadeIn" 
+                  style={{ width: '100%', marginBottom: '10px', background: '#f5f3ff' }} 
+                  value={expCard} 
+                  onChange={e => setExpCard(e.target.value)}
+                >
+                  <option value="">Kart seçin...</option>
+                  {kartlar.map(k => (
+                    <option key={k.id} value={k.id}>{k.name} ({k.owner})</option>
+                  ))}
+                </select>
+              )}
+
+              {expPaymentSource === 'havale' && (
+                <select 
+                  className="hub-input animate-fadeIn" 
+                  style={{ width: '100%', marginBottom: '10px', background: '#f0fdf4' }} 
+                  value={expBank} 
+                  onChange={e => setExpBank(e.target.value)}
+                >
+                  <option value="">Banka seçin...</option>
+                  {bankaHesaplari.map(b => (
+                    <option key={b.id} value={b.id}>{b.name} ({b.bank})</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <button className="hub-submit-btn" onClick={handleAddExpense}>Sisteme İşle</button>
