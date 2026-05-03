@@ -1528,3 +1528,66 @@
   box-shadow: 0 0 8px var(--p-color);
   opacity: 0.6;
 }
+
+/* Integrated Stats Panel */
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.stat-card-premium {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 20px;
+}
+
+.scp-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scp-user span {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.scp-user strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.scp-metrics {
+  display: flex;
+  gap: 12px;
+}
+
+.scp-metric {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--txt-light);
+  background: rgba(0,0,0,0.03);
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.scp-metric.highlight {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.scp-metric svg {
+  opacity: 0.7;
+}
