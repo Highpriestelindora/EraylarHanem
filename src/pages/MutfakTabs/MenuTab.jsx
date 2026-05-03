@@ -532,10 +532,10 @@ export default function MenuTab() {
 
         .recipe-scroll { max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 30px; margin-top: 10px; }
         .recipe-item-mini { padding: 8px 10px; border-radius: 16px; margin-bottom: 2px; min-height: 60px; display: flex; align-items: center; }
-        .ri-content { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+        .ri-content { display: flex; align-items: center; justify-content: flex-start; gap: 12px; width: 100%; }
         .ri-info { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; justify-content: flex-start; }
-        .ri-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; text-align: left; }
-        .ri-name-row { display: flex; align-items: center; gap: 6px; justify-content: flex-start; }
+        .ri-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; text-align: left; align-items: flex-start; }
+        .ri-name-row { display: flex; align-items: center; gap: 6px; width: 100%; justify-content: flex-start; }
         .ri-emoji { font-size: 16px; flex-shrink: 0; }
         .ri-name { font-size: 13px; font-weight: 800; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
         .ri-missing { 
