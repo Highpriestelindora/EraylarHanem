@@ -416,7 +416,7 @@ export default function MenuTab() {
                                 }}
                                 title="Eksikleri Listeye Ekle"
                               >
-                                <ShoppingCart size={16} color="#d97706" />
+                                <ShoppingCart size={16} color="#059669" />
                               </button>
                             )}
                             <button className="recipe-select-btn" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>
@@ -533,11 +533,11 @@ export default function MenuTab() {
         .recipe-scroll { max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 30px; margin-top: 10px; }
         .recipe-item-mini { padding: 8px 10px; border-radius: 16px; margin-bottom: 2px; min-height: 60px; display: flex; align-items: center; }
         .ri-content { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
-        .ri-info { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; }
-        .ri-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
-        .ri-name-row { display: flex; align-items: center; gap: 6px; }
+        .ri-info { display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; justify-content: flex-start; }
+        .ri-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; text-align: left; }
+        .ri-name-row { display: flex; align-items: center; gap: 6px; justify-content: flex-start; }
         .ri-emoji { font-size: 16px; flex-shrink: 0; }
-        .ri-name { font-size: 13px; font-weight: 800; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ri-name { font-size: 13px; font-weight: 800; color: var(--txt); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
         .ri-missing { 
           font-size: 10px; 
           font-weight: 700; 
@@ -548,12 +548,13 @@ export default function MenuTab() {
           overflow: hidden;
           line-height: 1.1;
           max-height: 2.2em;
+          text-align: left;
         }
         .ri-btns { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         
         .add-missing-mini-btn { 
-          background: #fffbeb !important; 
-          border: 1px solid #fcd34d !important; 
+          background: #f0fdf4 !important; 
+          border: 1px solid #bbf7d0 !important; 
           width: 32px; height: 32px; 
           display: flex !important; align-items: center; justify-content: center; 
           border-radius: 10px !important; 
