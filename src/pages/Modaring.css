@@ -1825,3 +1825,24 @@
   letter-spacing: 0.5px;
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
+
+/* Enhanced Eye Button */
+.ss-action-btn-eye {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+  transition: 0.3s;
+}
+
+.ss-action-btn-eye:active {
+  transform: scale(0.9);
+  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.2);
+}
