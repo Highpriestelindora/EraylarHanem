@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
-  LayoutGrid, CalendarDays, TrendingUp, UserCheck, DollarSign
+  LayoutGrid, CalendarDays, TrendingUp, DollarSign
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
@@ -32,12 +32,20 @@ const VardiyaTab = () => {
   const getWeekRange = (date) => {
     const start = new Date(date);
     start.setDate(start.getDate() - (start.getDay() === 0 ? 6 : start.getDay() - 1));
-    const days = Array.from({ length: 7 }, (_, i) => {
+    const daysArr = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start);
       d.setDate(d.getDate() + i);
       return d;
     });
-    return days;
+    return daysArr;
+  };
+
+  const getWeekNumber = (d) => {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return weekNo;
   };
 
   // --- STATS CALCULATIONS ---
@@ -123,7 +131,6 @@ const VardiyaTab = () => {
 
   return (
     <div className="tab-view-content animate-fadeIn">
-      {/* Switcher */}
       <div className="view-mode-switcher glass mb-12">
         <button className={viewMode === 'daily' ? 'active' : ''} onClick={() => setViewMode('daily')}><Clock size={16} /></button>
         <button className={viewMode === 'weekly' ? 'active' : ''} onClick={() => setViewMode('weekly')}><LayoutGrid size={16} /></button>
@@ -134,10 +141,12 @@ const VardiyaTab = () => {
       <div className="day-selector-premium glass mb-12">
         <button onClick={() => changeDate(-1)} className="icon-btn-small"><ChevronLeft size={18} /></button>
         <div className="active-day-label">
-          <strong>{viewMode === 'daily' ? selectedDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'short' }) : 
-                  viewMode === 'weekly' ? 'Haftalık Görünüm' : 
-                  viewMode === 'monthly' ? selectedDate.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }) :
-                  selectedDate.getFullYear() + ' Yılı'}</strong>
+          <strong>
+            {viewMode === 'daily' ? selectedDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'short' }) : 
+             viewMode === 'weekly' ? `Hafta ${getWeekNumber(selectedDate)}: ${getWeekRange(selectedDate)[0].getDate()} - ${getWeekRange(selectedDate)[6].toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}` : 
+             viewMode === 'monthly' ? selectedDate.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' }) :
+             selectedDate.getFullYear() + ' Yılı'}
+          </strong>
         </div>
         <button onClick={() => changeDate(1)} className="icon-btn-small"><ChevronRight size={18} /></button>
       </div>
@@ -155,32 +164,19 @@ const VardiyaTab = () => {
       {viewMode === 'monthly' && <div className="p-12 opacity-50 text-center">Aylık döküm aşağıdadır.</div>}
       {viewMode === 'yearly' && renderYearly()}
 
-      {/* STATISTICS PANEL (Dynamic) */}
-      <div className="section-header-v2 mt-20">
-        <h3>📊 Personel İstatistikleri</h3>
-      </div>
+      <div className="section-header-v2 mt-20"><h3>📊 Personel İstatistikleri</h3></div>
       <div className="stats-list">
          {currentViewStats.map(s => (
            <div key={s.id} className="stat-card-premium glass animate-pop">
-              <div className="scp-user">
-                 <span style={{ background: s.color }}>{s.emoji}</span>
-                 <strong>{s.name}</strong>
-              </div>
+              <div className="scp-user"><span style={{ background: s.color }}>{s.emoji}</span><strong>{s.name}</strong></div>
               <div className="scp-metrics">
-                 <div className="scp-metric">
-                    <Clock size={12} />
-                    <span>{s.hours}s</span>
-                 </div>
-                 <div className="scp-metric highlight">
-                    <DollarSign size={12} />
-                    <span>{s.earned.toLocaleString()} ₺</span>
-                 </div>
+                 <div className="scp-metric"><Clock size={12} /><span>{s.hours}s</span></div>
+                 <div className="scp-metric highlight"><DollarSign size={12} /><span>{s.earned.toLocaleString()} ₺</span></div>
               </div>
            </div>
          ))}
       </div>
 
-      {/* Modals */}
       {editingShift && (
         <ShiftEditModal 
           shift={editingShift}
@@ -212,6 +208,7 @@ const VardiyaTab = () => {
   );
 };
 
+// ... ShiftEditModal and StaffAddModal remain same ...
 const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
   const [times, setTimes] = useState({ startTime: shift.startTime || "10", endTime: shift.endTime || "22" });
   const hoursArr = Array.from({ length: 13 }, (_, i) => (i + 10).toString());
