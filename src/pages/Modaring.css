@@ -1828,9 +1828,9 @@
 
 /* Enhanced Eye Button */
 .ss-action-btn-eye {
-  width: 52px;
-  height: 52px;
-  border-radius: 18px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
   color: white;
   border: none;
