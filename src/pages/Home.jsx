@@ -411,7 +411,7 @@ const Home = () => {
             </div>
           </div>
           <div className="phb-actions">
-            <button className="phb-icon-btn" onClick={() => navigate('/ayarlar')}><Settings size={20} /></button>
+            <button className="phb-icon-btn" onClick={() => navigate('/ayarlar')}><Settings size={24} /></button>
           </div>
         </div>
       </div>
