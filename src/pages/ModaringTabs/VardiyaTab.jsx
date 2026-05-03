@@ -19,30 +19,41 @@ const VardiyaTab = () => {
 
   const formattedDateStr = selectedDate.toISOString().split('T')[0];
 
-  // --- MOCK DATA INJECTION (FIXED & SAFE) ---
+  // --- ORIGINAL DATA INJECTION (04-10 MAYIS) ---
   useEffect(() => {
-    const nextWeekDate = "2026-05-11";
-    // Added safety check with ?. to prevent 'startsWith' error
-    const hasNextWeek = shifts.some(s => s?.date?.startsWith?.("2026-05-11"));
+    const targetDate = "2026-05-04";
+    const hasData = shifts.some(s => s?.date === targetDate);
     
-    if (!hasNextWeek && personel.length >= 2) {
+    if (!hasData && personel.length >= 2) {
       const azraId = personel.find(p => p.name.includes("Azra"))?.id || personel[0].id;
       const gozdeId = personel.find(p => p.name.includes("Gözde"))?.id || personel[1].id;
       const zeynepId = personel.find(p => p.name.includes("Zeynep"))?.id || (personel[2]?.id || personel[0].id);
 
-      const mockNextWeek = [
-        { id: 'm1', date: '2026-05-11', personelId: azraId, startTime: "10", endTime: "18", totalPay: 1200 },
-        { id: 'm2', date: '2026-05-11', personelId: gozdeId, startTime: "16", endTime: "22", totalPay: 900 },
-        { id: 'm3', date: '2026-05-12', personelId: gozdeId, startTime: "10", endTime: "16", totalPay: 900 },
-        { id: 'm4', date: '2026-05-12', personelId: azraId, startTime: "14", endTime: "22", totalPay: 1200 },
-        { id: 'm5', date: '2026-05-13', personelId: azraId, startTime: "10", endTime: "18", totalPay: 1200 },
-        { id: 'm6', date: '2026-05-14', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 900 },
-        { id: 'm7', date: '2026-05-15', personelId: gozdeId, startTime: "10", endTime: "17", totalPay: 1050 },
-        { id: 'm8', date: '2026-05-16', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 900 },
-        { id: 'm9', date: '2026-05-17', personelId: zeynepId, startTime: "10", endTime: "16", totalPay: 900 },
-        { id: 'm10', date: '2026-05-17', personelId: azraId, startTime: "14", endTime: "22", totalPay: 1200 },
+      const originalPlan = [
+        // Pazartesi
+        { id: 'o1', date: '2026-05-04', personelId: azraId, startTime: "10", endTime: "18", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
+        { id: 'o2', date: '2026-05-04', personelId: gozdeId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
+        // Salı
+        { id: 'o3', date: '2026-05-05', personelId: gozdeId, startTime: "10", endTime: "16", totalPay: 6 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
+        { id: 'o4', date: '2026-05-05', personelId: azraId, startTime: "14", endTime: "22", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
+        // Çarşamba
+        { id: 'o5', date: '2026-05-06', personelId: azraId, startTime: "10", endTime: "18", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
+        { id: 'o6', date: '2026-05-06', personelId: gozdeId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
+        // Perşembe
+        { id: 'o7', date: '2026-05-07', personelId: azraId, startTime: "10", endTime: "18", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
+        { id: 'o8', date: '2026-05-07', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === zeynepId)?.hourlyRate || 0) },
+        // Cuma
+        { id: 'o9', date: '2026-05-08', personelId: gozdeId, startTime: "10", endTime: "17", totalPay: 7 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
+        { id: 'o10', date: '2026-05-08', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === zeynepId)?.hourlyRate || 0) },
+        // Cumartesi
+        { id: 'o11', date: '2026-05-09', personelId: gozdeId, startTime: "10", endTime: "17", totalPay: 7 * (personel.find(px => px.id === gozdeId)?.hourlyRate || 0) },
+        { id: 'o12', date: '2026-05-09', personelId: zeynepId, startTime: "16", endTime: "22", totalPay: 6 * (personel.find(px => px.id === zeynepId)?.hourlyRate || 0) },
+        // Pazar
+        { id: 'o13', date: '2026-05-10', personelId: zeynepId, startTime: "10", endTime: "16", totalPay: 6 * (personel.find(px => px.id === zeynepId)?.hourlyRate || 0) },
+        { id: 'o14', date: '2026-05-10', personelId: azraId, startTime: "14", endTime: "22", totalPay: 8 * (personel.find(px => px.id === azraId)?.hourlyRate || 0) },
       ];
-      setModuleData('modaring', { vardiya: [...shifts, ...mockNextWeek] });
+      
+      setModuleData('modaring', { vardiya: [...shifts, ...originalPlan] });
     }
   }, [personel.length]);
 
@@ -119,12 +130,11 @@ const VardiyaTab = () => {
   const totalGider = useMemo(() => currentViewStats.reduce((acc, s) => acc + s.earned, 0), [currentViewStats]);
 
   const handleManualSave = async () => {
-    if (!forceSaveToSupabase) return toast.error("Kayıt fonksiyonu bulunamadı");
     try {
       await forceSaveToSupabase();
       toast.success("Buluta kaydedildi! ☁️");
     } catch (err) {
-      toast.error("Kayıt sırasında hata");
+      toast.error("Kayıt hatası");
     }
   };
 
@@ -197,7 +207,7 @@ const VardiyaTab = () => {
           <button className={viewMode === 'yearly' ? 'active' : ''} onClick={() => setViewMode('yearly')}><TrendingUp size={16} /></button>
         </div>
         {viewMode === 'weekly' && (
-          <button className="whatsapp-copy-btn glass animate-pop" onClick={copyWeeklyToWhatsApp} title="WhatsApp Kopyala">
+          <button className="whatsapp-copy-btn glass animate-pop" onClick={copyWeeklyToWhatsApp}>
             <MessageCircle size={18} />
           </button>
         )}
@@ -219,7 +229,7 @@ const VardiyaTab = () => {
       <div className="shift-summary glass mb-16">
         <div className="ss-item">
           <Calculator size={18} color="#10b981" />
-          <div className="ss-text"><small>Toplam Gider</small><strong>{totalGider.toLocaleString('tr-TR')} TL</strong></div>
+          <div className="ss-text"><small>Toplam Gider ({viewMode})</small><strong>{totalGider.toLocaleString('tr-TR')} TL</strong></div>
         </div>
         <div className="ss-actions">
            <button className="ss-action-btn-primary" onClick={handleManualSave}><Save size={18} /></button>
@@ -268,7 +278,6 @@ const VardiyaTab = () => {
   );
 };
 
-// ... ShiftEditModal and StaffAddModal ...
 const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
   const [times, setTimes] = useState({ startTime: shift.startTime || "10", endTime: shift.endTime || "22" });
   const hoursArr = Array.from({ length: 13 }, (_, i) => (i + 10).toString());
