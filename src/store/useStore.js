@@ -14,7 +14,8 @@ import {
   INITIAL_SOCIAL,
   INITIAL_WEIGHTS,
   INITIAL_SOCIAL_POOL,
-  SOCIAL_ROUTINES
+  SOCIAL_ROUTINES,
+  ENGINEERING_CONVERSIONS
 } from '../constants/data';
 import { notificationService } from '../lib/notificationService';
 import toast from 'react-hot-toast';
@@ -318,6 +319,7 @@ const DEFAULT_STATE = {
     tracking: {
       home: { lat: 36.8841, lng: 30.7056, radius: 100, label: 'Evim', address: 'Kepez/Antalya' },
       work: { lat: 36.8969, lng: 30.7133, radius: 200, label: 'İşyerim', address: 'Muratpaşa/Antalya' },
+      savedLocations: [], // Array of custom places { id, lat, lng, label, address, type }
       lastAnalysisDate: null,
       cachedAnalysis: null,
       routine: {
@@ -393,11 +395,7 @@ const DEFAULT_STATE = {
   currentUser: null, // { name: 'Görkem', emoji: '👨‍💻' } or { name: 'Esra', emoji: '👩‍🍳' }
     muhendislik: {
       activeTab: 'muhendislik',
-      pinnedConversions: [
-        { id: '1', from: 'lt/min', to: 'gpm', active: true },
-        { id: '2', from: 'bar', to: 'psi', active: true },
-        { id: '3', from: 'kg', to: 'lb', active: true }
-      ],
+      pinnedConversions: ['p_bar_psi', 'f_kg_lb', 'q_lmin_gpm'],
       problemBank: [],
       decisionLog: [],
       crm: {
@@ -901,18 +899,20 @@ const useStore = create(
       // ── Mühendislik Actions ────────────────────────────────
       addEngineeringProblem: (problem) => {
         const state = get();
+        const currentBank = Array.isArray(state.muhendislik.problemBank) ? state.muhendislik.problemBank : [];
         const newProblem = {
           id: Date.now(),
           date: new Date().toISOString(),
           ...problem
         };
-        set({ muhendislik: { ...state.muhendislik, problemBank: [newProblem, ...state.muhendislik.problemBank] } });
+        set({ muhendislik: { ...state.muhendislik, problemBank: [newProblem, ...currentBank] } });
         get().addLog('Mühendislik', `Yeni problem kaydedildi: ${problem.title}`);
         get().saveToSupabase();
       },
       updateEngineeringProblem: (id, updates) => {
         const state = get();
-        const updated = state.muhendislik.problemBank.map(p => p.id === id ? { ...p, ...updates } : p);
+        const currentBank = Array.isArray(state.muhendislik.problemBank) ? state.muhendislik.problemBank : [];
+        const updated = currentBank.map(p => p.id === id ? { ...p, ...updates } : p);
         set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
         get().saveToSupabase();
       },
@@ -945,9 +945,15 @@ const useStore = create(
         set({ muhendislik: { ...state.muhendislik, decisionLog: updated } });
         get().saveToSupabase();
       },
-      updatePinnedConversion: (id, updates) => {
+      togglePinnedConversion: (id) => {
         const state = get();
-        const updated = state.muhendislik.pinnedConversions.map(c => c.id === id ? { ...c, ...updates } : c);
+        const current = state.muhendislik.pinnedConversions || [];
+        let updated;
+        if (current.includes(id)) {
+          updated = current.filter(cid => cid !== id);
+        } else {
+          updated = [id, ...current].slice(0, 3);
+        }
         set({ muhendislik: { ...state.muhendislik, pinnedConversions: updated } });
         get().saveToSupabase();
       },
@@ -3653,6 +3659,54 @@ const useStore = create(
         });
         get().saveToSupabase();
         toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi! 📍`);
+      },
+
+      addLocation: (location) => {
+        const state = get();
+        const tracking = state.ev.tracking || {};
+        const saved = Array.isArray(tracking.savedLocations) ? tracking.savedLocations : [];
+        const newLoc = { id: Date.now(), ...location };
+        
+        set({
+          ev: {
+            ...state.ev,
+            tracking: { ...tracking, savedLocations: [newLoc, ...saved] }
+          }
+        });
+        get().saveToSupabase();
+        toast.success('Yeni konum kaydedildi! 📍');
+      },
+
+      updateLocation: (id, updates) => {
+        const state = get();
+        const tracking = state.ev.tracking || {};
+        const saved = (tracking.savedLocations || []).map(l => 
+          l.id === id ? { ...l, ...updates } : l
+        );
+        
+        set({
+          ev: {
+            ...state.ev,
+            tracking: { ...tracking, savedLocations: saved }
+          }
+        });
+        get().saveToSupabase();
+        toast.success('Konum güncellendi! 📍');
+      },
+
+      deleteLocation: (id) => {
+        const state = get();
+        const tracking = state.ev.tracking || {};
+        const saved = (tracking.savedLocations || []).filter(l => l.id !== id);
+        
+        set({
+          ev: {
+            ...state.ev,
+            tracking: { ...tracking, savedLocations: saved }
+          }
+        });
+        get().saveToSupabase();
+        toast.success('Konum silindi.');
       },
 
       logTimeSlice: (type, minutes = 15) => {

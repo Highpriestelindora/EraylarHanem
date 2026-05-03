@@ -11,10 +11,14 @@
             "id": "d7cb612a97fffb98",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "entities/finans_ve_kasa.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "finans_ve_kasa"
             }
           }
         ]
@@ -181,6 +185,7 @@
   },
   "active": "d7cb612a97fffb98",
   "lastOpenFiles": [
+    "index.md",
     "entities/mutfak_modulu.md",
     "decisions/tek_tablo_jsonb_depolama.md",
     "sources/legacy_docs.md",
@@ -195,7 +200,6 @@
     "log.md",
     "decisions/ios_oncelikli_test.md",
     "raw/legacy/Index.md",
-    "index.md",
     "concepts/ios_oncelikli_tasarim.md",
     "raw/legacy/Tatil_Modulu.md",
     "entities/pet.md",

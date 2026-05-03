@@ -291,13 +291,20 @@ function HaftaTab({ sosyal, onAdd }) {
 
     // 1. Social Activities & Notes
     (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.durum !== 'iptal').forEach(a => {
+      // Force original emoji, fallback to defaults based on type
+      let displayEmoji = a.emoji;
+      if (!displayEmoji || displayEmoji === '✅') {
+        displayEmoji = a.tur === 'not' ? '📝' : (a.tur === 'evde' ? '🏠' : '🎭');
+      }
+
       events.push({ 
         date: a.tarih, 
-        icon: a.emoji || (a.tur === 'not' ? '📝' : '🎭'), 
+        icon: displayEmoji, 
         title: a.baslik || a.title, 
-        color: a.tur === 'not' ? '#8b5cf6' : '#f59e0b', 
+        color: a.tamamlandi ? '#10b981' : (a.tur === 'not' ? '#8b5cf6' : '#f59e0b'), 
         type: 'social', 
         isNote: a.tur === 'not',
+        isCompleted: !!a.tamamlandi,
         originalItem: a 
       });
     });
@@ -623,11 +630,13 @@ function HaftaTab({ sosyal, onAdd }) {
                         </div>
                         {a.type === 'social' && (
                           <div className="tl-actions">
-                            {!a.originalItem.tamamlandi && (
-                              <button className="tl-btn done prominent" onClick={() => setCompleteModal(a.originalItem)}>
-                                <CheckCircle2 size={18} />
-                              </button>
-                            )}
+                            <button 
+                              className={`tl-btn done ${a.originalItem.tamamlandi ? 'reviewed' : 'prominent'}`} 
+                              onClick={() => setCompleteModal(a.originalItem)}
+                              title={a.originalItem.tamamlandi ? "Değerlendirmeyi Gör/Güncelle" : "Tamamla & Değerlendir"}
+                            >
+                              {a.originalItem.tamamlandi ? <Star size={18} fill="#f59e0b" color="#f59e0b" /> : <CheckCircle2 size={18} />}
+                            </button>
                             <button className="tl-btn cancel" onClick={() => setDeletingId(a.originalItem.id)}>
                               <Trash2 size={16} />
                             </button>
@@ -718,10 +727,20 @@ function HaftaTab({ sosyal, onAdd }) {
                           <span style={{ fontSize: '12px', color: 'var(--txt-light)', marginTop: '2px' }}>{e.originalItem?.detaylar || (e.type === 'social' ? 'Detay eklemek için tıkla...' : 'Randevu/Aktivite')}</span>
                         </div>
                       </div>
-                      {e.type === 'social' && !e.originalItem.tamamlandi && (
+                      {e.type === 'social' && (
                         <div className="ni-actions" style={{ display: 'flex', gap: '8px' }}>
-                          <button className="ni-done-btn" onClick={() => setCompleteModal(e.originalItem)} style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <CheckCircle2 size={18} />
+                          <button 
+                            className="ni-done-btn" 
+                            onClick={() => setCompleteModal(e.originalItem)} 
+                            style={{ 
+                              background: e.originalItem.tamamlandi ? '#fef3c7' : '#f0fdf4', 
+                              color: e.originalItem.tamamlandi ? '#d97706' : '#16a34a', 
+                              border: `1px solid ${e.originalItem.tamamlandi ? '#fcd34d' : '#bbf7d0'}`, 
+                              width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+                            }}
+                            title={e.originalItem.tamamlandi ? "Değerlendirmeyi Gör/Düzenle" : "Tamamla"}
+                          >
+                            {e.originalItem.tamamlandi ? <Star size={16} fill="currentColor" /> : <CheckCircle2 size={18} />}
                           </button>
                           <button className="ni-cancel-btn" onClick={() => setDeletingId(e.originalItem.id)} style={{ background: '#fff5f5', color: '#dc2626', border: '1px solid #fecaca', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Trash2 size={16} />
@@ -929,50 +948,35 @@ function ActivityDetailsModal({ activity, onClose, allActivities }) {
 
 function CompleteActivityModal({ activity, onClose }) {
   const { completeSocialActivity, currentUser } = useStore();
-  const [activeReviewer, setActiveReviewer] = useState(
-    currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem'
-  );
+  
+  // Determine who is logged in
+  const isEsra = currentUser?.name?.toLowerCase().includes('esra');
+  const userKey = isEsra ? 'esra' : 'gorkem';
 
-  const [pGorkem, setPGorkem] = useState(5);
-  const [pEsra, setPEsra] = useState(5);
+  const [pGorkem, setPGorkem] = useState(activity.puan_gorkem || 5);
+  const [pEsra, setPEsra] = useState(activity.puan_esra || 5);
   const [cost, setCost] = useState(activity.harcama || 0);
-  const [commentGorkem, setCommentGorkem] = useState('');
-  const [commentEsra, setCommentEsra] = useState('');
+  const [commentGorkem, setCommentGorkem] = useState(activity.yorum_gorkem || '');
+  const [commentEsra, setCommentEsra] = useState(activity.yorum_esra || '');
 
   const handleComplete = () => {
     completeSocialActivity(activity.id, pGorkem, pEsra, Number(cost), commentGorkem, commentEsra);
     onClose();
-    toast.success('Aktivite tamamlandı! 🎉');
+    toast.success('Değerlendirmeniz kaydedildi! 🎉');
   };
 
   return (
     <div className="modal-form personalized-review">
-      {/* User Switcher */}
-      <div className="review-user-tabs glass">
-        <button 
-          className={`rut-btn gorkem ${activeReviewer === 'gorkem' ? 'active' : ''}`}
-          onClick={() => setActiveReviewer('gorkem')}
-        >
-          <span className="rut-emoji">👨</span>
-          <div className="rut-info">
-            <span className="rut-name">Görkem</span>
-            <span className="rut-status">{commentGorkem ? '✅ Hazır' : '✍️ Bekliyor'}</span>
-          </div>
-        </button>
-        <button 
-          className={`rut-btn esra ${activeReviewer === 'esra' ? 'active' : ''}`}
-          onClick={() => setActiveReviewer('esra')}
-        >
-          <span className="rut-emoji">👩</span>
-          <div className="rut-info">
-            <span className="rut-name">Esra</span>
-            <span className="rut-status">{commentEsra ? '✅ Hazır' : '✍️ Bekliyor'}</span>
-          </div>
-        </button>
+      <div className="reviewer-info-mini glass mb-20">
+        <span className="ri-emoji">{isEsra ? '👩' : '👨'}</span>
+        <div className="ri-text">
+           <strong>{isEsra ? 'Esra' : 'Görkem'}</strong>
+           <span>Aktiviteyi Değerlendiriyor</span>
+        </div>
       </div>
 
-      <div className="form-group mt-20">
-        <label>💵 Gerçekleşen Harcama</label>
+      <div className="form-group">
+        <label>💵 Gerçekleşen Harcama (Toplam)</label>
         <div className="cost-input-wrapper">
           <input 
             type="number" 
@@ -984,15 +988,15 @@ function CompleteActivityModal({ activity, onClose }) {
         </div>
       </div>
 
-      <div className="reviewer-section animate-fadeIn" key={activeReviewer}>
+      <div className="reviewer-section animate-fadeIn">
         <div className="form-group">
-          <label>🌟 {activeReviewer === 'gorkem' ? 'Görkem' : 'Esra'}'in Puanı (1-10)</label>
+          <label>🌟 Puanın (1-10)</label>
           <div className="score-selector">
             {[1,2,3,4,5,6,7,8,9,10].map(num => (
               <button 
                 key={num}
-                className={`score-btn ${ (activeReviewer === 'gorkem' ? pGorkem : pEsra) == num ? 'active' : ''}`}
-                onClick={() => activeReviewer === 'gorkem' ? setPGorkem(num) : setPEsra(num)}
+                className={`score-btn ${ (isEsra ? pEsra : pGorkem) == num ? 'active' : ''}`}
+                onClick={() => isEsra ? setPEsra(num) : setPGorkem(num)}
               >
                 {num}
               </button>
@@ -1001,12 +1005,12 @@ function CompleteActivityModal({ activity, onClose }) {
         </div>
 
         <div className="form-group">
-          <label>📝 {activeReviewer === 'gorkem' ? 'Görkem' : 'Esra'}'in Yorumu</label>
+          <label>📝 Yorumun</label>
           <textarea 
-            value={activeReviewer === 'gorkem' ? commentGorkem : commentEsra} 
-            onChange={e => activeReviewer === 'gorkem' ? setCommentGorkem(e.target.value) : setCommentEsra(e.target.value)} 
-            placeholder={`${activeReviewer === 'gorkem' ? 'Görkem' : 'Esra'}, nasıl geçti?`} 
-            rows={3}
+            value={isEsra ? commentEsra : commentGorkem} 
+            onChange={e => isEsra ? setCommentEsra(e.target.value) : setCommentGorkem(e.target.value)} 
+            placeholder="Nasıl geçti?" 
+            rows={4}
             style={{ resize: 'none' }}
           />
         </div>
@@ -1014,7 +1018,7 @@ function CompleteActivityModal({ activity, onClose }) {
 
       <button className="submit-btn social premium-complete mt-10" onClick={handleComplete}>
         <div className="btn-content">
-          <span>Tamamla & Arşivle</span>
+          <span>Değerlendirmeyi Kaydet</span>
           <ArrowRight size={18} />
         </div>
       </button>
@@ -1194,11 +1198,13 @@ function EditHistoryModal({ activity, onClose }) {
   const [commentGorkem, setCommentGorkem] = useState(activity.yorum_gorkem || '');
   const [commentEsra, setCommentEsra] = useState(activity.yorum_esra || '');
   const [baslik, setBaslik] = useState(activity.baslik || '');
+  const [mekan, setMekan] = useState(activity.mekan || '');
   const [date, setDate] = useState(activity.doneDate || activity.tarih || '');
 
   const handleUpdate = () => {
     updateSocialActivity(activity.id, { 
       baslik,
+      mekan,
       tarih: date,
       puan_gorkem: Number(pGorkem), 
       puan_esra: Number(pEsra), 
@@ -1215,6 +1221,10 @@ function EditHistoryModal({ activity, onClose }) {
       <div className="form-group">
         <label>Aktivite Başlığı</label>
         <input type="text" value={baslik} onChange={e => setBaslik(e.target.value)} />
+      </div>
+      <div className="form-group">
+        <label>Mekan / Yer</label>
+        <input type="text" value={mekan} onChange={e => setMekan(e.target.value)} placeholder="Örn: Bizim ev" />
       </div>
       <div className="form-group">
         <label>Tarih</label>
@@ -1267,7 +1277,9 @@ function EditHistoryModal({ activity, onClose }) {
 }
 
 function GecmisTab({ sosyal, onEdit, onDelete }) {
-  const done = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : []).filter(a => a.tamamlandi);
+  // Hem tamamlandi true olanlar hem de durumu tamamlandi olanları al (robustness)
+  const done = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : [])
+    .filter(a => a.tamamlandi || a.durum === 'tamamlandi');
   const totalHarcama = done.reduce((sum, a) => sum + (a.harcama || 0), 0);
   const avgPuan = done.length > 0 
     ? (done.reduce((sum, a) => sum + Number(a.puan_gorkem || 0) + Number(a.puan_esra || 0), 0) / (done.length * 2)).toFixed(1)

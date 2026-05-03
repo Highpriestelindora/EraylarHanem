@@ -6,7 +6,7 @@ import {
   Droplets, Zap, Flame, Globe, ChevronRight, ChevronDown,
   Shield, Key, Phone, User, Star, MoreVertical,
   PlusCircle, ArrowLeft, Camera, Settings, Info,
-  Building, FileText, Landmark, Home, MapPin, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode, X,
+  Building, FileText, Landmark, Home, MapPin, Map as MapIcon, Package, RotateCcw, Wallet, ArrowRight, Search, AlertCircle, ShoppingCart, ShoppingBasket, ShoppingBag, Eye, EyeOff, QrCode, X,
   Book, Lock, Unlock, MousePointer2, Stamp as StampIcon, Activity, CreditCard
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -19,6 +19,7 @@ import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement } from 'chart.js';
 import { generateYektaAdvice } from '../lib/yektaEngine';
 import { synthesizeCharacter } from '../lib/synthesisEngine';
+import LocationModal from '../components/LocationModal';
 import './Ev.css';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement);
@@ -174,6 +175,7 @@ export default function Ev() {
   const [showGuestWifiPass, setShowGuestWifiPass] = useState(false);
   const [showWifiMain, setShowWifiMain] = useState(true);
   const [isChartsReady, setIsChartsReady] = useState(false);
+  const [showLocationSettings, setShowLocationSettings] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsChartsReady(true), 600);
@@ -366,7 +368,15 @@ export default function Ev() {
       </header>
 
       <div className="ev-scroll-content">
-        {activeTab === 'depo' && (
+        {showLocationSettings && (
+        <LocationModal 
+          isOpen={showLocationSettings}
+          onClose={() => setShowLocationSettings(false)}
+          locations={ev.tracking}
+        />
+      )}
+
+      {activeTab === 'depo' && (
           <DepoView 
             depo={ev.depo} 
             deleteDepoItem={deleteDepoItem} 
@@ -477,67 +487,80 @@ export default function Ev() {
                  <p>Bu sistem; tatil rotalarınızı, ev/iş konumlarınızdaki sürenizi ve günlük rutinlerinizi yapay zeka ile sentezleyerek yaşam dengenizi takip eder.</p>
                </div>
                
-                <div className="tracking-setup mt-32 pt-24 mb-24 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', gap: '16px' }}>
-                  <button 
-                    className={`btn-pill-v2 ${ev.tracking?.home?.lat ? 'fixed' : ''}`} 
-                    onClick={() => {
-                      const update = () => {
-                        toast.loading("Konum alınıyor...", { id: 'loc' });
-                        navigator.geolocation.getCurrentPosition(p => {
-                          updateLocationSettings('home', { 
-                            lat: p.coords.latitude, 
-                            lng: p.coords.longitude, 
-                            label: 'Evim', 
-                            address: 'Otomatik Konum' 
+                <div className="tracking-setup mt-32 pt-24 mb-24 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <button 
+                      className={`btn-pill-v2 ${ev.tracking?.home?.lat ? 'fixed' : ''}`} 
+                      style={{ width: '100%', justifyContent: 'center' }}
+                      onClick={() => {
+                        const update = () => {
+                          toast.loading("Konum alınıyor...", { id: 'loc' });
+                          navigator.geolocation.getCurrentPosition(p => {
+                            updateLocationSettings('home', { 
+                              lat: p.coords.latitude, 
+                              lng: p.coords.longitude, 
+                              label: 'Evim', 
+                              address: 'Otomatik Konum' 
+                            });
+                            toast.success("Ev konumu güncellendi! 📍", { id: 'loc' });
+                          }, (err) => {
+                            console.error(err);
+                            toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
                           });
-                          toast.success("Ev konumu güncellendi! 📍", { id: 'loc' });
-                        }, (err) => {
-                          console.error(err);
-                          toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
-                        });
-                      };
+                        };
 
-                      if (ev.tracking?.home?.lat) {
-                        requestConfirm("Mevcut konumunu 'Evim' olarak güncellemek istiyor musun?", update);
-                      } else {
-                        update();
-                      }
-                    }}
-                  >
-                    <Home size={14} />
-                    <span>{ev.tracking?.home?.lat ? 'Evi Güncelle' : 'Evi Set Et'}</span>
-                    {ev.tracking?.home?.lat && <div className="dot-active"></div>}
-                  </button>
+                        if (ev.tracking?.home?.lat) {
+                          requestConfirm("Mevcut konumunu 'Evim' olarak güncellemek istiyor musun?", update);
+                        } else {
+                          update();
+                        }
+                      }}
+                    >
+                      <Home size={14} />
+                      <span>{ev.tracking?.home?.lat ? 'Evi Güncelle' : 'Evi Set Et'}</span>
+                      {ev.tracking?.home?.lat && <div className="dot-active"></div>}
+                    </button>
+
+                    <button 
+                      className={`btn-pill-v2 ${ev.tracking?.work?.lat ? 'fixed' : ''}`} 
+                      style={{ width: '100%', justifyContent: 'center' }}
+                      onClick={() => {
+                        const update = () => {
+                          toast.loading("Konum alınıyor...", { id: 'loc' });
+                          navigator.geolocation.getCurrentPosition(p => {
+                            updateLocationSettings('work', { 
+                              lat: p.coords.latitude, 
+                              lng: p.coords.longitude, 
+                              label: 'İşyerim', 
+                              address: 'Otomatik Konum' 
+                            });
+                            toast.success("İş konumu güncellendi! 📍", { id: 'loc' });
+                          }, (err) => {
+                            console.error(err);
+                            toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
+                          });
+                        };
+
+                        if (ev.tracking?.work?.lat) {
+                          requestConfirm("Mevcut konumunu 'İşyerim' olarak güncellemek istiyor musun?", update);
+                        } else {
+                          update();
+                        }
+                      }}
+                    >
+                      <Building size={14} />
+                      <span>{ev.tracking?.work?.lat ? 'İşi Güncelle' : 'İşi Set Et'}</span>
+                      {ev.tracking?.work?.lat && <div className="dot-active"></div>}
+                    </button>
+                  </div>
 
                   <button 
-                    className={`btn-pill-v2 ${ev.tracking?.work?.lat ? 'fixed' : ''}`} 
-                    onClick={() => {
-                      const update = () => {
-                        toast.loading("Konum alınıyor...", { id: 'loc' });
-                        navigator.geolocation.getCurrentPosition(p => {
-                          updateLocationSettings('work', { 
-                            lat: p.coords.latitude, 
-                            lng: p.coords.longitude, 
-                            label: 'İşyerim', 
-                            address: 'Otomatik Konum' 
-                          });
-                          toast.success("İş konumu güncellendi! 📍", { id: 'loc' });
-                        }, (err) => {
-                          console.error(err);
-                          toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
-                        });
-                      };
-
-                      if (ev.tracking?.work?.lat) {
-                        requestConfirm("Mevcut konumunu 'İşyerim' olarak güncellemek istiyor musun?", update);
-                      } else {
-                        update();
-                      }
-                    }}
+                    className="btn-pill-v2 prominent" 
+                    onClick={() => setShowLocationSettings(true)}
+                    style={{ background: 'var(--social)', color: 'white', border: 'none', width: '100%', justifyContent: 'center', padding: '14px' }}
                   >
-                    <Building size={14} />
-                    <span>{ev.tracking?.work?.lat ? 'İşi Güncelle' : 'İşi Set Et'}</span>
-                    {ev.tracking?.work?.lat && <div className="dot-active"></div>}
+                    <MapIcon size={16} />
+                    <span>Gelişmiş Konum Yönetimi</span>
                   </button>
                 </div>
 

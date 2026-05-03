@@ -178,7 +178,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v3.2.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"FAZ 3"</span>
+            v3.3.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"KONUM HUB"</span>
           </span>
         </div>
         <span style={{

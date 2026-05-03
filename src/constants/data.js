@@ -4209,3 +4209,76 @@ export const INITIAL_VISAS = [
   { id: 'v2', owner: 'esra', country: 'Yunanistan', type: 'Schengen', start: '2023-05-10', end: '2023-11-10' },
   { id: 'v3', owner: 'gorkem', country: 'ABD', type: 'B1/B2', start: '2020-01-01', end: '2030-01-01' }
 ];
+
+export const ENGINEERING_UNITS = {
+  pressure: [
+    { id: 'bar', label: 'Bar', factor: 1 },
+    { id: 'psi', label: 'PSI', factor: 14.5038 },
+    { id: 'mpa', label: 'MPa', factor: 0.1 },
+    { id: 'kgfcm2', label: 'kgf/cm²', factor: 1.01972 },
+    { id: 'atm', label: 'Atm', factor: 0.986923 }
+  ],
+  force: [
+    { id: 'kg', label: 'Kilogram (kg)', factor: 1 },
+    { id: 'lb', label: 'Pound (lb)', factor: 2.20462 },
+    { id: 'n', label: 'Newton (N)', factor: 9.80665 },
+    { id: 'kn', label: 'Kilonewton (kN)', factor: 0.00980665 }
+  ],
+  flow: [
+    { id: 'lmin', label: 'lt/dk', factor: 1 },
+    { id: 'gpm', label: 'GPM (US)', factor: 0.264172 },
+    { id: 'm3h', label: 'm³/saat', factor: 0.06 },
+    { id: 'ls', label: 'lt/sn', factor: 0.0166667 }
+  ],
+  power: [
+    { id: 'kw', label: 'Kilowatt (kW)', factor: 1 },
+    { id: 'hp', label: 'Horsepower (HP)', factor: 1.34102 },
+    { id: 'kcalh', label: 'kcal/h', factor: 859.845 }
+  ],
+  speed: [
+    { id: 'ms', label: 'm/s', factor: 1 },
+    { id: 'fpm', label: 'ft/min', factor: 196.85 },
+    { id: 'kmh', label: 'km/saat', factor: 3.6 }
+  ],
+  length: [
+    { id: 'mm', label: 'Milimetre (mm)', factor: 1 },
+    { id: 'cm', label: 'Santimetre (cm)', factor: 0.1 },
+    { id: 'm', label: 'Metre (m)', factor: 0.001 },
+    { id: 'inch', label: 'İnç (in)', factor: 0.0393701 },
+    { id: 'ft', label: 'Feet (ft)', factor: 0.00328084 }
+  ],
+  torque: [
+    { id: 'nm', label: 'Newton-metre (Nm)', factor: 1 },
+    { id: 'kgfm', label: 'kgf.m', factor: 0.101972 },
+    { id: 'lbin', label: 'lb.in', factor: 8.85075 }
+  ],
+  volume: [
+    { id: 'l', label: 'Litre (L)', factor: 1 },
+    { id: 'm3', label: 'm³', factor: 0.001 },
+    { id: 'gal', label: 'Galon (US)', factor: 0.264172 },
+    { id: 'cm3', label: 'cm³', factor: 1000 }
+  ],
+  viscosity: [
+    { id: 'cst', label: 'cSt (mm²/s)', factor: 1 },
+    { id: 'cp', label: 'cP (mPa.s)', factor: 0.89 } // Su bazlı yaklaşık
+  ]
+};
+
+export const ENGINEERING_CONVERSIONS = [
+  { id: 'p_bar_psi', type: 'pressure', from: 'bar', to: 'psi', label: 'Bar ➔ PSI' },
+  { id: 'f_kg_lb', type: 'force', from: 'kg', to: 'lb', label: 'kg ➔ lb' },
+  { id: 'q_lmin_gpm', type: 'flow', from: 'lmin', to: 'gpm', label: 'lt/dk ➔ GPM' },
+  { id: 'p_kw_hp', type: 'power', from: 'kw', to: 'hp', label: 'kW ➔ HP' },
+  { id: 's_ms_fpm', type: 'speed', from: 'ms', to: 'fpm', label: 'm/s ➔ ft/min' },
+  { id: 'l_mm_inch', type: 'length', from: 'mm', to: 'inch', label: 'mm ➔ in' },
+  { id: 't_nm_kgfm', type: 'torque', from: 'nm', to: 'kgfm', label: 'Nm ➔ kgf.m' },
+  { id: 'v_l_m3', type: 'volume', from: 'l', to: 'm3', label: 'Litre ➔ m³' },
+  { id: 'p_mpa_bar', type: 'pressure', from: 'mpa', to: 'bar', label: 'MPa ➔ Bar' },
+  { id: 'f_n_kg', type: 'force', from: 'n', to: 'kg', label: 'Newton ➔ kg' },
+  { id: 'q_m3h_lmin', type: 'flow', from: 'm3h', to: 'lmin', label: 'm³/sa ➔ lt/dk' },
+  { id: 'p_hp_kw', type: 'power', from: 'hp', to: 'kw', label: 'HP ➔ kW' },
+  { id: 'v_m3_l', type: 'volume', from: 'm3', to: 'l', label: 'm³ ➔ Litre' },
+  { id: 'p_bar_atm', type: 'pressure', from: 'bar', to: 'atm', label: 'Bar ➔ Atm' },
+  { id: 'l_ft_m', type: 'length', from: 'ft', to: 'm', label: 'Feet ➔ Metre' },
+  { id: 't_nm_lbin', type: 'torque', from: 'nm', to: 'lbin', label: 'Nm ➔ lb.in' }
+];
