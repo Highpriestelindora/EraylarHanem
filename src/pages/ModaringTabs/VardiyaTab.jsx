@@ -146,17 +146,30 @@ const VardiyaTab = () => {
     let remainingShifts = [];
     let msg = "";
 
-    console.log("DEBUG: Attempting clear. Target Date:", formattedDateStr, "View Mode:", viewMode);
-
     if (viewMode === 'daily') {
       if (!window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) return;
-      remainingShifts = currentShifts.filter(s => s?.date !== formattedDateStr);
-      msg = "Gün temizlendi 🧹";
+      
+      const targetDate = String(formattedDateStr).trim();
+      remainingShifts = currentShifts.filter(s => String(s?.date || "").trim() !== targetDate);
+      
+      const deletedCount = currentShifts.length - remainingShifts.length;
+      if (deletedCount === 0) {
+        toast.error(`Silecek kayıt bulunamadı! (Seçili: ${targetDate})`);
+        return;
+      }
+      msg = `${deletedCount} vardiya temizlendi 🧹`;
     } else if (viewMode === 'weekly') {
       if (!window.confirm("Bu haftanın TÜM vardiyalarını silmek istediğinize emin misiniz?")) return;
-      const weekStrs = getWeekRange(selectedDate).map(d => getLocalDateStr(d));
-      remainingShifts = currentShifts.filter(s => !weekStrs.includes(s?.date));
-      msg = "Hafta temizlendi 🧹";
+      
+      const weekStrs = getWeekRange(selectedDate).map(d => getLocalDateStr(d).trim());
+      remainingShifts = currentShifts.filter(s => !weekStrs.includes(String(s?.date || "").trim()));
+      
+      const deletedCount = currentShifts.length - remainingShifts.length;
+      if (deletedCount === 0) {
+        toast.error("Bu hafta için silecek kayıt bulunamadı!");
+        return;
+      }
+      msg = `${deletedCount} haftalık vardiya temizlendi 🧹`;
     } else {
       toast.error("Bu görünümde toplu temizleme yapılamaz");
       return;
