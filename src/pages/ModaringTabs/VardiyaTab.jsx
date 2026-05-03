@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, Users, UserPlus, Trash2, 
   Calculator, Clock, X, Save, ChevronLeft, ChevronRight,
-  LayoutGrid, CalendarDays, TrendingUp, DollarSign, MessageCircle, Eraser, Sparkles
+  LayoutGrid, CalendarDays, TrendingUp, DollarSign, MessageCircle, Eraser, Sparkles,
+  Eye, EyeOff, FileText, Info, Phone, Calendar as CalendarIcon, Zap
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
@@ -16,6 +17,8 @@ const VardiyaTab = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [editingShift, setEditingShift] = useState(null);
+  const [hideEarnings, setHideEarnings] = useState(true);
+  const [selectedPersonDetail, setSelectedPersonDetail] = useState(null);
 
   const formattedDateStr = selectedDate.toISOString().split('T')[0];
 
@@ -49,33 +52,8 @@ const VardiyaTab = () => {
     if (window.confirm("Bu günün tüm vardiyalarını silmek istediğinize emin misiniz?")) {
       const updatedShifts = shifts.filter(s => s?.date !== formattedDateStr);
       setModuleData('modaring', { vardiya: updatedShifts });
-      toast.success("Gün temizlendi 🧹");
+      toast.success("Gün temizlendi");
     }
-  };
-
-  const copyWeeklyToWhatsApp = () => {
-    const week = getWeekRange(selectedDate);
-    const emojis = ['💫', '🎀', '💜', '👀', '🍓', '🌼', '🌺'];
-    let text = `💫 ${week[0].getDate()} - ${week[6].toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} ✨✨✨\n`;
-    
-    week.forEach((d, i) => {
-      const dStr = d.toISOString().split('T')[0];
-      const dayName = d.toLocaleDateString('tr-TR', { weekday: 'long' });
-      text += `\n${emojis[i]}${dayName}\n`;
-      
-      const dayShifts = shifts.filter(s => s?.date === dStr);
-      if (dayShifts.length === 0) {
-        text += "Plan yok veya izinli 🏖️\n";
-      } else {
-        dayShifts.forEach(s => {
-          const p = personel.find(x => x.id === s.personelId);
-          text += `${p?.name?.split(' ')[0] || 'Personel'} ${s.startTime}:00 - ${s.endTime}:00\n`;
-        });
-      }
-    });
-
-    navigator.clipboard.writeText(text);
-    toast.success("WhatsApp planı kopyalandı!", { icon: '📱' });
   };
 
   const currentViewStats = useMemo(() => {
@@ -93,7 +71,7 @@ const VardiyaTab = () => {
 
       const hours = filtered.reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
       const earned = filtered.reduce((acc, s) => acc + (s.totalPay || 0), 0);
-      return { ...p, hours, earned, count: filtered.length };
+      return { ...p, hours, earned, count: filtered.length, lastNote: filtered[filtered.length-1]?.note };
     });
   }, [viewMode, selectedDate, shifts, personel, formattedDateStr]);
 
@@ -106,11 +84,19 @@ const VardiyaTab = () => {
         {personel.map(p => {
           const shift = shifts.find(s => s?.personelId === p.id && s?.date === formattedDateStr);
           return (
-            <div key={p.id} className="cg-row" onClick={() => setEditingShift({ personelId: p.id, date: formattedDateStr, startTime: shift?.startTime || "10", endTime: shift?.endTime || "22" })}>
-              <div className="cg-user-col"><span className="gt-avatar" style={{ background: p.color }}>{p.emoji}</span><strong>{p.name?.split(' ')[0]}</strong></div>
+            <div key={p.id} className="cg-row" onClick={() => setEditingShift({ personelId: p.id, date: formattedDateStr, startTime: shift?.startTime || "10", endTime: shift?.endTime || "22", note: shift?.note || "" })}>
+              <div className="cg-user-col" onClick={(e) => { e.stopPropagation(); setSelectedPersonDetail(p); }}>
+                <span className="gt-avatar" style={{ background: p.color }}>{p.emoji}</span>
+                <strong>{p.name?.split(' ')[0]}</strong>
+              </div>
               <div className="cg-track-col">
                 <div className="cg-track-bg"><div className="cg-tick"></div><div className="cg-tick"></div><div className="cg-tick"></div></div>
-                {shift && <div className="cg-shift-bar" style={{ left: `${((parseInt(shift.startTime) - 10) / 12) * 100}%`, width: `${((parseInt(shift.endTime) - parseInt(shift.startTime)) / 12) * 100}%`, background: p.color }}><small>{shift.startTime}-{shift.endTime}</small></div>}
+                {shift && (
+                  <div className="cg-shift-bar" style={{ left: `${((parseInt(shift.startTime) - 10) / 12) * 100}%`, width: `${((parseInt(shift.endTime) - parseInt(shift.startTime)) / 12) * 100}%`, background: p.color }}>
+                    <small>{shift.startTime}-{shift.endTime}</small>
+                    {shift.note && <div className="cg-note-indicator"><FileText size={8} /></div>}
+                  </div>
+                )}
               </div>
             </div>
           )
@@ -119,48 +105,8 @@ const VardiyaTab = () => {
     </div>
   );
 
-  const renderWeekly = () => (
-    <div className="weekly-summary-view glass animate-fadeIn">
-       <div className="ws-grid">
-          {personel.map(p => (
-            <div key={p.id} className="ws-compact-row">
-               <div className="wsc-user"><span style={{ background: p.color }}>{p.emoji}</span><strong>{p.name?.split(' ')[0]}</strong></div>
-               <div className="wsc-days">
-                  {getWeekRange(selectedDate).map((d, i) => {
-                    const dStr = d.toISOString().split('T')[0];
-                    const shift = shifts.find(s => s?.personelId === p.id && s?.date === dStr);
-                    return <div key={i} className={`wsc-dot ${shift ? 'active' : ''}`} style={{ '--p-color': p.color }}></div>
-                  })}
-               </div>
-            </div>
-          ))}
-       </div>
-    </div>
-  );
-
-  const renderYearly = () => {
-    const months = ['Ocak','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
-    return (
-      <div className="yearly-summary-view glass animate-fadeIn">
-        <div className="yearly-list">
-          {months.map((m, idx) => {
-            const monthlyTotal = shifts.filter(s => { const d = new Date(s?.date); return d.getMonth() === idx && d.getFullYear() === selectedDate.getFullYear(); }).reduce((acc, s) => acc + (s.totalPay || 0), 0);
-            return (
-              <div key={m} className="yearly-row">
-                <div className="yr-month">{m}</div>
-                <div className="yr-bar-container"><div className="yr-bar" style={{ width: `${Math.min(100, (monthlyTotal / 50000) * 100)}%` }}></div></div>
-                <div className="yr-total">{monthlyTotal > 0 ? monthlyTotal.toLocaleString() + ' ₺' : '-'}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="tab-view-content animate-fadeIn">
-      {/* Switcher & Copy Action */}
       <div className="view-mode-header mb-12">
         <div className="view-mode-switcher glass">
           <button className={viewMode === 'daily' ? 'active' : ''} onClick={() => setViewMode('daily')}><Clock size={16} /></button>
@@ -168,11 +114,6 @@ const VardiyaTab = () => {
           <button className={viewMode === 'monthly' ? 'active' : ''} onClick={() => setViewMode('monthly')}><CalendarDays size={16} /></button>
           <button className={viewMode === 'yearly' ? 'active' : ''} onClick={() => setViewMode('yearly')}><TrendingUp size={16} /></button>
         </div>
-        {viewMode === 'weekly' && (
-          <button className="whatsapp-copy-btn glass animate-pop" onClick={copyWeeklyToWhatsApp}>
-            <MessageCircle size={18} />
-          </button>
-        )}
       </div>
 
       <div className="day-selector-premium glass mb-12">
@@ -191,14 +132,12 @@ const VardiyaTab = () => {
       <div className="shift-summary glass mb-16">
         <div className="ss-item">
           <Calculator size={18} color="#10b981" />
-          <div className="ss-text"><small>Dönem Gideri</small><strong>{totalGider.toLocaleString('tr-TR')} TL</strong></div>
+          <div className="ss-text"><small>{hideEarnings ? 'Toplam Mesai' : 'Dönem Gideri'}</small><strong>{hideEarnings ? currentViewStats.reduce((acc,s)=>acc+s.hours,0)+' saat' : totalGider.toLocaleString('tr-TR')+' TL'}</strong></div>
         </div>
         <div className="ss-actions">
+           <button className="ss-action-btn" onClick={() => setHideEarnings(!hideEarnings)} title="Giderleri Gizle/Göster">{hideEarnings ? <EyeOff size={18} /> : <Eye size={18} />}</button>
            <button className="ss-action-btn-danger" onClick={clearDay} title="Günü Temizle"><Eraser size={18} /></button>
-           <button className="ss-action-btn-cute animate-bounce-subtle" onClick={() => setShowStaffModal(true)} title="Personel Ekle">
-              <Sparkles size={16} />
-              <span>Personel</span>
-           </button>
+           <button className="ss-action-btn-cute" onClick={() => setShowStaffModal(true)} title="Personel Yönetimi"><Users size={16} /></button>
         </div>
       </div>
 
@@ -206,26 +145,22 @@ const VardiyaTab = () => {
       {viewMode === 'weekly' && renderWeekly()}
       {viewMode === 'yearly' && renderYearly()}
 
-      <div className="section-header-v2 mt-20"><h3>📊 Personel Analizi</h3></div>
+      <div className="section-header-v2 mt-20"><h3>📊 Planlama Analizi</h3></div>
       <div className="stats-list pb-80">
          {currentViewStats.map(s => (
-           <div key={s.id} className="stat-card-visual glass animate-pop">
+           <div key={s.id} className="stat-card-visual glass animate-pop" onClick={() => setSelectedPersonDetail(s)}>
               <div className="scv-header">
                  <div className="scv-user">
                     <span className="scv-emoji" style={{ background: s.color }}>{s.emoji}</span>
-                    <div className="scv-info">
-                       <strong>{s.name}</strong>
-                       <small>{s.hours} saat mesai</small>
-                    </div>
+                    <div className="scv-info"><strong>{s.name}</strong><small>{s.hours} saat planlandı</small></div>
                  </div>
-                 <div className="scv-earned">
-                    <small>Hakediş</small>
-                    <strong>{s.earned.toLocaleString()} ₺</strong>
-                 </div>
+                 {!hideEarnings && (
+                   <div className="scv-earned"><small>Hakediş</small><strong>{s.earned.toLocaleString()} ₺</strong></div>
+                 )}
+                 {hideEarnings && <Info size={16} className="opacity-20" />}
               </div>
-              <div className="scv-progress-track">
-                 <div className="scv-progress-bar" style={{ width: `${Math.min(100, (s.hours / 12) * 100)}%`, background: s.color }}></div>
-              </div>
+              <div className="scv-progress-track"><div className="scv-progress-bar" style={{ width: `${Math.min(100, (s.hours / 40) * 100)}%`, background: s.color }}></div></div>
+              {s.lastNote && <div className="scv-note"><FileText size={10} /><span>{s.lastNote}</span></div>}
            </div>
          ))}
       </div>
@@ -240,34 +175,73 @@ const VardiyaTab = () => {
             const otherShifts = shifts.filter(s => !(s?.personelId === data.personelId && s?.date === data.date));
             setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: Date.now().toString(), totalPay: wage }] });
             setEditingShift(null);
-            toast.success('Güncellendi');
+            toast.success('Shift güncellendi');
           }}
           onDelete={() => {
             setModuleData('modaring', { vardiya: shifts.filter(s => !(s?.personelId === editingShift.personelId && s?.date === editingShift.date)) });
             setEditingShift(null);
-            toast.error('Silindi');
+            toast.error('Shift silindi');
           }}
         />
       )}
-      {showStaffModal && <StaffAddModal personel={personel} onClose={() => setShowStaffModal(false)} onAdd={(p) => setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true }] })} onRemove={(id) => setModuleData('modaring', { personel: personel.filter(px => px.id !== id) })} />}
+
+      {selectedPersonDetail && (
+        <PersonDetailModal 
+          person={selectedPersonDetail} 
+          onClose={() => setSelectedPersonDetail(null)} 
+          onUpdate={(updates) => {
+            const updated = personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p);
+            setModuleData('modaring', { personel: updated });
+            setSelectedPersonDetail(null);
+            toast.success('Personel güncellendi');
+          }}
+        />
+      )}
+
+      {showStaffModal && <StaffAddModal personel={personel} onClose={() => setShowStaffModal(false)} onAdd={(p) => setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] })} onRemove={(id) => setModuleData('modaring', { personel: personel.filter(px => px.id !== id) })} />}
     </div>
   );
 };
 
 const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
-  const [times, setTimes] = useState({ startTime: shift.startTime || "10", endTime: shift.endTime || "22" });
+  const [data, setData] = useState({ startTime: shift.startTime || "10", endTime: shift.endTime || "22", note: shift.note || "" });
   const hoursArr = Array.from({ length: 13 }, (_, i) => (i + 10).toString());
+  const applyTemplate = (start, end) => setData({...data, startTime: start, endTime: end});
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" style={{ maxWidth: '300px' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Planla</h3><small>{personel.name}</small></div></div>
+      <div className="modal-content glass animate-pop" style={{ maxWidth: '320px' }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Yaz</h3><small>{personel.name}</small></div></div>
         <div className="modal-body-v2">
-          <div className="form-grid-v2">
-            <div className="form-group-v2"><label>Giriş</label><select className="premium-select" value={times.startTime} onChange={e => setTimes({...times, startTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div>
-            <div className="form-group-v2"><label>Çıkış</label><select className="premium-select" value={times.endTime} onChange={e => setTimes({...times, endTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div>
+          <div className="template-row mb-12">
+             <button className="template-btn" onClick={() => applyTemplate("10", "18")}>🌅 10-18</button>
+             <button className="template-btn" onClick={() => applyTemplate("14", "22")}>🌙 14-22</button>
+             <button className="template-btn" onClick={() => applyTemplate("10", "22")}>💎 Tam</button>
           </div>
-          <div className="wage-preview glass mt-16"><Calculator size={14} color="#10b981" /><span>Hakediş: <strong>{(parseInt(times.endTime) - parseInt(times.startTime)) * (personel.hourlyRate || 0)} TL</strong></span></div>
-          <div className="modal-actions-v2 mt-20"><button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button><button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave({...shift, ...times})}>Kaydet</button></div>
+          <div className="form-grid-v2">
+            <div className="form-group-v2"><label>Giriş</label><select className="premium-select" value={data.startTime} onChange={e => setData({...data, startTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div>
+            <div className="form-group-v2"><label>Çıkış</label><select className="premium-select" value={data.endTime} onChange={e => setData({...data, endTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div>
+          </div>
+          <div className="form-group-v2 mt-12"><label>Vardiya Notu</label><textarea className="premium-input" style={{ height: '60px', padding: '10px' }} value={data.note} onChange={e => setData({...data, note: e.target.value})} placeholder="Örn: Erken çıkacak..." /></div>
+          <div className="modal-actions-v2 mt-20"><button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button><button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave({...shift, ...data})}>Planı Kaydet</button></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const PersonDetailModal = ({ person, onClose, onUpdate }) => {
+  const [form, setForm] = useState({ name: person.name, role: person.role || 'Satış Danışmanı', phone: person.phone || '', hourlyRate: person.hourlyRate || 0, note: person.note || '' });
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content glass animate-slideUp staff-modal-v2" onClick={e => e.stopPropagation()}>
+        <div className="modal-header-v2"><span style={{ background: person.color, width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{person.emoji}</span><h3>{person.name} Profili</h3><button className="icon-btn-small" onClick={onClose}><X size={20} /></button></div>
+        <div className="modal-body-v2">
+          <div className="form-group-v2"><label>Tam Adı</label><input className="premium-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
+          <div className="form-grid-v2 mt-12"><div className="form-group-v2"><label>Rol</label><input className="premium-input" value={form.role} onChange={e => setForm({...form, role: e.target.value})} /></div><div className="form-group-v2"><label>Saatlik Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} /></div></div>
+          <div className="form-group-v2 mt-12"><label>Telefon</label><div style={{ display: 'flex', gap: 8 }}><input className="premium-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="05xx..." /><a href={`tel:${form.phone}`} className="icon-btn-small" style={{ background: '#10b981', color: 'white' }}><Phone size={16} /></a></div></div>
+          <div className="form-group-v2 mt-12"><label>Personel Notları</label><textarea className="premium-input" style={{ height: '80px', padding: '10px' }} value={form.note} onChange={e => setForm({...form, note: e.target.value})} placeholder="İzin günleri, performans vb..." /></div>
+          <button className="submit-btn-premium mt-24" onClick={() => onUpdate(form)}>Güncelle</button>
         </div>
       </div>
     </div>
@@ -279,7 +253,7 @@ const StaffAddModal = ({ personel, onClose, onAdd, onRemove }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-slideUp staff-modal-v2" onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><Users size={24} color="#fb7185" /><h3>Personel</h3><button className="icon-btn-small" onClick={onClose}><X size={20} /></button></div>
+        <div className="modal-header-v2"><Users size={24} color="#fb7185" /><h3>Personel Listesi</h3><button className="icon-btn-small" onClick={onClose}><X size={20} /></button></div>
         <div className="modal-body-v2">
           <div className="staff-current-list mb-24">{personel.map(p => (<div key={p.id} className="staff-current-item"><div className="sci-user"><span style={{ background: p.color }}>{p.emoji}</span><div><strong>{p.name}</strong><small>{p.hourlyRate}₺/s</small></div></div><button className="icon-btn-small" onClick={() => onRemove(p.id)}><Trash2 size={14} color="#ef4444" /></button></div>))}</div>
           <div className="divider mb-12"><span>Yeni Ekle</span></div>
