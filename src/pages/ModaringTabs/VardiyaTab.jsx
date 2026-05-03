@@ -48,12 +48,36 @@ const VardiyaTab = () => {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
   };
 
-  // Dynamic Overtime Thresholds
+  const copyWeeklyToWhatsApp = () => {
+    const week = getWeekRange(selectedDate);
+    const emojis = ['💫', '🎀', '💜', '👀', '🍓', '🌼', '🌺'];
+    let text = `💫 ${week[0].getDate()} - ${week[6].toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })} ✨✨✨\n`;
+    
+    week.forEach((d, i) => {
+      const dStr = d.toISOString().split('T')[0];
+      const dayName = d.toLocaleDateString('tr-TR', { weekday: 'long' });
+      text += `\n${emojis[i]}${dayName}\n`;
+      
+      const dayShifts = shifts.filter(s => s?.date === dStr);
+      if (dayShifts.length === 0) {
+        text += "Plan yok veya izinli 🏖️\n";
+      } else {
+        dayShifts.forEach(s => {
+          const p = personel.find(x => x.id === s.personelId);
+          text += `${p?.name?.split(' ')[0] || 'Personel'} ${s.startTime}:00 - ${s.endTime}:00\n`;
+        });
+      }
+    });
+
+    navigator.clipboard.writeText(text);
+    toast.success("WhatsApp planı kopyalandı!", { icon: '📱' });
+  };
+
   const overtimeThreshold = useMemo(() => {
     if (viewMode === 'daily') return 12;
     if (viewMode === 'weekly') return 50;
-    if (viewMode === 'monthly') return 215; // 50 * 4.3
-    if (viewMode === 'yearly') return 2600; // 50 * 52
+    if (viewMode === 'monthly') return 215;
+    if (viewMode === 'yearly') return 2600;
     return 50;
   }, [viewMode]);
 
@@ -105,7 +129,7 @@ const VardiyaTab = () => {
     const otherShifts = shifts.filter(s => !(s?.id === data.id));
     setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
     setEditingShift(null);
-    toast.success('Shift kaydedildi');
+    toast.success('Kaydedildi');
   };
 
   const renderDaily = () => (
@@ -273,7 +297,7 @@ const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" style={{ maxWidth: '320px' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Planla</h3><small>{personel.name}</small></div></div>
+        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Yaz</h3><small>{personel.name}</small></div></div>
         <div className="modal-body-v2">
           <div className="template-row mb-12">
              <button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "18"})}>🌅 10-18</button>
