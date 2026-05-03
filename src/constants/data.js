@@ -4282,3 +4282,12 @@ export const ENGINEERING_CONVERSIONS = [
   { id: 'l_ft_m', type: 'length', from: 'ft', to: 'm', label: 'Feet ➔ Metre' },
   { id: 't_nm_lbin', type: 'torque', from: 'nm', to: 'lbin', label: 'Nm ➔ lb.in' }
 ];
+
+export const INITIAL_MODARING = {
+  personel: [], // { id, name, hourlyRate, color, emoji, active }
+  vardiya: [],  // { id, personelId, date, startTime, endTime, totalPay, status }
+  kasa: [],     // { id, date, type, amount, method, note }
+  tedarik: [],  // { id, name, link, category, contact }
+  ajanda: [],   // { id, title, dueDate, amount, status }
+  trendler: []  // Fashion news cache
+};

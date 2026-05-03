@@ -1,11 +1,27 @@
-import React from 'react';
-import { Sparkles, ArrowLeft, Heart, Palette, Shirt, Camera } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, ArrowLeft, Heart, Palette, Shirt, Camera, Calendar, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AnimatedPage from '../components/AnimatedPage';
 import './Modaring.css';
 
+// Tab Components
+import KasaTab from './ModaringTabs/KasaTab';
+import VardiyaTab from './ModaringTabs/VardiyaTab';
+import TedarikTab from './ModaringTabs/TedarikTab';
+import AjandaTab from './ModaringTabs/AjandaTab';
+import TrendTab from './ModaringTabs/TrendTab';
+
 const Modaring = () => {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('vardiya');
+
+  const tabs = [
+    { id: 'kasa', label: 'Kasa', icon: Palette, emoji: '💰' },
+    { id: 'vardiya', label: 'Vardiya', icon: Shirt, emoji: '🕒' },
+    { id: 'tedarik', label: 'Tedarik', icon: Heart, emoji: '📦' },
+    { id: 'ajanda', label: 'Ajanda', icon: Calendar, emoji: '📅' },
+    { id: 'trend', label: 'Trend', icon: TrendingUp, emoji: '🚀' }
+  ];
 
   return (
     <AnimatedPage className="modaring-container">
@@ -24,31 +40,28 @@ const Modaring = () => {
             </button>
           </div>
         </div>
+
+        <nav className="tab-nav">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+              style={{ flex: 1 }}
+            >
+              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
+              <span style={{ fontSize: '10px' }}>{tab.label}</span>
+            </button>
+          ))}
+        </nav>
       </header>
 
       <div className="modaring-content">
-        <div className="empty-state-premium">
-          <div className="empty-icon-circle">
-            <Palette size={48} color="#fb7185" />
-          </div>
-          <h2>Modaring Yakında Burada!</h2>
-          <p>Tasarım fikirleri, moda takipleri ve Esra'nın yaratıcı dünyasına dair her şey çok yakında bu modülde yerini alacak. ✨</p>
-          
-          <div className="feature-previews">
-            <div className="feature-mini-card glass">
-              <Shirt size={20} />
-              <span>Kombinler</span>
-            </div>
-            <div className="feature-mini-card glass">
-              <Heart size={20} />
-              <span>İlhamlar</span>
-            </div>
-            <div className="feature-mini-card glass">
-              <Camera size={20} />
-              <span>Portfolio</span>
-            </div>
-          </div>
-        </div>
+        {activeTab === 'kasa' && <KasaTab />}
+        {activeTab === 'vardiya' && <VardiyaTab />}
+        {activeTab === 'tedarik' && <TedarikTab />}
+        {activeTab === 'ajanda' && <AjandaTab />}
+        {activeTab === 'trend' && <TrendTab />}
       </div>
     </AnimatedPage>
   );

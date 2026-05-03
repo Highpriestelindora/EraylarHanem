@@ -15,7 +15,8 @@ import {
   INITIAL_WEIGHTS,
   INITIAL_SOCIAL_POOL,
   SOCIAL_ROUTINES,
-  ENGINEERING_CONVERSIONS
+  ENGINEERING_CONVERSIONS,
+  INITIAL_MODARING
 } from '../constants/data';
 import { notificationService } from '../lib/notificationService';
 import toast from 'react-hot-toast';
@@ -407,6 +408,7 @@ const DEFAULT_STATE = {
         programs: []
       }
     },
+  modaring: INITIAL_MODARING,
   family_id: 'eraylar-family-shared-id', // Fixed family ID for production consistency
 };
 
@@ -669,6 +671,7 @@ function extractAppData(state, forPersist = false) {
     logs: state.logs,
     system: state.system,
     muhendislik: state.muhendislik,
+    modaring: state.modaring,
   };
 
   if (forPersist && data.tatil?.trips) {
