@@ -1,8 +1,8 @@
 .floating-hub-container {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  bottom: calc(env(safe-area-inset-bottom) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
   display: flex;
   flex-direction: column;
