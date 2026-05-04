@@ -7,6 +7,7 @@ import {
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 import ActionSheet from '../../components/ActionSheet';
+import PaymentSelector from '../../components/PaymentSelector';
 
 export default function MenuTab() {
   const { mutfak, updateMenuDetail, setEatOut, setDelivery, addRecipe, getAvailableRecipes, currentUser, luckyFill } = useStore();
@@ -294,8 +295,8 @@ export default function MenuTab() {
       >
         {showDelivery && (
           <DeliveryForm 
-            onConfirm={(info) => {
-              setDelivery(showDelivery.dt, showDelivery.ml, info);
+            onConfirm={(info, paymentInfo) => {
+              setDelivery(showDelivery.dt, showDelivery.ml, info, paymentInfo);
               setShowDelivery(null);
               toast.success('Sipariş kaydedildi! 🛵');
             }}
@@ -311,8 +312,8 @@ export default function MenuTab() {
       >
         {showEatOut && (
           <EatOutForm 
-            onConfirm={(info) => {
-              setEatOut(showEatOut.dt, showEatOut.ml, info);
+            onConfirm={(info, paymentInfo) => {
+              setEatOut(showEatOut.dt, showEatOut.ml, info, paymentInfo);
               setShowEatOut(null);
               toast.success('Dışarıda yemek kaydedildi! 🍴');
             }}
@@ -626,6 +627,7 @@ function DeliveryForm({ onConfirm, existingRestaurants }) {
   const [fr, setFr] = useState('');
   const [wh, setWh] = useState('');
   const [pr, setPr] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const filtered = existingRestaurants.filter(r => r.toLowerCase().includes(fr.toLowerCase()));
@@ -667,9 +669,12 @@ function DeliveryForm({ onConfirm, existingRestaurants }) {
           onChange={e => setPr(e.target.value)}
         />
       </div>
+      <div className="mt-12 mb-20">
+        <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+      </div>
       <button 
         className="submit-btn" 
-        onClick={() => onConfirm({ fr, wh, pr: Number(pr) })}
+        onClick={() => onConfirm({ fr, wh, pr: Number(pr) }, paymentMethod)}
         style={{ background: 'linear-gradient(135deg, #F1C40F, #F39C12)' }}
       >
         Siparişi Kaydet & Finansa İşle
@@ -681,6 +686,7 @@ function DeliveryForm({ onConfirm, existingRestaurants }) {
 function EatOutForm({ onConfirm, existingRestaurants }) {
   const [fr, setFr] = useState('');
   const [pr, setPr] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const filtered = existingRestaurants.filter(r => r.toLowerCase().includes(fr.toLowerCase()));
@@ -713,9 +719,12 @@ function EatOutForm({ onConfirm, existingRestaurants }) {
           onChange={e => setPr(e.target.value)}
         />
       </div>
+      <div className="mt-12 mb-20">
+        <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+      </div>
       <button 
         className="submit-btn" 
-        onClick={() => onConfirm({ fr, pr: Number(pr) })}
+        onClick={() => onConfirm({ fr, pr: Number(pr) }, paymentMethod)}
         style={{ background: 'linear-gradient(135deg, #3498DB, #2980B9)' }}
       >
         Kaydet & Finansa İşle

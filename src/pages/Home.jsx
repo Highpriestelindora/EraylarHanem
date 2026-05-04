@@ -360,7 +360,7 @@ const Home = () => {
     } else if (currentUser?.name === 'Görkem') {
       personalizedModule = { 
         id: 'muhendislik', 
-        name: 'Eraylar Mühendislik', 
+        name: 'Eraylar Teknik', 
         sub: 'Görkem\'in Atölyesi', 
         icon: '⚙️', 
         color: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)', 

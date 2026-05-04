@@ -405,7 +405,9 @@ const DEFAULT_STATE = {
       },
       life: {
         routines: [],
-        programs: []
+        programs: [],
+        focusSessions: [],
+        dailyActivities: []
       }
     },
   modaring: INITIAL_MODARING,
@@ -910,20 +912,20 @@ const useStore = create(
         };
         set({ muhendislik: { ...state.muhendislik, problemBank: [newProblem, ...currentBank] } });
         get().addLog('Mühendislik', `Yeni problem kaydedildi: ${problem.title}`);
-        get().saveToSupabase();
+        get().saveToSupabase(true);
       },
       updateEngineeringProblem: (id, updates) => {
         const state = get();
         const currentBank = Array.isArray(state.muhendislik.problemBank) ? state.muhendislik.problemBank : [];
         const updated = currentBank.map(p => p.id === id ? { ...p, ...updates } : p);
         set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
-        get().saveToSupabase();
+        get().saveToSupabase(true);
       },
       deleteEngineeringProblem: (id) => {
         const state = get();
         const updated = state.muhendislik.problemBank.filter(p => p.id !== id);
         set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
-        get().saveToSupabase();
+        get().saveToSupabase(true);
       },
       addEngineeringDecision: (decision) => {
         const state = get();
@@ -934,7 +936,7 @@ const useStore = create(
         };
         set({ muhendislik: { ...state.muhendislik, decisionLog: [newDecision, ...state.muhendislik.decisionLog] } });
         get().addLog('Karar Günlüğü', `Yeni karar alındı: ${decision.title}`);
-        get().saveToSupabase();
+        get().saveToSupabase(true);
       },
       updateEngineeringDecision: (id, updates) => {
         const state = get();
@@ -967,7 +969,7 @@ const useStore = create(
         const newCustomer = { id: Date.now(), ...customer, date: new Date().toISOString() };
         const updatedCrm = { ...state.muhendislik.crm, customers: [newCustomer, ...(state.muhendislik.crm.customers || [])] };
         set({ muhendislik: { ...state.muhendislik, crm: updatedCrm } });
-        get().saveToSupabase();
+        get().saveToSupabase(true);
       },
       updateCrmCustomer: (id, updates) => {
         const state = get();
@@ -999,6 +1001,39 @@ const useStore = create(
         const state = get();
         const updatedDeals = (state.muhendislik.crm.deals || []).filter(d => d.id !== id);
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
+        get().saveToSupabase(true);
+      },
+
+      // --- Zihni Sinir Proce Actions ---
+      addZihniProce: (proce) => {
+        const state = get();
+        const currentProceler = state.muhendislik.zihniProceler || [];
+        set({ 
+          muhendislik: { 
+            ...state.muhendislik, 
+            zihniProceler: [proce, ...currentProceler] 
+          } 
+        });
+        get().saveToSupabase(true);
+      },
+      updateZihniProce: (id, updates) => {
+        const state = get();
+        const updated = (state.muhendislik.zihniProceler || []).map(p => p.id === id ? { ...p, ...updates } : p);
+        set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
+        get().saveToSupabase();
+      },
+      toggleZihniProceStatus: (id) => {
+        const state = get();
+        const updated = (state.muhendislik.zihniProceler || []).map(p => 
+          p.id === id ? { ...p, completed: !p.completed } : p
+        );
+        set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
+        get().saveToSupabase();
+      },
+      deleteZihniProce: (id) => {
+        const state = get();
+        const updated = (state.muhendislik.zihniProceler || []).filter(p => p.id !== id);
+        set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
         get().saveToSupabase();
       },
 
@@ -1036,6 +1071,41 @@ const useStore = create(
         const updatedPrograms = (state.muhendislik.life.programs || []).filter(p => p.id !== id);
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, programs: updatedPrograms } } });
         get().saveToSupabase();
+      },
+
+      // --- Focus Session Actions ---
+      addFocusSession: (session) => {
+        const state = get();
+        const currentSessions = state.muhendislik.life.focusSessions || [];
+        const updatedLife = { 
+          ...state.muhendislik.life, 
+          focusSessions: [session, ...currentSessions] 
+        };
+        set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
+        get().saveToSupabase(true);
+      },
+      deleteFocusSession: (id) => {
+        const state = get();
+        const updatedSessions = (state.muhendislik.life.focusSessions || []).filter(s => s.id !== id);
+        set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, focusSessions: updatedSessions } } });
+        get().saveToSupabase(true);
+      },
+
+      addLifeActivity: (activity) => {
+        const state = get();
+        const currentActivities = state.muhendislik.life.dailyActivities || [];
+        const updatedLife = { 
+          ...state.muhendislik.life, 
+          dailyActivities: [activity, ...currentActivities] 
+        };
+        set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
+        get().saveToSupabase(true);
+      },
+      deleteLifeActivity: (id) => {
+        const state = get();
+        const updatedActivities = (state.muhendislik.life.dailyActivities || []).filter(a => a.id !== id);
+        set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, dailyActivities: updatedActivities } } });
+        get().saveToSupabase(true);
       },
 
       loadFromSupabase: async () => {
@@ -1079,9 +1149,23 @@ const useStore = create(
             selectedVehicleId: remote.selectedVehicleId || 'v1',
             tatil: { ...DEFAULT_STATE.tatil, ...remote.tatil },
             achievements: remote.achievements || DEFAULT_STATE.achievements,
-            modaring: remote.modaring || DEFAULT_STATE.modaring,
-            logs: remote.logs || DEFAULT_STATE.logs,
-            system: { ...get().system, isCloudReady: true },
+            modaring: {
+              ...DEFAULT_STATE.modaring,
+              ...remote.modaring,
+              refikaFikirleri: [...new Set([...(get().modaring?.refikaFikirleri || []), ...(remote.modaring?.refikaFikirleri || [])].map(f => JSON.stringify(f)))].map(s => JSON.parse(s))
+            },
+            muhendislik: {
+              ...DEFAULT_STATE.muhendislik,
+              ...remote.muhendislik,
+              problemBank: [...new Map([...(get().muhendislik?.problemBank || []), ...(remote.muhendislik?.problemBank || [])].map(item => [item.id, item])).values()],
+              decisionLog: [...new Map([...(get().muhendislik?.decisionLog || []), ...(remote.muhendislik?.decisionLog || [])].map(item => [item.id, item])).values()],
+              crm: {
+                customers: [...new Map([...(get().muhendislik?.crm?.customers || []), ...(remote.muhendislik?.crm?.customers || [])].map(item => [item.id, item])).values()],
+                deals: [...new Map([...(get().muhendislik?.crm?.deals || []), ...(remote.muhendislik?.crm?.deals || [])].map(item => [item.id, item])).values()],
+              }
+            },
+            logs: [...new Map([...(get().logs || []), ...(remote.logs || [])].map(item => [item.id, item])).values()].slice(0, 50),
+            system: { ...get().system, isCloudReady: true, lastSync: Date.now() },
             isOnline: true
           });
         } else {
@@ -1129,13 +1213,12 @@ const useStore = create(
         return () => supabase.removeChannel(channel);
       },
 
-      saveToSupabase: async () => {
+      saveToSupabase: async (immediate = false) => {
         if (saveTimeout) clearTimeout(saveTimeout);
 
-        saveTimeout = setTimeout(async () => {
+        const runSave = async () => {
           if (get().isSaving) {
-            // If already saving, schedule another check after a short delay
-            setTimeout(() => get().saveToSupabase(), 2000);
+            if (!immediate) setTimeout(() => get().saveToSupabase(), 2000);
             return;
           }
 
@@ -1150,16 +1233,23 @@ const useStore = create(
             }
 
             const dataToPush = extractAppData(state);
-            dataToPush.system = { ...dataToPush.system, lastUpdatedBy: state.system.clientId };
+            dataToPush.system = { ...dataToPush.system, lastUpdatedBy: state.system.clientId, updatedAt: Date.now() };
 
             await pushToSupabase(dataToPush);
             set({ isOnline: true, isSaving: false });
+            console.log('✨ Data synced to cloud.');
           } catch (err) {
             console.error('❌ saveToSupabase error:', err);
             set({ isSaving: false, isOnline: false });
           }
           saveTimeout = null;
-        }, 1000);
+        };
+
+        if (immediate) {
+          await runSave();
+        } else {
+          saveTimeout = setTimeout(runSave, 1500);
+        }
       },
 
       // KRİTİK: Beklemeden, hemen buluta bas (Silme gibi işlemler için)
@@ -1184,10 +1274,31 @@ const useStore = create(
       },
       addExpense: (expense) => {
         const state = get();
+        
+        // Find default payment method
+        let defaultPay = '';
+        const recurring = [
+          ...(state.ev?.abonelikler || []),
+          ...(state.ev?.duzenliOdemeler || [])
+        ].find(r => r.name?.toLowerCase() === expense.title?.toLowerCase());
+
+        if (recurring?.linkedCardId) {
+          defaultPay = `kart|${recurring.linkedCardId}`;
+        } else {
+          const history = state.finans?.buAyHarcamalar || [];
+          const lastMatch = history.find(h => h.baslik?.toLowerCase() === expense.title?.toLowerCase());
+          if (lastMatch) {
+            if (lastMatch.kart_id) defaultPay = `kart|${lastMatch.kart_id}`;
+            else if (lastMatch.banka_id) defaultPay = `havale|${lastMatch.banka_id}`;
+            else defaultPay = 'nakit';
+          }
+        }
+
         const newPoolItem = {
           id: Date.now(),
           dt: new Date().toISOString().split('T')[0],
           confirmed: false,
+          defaultPay,
           ...expense
         };
         set({ finans: { ...state.finans, approvalPool: [newPoolItem, ...(state.finans.approvalPool || [])] } });
@@ -1863,7 +1974,7 @@ const useStore = create(
         set({ ev: { ...state.ev, duzenliOdemeler: state.ev.duzenliOdemeler.filter(i => i.id !== id) } });
         get().saveToSupabase();
       },
-      addFinanceExpense: (expense) => {
+      addFinanceExpense: (expense, paymentInfo) => {
         const state = get();
         const newExpense = { ...expense, id: Date.now(), timestamp: new Date().toISOString() };
         const currentHarcamalar = state.ev.finans?.harcamalar || [];
@@ -1876,6 +1987,17 @@ const useStore = create(
             }
           }
         });
+        
+        // Also send to global finance approval pool
+        get().addExpense({
+          title: expense.name || 'Ev Harcaması',
+          amount: Number(expense.amount),
+          category: 'ev',
+          source: 'Ev Hub',
+          payer: state.currentUser?.name?.toLowerCase() || 'ortak',
+          defaultPay: paymentInfo
+        });
+
         get().saveToSupabase();
       },
 
@@ -1899,34 +2021,17 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      saveQuickExpense: (data) => {
+      saveQuickExpense: (data, paymentInfo) => {
         const state = get();
         const { amount, category, user } = data;
-        const today = new Date().toISOString();
-
-        const newHarcama = {
-          id: `q-${Date.now()}`,
+        
+        get().addExpense({
           title: category || 'Hızlı Harcama',
           amount: Number(amount),
-          category: category || 'Diğer',
-          date: today.split('T')[0],
-          payer: user,
-          confirmed: true,
-          source: 'Hızlı Giriş'
-        };
-
-        const yeniBakiyeler = { ...state.kasa.bakiyeler };
-        const payerKey = (user || 'ortak').toLowerCase();
-        if (yeniBakiyeler[payerKey] !== undefined) {
-          yeniBakiyeler[payerKey] -= Number(amount);
-        }
-
-        set({
-          finans: {
-            ...state.finans,
-            harcamalar: [newHarcama, ...(state.finans.harcamalar || [])]
-          },
-          kasa: { ...state.kasa, bakiyeler: yeniBakiyeler }
+          category: 'ev',
+          source: 'Hızlı Giriş',
+          payer: user || 'ortak',
+          defaultPay: paymentInfo
         });
 
         get().addLog('Finans', `${user} tarafından ${amount}₺ hızlı harcama girişi yapıldı.`);
@@ -2406,7 +2511,7 @@ const useStore = create(
         return count;
       },
 
-      setEatOut: async (dt, ml, info) => {
+      setEatOut: async (dt, ml, info, paymentInfo) => {
         const state = get();
         const { fr, pr } = info;
         const prefix = ml === 'k' ? 'k' : 'a';
@@ -2416,7 +2521,8 @@ const useStore = create(
             title: 'Dışarıda Yemek (' + (fr || 'Restoran') + ')',
             amount: pr,
             category: 'Mutfak',
-            payer: state.currentUser?.name || 'Görkem'
+            payer: state.currentUser?.name || 'Görkem',
+            defaultPay: paymentInfo
           });
         }
 
@@ -2437,7 +2543,7 @@ const useStore = create(
         get().updateMenuDetail(dt, details);
       },
 
-      setDelivery: async (dt, ml, info) => {
+      setDelivery: async (dt, ml, info, paymentInfo) => {
         const state = get();
         const { fr, wh, pr } = info;
         const prefix = ml === 'k' ? 'k' : 'a';
@@ -2454,7 +2560,8 @@ const useStore = create(
             title: 'Dışarıdan Sipariş (' + (fr || wh) + ')',
             amount: pr,
             category: 'Mutfak',
-            payer: state.currentUser?.name || 'Görkem'
+            payer: state.currentUser?.name || 'Görkem',
+            defaultPay: paymentInfo
           });
         }
 
@@ -3162,7 +3269,7 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      completeSocialActivity: (id, pGorkem, pEsra, cost = 0, commentGorkem = '', commentEsra = '') => {
+      completeSocialActivity: (id, pGorkem, pEsra, cost = 0, commentGorkem = '', commentEsra = '', paymentInfo = null) => {
         const state = get();
         const aktList2 = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
         const act = aktList2.find(x => x.id === id);
@@ -3190,7 +3297,9 @@ const useStore = create(
             amount: Number(cost),
             category: 'Sosyal Aktivite',
             payer: 'ortak',
-            dt: completionDate.split('T')[0]
+            source: 'Sosyal',
+            dt: completionDate.split('T')[0],
+            ...(paymentInfo ? { defaultPay: paymentInfo } : {})
           });
         }
 
@@ -3323,7 +3432,7 @@ const useStore = create(
 
 
       // ── Ev Actions ─────────────────────────────────────
-      addFatura: (fatura) => {
+      addFatura: (fatura, paymentInfo) => {
         const state = get();
         const newFatura = {
           id: Date.now(),
@@ -3340,7 +3449,8 @@ const useStore = create(
           amount: Number(fatura.amount),
           category: 'fatura',
           source: 'Ev Hub',
-          payer: 'ortak'
+          payer: 'ortak',
+          defaultPay: paymentInfo
         });
 
         get().saveToSupabase();
@@ -3893,7 +4003,7 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      addFuelLog: (log) => {
+      addFuelLog: (log, paymentInfo = null) => {
         const state = get();
         const vehicle = state.garaj.find(v => v.id === state.selectedVehicleId);
         if (!vehicle) return;
@@ -3929,13 +4039,15 @@ const useStore = create(
           title: `Yakıt: ${log.station} (${vehicle.model})`,
           amount: log.amount * log.price,
           category: 'arac',
-          source: 'Garaj'
+          source: 'Garaj',
+          dt: log.date,
+          ...(paymentInfo ? { defaultPay: paymentInfo } : {})
         });
 
         get().saveToSupabase();
       },
 
-      addServiceRecord: (record) => {
+      addServiceRecord: (record, paymentInfo = null) => {
         const state = get();
         const vehicle = state.garaj.find(v => v.id === state.selectedVehicleId);
         if (!vehicle) return;
@@ -3957,7 +4069,9 @@ const useStore = create(
           title: `Servis: ${record.title} (${vehicle.model})`,
           amount: record.cost,
           category: 'arac',
-          source: 'Garaj'
+          source: 'Garaj',
+          dt: record.date,
+          ...(paymentInfo ? { defaultPay: paymentInfo } : {})
         });
 
         get().saveToSupabase();
@@ -3998,7 +4112,7 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      addWashRecord: (vehicleId, { price, date }) => {
+      addWashRecord: (vehicleId, { price, date }, paymentInfo = null) => {
         const state = get();
         const vehicle = state.garaj.find(v => v.id === vehicleId);
         if (!vehicle) return;
@@ -4015,7 +4129,8 @@ const useStore = create(
             amount: price,
             category: 'arac',
             date: date,
-            source: 'Garaj'
+            source: 'Garaj',
+            ...(paymentInfo ? { defaultPay: paymentInfo } : {})
           });
         }
 
@@ -4031,7 +4146,7 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      finishParking: (vehicleId, cost) => {
+      finishParking: (vehicleId, cost, paymentInfo = null) => {
         const state = get();
         const vehicle = state.garaj.find(v => v.id === vehicleId);
         if (!vehicle) return;
@@ -4041,7 +4156,8 @@ const useStore = create(
             title: `Otopark: ${vehicle.model}`,
             amount: cost,
             category: 'arac',
-            source: 'Garaj'
+            source: 'Garaj',
+            ...(paymentInfo ? { defaultPay: paymentInfo } : {})
           });
         }
 
@@ -4071,7 +4187,7 @@ const useStore = create(
         get().saveToSupabase();
       },
 
-      addDocument: (vehicleId, doc) => {
+      addDocument: (vehicleId, doc, paymentInfo = null) => {
         const state = get();
         const vehicle = state.garaj.find(v => v.id === vehicleId);
         const newDoc = { id: Date.now().toString(), ...doc };
@@ -4086,7 +4202,8 @@ const useStore = create(
             amount: doc.cost,
             category: 'arac',
             source: 'Garaj',
-            date: doc.startDate || new Date().toISOString().split('T')[0]
+            date: doc.startDate || new Date().toISOString().split('T')[0],
+            ...(paymentInfo ? { defaultPay: paymentInfo } : {})
           });
         }
 
@@ -4270,12 +4387,12 @@ const useStore = create(
 
         // Finans kaydı varsa ekle
         if (data.amount && parseFloat(data.amount) > 0) {
-          await get().addHarcama({
-            tarih: data.date.split('.').reverse().join('-'), // format to YYYY-MM-DD
-            baslik: `${petId.charAt(0).toUpperCase() + petId.slice(1)}: ${vaccineName} Aşısı`,
-            tutar: parseFloat(data.amount),
-            kategori: 'Evcil Hayvan',
-            notlar: `${data.place || ''}`
+          get().addExpense({
+            title: `🐾 ${petId.charAt(0).toUpperCase() + petId.slice(1)}: ${vaccineName} Aşısı`,
+            amount: parseFloat(data.amount),
+            category: 'Pet',
+            payer: state.currentUser?.name || 'Görkem',
+            defaultPay: data.paymentInfo
           });
         }
 
@@ -4581,7 +4698,7 @@ const useStore = create(
         });
       },
 
-      batchConfirmShopping: async (items, totalPrice, market, cardId) => {
+      batchConfirmShopping: async (items, totalPrice, market, paymentInfo) => {
         const state = get();
         let updatedMutfak = { ...state.mutfak };
         const itemIds = items.map(i => i.id);
@@ -4636,7 +4753,7 @@ const useStore = create(
             amount: totalPrice,
             category: 'Mutfak',
             payer: state.currentUser?.name || 'Görkem',
-            cardId: cardId || null
+            defaultPay: paymentInfo
           });
         }
 

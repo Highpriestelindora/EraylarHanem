@@ -55,6 +55,17 @@
   color: rgba(239, 68, 68, 0.5);
 }
 
+.status-dot.syncing {
+  background: #3B82F6;
+  color: rgba(59, 130, 246, 0.5);
+  animation: sync-pulse 1s infinite alternate;
+}
+
+@keyframes sync-pulse {
+  from { opacity: 0.4; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.2); box-shadow: 0 0 15px #3B82F6; }
+}
+
 .app-header h1 {
   font-size: 18px;
   color: var(--txt);

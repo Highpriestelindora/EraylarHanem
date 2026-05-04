@@ -16,6 +16,7 @@ import Portal from '../components/Portal';
 import ActionSheet from '../components/ActionSheet';
 import { calculateTripStatus } from '../lib/dateUtils';
 import './Sosyal.css';
+import PaymentSelector from '../components/PaymentSelector';
 
 const MOTIVATION_QUOTES = [
   "Birlikte planlanan her gün, paylaşılan yeni bir mutluluktur. ✨",
@@ -958,9 +959,10 @@ function CompleteActivityModal({ activity, onClose }) {
   const [cost, setCost] = useState(activity.harcama || 0);
   const [commentGorkem, setCommentGorkem] = useState(activity.yorum_gorkem || '');
   const [commentEsra, setCommentEsra] = useState(activity.yorum_esra || '');
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   const handleComplete = () => {
-    completeSocialActivity(activity.id, pGorkem, pEsra, Number(cost), commentGorkem, commentEsra);
+    completeSocialActivity(activity.id, pGorkem, pEsra, Number(cost), commentGorkem, commentEsra, paymentMethod);
     onClose();
     toast.success('Değerlendirmeniz kaydedildi! 🎉');
   };
@@ -975,16 +977,20 @@ function CompleteActivityModal({ activity, onClose }) {
         </div>
       </div>
 
-      <div className="form-group">
-        <label>💵 Gerçekleşen Harcama (Toplam)</label>
-        <div className="cost-input-wrapper">
-          <input 
-            type="number" 
-            value={cost} 
-            onChange={e => setCost(e.target.value)}
-            placeholder="0"
-          />
-          <span className="currency-suffix">₺</span>
+      <div className="form-row">
+        <div className="form-group">
+          <label>💵 Harcama (₺)</label>
+          <div className="cost-input-wrapper">
+            <input 
+              type="number" 
+              value={cost} 
+              onChange={e => setCost(e.target.value)}
+              placeholder="0"
+            />
+          </div>
+        </div>
+        <div className="form-group">
+          <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
         </div>
       </div>
 

@@ -9,7 +9,8 @@ import './AppLayout.css';
 export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const isOnline = useStore(state => state.system?.isOnline ?? true);
+  const isOnline = useStore(state => state.isOnline ?? true);
+  const isSaving = useStore(state => state.isSaving);
   const currentUser = useStore(state => state.currentUser);
   const isHome = location.pathname === '/';
   
@@ -24,7 +25,10 @@ export default function AppLayout() {
             <div className="header-title-main">
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <h1>Eraylar Hanem</h1>
-                <div className={`status-dot ${isOnline ? 'online' : 'offline'}`} title={isOnline ? 'Online' : 'Offline'} />
+                <div 
+                  className={`status-dot ${isSaving ? 'syncing' : (isOnline ? 'online' : 'offline')}`} 
+                  title={isSaving ? 'Senkronize ediliyor...' : (isOnline ? 'Bulut Bağlantısı Aktif' : 'Çevrimdışı')} 
+                />
               </div>
               <small>Hoş geldin, {currentUser?.name || 'Misafir'}</small>
             </div>

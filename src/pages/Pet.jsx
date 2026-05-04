@@ -12,6 +12,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import actionIcon from '../assets/eraylar-logo.png';
 import { PET_QUOTES } from '../constants/petQuotes';
 import { VACCINES, INITIAL_WEIGHTS } from '../constants/data';
+import PaymentSelector from '../components/PaymentSelector';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -330,6 +331,7 @@ export default function Pet() {
 function AddPetExpenseContent({ petId, onClose }) {
   const { addExpense, pet } = useStore();
   const [formData, setFormData] = useState({ title: '', amount: '', payer: 'ortak' });
+  const [paymentMethod, setPaymentMethod] = useState('');
   const petName = pet.meta[petId].name;
 
   const handleSubmit = (e) => {
@@ -339,7 +341,8 @@ function AddPetExpenseContent({ petId, onClose }) {
       title: `🐾 ${petName}: ${formData.title}`,
       amount: Number(formData.amount),
       category: 'pet',
-      payer: formData.payer
+      payer: formData.payer,
+      defaultPay: paymentMethod
     });
     onClose();
     toast.success('Harcama Finans\'a eklendi! 💸');
@@ -354,6 +357,10 @@ function AddPetExpenseContent({ petId, onClose }) {
       <div className="form-group">
         <label>Tutar (₺)</label>
         <input type="number" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0" required />
+      </div>
+      <div className="form-group">
+        <label>Ödeme Yöntemi</label>
+        <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
       </div>
       <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Harcamayı Kaydet</button>
     </form>
@@ -456,11 +463,12 @@ function ApplyVaccineContent({ petId, vaccine, onClose }) {
   const { completePetVaccine } = useStore();
   const [place, setPlace] = useState('');
   const [amount, setAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [date, setDate] = useState(new Date().toLocaleDateString('tr-TR'));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await completePetVaccine(petId, vaccine.n, { place, amount, date });
+    await completePetVaccine(petId, vaccine.n, { place, amount, date, paymentInfo: paymentMethod });
     toast.success(`${vaccine.n} aşısı başarıyla kaydedildi! 💉`);
     onClose();
   };
@@ -479,6 +487,12 @@ function ApplyVaccineContent({ petId, vaccine, onClose }) {
         <label>Ücret (₺) <small>(Harcamalara eklemek için doldurun)</small></label>
         <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="0.00" />
       </div>
+      {amount > 0 && (
+        <div className="form-group">
+          <label>Ödeme Yöntemi</label>
+          <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+        </div>
+      )}
       <button type="submit" className="submit-btn" style={{ background: '#10b981', color: 'white' }}>
         Aşıyı Onayla
       </button>

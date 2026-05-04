@@ -14,6 +14,7 @@ const SplashScreen = ({ finishLoading }) => {
     { t: 'Fatura canavarları evden kovuluyor... 💸', m: '💸' },
     { t: 'Modaring vardiya sistemi senkronize ediliyor... 📊', m: '📊' },
     { t: 'Vizyoner asistan hesaplamaları bitiriyor... 🧠', m: '🧠' },
+    { t: 'Ödeme kanalları onay havuzuna bağlanıyor... 💸', m: '💸' },
     { t: 'Mühendislik CRM fazları senkronize ediliyor... 💼', m: '💼' },
     { t: 'Hayat modülü rutinleri optimize ediliyor... ⏳', m: '⏳' },
     { t: 'Eraylar Hanem %100 Sevgiyle Yükleniyor... ❤️', m: '❤️' }
@@ -179,7 +180,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v3.5.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"DİNAMİK VARDİYA"</span>
+            v3.6.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"FİNANSAL SENKRON"</span>
           </span>
         </div>
         <span style={{

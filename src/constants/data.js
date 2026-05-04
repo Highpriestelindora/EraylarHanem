@@ -4291,5 +4291,6 @@ export const INITIAL_MODARING = {
   tedarik: [],  // { id, name, link, category, contact, note }
   siparisler: [], // { id, supplierId, date, items, total, paid, status, bankId }
   ajanda: [],   // { id, title, dueDate, amount, status }
-  trendler: []  // Fashion news cache
+  trendler: [],  // Fashion news cache
+  refikaFikirleri: [] // Saved Refika ideas { id, title, desc, cost, price, strategy, context, date }
 };

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, CheckCircle2, Circle, Search, CreditCard, AlertTriangle, Wallet, ShoppingCart, BellRing, X, ArrowRight } from 'lucide-react';
 import useStore from '../../store/useStore';
 import ActionSheet from '../../components/ActionSheet';
+import PaymentSelector from '../../components/PaymentSelector';
 import toast from 'react-hot-toast';
 
 const AlisverisTab = () => {
@@ -21,7 +22,7 @@ const AlisverisTab = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [totalPrice, setTotalPrice] = useState('');
   const [market, setMarket] = useState('BİM');
-  const [cardId, setCardId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   const alisveris = mutfak.alisveris || [];
   
@@ -91,10 +92,11 @@ const AlisverisTab = () => {
   };
 
   const handleCheckout = () => {
-    batchConfirmShopping(checkoutItems, parseFloat(totalPrice) || 0, market, cardId);
+    batchConfirmShopping(checkoutItems, parseFloat(totalPrice) || 0, market, paymentMethod);
     setShowCheckout(false);
     setCheckedIds([]);
     setTotalPrice('');
+    setPaymentMethod('');
     toast.success('Alışveriş tamamlandı, finans ve stoka işlendi! 💰');
   };
 
@@ -297,14 +299,9 @@ const AlisverisTab = () => {
                 <option>BİM</option><option>Migros</option><option>A101</option><option>ŞOK</option><option>File</option><option>Pazar</option><option>Kasap</option><option>Diğer</option>
               </select>
             </div>
-            <div className="form-group">
-              <label>Ödeme Kartı</label>
-              <select value={cardId} onChange={e => setCardId(e.target.value)}>
-                <option value="">Nakit / Diğer</option>
-                {(finans?.kartlar || []).map(card => (
-                  <option key={card.id} value={card.id}>{card.banka} - {card.ad}</option>
-                ))}
-              </select>
+            <div className="form-group" style={{ flex: 1 }}>
+              <label>Ödeme Yöntemi</label>
+              <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
             </div>
           </div>
 

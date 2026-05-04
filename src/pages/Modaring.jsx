@@ -20,7 +20,7 @@ const Modaring = () => {
     { id: 'vardiya', label: 'Vardiya', icon: Shirt, emoji: '🕒' },
     { id: 'tedarik', label: 'Tedarik', icon: Heart, emoji: '📦' },
     { id: 'ajanda', label: 'Ajanda', icon: Calendar, emoji: '📅' },
-    { id: 'trend', label: 'Trend', icon: TrendingUp, emoji: '🚀' }
+    { id: 'refika', label: 'Refika', icon: Sparkles, emoji: '🧚' }
   ];
 
   return (
@@ -61,7 +61,7 @@ const Modaring = () => {
         {activeTab === 'vardiya' && <VardiyaTab />}
         {activeTab === 'tedarik' && <TedarikTab />}
         {activeTab === 'ajanda' && <AjandaTab />}
-        {activeTab === 'trend' && <TrendTab />}
+        {activeTab === 'refika' && <TrendTab />}
       </div>
     </AnimatedPage>
   );

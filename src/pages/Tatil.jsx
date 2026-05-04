@@ -15,6 +15,7 @@ import {
 import ConfirmModal from '../components/ConfirmModal';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import PaymentSelector from '../components/PaymentSelector';
 import { PACKING_POOL, BUCKET_LIST, INITIAL_TRIPS, INITIAL_VISAS, GEO_ADVICE } from '../constants/data';
 import { calculateTripStatus, getNowUTC } from '../lib/dateUtils';
 import './Tatil.css';
@@ -1123,7 +1124,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
       >
         <AddTripExpenseContent trip={trip} onAdd={(exp) => { 
           const amount = Number(exp.amount);
-          addExpense({ ...exp, category: 'tatil', title: `✈️ ${trip.city}: ${exp.title}` }); 
+          addExpense({ ...exp, category: 'tatil', title: `✈️ ${trip.city}: ${exp.title}`, defaultPay: exp.paymentMethod }); 
           handleUpdateTrip({ 
             budget: { 
               ...trip.budget, 
@@ -2232,7 +2233,7 @@ function BudgetSection({ trip, onShowExpense }) {
 }
 
 function AddTripExpenseContent({ onAdd }) {
-  const [form, setForm] = useState({ title: '', amount: '', payer: 'ortak' });
+  const [form, setForm] = useState({ title: '', amount: '', payer: 'ortak', paymentMethod: '' });
   return (
     <div className="modal-form-premium">
       <div className="form-group">
@@ -2242,6 +2243,10 @@ function AddTripExpenseContent({ onAdd }) {
       <div className="form-group">
         <label>Tutar (₺)</label>
         <input type="number" placeholder="0₺" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="premium-input" />
+      </div>
+      <div className="form-group">
+        <label>Ödeme Yöntemi</label>
+        <PaymentSelector value={form.paymentMethod} onChange={(val) => setForm({...form, paymentMethod: val})} />
       </div>
       <div className="user-select-grid">
         <button type="button" className={form.payer === 'gorkem' ? 'active' : ''} onClick={() => setForm({...form, payer: 'gorkem'})}>Görkem</button>

@@ -497,6 +497,19 @@ const OnayTab = React.memo(({ finans, prv }) => {
   const kartlar = finans?.kartlar || [];
   const [kartSecim, setKartSecim] = useState({});
 
+  // Sync defaults from pool items
+  useEffect(() => {
+    const newChoices = { ...kartSecim };
+    let changed = false;
+    pool.forEach(item => {
+      if (!newChoices[item.id] && item.defaultPay) {
+        newChoices[item.id] = item.defaultPay;
+        changed = true;
+      }
+    });
+    if (changed) setKartSecim(newChoices);
+  }, [pool]);
+
   if (pool.length === 0) {
     return (
       <div className="f-tab-content animate-fadeIn">

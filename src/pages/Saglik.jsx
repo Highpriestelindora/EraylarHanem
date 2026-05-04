@@ -6,6 +6,7 @@ import AnimatedPage from '../components/AnimatedPage';
 import ActionSheet from '../components/ActionSheet';
 import toast from 'react-hot-toast';
 import './Saglik.css';
+import PaymentSelector from '../components/PaymentSelector';
 
 import AppointmentTab from './saglik/AppointmentTab';
 import MedicineTab from './saglik/MedicineTab';
@@ -90,13 +91,15 @@ export default function Saglik() {
 
 function AddHealthExpenseContent({ onClose, addExpense }) {
   const [form, setForm] = useState({ title: '', amount: '', payer: 'ortak' });
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     addExpense({
       ...form,
       category: 'saglik',
-      title: `🏥 Sağlık: ${form.title}`
+      title: `🏥 Sağlık: ${form.title}`,
+      defaultPay: paymentMethod
     });
     toast.success('Harcama kaydedildi! 💸');
     onClose();
@@ -113,14 +116,8 @@ function AddHealthExpenseContent({ onClose, addExpense }) {
         <input type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} required style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)' }} inputMode="decimal" />
       </div>
       <div className="form-group">
-        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Ödeyen</label>
-        <div className="payer-select" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-          {['gorkem', 'esra', 'ortak'].map(p => (
-            <button key={p} type="button" className={form.payer === p ? 'active' : ''} onClick={() => setForm({...form, payer: p})} style={{ padding: '12px', borderRadius: '14px', border: '1px solid var(--brd)', background: form.payer === p ? 'var(--saglik-header-grad)' : 'white', color: form.payer === p ? 'white' : 'inherit', fontWeight: 'bold' }}>
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </button>
-          ))}
-        </div>
+        <label style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', display: 'block' }}>Ödeme Yöntemi</label>
+        <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
       </div>
       <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'var(--saglik-header-grad)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.2)' }}>Harcamayı Kaydet</button>
     </form>

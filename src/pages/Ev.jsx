@@ -21,6 +21,7 @@ import { generateYektaAdvice } from '../lib/yektaEngine';
 import { synthesizeCharacter } from '../lib/synthesisEngine';
 import LocationModal from '../components/LocationModal';
 import './Ev.css';
+import PaymentSelector from '../components/PaymentSelector';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement, ArcElement);
 
@@ -130,7 +131,7 @@ export default function Ev() {
     addAbonelik, updateAbonelik, deleteAbonelik,
     addDuzenliOdeme, updateDuzenliOdeme, deleteDuzenliOdeme,
     addFinanceExpense, updateLocationSettings, tatil, updateCachedAnalysis,
-    savePersonalityResults, saveInvoiceToFinance, saveQuickExpense, finans
+    savePersonalityResults, saveInvoiceToFinance, saveQuickExpense, finans, addFatura
   } = useStore();
 
   const { 
@@ -392,12 +393,12 @@ export default function Ev() {
                <div className="coach-header">
                  <div className="coach-avatar">
                    <div className="avatar-circle">
-                     {currentUser?.emoji || '👨‍💻'}
+                     👔
                    </div>
                    <div className="avatar-status-dot pulse"></div>
                  </div>
                  <div className="coach-meta">
-                   <div className="coach-name">Yaşam Koçu Yekta Tilmen</div>
+                   <div className="coach-name">Yaşam Stratejisti Yekta Tilmen</div>
                    <div className="coach-greeting">"{yektaQuote}"</div>
                  </div>
                </div>
@@ -426,15 +427,23 @@ export default function Ev() {
 
             {/* 2. Time Analysis Card (NOW A FULL DASHBOARD) */}
             <div className="time-analysis-module glass mb-32">
-               <div className="section-header-v2">
-                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                   <h3>📊 Yaşam Dengesi Analizi</h3>
-                   <p className="am-sub">Öğrenilen alışkanlıklar ve gerçek logların sentezi</p>
-                 </div>
-                 <div className="active-user-badge">
-                   {currentUser?.name === 'Esra' ? '👩‍🍳 Esra' : '👨‍💻 Görkem'}
-                 </div>
-               </div>
+                <div className="section-header-v2">
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h3>📊 Yaşam Dengesi Analizi</h3>
+                    <p className="am-sub">Gerçek verilerle {currentUser?.name} analizi</p>
+                  </div>
+                  <div className="user-selector-mini">
+                    {Object.entries(users || {}).map(([id, u]) => (
+                      <button 
+                        key={id}
+                        className={`us-btn ${(currentUser?.id === id || currentUser?.name?.toLowerCase().includes(id)) ? 'active' : ''}`}
+                        onClick={() => setCurrentUser({ ...u, id })}
+                      >
+                        {u.emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                
                <div className="analysis-grid">
                   {/* HAFTALIK GRAFİK */}
@@ -931,60 +940,24 @@ export default function Ev() {
 
                     <div className="receipt-divider-line"></div>
 
-                    <div className="r-payment-section">
-                       <label>ÖDEME YÖNTEMİ</label>
-                       <div className="r-payment-bar">
-                          {[
-                            { id: 'Nakit', icon: <Wallet size={16} />, label: 'NAKİT' },
-                            { id: 'EFT', icon: <Building size={16} />, label: 'EFT' },
-                            { id: 'Kredi Kartı', icon: <Key size={16} />, label: 'KART' }
-                          ].map(m => (
-                            <button 
-                              key={m.id}
-                              className={`r-pay-pill ${paymentMethod === m.id ? 'active' : ''}`}
-                              onClick={() => setPaymentMethod(m.id)}
-                            >
-                              {m.icon}
-                              <span>{m.label}</span>
-                            </button>
-                          ))}
-                       </div>
+                    <div className="mt-20">
+                      <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
                     </div>
-
-                    {paymentMethod === 'Kredi Kartı' && (
-                      <div className="r-card-drawer animate-fadeIn">
-                        <div className="card-selection-pills compact">
-                           {(finans?.kartlar || []).map(k => (
-                             <button 
-                               key={k.id}
-                               className={`card-pill mini ${faturaForm?.linkedCardId === k.id ? 'active' : ''}`}
-                               onClick={() => setFaturaForm({...faturaForm, linkedCardId: k.id})}
-                             >
-                               <span className="dot" style={{ background: k.color }}></span>
-                               {k.name}
-                             </button>
-                           ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   <div className="invoice-stamp-v5">ERAYLAR ONAYLI</div>
 
                   <div className="r-btn-container">
                     <button className="r-complete-btn-rounded" onClick={() => {
-                       if(!faturaInput) return toast.error("Lütfen tutar girin.");
-                       if(paymentMethod === 'Kredi Kartı' && !faturaForm?.linkedCardId) return toast.error("Lütfen kart seçin.");
-                       
-                       saveQuickExpense({
-                         amount: Number(faturaInput),
-                         category: faturaForm?.name || paymentMethod,
-                         user: currentUser?.name || 'Görkem',
-                         linkedCardId: paymentMethod === 'Kredi Kartı' ? faturaForm.linkedCardId : null
-                       });
-                       setFaturaInput('');
-                       setPaymentMethod('Nakit');
-                       setFaturaForm({...faturaForm, linkedCardId: '', name: ''});
+                        if(!faturaInput) return toast.error("Lütfen tutar girin.");
+                        saveQuickExpense({
+                          amount: Number(faturaInput),
+                          category: faturaForm?.name || 'Hızlı Harcama',
+                          user: currentUser?.name || 'Görkem'
+                        }, paymentMethod);
+                        setFaturaInput('');
+                        setPaymentMethod('');
+                        setFaturaForm({...faturaForm, name: ''});
                        toast.success("Harcama onaylandı! ✅");
                      }}>
                        GİRİŞİ TAMAMLA
@@ -1399,16 +1372,10 @@ export default function Ev() {
               </div>
             </div>
             <div className="form-group-v2">
-              <label>Ödeme Yöntemi (Kredi Kartı)</label>
-              <select 
+              <PaymentSelector 
                 value={editingAbo.linkedCardId} 
-                onChange={(e) => setEditingAbo({...editingAbo, linkedCardId: e.target.value})}
-              >
-                <option value="">Kart Seçin</option>
-                {(finans?.kartlar || []).map(k => (
-                  <option key={k.id} value={k.id}>{k.name} ({k.owner})</option>
-                ))}
-              </select>
+                onChange={(val) => setEditingAbo({...editingAbo, linkedCardId: val})}
+              />
             </div>
             <div className="form-group-v2">
               <label>İlk Abonelik Tarihi</label>
@@ -1472,26 +1439,14 @@ export default function Ev() {
               />
             </div>
             <div className="form-group-v2">
-              <label>Ödeme Yöntemi</label>
-              <select 
+              <PaymentSelector 
                 value={editingFatura.linkedCardId} 
-                onChange={(e) => setEditingFatura({...editingFatura, linkedCardId: e.target.value})}
-              >
-                <option value="">Seçiniz</option>
-                <optgroup label="Cüzdan & Nakit">
-                  <option value="nakit">💵 Nakit</option>
-                  <option value="havale">💸 EFT / Havale</option>
-                </optgroup>
-                <optgroup label="Kredi Kartları">
-                  {(ev.finans?.kartlar || []).map(k => (
-                    <option key={k.id} value={k.id}>{k.name} ({k.owner})</option>
-                  ))}
-                </optgroup>
-              </select>
+                onChange={(val) => setEditingFatura({...editingFatura, linkedCardId: val})}
+              />
             </div>
             <button className="save-btn-v2" onClick={() => {
               if(!editingFatura.name || !editingFatura.amount) return toast.error('Lütfen isim ve tutar girin');
-              addFinanceExpense(editingFatura);
+              addFinanceExpense(editingFatura, editingFatura.linkedCardId);
               toast.success(`${editingFatura.name} harcaması Finans modülüne işlendi! 💸`);
               setEditingFatura(null);
             }}>Finansa İşle</button>
@@ -1725,10 +1680,10 @@ export default function Ev() {
       <ActionSheet isOpen={showTahlilSheet} onClose={() => setShowTahlilSheet(false)} title="Yekta Tilmen'den Karakter Tahlili">
         <div className="tahlil-sheet-content">
           <div className="tahlil-header">
-            <div className="avatar-circle-large">🧐</div>
+            <div className="avatar-circle-large">👔</div>
             <div className="tahlil-summary">
-              <h3>{currentUser?.name}</h3>
-              <p>{Object.keys(resultsObj).length} Analiz Dosyası İşlendi</p>
+              <h3>{currentUser?.name} Dosyası</h3>
+              <p>Yaşam Stratejisti Yekta Tilmen Tarafından Onaylandı</p>
             </div>
           </div>
 
@@ -2257,21 +2212,36 @@ function DaskManagementContent({ data, onClose }) {
 }
 
 function AidatManagementContent({ data, onClose }) {
-  const { updateTasinmaz } = useStore();
+  const { updateTasinmaz, addExpense } = useStore();
   const [form, setForm] = useState({ aidat: data.aidat, aidatPaid: data.aidatPaid });
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   return (
     <div className="edit-form-v2">
       <div className="form-group-v2">
         <label>Aylık Aidat Tutarı (₺)</label>
-        <input type="number" value={form.aidat} onChange={e => setForm({...form, aidat: e.target.value})} />
+        <input type="number" value={form.aidat} onChange={e => setForm({...form, aidat: Number(e.target.value)})} />
       </div>
       <div className="form-toggle-row">
         <label>Bu Ayki Aidat Ödendi</label>
         <input type="checkbox" checked={form.aidatPaid} onChange={e => setForm({...form, aidatPaid: e.target.checked})} />
       </div>
+      {form.aidatPaid && (
+        <div className="mt-12">
+          <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+        </div>
+      )}
       <button className="save-btn-v2" onClick={() => {
         updateTasinmaz(data.id, form);
+        if (form.aidatPaid) {
+          addExpense({
+            title: `${data.name} Aidat Ödemesi`,
+            amount: Number(form.aidat),
+            category: 'ev',
+            source: 'Ev Hub',
+            defaultPay: paymentMethod
+          });
+        }
         toast.success('Aidat bilgileri güncellendi! 💳');
         onClose();
       }}>Bilgileri Kaydet</button>

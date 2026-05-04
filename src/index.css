@@ -660,4 +660,464 @@ input[type="time"] {
   color: var(--txt-light);
 }
 
-/* End of CSS */
+/* --- Focus & Life Analysis Styles --- */
+.focus-mode-selector {
+  display: flex;
+  padding: 6px;
+  border-radius: 20px;
+  gap: 8px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: var(--txt-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-btn.active {
+  background: white;
+  color: var(--primary-dark);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.analysis-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.total-analyzed {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.total-analyzed .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--txt-light);
+  margin-bottom: 2px;
+}
+
+.total-analyzed .val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.total-analyzed strong {
+  font-size: 18px;
+  color: var(--txt);
+}
+
+.total-analyzed .perc {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.add-act-btn {
+  padding: 12px 20px;
+  border-radius: 18px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  font-weight: 800;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px rgba(192, 132, 252, 0.3);
+}
+
+.chart-container-v2 {
+  padding: 16px;
+  border-radius: 24px;
+}
+
+.chart-container-v2 h3 {
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.dist-list-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dist-item-v2 .di-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.di-progress {
+  height: 6px;
+  background: var(--brd);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.di-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+.daily-timeline-v2 h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: var(--txt);
+}
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.timeline-card {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 20px;
+  gap: 12px;
+  position: relative;
+}
+
+.tc-time {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--txt-light);
+  width: 70px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tc-content {
+  flex: 1;
+  padding-left: 12px;
+  border-left: 3px solid var(--primary);
+}
+
+.tc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.tc-header strong {
+  font-size: 13px;
+  color: var(--txt);
+}
+
+.tc-duration {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--txt-light);
+}
+
+.tc-note {
+  font-size: 11px;
+  color: var(--txt-light);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.tc-delete {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.empty-mini-state, .empty-state-v3 {
+  padding: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--txt-light);
+  font-style: italic;
+}
+
+/* Timer styles optimization */
+.cat-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.cat-btn-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border-radius: 16px;
+  border: 2px solid transparent;
+  background: white;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.cat-btn-v2.selected {
+  border-color: var(--cat-color);
+  background: rgba(var(--cat-color), 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.cat-btn-v2 .c-emoji { font-size: 20px; margin-bottom: 4px; }
+.cat-btn-v2 .c-label { font-size: 10px; font-weight: 800; color: var(--txt-light); text-align: center; }
+
+.timer-display {
+  font-size: 56px;
+  font-weight: 800;
+  text-align: center;
+  margin: 30px 0;
+  font-family: 'Fraunces', serif;
+  color: var(--txt);
+  letter-spacing: -2px;
+}
+
+.active-pulse {
+  animation: pulseShadow 2s infinite;
+}
+
+@keyframes pulseShadow {
+  0% { box-shadow: 0 0 0 0 rgba(192, 132, 252, 0.2); }
+  70% { box-shadow: 0 0 0 20px rgba(192, 132, 252, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(192, 132, 252, 0); }
+}
+
+.analysis-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 20px;
+}
+
+.nav-arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nav-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nav-title strong {
+  font-size: 14px;
+  color: var(--txt);
+}
+
+.nav-title span {
+  font-size: 10px;
+  color: var(--txt-light);
+  font-weight: 700;
+}
+
+.add-act-btn-mini {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 15px rgba(192, 132, 252, 0.3);
+}
+
+.period-visual-container {
+  padding: 16px;
+  border-radius: 24px;
+}
+
+.period-visual-container h3 {
+  font-size: 14px;
+  margin-bottom: 20px;
+  color: var(--txt);
+}
+
+.trend-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 120px;
+  gap: 8px;
+  padding-bottom: 20px;
+  overflow-x: auto;
+}
+
+.trend-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 20px;
+}
+
+.tb-fill-bg {
+  width: 12px;
+  height: 80px;
+  background: var(--brd);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.tb-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--primary);
+  border-radius: 6px;
+  transition: height 0.5s ease;
+}
+
+.tb-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--txt-light);
+  text-transform: uppercase;
+}
+
+
+/* --- Period Tabs & Analysis UI --- */
+.period-tabs {
+  display: flex;
+  padding: 4px;
+  border-radius: 16px;
+  gap: 4px;
+}
+
+.period-tabs button {
+  flex: 1;
+  padding: 8px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: var(--txt-light);
+  font-weight: 800;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.period-tabs button.active {
+  background: var(--primary);
+  color: white;
+}
+
+.date-picker-v2 {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--brd);
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--txt);
+  font-size: 13px;
+  outline: none;
+}
+
+.analysis-summary-card {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 100%);
+}
+
+.asc-left, .asc-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.asc-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--txt-light);
+  margin-bottom: 4px;
+}
+
+.asc-label.warning { color: #f59e0b; }
+
+.asc-val {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.asc-val strong, .asc-right strong {
+  font-size: 20px;
+  color: var(--txt);
+}
+
+.timeline-empty-card {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px dashed var(--brd);
+  gap: 12px;
+  margin: 4px 0;
+}
+
+.timeline-empty-card .te-time {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--txt-light);
+  width: 70px;
+  text-align: right;
+  opacity: 0.6;
+}
+
+.timeline-empty-card .te-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--txt-light);
+  font-style: italic;
+}
+

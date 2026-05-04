@@ -30,21 +30,41 @@ const SleepTab = () => {
   );
 
   const calculateStats = (user) => {
-    const userLogs = sleepData.filter(s => s.kisi === user).slice(0, 7);
-    const goal = sleepGoals[user.toLowerCase()] || 8;
-
-    if (userLogs.length === 0) {
+    if (sleepData.length === 0) {
        return { totalDebt: 0, consistency: 0, avgQuality: 0, isEmpty: true };
     }
+
+    const goal = sleepGoals[user.toLowerCase()] || 8;
     
-    // 1. Sleep Debt (Last 7 entries)
-    const totalDebt = userLogs.reduce((acc, log) => acc + (goal - log.sure), 0);
+    // Group logs by date to handle multiple entries per day (naps, etc.)
+    const dailyTotals = {};
+    const dailyQualities = {};
     
-    // 2. Consistency (Simplified: variance of bedtime)
-    // For now we use a placeholder logic until we have enough data points
+    sleepData.forEach(log => {
+      const date = log.tarih;
+      dailyTotals[date] = (dailyTotals[date] || 0) + (log.sure || 0);
+      if (!dailyQualities[date]) dailyQualities[date] = [];
+      dailyQualities[date].push(log.kalite);
+    });
+
+    // Get the last 7 unique days that have data
+    const sortedDates = Object.keys(dailyTotals).sort((a, b) => new Date(b) - new Date(a)).slice(0, 7);
+    
+    // Calculate debt based on daily totals vs daily goal
+    const totalDebt = sortedDates.reduce((acc, date) => acc + (goal - dailyTotals[date]), 0);
+    
+    // Average quality across these days
+    const relevantQualities = sortedDates.flatMap(date => dailyQualities[date]);
+    const avgQuality = (relevantQualities.reduce((a, b) => a + b, 0) / relevantQualities.length).toFixed(1);
+    
+    // Consistency (variance of bedtime or just total debt factor)
     const consistency = Math.max(0, 100 - (Math.abs(totalDebt) * 5)); 
 
-    return { totalDebt: totalDebt.toFixed(1), consistency: Math.round(consistency), avgQuality: (userLogs.reduce((a,b) => a+b.kalite, 0) / userLogs.length).toFixed(1) };
+    return { 
+      totalDebt: totalDebt.toFixed(1), 
+      consistency: Math.round(consistency), 
+      avgQuality 
+    };
   };
 
   const getInsights = (stats) => {

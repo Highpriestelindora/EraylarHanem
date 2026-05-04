@@ -3,6 +3,7 @@ import { Droplets, Calendar, Minus, Plus, Trash2, RefreshCw, Info } from 'lucide
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../components/ConfirmModal';
+import PaymentSelector from '../../components/PaymentSelector';
 
 export default function SuTakipTab() {
   const { mutfak, updateWaterLevel, addWaterOrder, removeWaterOrder, addExpense, setWaterDailyRate, processDailyWaterDeduction } = useStore();
@@ -13,6 +14,7 @@ export default function SuTakipTab() {
   const lastOrder = water?.lastOrder ? new Date(water.lastOrder) : null;
 
   const [deleteModal, setDeleteModal] = useState({ open: false, index: null });
+  const [paymentMethod, setPaymentMethod] = useState('');
 
   // Sayfa açıldığında geçen zamana göre günlük düşümü yap
   useEffect(() => {
@@ -43,7 +45,13 @@ export default function SuTakipTab() {
     if (!isOrderAvailable()) return;
     
     addWaterOrder(2);
-    addExpense({ title: '2 Damacana Su', amount: 200, category: 'mutfak', payer: 'ortak' });
+    addExpense({ 
+      title: '2 Damacana Su', 
+      amount: 200, 
+      category: 'mutfak', 
+      payer: 'ortak',
+      defaultPay: paymentMethod
+    });
     toast.success('Sipariş kaydedildi ve Yedekler doldu! 🚚');
     
     // Direct phone call
@@ -114,6 +122,12 @@ export default function SuTakipTab() {
             </div>
           </div>
         </div>
+        
+        {available && (
+          <div className="mt-20">
+            <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+          </div>
+        )}
         
         <div className="su-actions" style={{ marginTop: '20px' }}>
           <button 

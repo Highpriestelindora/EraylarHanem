@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
 import ActionSheet from '../components/ActionSheet';
+import PaymentSelector from '../components/PaymentSelector';
 import './Aracim.css';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
@@ -590,6 +591,7 @@ function KMUpdateModal({ currentKM, onClose, onSave }) {
 
 function FuelLogModal({ onClose, onSave, currentKM }) {
   const [form, setForm] = useState({ km: currentKM, amount: '', price: '42.5', station: 'Shell', date: new Date().toISOString().split('T')[0] });
+  const [paymentMethod, setPaymentMethod] = useState('');
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
@@ -618,7 +620,10 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
               <option value="Diğer">⚪ Diğer</option>
             </select>
           </div>
-          <button className="submit-btn-premium red mt-20" onClick={() => { onSave(form); onClose(); toast.success('Yakıt kaydı ve masraf eklendi ⛽'); }}>Kaydet</button>
+          <div className="mt-20">
+            <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+          </div>
+          <button className="submit-btn-premium red mt-20" onClick={() => { onSave(form, paymentMethod); onClose(); toast.success('Yakıt kaydı ve masraf eklendi ⛽'); }}>Kaydet</button>
         </div>
       </div>
     </div>
@@ -709,6 +714,7 @@ function VehicleFormModal({ vehicle, onSave, onDelete, onClose }) {
 
 function WashModal({ onSave, onClose }) {
   const [form, setForm] = useState({ price: '', date: new Date().toISOString().split('T')[0] });
+  const [paymentMethod, setPaymentMethod] = useState('');
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
@@ -725,7 +731,10 @@ function WashModal({ onSave, onClose }) {
             <label>Tarih</label>
             <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="premium-input" />
           </div>
-          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); }}>Kaydet & Finansa İşle</button>
+          <div className="mt-20">
+            <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+          </div>
+          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form, paymentMethod); onClose(); }}>Kaydet & Finansa İşle</button>
         </div>
       </div>
     </div>
@@ -756,6 +765,9 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
   };
 
   if (parkLocation?.active) {
+    const [parkCost, setParkCost] = useState(0);
+    const [paymentMethod, setPaymentMethod] = useState('');
+
     return (
       <div className="modal-overlay" onClick={onClose}>
         <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
@@ -764,7 +776,7 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
             <h3>Park Bilgisi</h3>
           </div>
           <div className="modal-body-v2">
-            <div className="park-display-premium glass">
+            <div className="park-display-premium glass mb-20">
               {parkLocation.lat && (
                 <div className="park-map-mini">
                   <a href={`https://www.google.com/maps?q=${parkLocation.lat},${parkLocation.lng}`} target="_blank" rel="noreferrer">
@@ -777,9 +789,18 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
                 {parkLocation.spot && <div><strong>No:</strong> {parkLocation.spot}</div>}
               </div>
             </div>
+
+            <div className="form-group-v2">
+              <label>Park Ücreti (₺)</label>
+              <input type="number" value={parkCost} onChange={e => setParkCost(Number(e.target.value))} className="premium-input" placeholder="0" />
+            </div>
+
+            <div className="mt-12">
+              <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+            </div>
+
             <button className="submit-btn-premium mt-20" onClick={() => {
-              const cost = prompt('Park ücreti ödediniz mi? (Ödemediyseniz boş bırakın veya 0 yazın)');
-              onFinish(Number(cost) || 0);
+              onFinish(parkCost, paymentMethod);
               onClose();
               toast.success('Park kaydı kapatıldı.');
             }}>Parktan Çık (Tamamlandı)</button>
@@ -839,6 +860,7 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
 
 function ServiceFormModal({ onSave, onClose }) {
   const [form, setForm] = useState({ title: '', km: '', shop: '', cost: '', date: new Date().toISOString().split('T')[0] });
+  const [paymentMethod, setPaymentMethod] = useState('');
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
@@ -865,7 +887,10 @@ function ServiceFormModal({ onSave, onClose }) {
             <label>Servis / Usta</label>
             <input value={form.shop} onChange={e => setForm({...form, shop: e.target.value})} className="premium-input" placeholder="VW Yetkili Servis" />
           </div>
-          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); toast.success('Servis kaydı eklendi 🛠️'); }}>Kaydet</button>
+          <div className="mt-20">
+            <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+          </div>
+          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form, paymentMethod); onClose(); toast.success('Servis kaydı eklendi 🛠️'); }}>Kaydet</button>
         </div>
       </div>
     </div>
@@ -874,6 +899,7 @@ function ServiceFormModal({ onSave, onClose }) {
 
 function DocFormModal({ doc, onSave, onClose }) {
   const [form, setForm] = useState(doc || { name: '', brand: '', startDate: new Date().toISOString().split('T')[0], dueDate: '', icon: '📄', cost: '' });
+  const [paymentMethod, setPaymentMethod] = useState('');
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
@@ -915,7 +941,10 @@ function DocFormModal({ doc, onSave, onClose }) {
               </select>
             </div>
           </div>
-          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form); onClose(); toast.success('Belge kaydedildi! 📂'); }}>Kaydet</button>
+          <div className="mt-20">
+            <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+          </div>
+          <button className="submit-btn-premium mt-20" onClick={() => { onSave(form, paymentMethod); onClose(); toast.success('Belge kaydedildi! 📂'); }}>Kaydet</button>
         </div>
       </div>
     </div>

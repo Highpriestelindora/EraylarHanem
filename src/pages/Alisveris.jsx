@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import AlisverisTab from './MutfakTabs/AlisverisTab';
 import './Alisveris.css';
+import PaymentSelector from '../components/PaymentSelector';
 
 const MARKETS = [
   { id: 'Migros', color: '#ff6b00', icon: '🟠' },
@@ -190,7 +191,7 @@ export default function Alisveris() {
       amount: Number(amount),
       category: owner === 'ev' ? 'Ev' : 'Kişisel',
       payer: owner === 'gorkem' ? 'Görkem' : (owner === 'esra' ? 'Esra' : 'Ortak'),
-      cardId: cardId || null,
+      defaultPay: purchaseData.paymentMethod,
       market: market || 'Diğer'
     });
 
@@ -491,7 +492,7 @@ export default function Alisveris() {
 function ConfirmPurchaseModal({ item, onClose, onConfirm }) {
   const [amount, setAmount] = useState(item.pr || '');
   const [market, setMarket] = useState('Diğer');
-  const [cardId, setCardId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const { finans } = useStore();
 
   return (
@@ -525,14 +526,11 @@ function ConfirmPurchaseModal({ item, onClose, onConfirm }) {
               </select>
             </div>
             <div className="form-group">
-              <label>Kart</label>
-              <select value={cardId} onChange={e => setCardId(e.target.value)}>
-                <option value="">Nakit</option>
-                {(finans?.kartlar || []).map(k => <option key={k.id} value={k.id}>{k.name}</option>)}
-              </select>
+              <label>Ödeme Yöntemi</label>
+              <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
             </div>
           </div>
-          <button className="submit-btn" onClick={() => onConfirm({ amount, market, cardId })} style={{ background: '#10b981' }}>
+          <button className="submit-btn" onClick={() => onConfirm({ amount, market, paymentMethod })} style={{ background: '#10b981' }}>
             <CheckCircle2 size={18} /> Satın Alımı Onayla
           </button>
         </div>

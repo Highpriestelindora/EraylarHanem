@@ -15,6 +15,7 @@ const KasaTab = () => {
   const [showModal, setShowModal] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [editingBank, setEditingBank] = useState(null);
 
   const [selectedBankId, setSelectedBankId] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null });
@@ -78,6 +79,8 @@ const KasaTab = () => {
         const updatedKasa = kasa.filter(k => k.bankId !== id);
         setModuleData('modaring', { bankalar: updatedBanks, kasa: updatedKasa });
         setConfirmModal({ show: false });
+        setShowBankModal(false);
+        setEditingBank(null);
         toast.error('Hesap ve bağlı işlemler silindi');
         setTimeout(() => forceSaveToSupabase(), 500);
       }
@@ -125,11 +128,11 @@ const KasaTab = () => {
         </div>
 
         {stats.bankTotals.map(bank => (
-          <div
-            key={bank.id}
+          <div 
+            key={bank.id} 
             className={`account-mini-card glass ${selectedBankId === bank.id ? 'active' : ''}`}
             onClick={() => setSelectedBankId(selectedBankId === bank.id ? null : bank.id)}
-            onContextMenu={(e) => { e.preventDefault(); handleDeleteBank(bank.id, bank.name); }}
+            onContextMenu={(e) => { e.preventDefault(); setEditingBank(bank); setShowBankModal(true); }}
           >
             <div className="amc-icon" style={{ background: `${bank.color}20`, color: bank.color }}>
               {bank.type === 'Kredi Kartı' ? <CreditCard size={16} /> : <ArrowUpRight size={16} />}
@@ -231,9 +234,11 @@ const KasaTab = () => {
       )}
 
       {showBankModal && (
-        <BankModal
-          onClose={() => setShowBankModal(false)}
+        <BankModal 
+          item={editingBank}
+          onClose={() => { setShowBankModal(false); setEditingBank(null); }}
           onSave={handleSaveBank}
+          onDelete={handleDeleteBank}
         />
       )}
 
@@ -265,8 +270,8 @@ const ConfirmModal = ({ title, message, onConfirm, onCancel }) => (
   </div>
 );
 
-const BankModal = ({ onClose, onSave }) => {
-  const [form, setForm] = useState({
+const BankModal = ({ item, onClose, onSave, onDelete }) => {
+  const [form, setForm] = useState(item || {
     name: '',
     type: 'Banka Hesabı',
     initialBalance: '',
@@ -277,7 +282,7 @@ const BankModal = ({ onClose, onSave }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-pop kasa-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
-          <h3>Yeni Hesap / Kart</h3>
+          <h3>{item ? 'Hesabı Düzenle' : 'Yeni Hesap / Kart'}</h3>
           <button className="icon-btn-small" onClick={onClose}><X size={20} /></button>
         </div>
         <div className="modal-body-v2">
@@ -302,7 +307,17 @@ const BankModal = ({ onClose, onSave }) => {
             <label>Renk</label>
             <input type="color" className="premium-input-color" value={form.color} onChange={e => setForm({ ...form, color: e.target.value })} />
           </div>
-          <button className="submit-btn-premium mt-24" onClick={() => { if (!form.name) return toast.error('Ad girin'); onSave(form); }}>Hesap Ekle</button>
+
+          <div className="modal-actions-v2 mt-24">
+            {item && (
+              <button className="icon-btn-danger" onClick={() => onDelete(item.id, item.name)}>
+                <Trash2 size={20} />
+              </button>
+            )}
+            <button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => { if (!form.name) return toast.error('Ad girin'); onSave(form); }}>
+              {item ? 'Güncelle' : 'Hesap Ekle'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
