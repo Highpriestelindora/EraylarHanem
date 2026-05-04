@@ -226,11 +226,20 @@ const VardiyaTab = () => {
 
   const renderMonthly = () => {
     const daysInMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate();
+    const firstDayOfMonth = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).getDay();
+    const offset = (firstDayOfMonth + 6) % 7; // Monday = 0
+    
     const daysArr = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    const offsetArr = Array.from({ length: offset }, (_, i) => i);
+    const weekDays = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'];
     
     return (
       <div className="monthly-visual-view glass animate-fadeIn">
+         <div className="mv-heatmap-header">
+            {weekDays.map(d => <div key={d} className="mv-day-name">{d}</div>)}
+         </div>
          <div className="mv-heatmap">
+            {offsetArr.map(i => <div key={`offset-${i}`} className="mv-heat-box-empty"></div>)}
             {daysArr.map(day => {
               const dStr = getLocalDateStr(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day));
               const dayShifts = shifts.filter(s => s?.date === dStr);
@@ -430,14 +439,38 @@ const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
 };
 
 const PersonDetailModal = ({ person, onClose, onUpdate, onDelete }) => {
-  const [form, setForm] = useState({ name: person.name, role: person.role || 'Satış Danışmanı', phone: person.phone || '', hourlyRate: person.hourlyRate || 0, note: person.note || '' });
+  const [form, setForm] = useState({ 
+    name: person.name, 
+    role: person.role || 'Satış Danışmanı', 
+    phone: person.phone || '', 
+    hourlyRate: person.hourlyRate || 0, 
+    note: person.note || '',
+    color: person.color || '#fb7185',
+    emoji: person.emoji || '👤'
+  });
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content glass animate-slideUp staff-modal-v2" onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><span style={{ background: person.color, width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{person.emoji}</span><h3>Profil</h3><button className="icon-btn-small" onClick={onClose}><X size={20} /></button></div>
+        <div className="modal-header-v2">
+          <span style={{ background: form.color, width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.3s' }}>
+            {form.emoji}
+          </span>
+          <h3>Profil</h3>
+          <button className="icon-btn-small" onClick={onClose}><X size={20} /></button>
+        </div>
         <div className="modal-body-v2">
           <div className="form-group-v2"><label>Adı Soyadı</label><input className="premium-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
-          <div className="form-grid-v2 mt-12"><div className="form-group-v2"><label>Rol</label><input className="premium-input" value={form.role} onChange={e => setForm({...form, role: e.target.value})} /></div><div className="form-group-v2"><label>Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} /></div></div>
+          
+          <div className="form-grid-v2 mt-12">
+            <div className="form-group-v2"><label>Rol</label><input className="premium-input" value={form.role} onChange={e => setForm({...form, role: e.target.value})} /></div>
+            <div className="form-group-v2"><label>Renk</label><input type="color" className="premium-input-color" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div>
+          </div>
+
+          <div className="form-grid-v2 mt-12">
+            <div className="form-group-v2"><label>Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} /></div>
+            <div className="form-group-v2"><label>Emoji</label><input className="premium-input" value={form.emoji} onChange={e => setForm({...form, emoji: e.target.value})} /></div>
+          </div>
+
           <div className="form-group-v2 mt-12"><label>Telefon</label><div style={{ display: 'flex', gap: 8 }}><input className="premium-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /><a href={`tel:${form.phone}`} className="icon-btn-small" style={{ background: '#10b981', color: 'white' }}><Phone size={16} /></a></div></div>
           <div className="form-group-v2 mt-12"><label>Personel Notu</label><textarea className="premium-input" style={{ height: '80px', padding: '10px' }} value={form.note} onChange={e => setForm({...form, note: e.target.value})} /></div>
           <div className="modal-actions-v2 mt-20"><button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button><button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onUpdate(form)}>Güncelle</button></div>

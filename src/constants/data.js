@@ -4286,8 +4286,10 @@ export const ENGINEERING_CONVERSIONS = [
 export const INITIAL_MODARING = {
   personel: [], // { id, name, hourlyRate, color, emoji, active }
   vardiya: [],  // { id, personelId, date, startTime, endTime, totalPay, status }
-  kasa: [],     // { id, date, type, amount, method, note }
-  tedarik: [],  // { id, name, link, category, contact }
+  kasa: [],     // { id, date, type, amount, method, note, bankId }
+  bankalar: [], // { id, name, type, balance, color, icon }
+  tedarik: [],  // { id, name, link, category, contact, note }
+  siparisler: [], // { id, supplierId, date, items, total, paid, status, bankId }
   ajanda: [],   // { id, title, dueDate, amount, status }
   trendler: []  // Fashion news cache
 };
