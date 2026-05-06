@@ -126,12 +126,12 @@ export default function Profil() {
         <h4>Başarılar & Kazanımlar</h4>
         
         <div className="setting-item clickable" onClick={() => navigate('/basarilar')}>
-          <div className="setting-icon" style={{ background: '#fff7ed', color: '#f59e0b' }}><Trophy size={20} /></div>
+          <div className="setting-icon" style={{ background: '#fff7ed', color: '#f59e0b' }}><Award size={20} /></div>
           <div className="setting-content">
-            <span className="setting-title">Başarılar ve Rozetler</span>
-            <span className="setting-desc">Tüm aile içi kazanımların</span>
+            <span className="setting-title">Rozet Koleksiyonu</span>
+            <span className="setting-desc">Kazanılan tüm başarıların</span>
           </div>
-          <Award size={18} className="chevron" />
+          <ChevronRight size={18} className="chevron" />
         </div>
       </div>
 

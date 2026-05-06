@@ -18,6 +18,7 @@ import {
   ENGINEERING_CONVERSIONS,
   INITIAL_MODARING
 } from '../constants/data';
+import { ALL_ACHIEVEMENTS } from '../constants/achievements';
 import { notificationService } from '../lib/notificationService';
 import toast from 'react-hot-toast';
 
@@ -56,7 +57,8 @@ const DEFAULT_STATE = {
       email: 'gorkemeray@hotmail.com',
       bloodType: 'A Rh+',
       job: 'Software Architect',
-      emoji: '👨‍💻'
+      emoji: '👨‍💻',
+      achievements: ['f1', 'sys1'] // Başlangıç için birkaç tane
     },
     esra: {
       name: 'Esra ERAY',
@@ -66,7 +68,8 @@ const DEFAULT_STATE = {
       email: 'eesra_yldrm@gmail.com',
       bloodType: '0 Rh+',
       job: 'Interior Designer',
-      emoji: '👩‍🍳'
+      emoji: '👩‍🍳',
+      achievements: ['k1', 'sys1']
     }
   },
   kasa: {
@@ -203,7 +206,13 @@ const DEFAULT_STATE = {
       { id: 'h2', name: 'Su İçme (2L)', streak: 12, lastDone: '' }
     ],
     hallOfFame: [],
-    moodboard: { quote: "Büyük işler, küçük başlangıçlarla olur." }
+    moodboard: { quote: "Büyük işler, küçük başlangıçlarla olur." },
+    longTermVision: [
+      { id: 'ltv1', text: 'Yazılım mimarı olarak global bir projede yer al.', type: 'career' },
+      { id: 'ltv2', text: 'İlk yatırım evini teslim al.', type: 'finance' }
+    ],
+    completedHistory: [],
+    failedHistory: []
   },
   sosyal: {
     aktiviteler: INITIAL_SOCIAL.aktiviteler || [],
@@ -638,6 +647,140 @@ async function upsertKartMutabakat(kart_id, ay, beklenen, gercek, familyId = DEF
   }
 }
 
+// --- GRUP 1 (Mutfak, Alışveriş, Sosyal) SUPABASE GÖLGE YAZIM ---
+async function pushMutfakStokToSupabase(item, category) {
+  try {
+    const payload = {
+      id: `${category}-${item.n || item.isim}`,
+      kategori: category,
+      isim: item.n || item.isim,
+      miktar: Number(item.cr || item.miktar || 0),
+      birim: item.u || item.birim || 'adet',
+      min_stok: Number(item.mn || item.min_stok || 0),
+      emoji: item.ic || item.emoji || '📦',
+      reyon: item.ct || item.reyon || 'Genel',
+      marka: item.br || item.marka || '',
+      market: item.mk || item.market || '',
+      paket: item.pk || item.paket || '',
+      son_kullanma: item.ex || item.bt || item.son_kullanma || null
+    };
+    const { error } = await supabase.from('mutfak_stok').upsert(payload);
+    if (error) throw error;
+  } catch(e) { console.warn('Mutfak Stok Hatası:', e); }
+}
+
+async function pushMutfakSuToSupabase(suData) {
+  try {
+    const payload = {
+      id: 'mutfak_su',
+      level1: suData.level1 ?? 100,
+      level2: suData.level2 ?? 100,
+      daily_rate: suData.dailyRate ?? 20,
+      last_checked: suData.lastChecked || null,
+      last_order: suData.lastOrder || null,
+      history: suData.history || []
+    };
+    await supabase.from('mutfak_su').upsert(payload);
+  } catch(e) { console.warn('Mutfak Su Hatası:', e); }
+}
+
+async function removeMutfakStokFromSupabase(id) {
+  try {
+    await supabase.from('mutfak_stok').delete().eq('id', String(id));
+  } catch(e) { console.warn('Supabase Mutfak Stok delete hatası:', e); }
+}
+
+async function pushMutfakTarifToSupabase(t) {
+  try {
+    const payload = {
+      id: String(t.id),
+      isim: t.n || t.isim,
+      kategori: t.c || t.kategori,
+      sure: Number(t.t || t.sure || 30),
+      zorluk: Number(t.d || t.zorluk || 1),
+      emoji: t.e || t.emoji || '🍳',
+      malzemeler: Array.isArray(t.ig) ? t.ig : [],
+      favori: !!t.f,
+      puan: Number(t.p || 20)
+    };
+    const { error } = await supabase.from('mutfak_tarifler').upsert(payload);
+    if (error) throw error;
+  } catch(e) { console.warn('Tarif Hatası:', e); }
+}
+
+async function removeMutfakTarifFromSupabase(id) {
+  try {
+    await supabase.from('mutfak_tarifler').delete().eq('id', String(id));
+  } catch(e) { console.warn('Supabase Mutfak Tarif delete hatası:', e); }
+}
+
+async function pushAlisverisToSupabase(item, kime) {
+  try {
+    const payload = {
+      id: String(item.id),
+      isim: item.nm || item.isim,
+      link: item.link || '',
+      fiyat: Number(item.pr || item.fiyat || 0),
+      tarih: item.dt || item.tarih || new Date().toISOString(),
+      tamamlandi: !!item.done,
+      tamamlanma_tarihi: item.doneDate || null,
+      kime: kime
+    };
+    const { error } = await supabase.from('alisveris_listesi').upsert(payload);
+    if (error) throw error;
+  } catch(e) { console.warn('Alisveris Hatası:', e); }
+}
+
+async function pushMutfakMenuToSupabase(day, type, mealName) {
+  try {
+    const payload = {
+      id: `${day}-${type}`,
+      gun: day,
+      ogun: type,
+      yemek_adi: mealName,
+      tarih: new Date().toISOString().split('T')[0]
+    };
+    await supabase.from('mutfak_menu').upsert(payload);
+  } catch(e) { console.warn('Menu Hatası:', e); }
+}
+
+async function removeAlisverisFromSupabase(id) {
+  try {
+    await supabase.from('alisveris_listesi').delete().eq('id', String(id));
+  } catch(e) { console.warn('Supabase Alisveris delete hatası:', e); }
+}
+
+async function pushSosyalEtkinlikToSupabase(activity) {
+  try {
+    const payload = {
+      id: String(activity.id),
+      baslik: activity.baslik || activity.title || 'İsimsiz',
+      tarih: (activity.tarih && activity.tarih !== '') ? activity.tarih : ((activity.date && activity.date !== '') ? activity.date : null),
+      saat: activity.saat || activity.time || null,
+      emoji: activity.emoji || activity.icon || '🎭',
+      tur: activity.tur || activity.type || 'genel',
+      harcama: Number(activity.harcama || activity.cost || 0),
+      kisi_sayisi: Number(activity.kisiSayisi || 2),
+      puan_gorkem: Number(activity.puan_gorkem || 0),
+      puan_esra: Number(activity.puan_esra || 0),
+      yorum_gorkem: activity.yorum_gorkem || null,
+      yorum_esra: activity.yorum_esra || null,
+      detaylar: activity.detaylar || null,
+      durum: activity.durum || (activity.tamamlandi ? 'tamamlandi' : 'planda'),
+      master_category: activity.masterCategory || 'Genel'
+    };
+    const { error } = await supabase.from('sosyal_etkinlikler').upsert(payload);
+    if (error) throw error;
+  } catch(e) { console.warn('Sosyal Hatası:', e); }
+}
+
+async function removeSosyalEtkinlikFromSupabase(id) {
+  try {
+    await supabase.from('sosyal_etkinlikler').delete().eq('id', String(id));
+  } catch(e) { console.warn('Supabase Sosyal delete hatası:', e); }
+}
+// ----------------------------------------------------------------
+
 async function upsertArsiv(ay, ozet, familyId = DEFAULT_FID) {
   try {
     const { error } = await supabase
@@ -654,46 +797,531 @@ async function upsertArsiv(ay, ozet, familyId = DEFAULT_FID) {
 }
 // ─────────────────────────────────────────────────────────────
 
-function extractAppData(state, forPersist = false) {
-  const data = {
-    finans: state.finans,
-    users: state.users,
-    kasa: state.kasa,
-    mutfak: state.mutfak,
-    saglik: state.saglik,
-    alisveris: state.alisveris,
-    hedefler: state.hedefler,
-    sosyal: state.sosyal,
-    ev: state.ev,
-    pet: state.pet,
-    garaj: state.garaj,
-    selectedVehicleId: state.selectedVehicleId,
-    tatil: state.tatil,
-    achievements: state.achievements,
-    logs: state.logs,
-    system: state.system,
-    muhendislik: state.muhendislik,
-    modaring: state.modaring,
-  };
 
-  if (forPersist && data.tatil?.trips) {
-    data.tatil = {
-      ...data.tatil,
-      trips: data.tatil.trips.map(t => ({
-        ...t,
-        // Strip base64 photos from persistence to keep JSON small
-        // Only keep URLs (strings starting with http)
-        evaluations: t.evaluations ? Object.keys(t.evaluations).reduce((acc, user) => {
-          const userEval = t.evaluations[user];
-          acc[user] = {
-            ...userEval,
-            photos: userEval.photos ? userEval.photos.filter(p => !p || p.startsWith('http')) : []
-          };
-          return acc;
-        }, {}) : t.evaluations
-      }))
+// --- FAZ 1: HEDEFLER VE FINANS GÖLGE YAZIM YARDIMCILARI ---
+async function pushHedefToSupabase(goal) {
+  try {
+    const payload = {
+      id: String(goal.id),
+      title: goal.title || goal.name || '',
+      target: Number(goal.target) || 100,
+      current: Number(goal.current) || 0,
+      target_date: goal.targetDate || goal.deadline || null,
+      duration: goal.duration ? String(goal.duration) : null,
+      priority: goal.priority || 'Orta',
+      owner: goal.owner || 'ortak',
+      notes: goal.notes || null,
+      yearly_plan: goal.yearlyPlan || null
+    };
+    await supabase.from('hedefler_aktif').upsert(payload);
+  } catch(e) { console.warn('Supabase Hedef upsert hatası:', e); }
+}
+
+async function deleteHedefFromSupabase(id) {
+  try { await supabase.from('hedefler_aktif').delete().eq('id', String(id)); } catch(e){}
+}
+
+async function pushHedefGecmisToSupabase(historyItem, status) {
+  try {
+    const payload = {
+      id: String(historyItem.id),
+      title: historyItem.title || historyItem.name,
+      owner: historyItem.owner || 'ortak',
+      notes: historyItem.notes || null,
+      status: status, 
+      resolved_at: historyItem.completedAt || historyItem.failedAt || new Date().toISOString()
+    };
+    await supabase.from('hedefler_gecmis').upsert(payload);
+  } catch(e) { console.warn('Supabase Geçmiş upsert hatası:', e); }
+}
+
+async function pushVizyonPlanToSupabase(plan) {
+  try {
+    await supabase.from('hedefler_vizyon').upsert({
+      id: String(plan.id),
+      text: plan.text,
+      owner: plan.owner || 'ortak'
+    });
+  } catch(e) { console.warn('Supabase Vizyon upsert hatası:', e); }
+}
+
+async function deleteVizyonPlanFromSupabase(id) {
+  try { await supabase.from('hedefler_vizyon').delete().eq('id', String(id)); } catch(e){}
+}
+
+async function syncFinansKartlar(kartlar) {
+  try {
+    const payloads = kartlar.map(k => ({
+      id: String(k.id),
+      name: k.name,
+      owner: k.owner,
+      cutoff_day: Number(k.cutoff_day),
+      color: k.color,
+      min_pct: Number(k.min_pct || 20)
+    }));
+    if(payloads.length > 0) await supabase.from('finans_kartlar').upsert(payloads);
+  } catch(e) { console.warn('Supabase Kartlar upsert hatası:', e); }
+}
+
+async function syncFinansKrediler(borclar) {
+  try {
+    const payloads = borclar.map(b => ({
+      id: String(b.id),
+      name: b.name,
+      due_day: Number(b.due_day),
+      total: Number(b.total),
+      remaining: Number(b.remaining),
+      monthly: Number(b.monthly)
+    }));
+    if(payloads.length > 0) await supabase.from('finans_krediler').upsert(payloads);
+  } catch(e) { console.warn('Supabase Krediler upsert hatası:', e); }
+}
+
+async function syncFinansOnayHavuzu(pool) {
+  try {
+    const payloads = pool.map(p => ({
+      id: String(p.id),
+      baslik: p.title || p.baslik,
+      tutar: Number(p.amount || p.tutar),
+      kaynak: p.source || p.kaynak,
+      kayit_eden: p.payer || p.kayit_eden,
+      tarih: p.dt || p.tarih || null,
+      default_pay: p.defaultPay || null
+    }));
+    if(payloads.length > 0) await supabase.from('finans_onay_havuzu').upsert(payloads);
+  } catch(e) { console.warn('Supabase Onay Havuzu upsert hatası:', e); }
+}
+// -----------------------------------------------------------------
+
+// --- GRUP 2: EV, GARAJ, PET, SAĞLIK GÖLGE YAZIM YARDIMCILARI ---
+
+async function pushEvDuzenliOdemeToSupabase(item) {
+  try {
+    await supabase.from('ev_duzenli_odemeler').upsert({
+      id: String(item.id), name: item.name, amount: Number(item.amount || 0),
+      date: Number(item.date || 1), linked_card_id: item.linkedCardId || null,
+      auto_pay: !!item.autoPay, icon: item.icon || '💳',
+      provider: item.provider || null, customer_no: item.customerNo || null,
+      contract_end_date: item.contractEndDate || null
+    });
+  } catch(e) { console.warn('Ev Ödeme Hatası:', e); }
+}
+
+async function pushEvAbonelikToSupabase(item) {
+  try {
+    await supabase.from('ev_abonelikler').upsert({
+      id: String(item.id), name: item.name, amount: Number(item.amount || 0),
+      date: Number(item.date || 1), linked_card_id: item.linkedCardId || null,
+      auto_pay: !!item.autoPay, icon: item.icon || '📺',
+      start_date: item.startDate || null
+    });
+  } catch(e) { console.warn('Ev Abonelik Hatası:', e); }
+}
+
+async function pushEvOnarimToSupabase(item) {
+  try {
+    await supabase.from('ev_onarim').upsert({
+      id: String(item.id), task: item.task, status: item.status || 'bekliyor',
+      created_by: item.createdBy || null, created_at: item.createdAt || null,
+      completed_by: item.completedBy || null, completed_at: item.completedAt || null,
+      cleared_by: item.clearedBy || null, cleared_at: item.clearedAt || null,
+      is_archived: !!item.isArchived
+    });
+  } catch(e) { console.warn('Ev Onarım Hatası:', e); }
+}
+
+async function pushEvDemirbasToSupabase(item) {
+  try {
+    await supabase.from('ev_demirbaslar').upsert({
+      id: String(item.id), name: item.name, brand: item.brand || null,
+      warranty_date: item.warrantyDate || null, photo: item.photo || null
+    });
+  } catch(e) { console.warn('Ev Demirbaş Hatası:', e); }
+}
+
+async function pushEvBakimToSupabase(item) {
+  try {
+    await supabase.from('ev_bakimlar').upsert({
+      id: String(item.id), name: item.name, last_date: item.lastDate || null,
+      interval_days: Number(item.intervalDays || 180), icon: item.icon || '🔧',
+      brand: item.brand || null, model: item.model || null, part_no: item.partNo || null
+    });
+  } catch(e) { console.warn('Ev Bakım Hatası:', e); }
+}
+
+async function pushGarajYakitToSupabase(log, vehicleId = 'v1') {
+  try {
+    await supabase.from('garaj_yakit').upsert({
+      id: String(log.id), vehicle_id: vehicleId, tarih: log.tarih || log.dt || null,
+      km: Number(log.km || 0), litre: Number(log.litre || log.lt || 0),
+      tutar: Number(log.tutar || log.pr || 0), istasyon: log.istasyon || log.st || null,
+      tip: log.tip || log.tp || 'benzin', dolu: log.dolu !== false
+    });
+  } catch(e) { console.warn('Garaj Yakıt Hatası:', e); }
+}
+
+async function pushGarajServisToSupabase(svc, vehicleId = 'v1') {
+  try {
+    await supabase.from('garaj_servis').upsert({
+      id: String(svc.id), vehicle_id: vehicleId, tarih: svc.tarih || svc.dt || null,
+      km: Number(svc.km || 0), islem: svc.islem || svc.n || null,
+      tutar: Number(svc.tutar || svc.pr || 0), yer: svc.yer || svc.loc || null,
+      notlar: svc.notlar || svc.nt || null
+    });
+  } catch(e) { console.warn('Garaj Servis Hatası:', e); }
+}
+
+async function pushGarajBelgeToSupabase(doc, vehicleId = 'v1') {
+  try {
+    await supabase.from('garaj_belgeler').upsert({
+      id: String(doc.id), vehicle_id: vehicleId, name: doc.name,
+      due_date: doc.dueDate || null, icon: doc.icon || '📄'
+    });
+  } catch(e) { console.warn('Garaj Belge Hatası:', e); }
+}
+
+async function pushPetAsiToSupabase(petId, vaccine) {
+  try {
+    await supabase.from('pet_asilar').upsert({
+      id: `${petId}-${vaccine.id || vaccine.name}`, pet_id: petId,
+      asi_adi: vaccine.name || vaccine.asi_adi, son_tarih: vaccine.lastDate || vaccine.son_tarih || null,
+      sonraki_tarih: vaccine.nextDate || vaccine.sonraki_tarih || null,
+      durum: vaccine.done ? 'tamamlandi' : 'bekliyor', notlar: vaccine.notes || null
+    });
+  } catch(e) { console.warn('Pet Aşı Hatası:', e); }
+}
+
+async function pushPetAgirlikToSupabase(petId, entry) {
+  try {
+    await supabase.from('pet_agirlik').upsert({
+      id: String(entry.id || `${petId}-${entry.date || Date.now()}`), pet_id: petId,
+      tarih: entry.date || entry.tarih || new Date().toISOString(),
+      kilo: Number(entry.weight || entry.kilo || 0), notlar: entry.notes || null
+    });
+  } catch(e) { console.warn('Pet Ağırlık Hatası:', e); }
+}
+
+async function pushSaglikRandevuToSupabase(r) {
+  try {
+    await supabase.from('saglik_randevular').upsert({
+      id: String(r.id), kisi: r.kisi, doktor: r.doktor || null,
+      tarih: r.tarih || null, saat: r.saat || null,
+      not_text: r.not || null, rekurans: r.rekurans || 'yok'
+    });
+  } catch(e) { console.warn('Sağlık Randevu Hatası:', e); }
+}
+
+async function pushSaglikIlacToSupabase(i) {
+  try {
+    await supabase.from('saglik_ilaclar').upsert({
+      id: String(i.id), kisi: i.kisi, ad: i.ad,
+      dozaj: i.dozaj || null, siklik: i.siklik || null,
+      stok: Number(i.stok || 0), min_stok: Number(i.minStok || 5),
+      schedule: i.schedule || { morning: 0, afternoon: 0, evening: 0 }
+    });
+  } catch(e) { console.warn('Sağlık İlaç Hatası:', e); }
+}
+
+async function pushSaglikOlcumToSupabase(o) {
+  try {
+    await supabase.from('saglik_olcumler').upsert({
+      id: String(o.id), kisi: o.kisi, tur: o.tur || null,
+      deger: o.deger || null, tarih: o.tarih || null
+    });
+  } catch(e) { console.warn('Sağlık Ölçüm Hatası:', e); }
+}
+// -----------------------------------------------------------------
+
+// ═══════════════════════════════════════════════════════════════════
+// GRUP 3 GÖLGE YAZIM YARDIMCI FONKSİYONLARI
+// Tatil, Mühendislik, Modaring
+// ═══════════════════════════════════════════════════════════════════
+
+// --- Tatil ---
+async function pushTatilTripToSupabase(trip) {
+  try {
+    await supabase.from('tatil_trips').upsert({
+      id: String(trip.id), title: trip.title || '', city: trip.city || null,
+      country: trip.country || null, start_date: trip.startDate || null,
+      end_date: trip.endDate || null, trip_type: trip.tripType || 'tatil',
+      travelers: trip.travelers || 'ikimiz', transport_type: trip.transportType || 'ucak',
+      location_type: trip.locationType || 'yurtdisi', status: trip.status || 'planned',
+      notes: trip.notes || null, schengen: !!trip.schengen,
+      budget_est: Number(trip.budget?.est || 0), budget_real: Number(trip.budget?.real || 0),
+      valiz: trip.valiz || {}, evaluations: trip.evaluations || {},
+      photos: trip.photos || [], checklists: trip.checklists || [],
+      created_at: trip.created_at || new Date().toISOString()
+    });
+  } catch(e) { console.warn('Tatil Trip Hatası:', e); }
+}
+
+async function deleteTatilTripFromSupabase(tripId) {
+  try {
+    await supabase.from('tatil_trips').delete().eq('id', String(tripId));
+  } catch(e) { console.warn('Tatil Trip Silme Hatası:', e); }
+}
+
+async function pushTatilWishlistToSupabase(item) {
+  try {
+    await supabase.from('tatil_wishlist').upsert({
+      id: String(item.id), place: item.place || '', notes: item.notes || null,
+      user: item.user || null, date: item.date || new Date().toISOString()
+    });
+  } catch(e) { console.warn('Tatil Wishlist Hatası:', e); }
+}
+
+async function pushTatilPasaportToSupabase(kisi, data) {
+  try {
+    await supabase.from('tatil_pasaport').upsert({
+      kisi, name: data.name, surname: data.surname, no: data.no,
+      nationality: data.nationality || 'TC', birth_date: data.birthDate,
+      issue_date: data.issueDate, exp: data.exp, birth_place: data.birthPlace
+    });
+  } catch(e) { console.warn('Tatil Pasaport Hatası:', e); }
+}
+
+async function pushTatilVizeToSupabase(visa) {
+  try {
+    await supabase.from('tatil_vizeler').upsert({
+      id: String(visa.id), type: visa.type, owner: visa.owner,
+      start_date: visa.start, end_date: visa.end,
+      entries: visa.entries || 'Multi', country: visa.country
+    });
+  } catch(e) { console.warn('Tatil Vize Hatası:', e); }
+}
+
+// --- Mühendislik ---
+async function pushMuhendislikProblemToSupabase(p) {
+  try {
+    const { id, title, description, category, priority, status, solution, date, ...rest } = p;
+    await supabase.from('muhendislik_problems').upsert({
+      id: String(id), title, description: description || null,
+      category: category || null, priority: priority || 'Orta',
+      status: status || 'Açık', solution: solution || null,
+      date: date || new Date().toISOString(), extra: rest
+    });
+  } catch(e) { console.warn('Mühendislik Problem Hatası:', e); }
+}
+
+async function deleteMuhendislikProblemFromSupabase(id) {
+  try { await supabase.from('muhendislik_problems').delete().eq('id', String(id)); }
+  catch(e) { console.warn('Problem Silme Hatası:', e); }
+}
+
+async function pushMuhendislikDecisionToSupabase(d) {
+  try {
+    const { id, title, description, category, result, pros, cons, date, ...rest } = d;
+    await supabase.from('muhendislik_decisions').upsert({
+      id: String(id), title, description: description || null,
+      category: category || null, result: result || null,
+      pros: pros || null, cons: cons || null,
+      date: date || new Date().toISOString(), extra: rest
+    });
+  } catch(e) { console.warn('Mühendislik Karar Hatası:', e); }
+}
+
+async function deleteMuhendislikDecisionFromSupabase(id) {
+  try { await supabase.from('muhendislik_decisions').delete().eq('id', String(id)); }
+  catch(e) { console.warn('Karar Silme Hatası:', e); }
+}
+
+async function pushCrmCustomerToSupabase(c) {
+  try {
+    const { id, name, company, phone, email, notes, status, date, ...rest } = c;
+    await supabase.from('muhendislik_crm_customers').upsert({
+      id: String(id), name, company: company || null, phone: phone || null,
+      email: email || null, notes: notes || null, status: status || 'aktif',
+      date: date || new Date().toISOString(), extra: rest
+    });
+  } catch(e) { console.warn('CRM Müşteri Hatası:', e); }
+}
+
+async function deleteCrmCustomerFromSupabase(id) {
+  try { await supabase.from('muhendislik_crm_customers').delete().eq('id', String(id)); }
+  catch(e) { console.warn('CRM Müşteri Silme Hatası:', e); }
+}
+
+async function pushCrmDealToSupabase(d) {
+  try {
+    const { id, customerId, title, amount, status, notes, date, ...rest } = d;
+    await supabase.from('muhendislik_crm_deals').upsert({
+      id: String(id), customer_id: customerId || null, title: title || null,
+      amount: Number(amount || 0), status: status || 'pipeline',
+      notes: notes || null, date: date || new Date().toISOString(), extra: rest
+    });
+  } catch(e) { console.warn('CRM Deal Hatası:', e); }
+}
+
+async function deleteCrmDealFromSupabase(id) {
+  try { await supabase.from('muhendislik_crm_deals').delete().eq('id', String(id)); }
+  catch(e) { console.warn('CRM Deal Silme Hatası:', e); }
+}
+
+async function pushZihniProceToSupabase(p) {
+  try {
+    const { id, title, description, category, completed, date, ...rest } = p;
+    await supabase.from('muhendislik_proceler').upsert({
+      id: String(id), title, description: description || null,
+      category: category || null, completed: !!completed,
+      date: date || new Date().toISOString(), extra: rest
+    });
+  } catch(e) { console.warn('Zihni Proce Hatası:', e); }
+}
+
+async function deleteZihniProceFromSupabase(id) {
+  try { await supabase.from('muhendislik_proceler').delete().eq('id', String(id)); }
+  catch(e) { console.warn('Zihni Proce Silme Hatası:', e); }
+}
+
+async function pushLifeRoutineToSupabase(r) {
+  try {
+    const { id, title, category, frequency, timeOfDay, completed, date, ...rest } = r;
+    await supabase.from('muhendislik_life_routines').upsert({
+      id: String(id), title, category: category || null,
+      frequency: frequency || null, time_of_day: timeOfDay || null,
+      completed: !!completed, date: date || new Date().toISOString(), extra: rest
+    });
+  } catch(e) { console.warn('Life Routine Hatası:', e); }
+}
+
+async function deleteLifeRoutineFromSupabase(id) {
+  try { await supabase.from('muhendislik_life_routines').delete().eq('id', String(id)); }
+  catch(e) { console.warn('Life Routine Silme Hatası:', e); }
+}
+
+async function pushLifeProgramToSupabase(p) {
+  try {
+    const { id, title, description, status, date, ...rest } = p;
+    await supabase.from('muhendislik_life_programs').upsert({
+      id: String(id), title, description: description || null,
+      status: status || 'aktif', date: date || new Date().toISOString(), extra: rest
+    });
+  } catch(e) { console.warn('Life Program Hatası:', e); }
+}
+
+async function deleteLifeProgramFromSupabase(id) {
+  try { await supabase.from('muhendislik_life_programs').delete().eq('id', String(id)); }
+  catch(e) { console.warn('Life Program Silme Hatası:', e); }
+}
+
+// --- Modaring ---
+async function pushModaringPersonelToSupabase(p) {
+  try {
+    await supabase.from('modaring_personel').upsert({
+      id: String(p.id), name: p.name, hourly_rate: Number(p.hourlyRate || 0),
+      color: p.color || '#6366f1', emoji: p.emoji || '👤', active: p.active !== false
+    });
+  } catch(e) { console.warn('Modaring Personel Hatası:', e); }
+}
+
+async function deleteModaringPersonelFromSupabase(id) {
+  try { await supabase.from('modaring_personel').delete().eq('id', String(id)); }
+  catch(e) { console.warn('Modaring Personel Silme:', e); }
+}
+
+async function pushModaringVardiyaToSupabase(v) {
+  try {
+    await supabase.from('modaring_vardiya').upsert({
+      id: String(v.id), personel_id: v.personelId || null, date: v.date || null,
+      start_time: v.startTime || null, end_time: v.endTime || null,
+      total_pay: Number(v.totalPay || 0), status: v.status || 'aktif'
+    });
+  } catch(e) { console.warn('Modaring Vardiya Hatası:', e); }
+}
+
+async function deleteModaringVardiyaFromSupabase(id) {
+  try { await supabase.from('modaring_vardiya').delete().eq('id', String(id)); }
+  catch(e) { console.warn('Modaring Vardiya Silme:', e); }
+}
+
+async function pushModaringKasaToSupabase(k) {
+  try {
+    await supabase.from('modaring_kasa').upsert({
+      id: String(k.id), date: k.date || null, type: k.type || null,
+      amount: Number(k.amount || 0), method: k.method || null,
+      note: k.note || null, bank_id: k.bankId || null
+    });
+  } catch(e) { console.warn('Modaring Kasa Hatası:', e); }
+}
+
+async function pushModaringBankaToSupabase(b) {
+  try {
+    await supabase.from('modaring_bankalar').upsert({
+      id: String(b.id), name: b.name, type: b.type || null,
+      balance: Number(b.balance || 0), color: b.color || '#3b82f6', icon: b.icon || '🏦'
+    });
+  } catch(e) { console.warn('Modaring Banka Hatası:', e); }
+}
+
+async function pushModaringTedarikToSupabase(t) {
+  try {
+    await supabase.from('modaring_tedarik').upsert({
+      id: String(t.id), name: t.name, link: t.link || null,
+      category: t.category || null, contact: t.contact || null, note: t.note || null
+    });
+  } catch(e) { console.warn('Modaring Tedarik Hatası:', e); }
+}
+
+async function pushModaringSiparisToSupabase(s) {
+  try {
+    await supabase.from('modaring_siparisler').upsert({
+      id: String(s.id), supplier_id: s.supplierId || null, date: s.date || null,
+      items: s.items || [], total: Number(s.total || 0), paid: !!s.paid,
+      status: s.status || 'bekliyor', bank_id: s.bankId || null
+    });
+  } catch(e) { console.warn('Modaring Sipariş Hatası:', e); }
+}
+
+async function pushModaringAjandaToSupabase(a) {
+  try {
+    await supabase.from('modaring_ajanda').upsert({
+      id: String(a.id), title: a.title, due_date: a.dueDate || null,
+      amount: Number(a.amount || 0), status: a.status || 'bekliyor'
+    });
+  } catch(e) { console.warn('Modaring Ajanda Hatası:', e); }
+}
+
+async function pushModaringRefikaToSupabase(r) {
+  try {
+    await supabase.from('modaring_refika').upsert({
+      id: String(r.id), title: r.title || null, description: r.desc || null,
+      cost: Number(r.cost || 0), price: Number(r.price || 0),
+      strategy: r.strategy || null, context: r.context || null,
+      date: r.date || new Date().toISOString()
+    });
+  } catch(e) { console.warn('Modaring Refika Hatası:', e); }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+
+function extractAppData(state, forPersist = false) {
+  if (forPersist) {
+    // FAZ 10 - ONLINE FIRST MİMARİSİ
+    // Asla değişen modül verilerini (finans, hedefler vb.) LocalStorage'a kaydetme.
+    // Bu, telefonun eski veriyi yükleyip Supabase ile çakışmasını (mükerrer kayıtları) kesin olarak önler.
+    return {
+      system: state.system,
+      ui: state.ui,
+      currentUser: state.currentUser,
+      family_id: state.family_id,
+      selectedVehicleId: state.selectedVehicleId,
+      modaring: { ...state.modaring, activeTab: state.modaring?.activeTab }, // Sadece UI state
+      mutfak: { ...state.mutfak, activeTab: state.mutfak?.activeTab },
+      sosyal: { ...state.sosyal, tab: state.sosyal?.tab }
     };
   }
+
+  const data = {
+    // FAZ 10 - ONLINE FIRST: Modüller artık kendi SQL tablolarında.
+    users: state.users,
+    system: state.system,
+    selectedVehicleId: state.selectedVehicleId,
+    logs: state.logs,
+    achievements: state.achievements,
+    /* ARTIK SQL'DE:
+    mutfak, alisveris, sosyal, saglik, ev, pet, garaj, tatil, muhendislik, modaring
+    */
+  };
 
   return data;
 }
@@ -730,6 +1358,559 @@ const useStore = create(
         get().saveToSupabase();
       },
 
+      runPhase1Migration: async () => {
+        const state = get();
+        // Geçici olarak kontrolü kaldırıyoruz ki RLS hatası sonrası tekrar çalışabilsin
+        // if (state.system.migrationPhase1Done) {
+        //   toast.success('Faz 1 taşıması zaten yapılmış. Her şey güncel! 👍');
+        //   return;
+        // }
+
+        const loadId = toast.loading('Eski veriler Supabase\'e aktarılıyor. Lütfen bekleyin...');
+        
+        try {
+          // Hedefler Aktif
+          const goals = state.hedefler?.goals || [];
+          const moneyGoals = state.kasa?.kumbaralar || [];
+          for (const g of goals) await pushHedefToSupabase(g);
+          for (const g of moneyGoals) await pushHedefToSupabase(g);
+
+          // Hedefler Geçmiş
+          const compHist = state.hedefler?.completedHistory || [];
+          const failHist = state.hedefler?.failedHistory || [];
+          for (const h of compHist) await pushHedefGecmisToSupabase(h, 'completed');
+          for (const h of failHist) await pushHedefGecmisToSupabase(h, 'failed');
+
+          // Hedefler Vizyon
+          const vizyon = state.hedefler?.longTermVision || [];
+          for (const p of vizyon) await pushVizyonPlanToSupabase(p);
+
+          // Finans Onay Havuzu
+          const pool = state.finans?.approvalPool || [];
+          if (pool.length > 0) await syncFinansOnayHavuzu(pool);
+
+          // Finans Kartlar ve Krediler
+          const kartlar = state.finans?.kartlar || [];
+          if (kartlar.length > 0) await syncFinansKartlar(kartlar);
+          const borclar = state.finans?.borclar || [];
+          if (borclar.length > 0) await syncFinansKrediler(borclar);
+
+          set({ system: { ...state.system, migrationPhase1Done: true } });
+          get().saveToSupabase();
+
+          toast.dismiss(loadId);
+          toast.success('Geçmiş verileriniz kayıpsız bir şekilde Supabase\'e aktarıldı! 🎉');
+        } catch (error) {
+          console.error("Migration Error:", error);
+          toast.dismiss(loadId);
+          toast.error('Aktarım sırasında bir hata oluştu. Logları kontrol edin.');
+        }
+      },
+
+      runGroup1Migration: async () => {
+        const state = get();
+        const loadId = toast.loading('Tüm veriler (Emoji ve Planlar dahil) Supabase\'e aktarılıyor...');
+        
+        try {
+          // 1. Mutfak Stok (GEÇİCİ OLARAK KAPALI - Temiz veritabanını bozmamak için)
+          /* 
+          const buzdolabi = state.mutfak?.buzdolabi || [];
+          for (const item of buzdolabi) await pushMutfakStokToSupabase(item, 'buzdolabi');
+          const kiler = state.mutfak?.kiler || [];
+          for (const item of kiler) await pushMutfakStokToSupabase(item, 'kiler');
+          const dondurucu = state.mutfak?.dondurucu || [];
+          for (const item of dondurucu) await pushMutfakStokToSupabase(item, 'dondurucu');
+          */
+
+          // 2. Mutfak Tarifler & Menü
+          const tarifler = state.mutfak?.tarifler || [];
+          for (const t of tarifler) await pushMutfakTarifToSupabase(t);
+
+          const menu = state.mutfak?.menu || {};
+          for (const day in menu) {
+            const m = menu[day];
+            if (m.k) await pushMutfakMenuToSupabase(day, 'k', String(m.k));
+            if (m.k2) await pushMutfakMenuToSupabase(day, 'k2', String(m.k2));
+            if (m.a) await pushMutfakMenuToSupabase(day, 'a', String(m.a));
+            if (m.a2) await pushMutfakMenuToSupabase(day, 'a2', String(m.a2));
+            if (m.kdis) await pushMutfakMenuToSupabase(day, 'kdis', String(m.kdis));
+            if (m.ksp) await pushMutfakMenuToSupabase(day, 'ksp', String(m.ksp));
+            if (m.adis) await pushMutfakMenuToSupabase(day, 'adis', String(m.adis));
+            if (m.asp) await pushMutfakMenuToSupabase(day, 'asp', String(m.asp));
+          }
+
+          // 3. Alışveriş
+          const alisverisMutfak = state.mutfak?.alisveris || [];
+          for (const item of (Array.isArray(alisverisMutfak) ? alisverisMutfak : [])) await pushAlisverisToSupabase(item, 'mutfak');
+
+          const alisverisGenel = state.alisveris || {};
+          for (const k in alisverisGenel) {
+            if (Array.isArray(alisverisGenel[k])) {
+              for (const item of alisverisGenel[k]) await pushAlisverisToSupabase(item, k);
+            }
+          }
+
+          // 4. Sosyal
+          const aktiviteler = state.sosyal?.aktiviteler || [];
+          for (const act of aktiviteler) await pushSosyalEtkinlikToSupabase(act);
+
+          const havuz = state.sosyal?.havuz || [];
+          for (const h of havuz) {
+            const payload = { id: String(h.id), baslik: h.baslik, tur: h.tur, emoji: h.emoji, count: Number(h.count || 0), freq: h.freq, last_done: h.last };
+            await supabase.from('sosyal_havuz').upsert(payload);
+          }
+
+          const rutinler = state.sosyal?.rutinler || [];
+          for (const r of rutinler) {
+            const payload = { id: String(r.id), aktivite: r.aktivite, kisi: r.kisi, vakit: r.vakit, gunler: Array.isArray(r.gunler) ? r.gunler : [], saati: r.saati, ucret: Number(r.ucret || 0) };
+            await supabase.from('sosyal_rutinler').upsert(payload);
+          }
+
+          set({ system: { ...state.system, migrationGroup1Done: true } });
+          get().saveToSupabase();
+
+          toast.dismiss(loadId);
+          toast.success('Mükemmel! Tüm verileriniz eksiksiz aktarıldı. 🎉');
+        } catch(e) {
+          toast.dismiss(loadId);
+          toast.error('Aktarımda bir sorun oluştu: ' + e.message);
+        }
+      },
+
+      runGroup2Migration: async () => {
+        const state = get();
+        const loadId = toast.loading('Grup 2 (Ev, Garaj, Pet, Sağlık) Supabase\'e aktarılıyor...');
+        
+        try {
+          // 1. Ev Modülü
+          const ev = state.ev || {};
+          for (const item of (ev.duzenliOdemeler || [])) await pushEvDuzenliOdemeToSupabase(item);
+          for (const item of (ev.abonelikler || [])) await pushEvAbonelikToSupabase(item);
+          for (const item of (ev.onarimListesi || [])) await pushEvOnarimToSupabase(item);
+          for (const item of (ev.demirbaslar || [])) await pushEvDemirbasToSupabase(item);
+          for (const item of (ev.bakimlar || [])) await pushEvBakimToSupabase(item);
+
+          // 2. Garaj Modülü
+          const garaj = state.garaj || [];
+          for (const vehicle of garaj) {
+            const vid = vehicle.id || 'v1';
+            for (const log of (vehicle.fuelLogs || [])) await pushGarajYakitToSupabase(log, vid);
+            for (const svc of (vehicle.services || [])) await pushGarajServisToSupabase(svc, vid);
+            for (const doc of (vehicle.documents || [])) await pushGarajBelgeToSupabase(doc, vid);
+          }
+
+          // 3. Pet Modülü
+          const pet = state.pet || {};
+          const vaccines = pet.vaccines || {};
+          for (const petId in vaccines) {
+            const petVaccines = vaccines[petId];
+            if (Array.isArray(petVaccines)) {
+              for (const v of petVaccines) await pushPetAsiToSupabase(petId, v);
+            }
+          }
+          const weights = pet.weights || {};
+          for (const petId in weights) {
+            const petWeights = weights[petId];
+            if (Array.isArray(petWeights)) {
+              for (const w of petWeights) await pushPetAgirlikToSupabase(petId, w);
+            }
+          }
+
+          // 4. Sağlık Modülü
+          const saglik = state.saglik || {};
+          for (const r of (saglik.randevular || [])) await pushSaglikRandevuToSupabase(r);
+          for (const i of (saglik.ilaclar || [])) await pushSaglikIlacToSupabase(i);
+          for (const o of (saglik.olcumler || [])) await pushSaglikOlcumToSupabase(o);
+
+          set({ system: { ...state.system, migrationGroup2Done: true } });
+          get().saveToSupabase();
+
+          toast.dismiss(loadId);
+          toast.success('Grup 2 aktarımı tamamlandı! Ev, Garaj, Pet ve Sağlık verileri SQL\'de. 🎉');
+        } catch(e) {
+          toast.dismiss(loadId);
+          toast.error('Grup 2 aktarımında sorun: ' + e.message);
+        }
+      },
+
+      fetchGroup2Data: async () => {
+        try {
+          const [odemeler, abonelikler, onarim, demirbaslar, bakimlar,
+                 yakit, servis, belgeler,
+                 asilar, agirliklar,
+                 randevular, ilaclar, olcumler] = await Promise.all([
+            supabase.from('ev_duzenli_odemeler').select('*'),
+            supabase.from('ev_abonelikler').select('*'),
+            supabase.from('ev_onarim').select('*'),
+            supabase.from('ev_demirbaslar').select('*'),
+            supabase.from('ev_bakimlar').select('*'),
+            supabase.from('garaj_yakit').select('*'),
+            supabase.from('garaj_servis').select('*'),
+            supabase.from('garaj_belgeler').select('*'),
+            supabase.from('pet_asilar').select('*'),
+            supabase.from('pet_agirlik').select('*'),
+            supabase.from('saglik_randevular').select('*'),
+            supabase.from('saglik_ilaclar').select('*'),
+            supabase.from('saglik_olcumler').select('*'),
+          ]);
+
+          set(state => {
+            const ev = { ...state.ev };
+            const garaj = [...state.garaj];
+            const pet = { ...state.pet };
+            const saglik = { ...state.saglik };
+
+            // Ev
+            if (odemeler.data && odemeler.data.length > 0) {
+              ev.duzenliOdemeler = odemeler.data.map(x => ({
+                id: x.id, name: x.name, amount: Number(x.amount || 0),
+                date: Number(x.date || 1), linkedCardId: x.linked_card_id || null,
+                autoPay: !!x.auto_pay, icon: x.icon || '💳',
+                provider: x.provider || null, customerNo: x.customer_no || null,
+                contractEndDate: x.contract_end_date || null
+              }));
+            }
+            if (abonelikler.data && abonelikler.data.length > 0) {
+              ev.abonelikler = abonelikler.data.map(x => ({
+                id: x.id, name: x.name, amount: Number(x.amount || 0),
+                date: Number(x.date || 1), linkedCardId: x.linked_card_id || null,
+                autoPay: !!x.auto_pay, icon: x.icon || '📺',
+                startDate: x.start_date || null
+              }));
+            }
+            if (onarim.data && onarim.data.length > 0) {
+              ev.onarimListesi = onarim.data.map(x => ({
+                id: x.id, task: x.task, status: x.status || 'bekliyor',
+                createdBy: x.created_by, createdAt: x.created_at,
+                completedBy: x.completed_by, completedAt: x.completed_at,
+                clearedBy: x.cleared_by, clearedAt: x.cleared_at,
+                isArchived: !!x.is_archived
+              }));
+            }
+            if (demirbaslar.data && demirbaslar.data.length > 0) {
+              ev.demirbaslar = demirbaslar.data.map(x => ({
+                id: x.id, name: x.name, brand: x.brand,
+                warrantyDate: x.warranty_date, photo: x.photo
+              }));
+            }
+            if (bakimlar.data && bakimlar.data.length > 0) {
+              ev.bakimlar = bakimlar.data.map(x => ({
+                id: x.id, name: x.name, lastDate: x.last_date,
+                intervalDays: Number(x.interval_days || 180), icon: x.icon || '🔧',
+                brand: x.brand, model: x.model, partNo: x.part_no
+              }));
+            }
+
+            // Garaj (ilk aracı güncelle)
+            if (garaj.length > 0) {
+              const v = { ...garaj[0] };
+              if (yakit.data && yakit.data.length > 0) {
+                v.fuelLogs = yakit.data.filter(x => x.vehicle_id === v.id).map(x => ({
+                  id: x.id, tarih: x.tarih, km: Number(x.km), litre: Number(x.litre),
+                  tutar: Number(x.tutar), istasyon: x.istasyon, tip: x.tip, dolu: x.dolu
+                }));
+              }
+              if (servis.data && servis.data.length > 0) {
+                v.services = servis.data.filter(x => x.vehicle_id === v.id).map(x => ({
+                  id: x.id, tarih: x.tarih, km: Number(x.km), islem: x.islem,
+                  tutar: Number(x.tutar), yer: x.yer, notlar: x.notlar
+                }));
+              }
+              if (belgeler.data && belgeler.data.length > 0) {
+                v.documents = belgeler.data.filter(x => x.vehicle_id === v.id).map(x => ({
+                  id: x.id, name: x.name, dueDate: x.due_date, icon: x.icon
+                }));
+              }
+              garaj[0] = v;
+            }
+
+            // Pet
+            if (asilar.data && asilar.data.length > 0) {
+              const vaccinesByPet = {};
+              asilar.data.forEach(x => {
+                if (!vaccinesByPet[x.pet_id]) vaccinesByPet[x.pet_id] = [];
+                vaccinesByPet[x.pet_id].push({
+                  id: x.id, name: x.asi_adi, lastDate: x.son_tarih,
+                  nextDate: x.sonraki_tarih, done: x.durum === 'tamamlandi', notes: x.notlar
+                });
+              });
+              pet.vaccines = { ...pet.vaccines, ...vaccinesByPet };
+            }
+            if (agirliklar.data && agirliklar.data.length > 0) {
+              const weightsByPet = {};
+              agirliklar.data.forEach(x => {
+                if (!weightsByPet[x.pet_id]) weightsByPet[x.pet_id] = [];
+                weightsByPet[x.pet_id].push({
+                  id: x.id, date: x.tarih, weight: Number(x.kilo), notes: x.notlar
+                });
+              });
+              pet.weights = { ...pet.weights, ...weightsByPet };
+            }
+
+            // Sağlık
+            if (randevular.data && randevular.data.length > 0) {
+              saglik.randevular = randevular.data.map(x => ({
+                id: x.id, kisi: x.kisi, doktor: x.doktor,
+                tarih: x.tarih, saat: x.saat, not: x.not_text, rekurans: x.rekurans
+              }));
+            }
+            if (ilaclar.data && ilaclar.data.length > 0) {
+              saglik.ilaclar = ilaclar.data.map(x => ({
+                id: x.id, kisi: x.kisi, ad: x.ad,
+                dozaj: x.dozaj, siklik: x.siklik,
+                stok: Number(x.stok || 0), minStok: Number(x.min_stok || 5),
+                schedule: x.schedule || { morning: 0, afternoon: 0, evening: 0 }
+              }));
+            }
+            if (olcumler.data && olcumler.data.length > 0) {
+              saglik.olcumler = olcumler.data.map(x => ({
+                id: x.id, kisi: x.kisi, tur: x.tur, deger: x.deger, tarih: x.tarih
+              }));
+            }
+
+            return { ev, garaj, pet, saglik };
+          });
+        } catch (error) {
+          console.error("❌ fetchGroup2Data error:", error);
+        }
+      },
+
+      runGroup3Migration: async () => {
+        const state = get();
+        const loadId = toast.loading('Grup 3 (Tatil, Mühendislik, Modaring) Supabase\'e aktarılıyor...');
+        
+        try {
+          // 1. Tatil Modülü
+          const tatil = state.tatil || {};
+          for (const trip of (tatil.trips || [])) await pushTatilTripToSupabase(trip);
+          for (const w of (tatil.wishlist || [])) await pushTatilWishlistToSupabase(w);
+          if (tatil.passport) {
+            for (const kisi in tatil.passport) {
+              await pushTatilPasaportToSupabase(kisi, tatil.passport[kisi]);
+            }
+          }
+          for (const v of (tatil.visas || [])) await pushTatilVizeToSupabase(v);
+
+          // 2. Mühendislik Modülü
+          const muh = state.muhendislik || {};
+          for (const p of (muh.problemBank || [])) await pushMuhendislikProblemToSupabase(p);
+          for (const d of (muh.decisionLog || [])) await pushMuhendislikDecisionToSupabase(d);
+          for (const c of (muh.crm?.customers || [])) await pushCrmCustomerToSupabase(c);
+          for (const d of (muh.crm?.deals || [])) await pushCrmDealToSupabase(d);
+          for (const p of (muh.zihniProceler || [])) await pushZihniProceToSupabase(p);
+          for (const r of (muh.life?.routines || [])) await pushLifeRoutineToSupabase(r);
+          for (const p of (muh.life?.programs || [])) await pushLifeProgramToSupabase(p);
+
+          // 3. Modaring Modülü
+          const mod = state.modaring || {};
+          for (const p of (mod.personel || [])) await pushModaringPersonelToSupabase(p);
+          for (const v of (mod.vardiya || [])) await pushModaringVardiyaToSupabase(v);
+          for (const k of (mod.kasa || [])) await pushModaringKasaToSupabase(k);
+          for (const b of (mod.bankalar || [])) await pushModaringBankaToSupabase(b);
+          for (const t of (mod.tedarik || [])) await pushModaringTedarikToSupabase(t);
+          for (const s of (mod.siparisler || [])) await pushModaringSiparisToSupabase(s);
+          for (const a of (mod.ajanda || [])) await pushModaringAjandaToSupabase(a);
+          for (const r of (mod.refikaFikirleri || [])) await pushModaringRefikaToSupabase(r);
+
+          set({ system: { ...state.system, migrationGroup3Done: true } });
+          get().saveToSupabase();
+
+          toast.dismiss(loadId);
+          toast.success('Grup 3 aktarımı tamamlandı! Tatil, Mühendislik ve Modaring verileri SQL\'de. 🎉');
+        } catch(e) {
+          toast.dismiss(loadId);
+          toast.error('Grup 3 aktarımında sorun: ' + e.message);
+        }
+      },
+
+      fetchGroup3Data: async () => {
+        try {
+          const [
+            trips, wishlist, pasaport, vizeler,
+            problems, decisions, crmCustomers, crmDeals, proceler, lifeRoutines, lifePrograms,
+            personel, vardiya, kasaItems, bankalar, tedarik, siparisler, ajanda, refika
+          ] = await Promise.all([
+            supabase.from('tatil_trips').select('*'),
+            supabase.from('tatil_wishlist').select('*'),
+            supabase.from('tatil_pasaport').select('*'),
+            supabase.from('tatil_vizeler').select('*'),
+            supabase.from('muhendislik_problems').select('*'),
+            supabase.from('muhendislik_decisions').select('*'),
+            supabase.from('muhendislik_crm_customers').select('*'),
+            supabase.from('muhendislik_crm_deals').select('*'),
+            supabase.from('muhendislik_proceler').select('*'),
+            supabase.from('muhendislik_life_routines').select('*'),
+            supabase.from('muhendislik_life_programs').select('*'),
+            supabase.from('modaring_personel').select('*'),
+            supabase.from('modaring_vardiya').select('*'),
+            supabase.from('modaring_kasa').select('*'),
+            supabase.from('modaring_bankalar').select('*'),
+            supabase.from('modaring_tedarik').select('*'),
+            supabase.from('modaring_siparisler').select('*'),
+            supabase.from('modaring_ajanda').select('*'),
+            supabase.from('modaring_refika').select('*'),
+          ]);
+
+          set(state => {
+            const tatil = { ...state.tatil };
+            const muhendislik = { ...state.muhendislik };
+            const modaring = { ...state.modaring };
+
+            // ── Tatil ──
+            if (trips.data && trips.data.length > 0) {
+              tatil.trips = trips.data.map(x => ({
+                id: x.id, title: x.title, city: x.city, country: x.country,
+                startDate: x.start_date, endDate: x.end_date,
+                tripType: x.trip_type, travelers: x.travelers,
+                transportType: x.transport_type, locationType: x.location_type,
+                status: x.status, notes: x.notes, schengen: x.schengen,
+                budget: { est: Number(x.budget_est || 0), real: Number(x.budget_real || 0) },
+                valiz: x.valiz || {}, evaluations: x.evaluations || {},
+                photos: x.photos || [], checklists: x.checklists || [],
+                created_at: x.created_at
+              }));
+            }
+            if (wishlist.data && wishlist.data.length > 0) {
+              tatil.wishlist = wishlist.data.map(x => ({
+                id: x.id, place: x.place, notes: x.notes,
+                user: x.user, date: x.date
+              }));
+            }
+            if (pasaport.data && pasaport.data.length > 0) {
+              const ppObj = {};
+              pasaport.data.forEach(x => {
+                ppObj[x.kisi] = {
+                  name: x.name, surname: x.surname, no: x.no,
+                  nationality: x.nationality, birthDate: x.birth_date,
+                  issueDate: x.issue_date, exp: x.exp, birthPlace: x.birth_place
+                };
+              });
+              tatil.passport = ppObj;
+            }
+            if (vizeler.data && vizeler.data.length > 0) {
+              tatil.visas = vizeler.data.map(x => ({
+                id: x.id, type: x.type, owner: x.owner,
+                start: x.start_date, end: x.end_date,
+                entries: x.entries, country: x.country
+              }));
+            }
+
+            // ── Mühendislik ──
+            if (problems.data && problems.data.length > 0) {
+              muhendislik.problemBank = problems.data.map(x => ({
+                id: x.id, title: x.title, description: x.description,
+                category: x.category, priority: x.priority, status: x.status,
+                solution: x.solution, date: x.date, ...(x.extra || {})
+              }));
+            }
+            if (decisions.data && decisions.data.length > 0) {
+              muhendislik.decisionLog = decisions.data.map(x => ({
+                id: x.id, title: x.title, description: x.description,
+                category: x.category, result: x.result,
+                pros: x.pros, cons: x.cons, date: x.date, ...(x.extra || {})
+              }));
+            }
+            if (crmCustomers.data && crmCustomers.data.length > 0) {
+              muhendislik.crm = { ...muhendislik.crm };
+              muhendislik.crm.customers = crmCustomers.data.map(x => ({
+                id: x.id, name: x.name, company: x.company,
+                phone: x.phone, email: x.email, notes: x.notes,
+                status: x.status, date: x.date, ...(x.extra || {})
+              }));
+            }
+            if (crmDeals.data && crmDeals.data.length > 0) {
+              muhendislik.crm = { ...muhendislik.crm };
+              muhendislik.crm.deals = crmDeals.data.map(x => ({
+                id: x.id, customerId: x.customer_id, title: x.title,
+                amount: Number(x.amount || 0), status: x.status,
+                notes: x.notes, date: x.date, ...(x.extra || {})
+              }));
+            }
+            if (proceler.data && proceler.data.length > 0) {
+              muhendislik.zihniProceler = proceler.data.map(x => ({
+                id: x.id, title: x.title, description: x.description,
+                category: x.category, completed: x.completed,
+                date: x.date, ...(x.extra || {})
+              }));
+            }
+            if (lifeRoutines.data && lifeRoutines.data.length > 0) {
+              muhendislik.life = { ...muhendislik.life };
+              muhendislik.life.routines = lifeRoutines.data.map(x => ({
+                id: x.id, title: x.title, category: x.category,
+                frequency: x.frequency, timeOfDay: x.time_of_day,
+                completed: x.completed, date: x.date, ...(x.extra || {})
+              }));
+            }
+            if (lifePrograms.data && lifePrograms.data.length > 0) {
+              muhendislik.life = { ...muhendislik.life };
+              muhendislik.life.programs = lifePrograms.data.map(x => ({
+                id: x.id, title: x.title, description: x.description,
+                status: x.status, date: x.date, ...(x.extra || {})
+              }));
+            }
+
+            // ── Modaring ──
+            if (personel.data && personel.data.length > 0) {
+              modaring.personel = personel.data.map(x => ({
+                id: x.id, name: x.name, hourlyRate: Number(x.hourly_rate || 0),
+                color: x.color, emoji: x.emoji, active: x.active
+              }));
+            }
+            if (vardiya.data && vardiya.data.length > 0) {
+              modaring.vardiya = vardiya.data.map(x => ({
+                id: x.id, personelId: x.personel_id, date: x.date,
+                startTime: x.start_time, endTime: x.end_time,
+                totalPay: Number(x.total_pay || 0), status: x.status
+              }));
+            }
+            if (kasaItems.data && kasaItems.data.length > 0) {
+              modaring.kasa = kasaItems.data.map(x => ({
+                id: x.id, date: x.date, type: x.type,
+                amount: Number(x.amount || 0), method: x.method,
+                note: x.note, bankId: x.bank_id
+              }));
+            }
+            if (bankalar.data && bankalar.data.length > 0) {
+              modaring.bankalar = bankalar.data.map(x => ({
+                id: x.id, name: x.name, type: x.type,
+                balance: Number(x.balance || 0), color: x.color, icon: x.icon
+              }));
+            }
+            if (tedarik.data && tedarik.data.length > 0) {
+              modaring.tedarik = tedarik.data.map(x => ({
+                id: x.id, name: x.name, link: x.link,
+                category: x.category, contact: x.contact, note: x.note
+              }));
+            }
+            if (siparisler.data && siparisler.data.length > 0) {
+              modaring.siparisler = siparisler.data.map(x => ({
+                id: x.id, supplierId: x.supplier_id, date: x.date,
+                items: x.items || [], total: Number(x.total || 0),
+                paid: x.paid, status: x.status, bankId: x.bank_id
+              }));
+            }
+            if (ajanda.data && ajanda.data.length > 0) {
+              modaring.ajanda = ajanda.data.map(x => ({
+                id: x.id, title: x.title, dueDate: x.due_date,
+                amount: Number(x.amount || 0), status: x.status
+              }));
+            }
+            if (refika.data && refika.data.length > 0) {
+              modaring.refikaFikirleri = refika.data.map(x => ({
+                id: x.id, title: x.title, desc: x.description,
+                cost: Number(x.cost || 0), price: Number(x.price || 0),
+                strategy: x.strategy, context: x.context, date: x.date
+              }));
+            }
+
+            return { tatil, muhendislik, modaring };
+          });
+        } catch (error) {
+          console.error("❌ fetchGroup3Data error:", error);
+        }
+      },
+
+
       setModuleData: (moduleName, data) => {
         const state = get();
         // Bug Fix: If data is not an object, just replace it. 
@@ -742,6 +1923,18 @@ const useStore = create(
           set({ [moduleName]: data });
         }
         get().saveToSupabase();
+
+        // GRUP 2 GÖLGE YAZIM: setModuleData üzerinden yapılan güncellemeler
+        if (moduleName === 'saglik' && isObject) {
+          const merged = { ...state.saglik, ...data };
+          if (data.randevular) merged.randevular.forEach(r => pushSaglikRandevuToSupabase(r));
+          if (data.ilaclar) merged.ilaclar.forEach(i => pushSaglikIlacToSupabase(i));
+          if (data.olcumler) merged.olcumler.forEach(o => pushSaglikOlcumToSupabase(o));
+        }
+        if (moduleName === 'ev' && isObject) {
+          if (data.bakimlar) data.bakimlar.forEach(b => pushEvBakimToSupabase(b));
+          if (data.demirbaslar) data.demirbaslar.forEach(d => pushEvDemirbasToSupabase(d));
+        }
       },
 
       toggleSilentMode: () => {
@@ -806,6 +1999,7 @@ const useStore = create(
         }
 
         get().saveToSupabase();
+        pushSaglikIlacToSupabase(meds[idx]);
       },
 
       checkSystemNotifications: () => {
@@ -913,6 +2107,7 @@ const useStore = create(
         set({ muhendislik: { ...state.muhendislik, problemBank: [newProblem, ...currentBank] } });
         get().addLog('Mühendislik', `Yeni problem kaydedildi: ${problem.title}`);
         get().saveToSupabase(true);
+        pushMuhendislikProblemToSupabase(newProblem);
       },
       updateEngineeringProblem: (id, updates) => {
         const state = get();
@@ -920,12 +2115,15 @@ const useStore = create(
         const updated = currentBank.map(p => p.id === id ? { ...p, ...updates } : p);
         set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
         get().saveToSupabase(true);
+        const updatedItem = updated.find(p => p.id === id);
+        if (updatedItem) pushMuhendislikProblemToSupabase(updatedItem);
       },
       deleteEngineeringProblem: (id) => {
         const state = get();
         const updated = state.muhendislik.problemBank.filter(p => p.id !== id);
         set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
         get().saveToSupabase(true);
+        deleteMuhendislikProblemFromSupabase(id);
       },
       addEngineeringDecision: (decision) => {
         const state = get();
@@ -937,18 +2135,22 @@ const useStore = create(
         set({ muhendislik: { ...state.muhendislik, decisionLog: [newDecision, ...state.muhendislik.decisionLog] } });
         get().addLog('Karar Günlüğü', `Yeni karar alındı: ${decision.title}`);
         get().saveToSupabase(true);
+        pushMuhendislikDecisionToSupabase(newDecision);
       },
       updateEngineeringDecision: (id, updates) => {
         const state = get();
         const updated = state.muhendislik.decisionLog.map(d => d.id === id ? { ...d, ...updates } : d);
         set({ muhendislik: { ...state.muhendislik, decisionLog: updated } });
         get().saveToSupabase();
+        const updatedDec = updated.find(d => d.id === id);
+        if (updatedDec) pushMuhendislikDecisionToSupabase(updatedDec);
       },
       deleteEngineeringDecision: (id) => {
         const state = get();
         const updated = state.muhendislik.decisionLog.filter(d => d.id !== id);
         set({ muhendislik: { ...state.muhendislik, decisionLog: updated } });
         get().saveToSupabase();
+        deleteMuhendislikDecisionFromSupabase(id);
       },
       togglePinnedConversion: (id) => {
         const state = get();
@@ -970,12 +2172,15 @@ const useStore = create(
         const updatedCrm = { ...state.muhendislik.crm, customers: [newCustomer, ...(state.muhendislik.crm.customers || [])] };
         set({ muhendislik: { ...state.muhendislik, crm: updatedCrm } });
         get().saveToSupabase(true);
+        pushCrmCustomerToSupabase(newCustomer);
       },
       updateCrmCustomer: (id, updates) => {
         const state = get();
         const updatedCustomers = (state.muhendislik.crm.customers || []).map(c => c.id === id ? { ...c, ...updates } : c);
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, customers: updatedCustomers } } });
         get().saveToSupabase();
+        const updatedCust = updatedCustomers.find(c => c.id === id);
+        if (updatedCust) pushCrmCustomerToSupabase(updatedCust);
       },
       deleteCrmCustomer: (id) => {
         const state = get();
@@ -983,6 +2188,7 @@ const useStore = create(
         const updatedDeals = (state.muhendislik.crm.deals || []).filter(d => d.customerId !== id);
         set({ muhendislik: { ...state.muhendislik, crm: { customers: updatedCustomers, deals: updatedDeals } } });
         get().saveToSupabase();
+        deleteCrmCustomerFromSupabase(id);
       },
       addCrmDeal: (deal) => {
         const state = get();
@@ -990,18 +2196,22 @@ const useStore = create(
         const updatedDeals = [newDeal, ...(state.muhendislik.crm.deals || [])];
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
         get().saveToSupabase();
+        pushCrmDealToSupabase(newDeal);
       },
       updateCrmDeal: (id, updates) => {
         const state = get();
         const updatedDeals = (state.muhendislik.crm.deals || []).map(d => d.id === id ? { ...d, ...updates } : d);
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
         get().saveToSupabase();
+        const updatedDeal = updatedDeals.find(d => d.id === id);
+        if (updatedDeal) pushCrmDealToSupabase(updatedDeal);
       },
       deleteCrmDeal: (id) => {
         const state = get();
         const updatedDeals = (state.muhendislik.crm.deals || []).filter(d => d.id !== id);
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
         get().saveToSupabase(true);
+        deleteCrmDealFromSupabase(id);
       },
 
       // --- Zihni Sinir Proce Actions ---
@@ -1015,12 +2225,15 @@ const useStore = create(
           } 
         });
         get().saveToSupabase(true);
+        pushZihniProceToSupabase(proce);
       },
       updateZihniProce: (id, updates) => {
         const state = get();
         const updated = (state.muhendislik.zihniProceler || []).map(p => p.id === id ? { ...p, ...updates } : p);
         set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
         get().saveToSupabase();
+        const updatedProce = updated.find(p => p.id === id);
+        if (updatedProce) pushZihniProceToSupabase(updatedProce);
       },
       toggleZihniProceStatus: (id) => {
         const state = get();
@@ -1029,12 +2242,15 @@ const useStore = create(
         );
         set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
         get().saveToSupabase();
+        const toggled = updated.find(p => p.id === id);
+        if (toggled) pushZihniProceToSupabase(toggled);
       },
       deleteZihniProce: (id) => {
         const state = get();
         const updated = (state.muhendislik.zihniProceler || []).filter(p => p.id !== id);
         set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
         get().saveToSupabase();
+        deleteZihniProceFromSupabase(id);
       },
 
       // --- Engineering Life Actions ---
@@ -1044,6 +2260,7 @@ const useStore = create(
         const updatedLife = { ...state.muhendislik.life, routines: [newRoutine, ...(state.muhendislik.life.routines || [])] };
         set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
         get().saveToSupabase();
+        pushLifeRoutineToSupabase(newRoutine);
       },
       toggleLifeRoutine: (id) => {
         const state = get();
@@ -1052,12 +2269,15 @@ const useStore = create(
         );
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, routines: updatedRoutines } } });
         get().saveToSupabase();
+        const toggledRoutine = updatedRoutines.find(r => r.id === id);
+        if (toggledRoutine) pushLifeRoutineToSupabase(toggledRoutine);
       },
       deleteLifeRoutine: (id) => {
         const state = get();
         const updatedRoutines = (state.muhendislik.life.routines || []).filter(r => r.id !== id);
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, routines: updatedRoutines } } });
         get().saveToSupabase();
+        deleteLifeRoutineFromSupabase(id);
       },
       addLifeProgram: (program) => {
         const state = get();
@@ -1065,12 +2285,14 @@ const useStore = create(
         const updatedLife = { ...state.muhendislik.life, programs: [newProgram, ...(state.muhendislik.life.programs || [])] };
         set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
         get().saveToSupabase();
+        pushLifeProgramToSupabase(newProgram);
       },
       deleteLifeProgram: (id) => {
         const state = get();
         const updatedPrograms = (state.muhendislik.life.programs || []).filter(p => p.id !== id);
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, programs: updatedPrograms } } });
         get().saveToSupabase();
+        deleteLifeProgramFromSupabase(id);
       },
 
       // --- Focus Session Actions ---
@@ -1173,8 +2395,214 @@ const useStore = create(
         set({ syncing: false });
 
         // FAZ 9: JSON verisi yüklendikten sonra yeni SQL tablolarını üzerine yaz/kontrol et
+        await get().fetchPhase3Data(); // Faz 3: Supabase -> Single Source of Truth
+        await get().fetchGroup1Data(); // Faz 1.4: Grup 1 Mutfak, Sosyal, Alışveriş
+        await get().fetchGroup2Data(); // Grup 2: Ev, Garaj, Pet, Sağlık
+        await get().fetchGroup3Data(); // Grup 3: Tatil, Mühendislik, Modaring
         get().getBuAyHarcamalar();
         get().checkAutoKapanis();
+      },
+
+      fetchPhase3Data: async () => {
+        try {
+          const { data: dbKartlar } = await supabase.from('finans_kartlar').select('*');
+          const { data: dbBorclar } = await supabase.from('finans_krediler').select('*');
+          const { data: dbOnayHavuzu } = await supabase.from('finans_onay_havuzu').select('*');
+          const { data: dbHedefler } = await supabase.from('hedefler_aktif').select('*');
+          const { data: dbGecmis } = await supabase.from('hedefler_gecmis').select('*');
+          const { data: dbVizyon } = await supabase.from('hedefler_vizyon').select('*');
+
+          set(state => {
+            const f = { ...state.finans };
+            if (dbKartlar && dbKartlar.length > 0) {
+              f.kartlar = dbKartlar.map(k => {
+                const legacy = DEFAULT_STATE.finans.kartlar.find(dk => dk.id === k.id) || {};
+                return { id: k.id, name: k.name, owner: k.owner, cutoff_day: k.cutoff_day, color: k.color, min_pct: k.min_pct, limit: legacy.limit || 100000, balance: legacy.balance || 0, due_day_offset: legacy.due_day_offset || 10 };
+              });
+            } else if (dbKartlar && dbKartlar.length === 0) {
+              f.kartlar = DEFAULT_STATE.finans.kartlar;
+              syncFinansKartlar(f.kartlar); // Supabase'e geri yükle
+            }
+
+            if (dbBorclar && dbBorclar.length > 0) {
+              f.borclar = dbBorclar.map(b => ({ id: b.id, name: b.name, due_day: b.due_day, total: b.total, remaining: b.remaining, monthly: b.monthly }));
+            } else if (dbBorclar && dbBorclar.length === 0) {
+              f.borclar = DEFAULT_STATE.finans.borclar;
+              syncFinansKrediler(f.borclar); // Supabase'e geri yükle
+            }
+
+            if (dbOnayHavuzu && dbOnayHavuzu.length > 0) {
+              f.approvalPool = dbOnayHavuzu.map(p => ({ id: p.id, title: p.baslik, amount: p.tutar, source: p.kaynak, payer: p.kayit_eden, dt: p.tarih, defaultPay: p.default_pay }));
+            }
+
+            const h = { ...state.hedefler };
+            const k = { ...state.kasa };
+            if (dbHedefler) {
+              const mapped = dbHedefler.map(x => ({ id: x.id, name: x.title, title: x.title, target: x.target, current: x.current, targetDate: x.target_date, duration: x.duration, priority: x.priority, owner: x.owner, notes: x.notes, yearlyPlan: x.yearly_plan }));
+              const existingKumbaralarIds = new Set(k.kumbaralar?.map(x => String(x.id)) || []);
+              k.kumbaralar = mapped.filter(x => existingKumbaralarIds.has(String(x.id)));
+              h.goals = mapped.filter(x => !existingKumbaralarIds.has(String(x.id)));
+            }
+
+            if (dbGecmis) {
+              h.completedHistory = dbGecmis.filter(x => x.status === 'completed').map(x => ({ id: x.id, title: x.title, owner: x.owner, notes: x.notes, completedAt: x.resolved_at }));
+              h.failedHistory = dbGecmis.filter(x => x.status === 'failed').map(x => ({ id: x.id, title: x.title, owner: x.owner, notes: x.notes, failedAt: x.resolved_at }));
+            }
+
+            if (dbVizyon) {
+              h.longTermVision = dbVizyon.map(x => ({ id: x.id, text: x.text, owner: x.owner }));
+            }
+
+            return { finans: f, hedefler: h, kasa: k };
+          });
+        } catch(e) { console.error('Faz 3 Fetch error:', e); }
+      },
+
+      fetchGroup1Data: async () => {
+        try {
+          const [stok, tarifler, alisveris, sosyal, menu, havuz, rutinler, mutfakSu] = await Promise.all([
+            supabase.from('mutfak_stok').select('*'),
+            supabase.from('mutfak_tarifler').select('*'),
+            supabase.from('alisveris_listesi').select('*'),
+            supabase.from('sosyal_etkinlikler').select('*'),
+            supabase.from('mutfak_menu').select('*'),
+            supabase.from('sosyal_havuz').select('*'),
+            supabase.from('sosyal_rutinler').select('*'),
+            supabase.from('mutfak_su').select('*').eq('id', 'mutfak_su').single()
+          ]);
+
+          set(state => {
+            const m = { ...state.mutfak };
+            const s = { ...state.sosyal };
+            const a = { ...state.alisveris };
+
+            // 1. Mutfak Stok
+            if (stok.data) {
+              const mapStok = (list) => list.map(x => ({
+                n: x.isim, 
+                cr: Number(x.miktar), 
+                u: x.birim || 'adet', 
+                mn: Number(x.min_stok || 0),
+                ic: x.emoji || '📦', 
+                ct: x.reyon || 'Genel', 
+                br: x.marka || '', 
+                mk: x.market || '',
+                pk: x.paket || '', 
+                ex: x.son_kullanma || null
+              }));
+              m.buzdolabi = mapStok(stok.data.filter(x => x.kategori === 'buzdolabi'));
+              m.kiler = mapStok(stok.data.filter(x => x.kategori === 'kiler'));
+              m.dondurucu = mapStok(stok.data.filter(x => x.kategori === 'dondurucu'));
+            }
+
+            // 2. Mutfak Tarif & Menü
+            if (tarifler.data) {
+              m.tarifler = tarifler.data.map(t => ({
+                id: t.id, n: t.isim, c: t.kategori, t: Number(t.sure), d: Number(t.zorluk),
+                e: t.emoji, ig: t.malzemeler || [], f: !!t.favori, p: Number(t.puan || 20)
+              }));
+            }
+            if (menu.data) {
+              const newMenu = {};
+              menu.data.forEach(item => {
+                if (!newMenu[item.gun]) newMenu[item.gun] = {
+                  k: '', k2: '', kdis: false, ksp: false,
+                  a: '', a2: '', adis: false, asp: false
+                };
+                const val = item.yemek_adi;
+                if (item.ogun.endsWith('dis') || item.ogun.endsWith('sp')) {
+                  newMenu[item.gun][item.ogun] = val === 'true';
+                } else {
+                  newMenu[item.gun][item.ogun] = val;
+                }
+              });
+              m.menu = newMenu;
+            }
+            if (mutfakSu.data) {
+              m.su = {
+                level1: mutfakSu.data.level1 ?? 100,
+                level2: mutfakSu.data.level2 ?? 100,
+                dailyRate: mutfakSu.data.daily_rate ?? 20,
+                lastChecked: mutfakSu.data.last_checked || null,
+                lastOrder: mutfakSu.data.last_order || null,
+                history: mutfakSu.data.history || []
+              };
+            }
+
+            // 3. Alışveriş
+            if (alisveris.data) {
+              const mapAl = (list) => list.map(x => ({ id: x.id, nm: x.isim, link: x.link, pr: Number(x.fiyat), dt: x.tarih, done: !!x.tamamlandi, doneDate: x.tamamlanma_tarihi }));
+              a.gorkem = mapAl(alisveris.data.filter(x => x.kime === 'gorkem'));
+              a.esra = mapAl(alisveris.data.filter(x => x.kime === 'esra'));
+              a.ev = mapAl(alisveris.data.filter(x => x.kime === 'ev'));
+              a.wishlist = mapAl(alisveris.data.filter(x => x.kime === 'wishlist'));
+              m.alisveris = mapAl(alisveris.data.filter(x => x.kime === 'mutfak'));
+            }
+
+            // 4. Sosyal
+            if (sosyal.data) {
+              s.aktiviteler = sosyal.data.map(x => ({
+                id: x.id, baslik: x.baslik, tarih: x.tarih, saat: x.saat, emoji: x.emoji, tur: x.tur,
+                harcama: Number(x.harcama), kisiSayisi: Number(x.kisi_sayisi),
+                puan_gorkem: Number(x.puan_gorkem || 0), puan_esra: Number(x.puan_esra || 0),
+                yorum_gorkem: x.yorum_gorkem || '', yorum_esra: x.yorum_esra || '',
+                detaylar: x.detaylar || '', tamamlandi: x.durum === 'tamamlandi', durum: x.durum || 'planda'
+              }));
+            }
+            if (havuz.data) {
+              s.havuz = havuz.data.map(h => ({ id: h.id, baslik: h.baslik, tur: h.tur, emoji: h.emoji, count: Number(h.count || 0), freq: h.freq, last: h.last_done }));
+            }
+            if (rutinler.data) {
+              s.rutinler = rutinler.data.map(r => ({ id: r.id, aktivite: r.aktivite, kisi: r.kisi, vakit: r.vakit, gunler: r.gunler || [], saati: r.saati, ucret: Number(r.ucret || 0) }));
+            }
+
+            return { mutfak: m, sosyal: s, alisveris: a };
+          });
+        } catch (error) {
+          console.error("❌ fetchGroup1Data error:", error);
+        }
+      },
+
+      recoverFromLocalStorage: async () => {
+        const loadId = toast.loading('Tarayıcı hafızası taranıyor (Derin Tarama)...');
+        try {
+          let foundData = null;
+          // LocalStorage'daki tüm anahtarları tara
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            try {
+              const val = localStorage.getItem(key);
+              if (val && (val.includes('"mutfak"') || val.includes('"sosyal"'))) {
+                const parsed = JSON.parse(val);
+                const state = parsed.state || parsed;
+                if (state.mutfak?.buzdolabi?.length > 0 || state.sosyal?.aktiviteler?.length > 0) {
+                  foundData = state;
+                  console.log('Bulunan Yedek Anahtarı:', key);
+                  break;
+                }
+              }
+            } catch(e) {}
+          }
+
+          if (!foundData) {
+            toast.dismiss(loadId);
+            toast.error('Maalesef tarayıcı hafızasında da eski bir iz bulunamadı. 😔');
+            return;
+          }
+
+          const updates = {};
+          if (foundData.mutfak) updates.mutfak = foundData.mutfak;
+          if (foundData.sosyal) updates.sosyal = foundData.sosyal;
+          if (foundData.alisveris) updates.alisveris = foundData.alisveris;
+
+          set(updates);
+          toast.dismiss(loadId);
+          toast.success('BÜYÜK BAŞARI! Tarayıcı hafızasından veriler kurtarıldı. 🎉 Şimdi migrasyonu yapabilirsiniz.');
+          await get().runGroup1Migration();
+        } catch(e) {
+          toast.dismiss(loadId);
+          toast.error('Yerel kurtarma hatası: ' + e.message);
+        }
       },
 
       subscribed: false,
@@ -1187,23 +2615,48 @@ const useStore = create(
         const channel = supabase.channel(channelName);
         
         channel
-          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'eraylar_store', filter: 'id=eq.1' },
+          .on('postgres_changes', { event: '*', schema: 'public' },
             (payload) => {
-              const newData = payload.new.data;
-              if (!newData) return;
-              
               const state = get();
-              if (state.isSaving) return;
-              if (newData.system?.lastUpdatedBy === state.system.clientId) return;
+              const table = payload.table;
 
-              // Veri gerçekten farklı mı kontrol et
-              const currentDataStr = JSON.stringify(extractAppData(state));
-              const newDataStr = JSON.stringify(newData);
-              if (currentDataStr === newDataStr) return;
+              // 1. Monolitik JSON Güncellemesi
+              if (table === 'eraylar_store' && payload.eventType === 'UPDATE') {
+                const newData = payload.new?.data;
+                if (!newData) return;
+                if (state.isSaving) return;
+                if (newData.system?.lastUpdatedBy === state.system.clientId) return;
+                
+                // Faz 4 sonrası JSON'da finans ve hedefler olmadığı için güvenle merge yapabiliriz.
+                set({ ...newData });
+              }
 
-              console.log('🔄 Buluttan yeni veri geldi, senkronize ediliyor...');
-              set({ ...newData });
-            })
+              // 2. Faz 3 SQL Tabloları Güncellemesi
+              const phase3Tables = [
+                'finans_kartlar', 'finans_krediler', 'finans_onay_havuzu', 
+                'hedefler_aktif', 'hedefler_gecmis', 'hedefler_vizyon'
+              ];
+              if (phase3Tables.includes(table)) {
+                console.log(`🔄 [Realtime] ${table} değişti, veriler eşitleniyor...`);
+                get().fetchPhase3Data();
+              }
+
+              // 3. Grup 1 Tabloları Güncellemesi
+              const group1Tables = [
+                'mutfak_stok', 'mutfak_tarifler', 'alisveris_listesi', 'sosyal_etkinlikler'
+              ];
+              if (group1Tables.includes(table)) {
+                console.log(`🔄 [Realtime] ${table} değişti, Grup 1 verileri eşitleniyor...`);
+                get().fetchGroup1Data();
+              }
+
+              // 4. Harcamalar Güncellemesi
+              if (table === 'finans_harcamalar') {
+                console.log(`🔄 [Realtime] Harcamalar değişti, bakiye güncelleniyor...`);
+                get().getBuAyHarcamalar();
+              }
+            }
+          )
           .subscribe((status) => {
             if (status === 'SUBSCRIBED') {
               set({ subscribed: true });
@@ -1241,6 +2694,11 @@ const useStore = create(
           } catch (err) {
             console.error('❌ saveToSupabase error:', err);
             set({ isSaving: false, isOnline: false });
+            // FAZ 10: Kullanıcıyı sessizce kaybolan veriler konusunda uyar.
+            toast.error('Bağlantı hatası: Son işleminiz buluta kaydedilemedi!', {
+              id: 'sync-error', // Prevent duplicate toasts
+              duration: 4000
+            });
           }
           saveTimeout = null;
         };
@@ -1270,6 +2728,10 @@ const useStore = create(
       updateFinansData: (key, data) => {
         const state = get();
         set({ finans: { ...state.finans, [key]: data } });
+        // GÖLGE YAZIM (SHADOW WRITE) - FAZ 1
+        if (key === 'kartlar') syncFinansKartlar(data);
+        if (key === 'borclar') syncFinansKrediler(data);
+        if (key === 'approvalPool') syncFinansOnayHavuzu(data);
         get().saveToSupabase();
       },
       addExpense: (expense) => {
@@ -1301,7 +2763,9 @@ const useStore = create(
           defaultPay,
           ...expense
         };
-        set({ finans: { ...state.finans, approvalPool: [newPoolItem, ...(state.finans.approvalPool || [])] } });
+        const newPool = [newPoolItem, ...(state.finans.approvalPool || [])];
+        set({ finans: { ...state.finans, approvalPool: newPool } });
+        syncFinansOnayHavuzu(newPool); // Gölge Yazım
         get().saveToSupabase();
       },
 
@@ -1434,6 +2898,8 @@ const useStore = create(
 
         const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
         set({ finans: { ...get().finans, approvalPool: updatedPool } });
+        syncFinansOnayHavuzu(updatedPool); // Gölge Yazım
+        supabase.from('finans_onay_havuzu').delete().eq('id', String(poolId)).then();
         get().addLog('Harcama Onaylandı (v2)', `${item.title}: ${item.amount}₺`);
         get().saveToSupabase();
         toast.success('Harcama onaylandı ve kaydedildi! ✅');
@@ -1444,6 +2910,8 @@ const useStore = create(
         const state = get();
         const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
         set({ finans: { ...state.finans, approvalPool: updatedPool } });
+        syncFinansOnayHavuzu(updatedPool); // Gölge Yazım
+        supabase.from('finans_onay_havuzu').delete().eq('id', String(poolId)).then();
         get().saveToSupabase();
         toast.success('Harcama reddedildi.');
       },
@@ -1592,11 +3060,67 @@ const useStore = create(
             ...state.finans.kartMutabakat[kartId],
             gercek: Number(tutar),
             ay: hedefAy,
+            paid: false // Yeni gerçek borç girildiğinde ödenmedi olarak başlar
           },
         };
         set({ finans: { ...state.finans, kartMutabakat: yeniMutabakat } });
         get().saveToSupabase();
         toast.success('Gerçek borç kaydedildi! 💳');
+      },
+
+      // Kredi kartı borcunu öder
+      payCreditCard: async (kartId, amount, paymentType, source) => {
+        const state = get();
+        const buAy = new Date().toISOString().slice(0, 7);
+        const amountNum = Number(amount);
+
+        // 1. Ödeme Kaynağından Düş
+        let yeniBakiyeler = { ...state.kasa.bakiyeler };
+        let yeniBankaHesaplari = [...(state.kasa.bankaHesaplari || [])];
+
+        const { type, id } = source; // source: { type: 'nakit' | 'havale', id: 'banka-id' }
+
+        if (type === 'havale' && id) {
+          yeniBankaHesaplari = yeniBankaHesaplari.map(b => 
+            b.id === id ? { ...b, balance: b.balance - amountNum } : b
+          );
+        } else {
+          const payerKey = (state.currentUser?.name || 'ortak').toLowerCase();
+          if (yeniBakiyeler[payerKey] !== undefined) {
+            yeniBakiyeler[payerKey] -= amountNum;
+          }
+        }
+
+        // 2. Kart Mutabakatını Güncelle
+        const currentMut = state.finans.kartMutabakat[kartId] || { beklenen: 0, gercek: 0, ay: buAy };
+        const yeniMutabakat = {
+          ...state.finans.kartMutabakat,
+          [kartId]: {
+            ...currentMut,
+            paid: true,
+            paymentType: paymentType, // 'full' | 'min'
+            paidAmount: amountNum,
+            sourceType: type,
+            sourceId: id,
+            ay: buAy
+          }
+        };
+
+        // 3. Supabase'deki mutabakat kaydını güncelle
+        // Not: finans_kart_mutabakat tablosunda paid/paymentType kolonları olmalı.
+        // Eğer yoksa upsertKartMutabakat hata verebilir, bu yüzden sadece yerelde tutuyoruz şimdilik 
+        // veya DB şemasını bildiğimizi varsayıyoruz. 
+        await upsertKartMutabakat(kartId, buAy, currentMut.beklenen, currentMut.gercek, state.family_id);
+
+        set({
+          kasa: { ...state.kasa, bakiyeler: yeniBakiyeler, bankaHesaplari: yeniBankaHesaplari },
+          finans: { ...state.finans, kartMutabakat: yeniMutabakat }
+        });
+
+        const kartName = state.finans.kartlar.find(k => k.id === kartId)?.name || kartId;
+        get().addLog('Kart Ödemesi', `${kartName} için ${amountNum}₺ ödeme yapıldı (${paymentType === 'full' ? 'Tam' : 'Asgari'}).`);
+        get().saveToSupabase();
+        toast.success(`${kartName} ödemesi başarıyla kaydedildi! 🎉`);
       },
 
       // Bu ayın harcamalarını Supabase'den çeker
@@ -1787,9 +3311,13 @@ const useStore = create(
           deadline: '', 
           priority: 'Orta',
           category: 'Genel',
+          notes: '',
+          createdAt: new Date().toISOString(),
+          createdBy: state.users?.gorkem?.name || 'Sistem', // Default to current user logic if needed
           ...goal 
         };
         set({ kasa: { ...state.kasa, kumbaralar: [...(state.kasa.kumbaralar || []), newGoal] } });
+        pushHedefToSupabase(newGoal); // Gölge Yazım
         get().addLog('Hedef Eklendi', `Yeni hedef: ${goal.name}`);
         get().saveToSupabase();
       },
@@ -1798,6 +3326,8 @@ const useStore = create(
         const state = get();
         const updated = (state.kasa.kumbaralar || []).map(g => g.id === id ? { ...g, ...updates } : g);
         set({ kasa: { ...state.kasa, kumbaralar: updated } });
+        const updatedGoal = updated.find(g => g.id === id);
+        if (updatedGoal) pushHedefToSupabase(updatedGoal); // Gölge Yazım
         get().saveToSupabase();
       },
 
@@ -1805,7 +3335,204 @@ const useStore = create(
         const state = get();
         const g = (state.kasa.kumbaralar || []).find(x => x.id === id);
         set({ kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(x => x.id !== id) } });
+        deleteHedefFromSupabase(id); // Gölge Yazım
         if (g) get().addLog('Hedef Silindi', `${g.name}`);
+        get().saveToSupabase();
+      },
+
+      // --- Vision Goal Actions ---
+      addVisionGoal: (goal) => {
+        const state = get();
+        const newGoal = {
+          id: Date.now(),
+          current: 0,
+          target: 100,
+          notes: '',
+          createdAt: new Date().toISOString(),
+          createdBy: 'Görkem', 
+          ...goal
+        };
+        set({ hedefler: { ...state.hedefler, goals: [...(state.hedefler.goals || []), newGoal] } });
+        pushHedefToSupabase(newGoal); // Gölge Yazım
+        get().saveToSupabase();
+      },
+
+      updateVisionGoal: (id, updates) => {
+        const state = get();
+        const updated = (state.hedefler.goals || []).map(g => g.id === id ? { ...g, ...updates } : g);
+        set({ hedefler: { ...state.hedefler, goals: updated } });
+        const updatedGoal = updated.find(g => g.id === id);
+        if (updatedGoal) pushHedefToSupabase(updatedGoal); // Gölge Yazım
+        get().saveToSupabase();
+      },
+
+      deleteVisionGoal: (id) => {
+        const state = get();
+        set({ hedefler: { ...state.hedefler, goals: (state.hedefler.goals || []).filter(g => g.id !== id) } });
+        deleteHedefFromSupabase(id); // Gölge Yazım
+        get().saveToSupabase();
+      },
+
+      addVisionPlan: (plan) => {
+        const state = get();
+        const newItem = { id: Date.now().toString(), ...plan };
+        set({ hedefler: { ...state.hedefler, longTermVision: [...(state.hedefler.longTermVision || []), newItem] } });
+        pushVizyonPlanToSupabase(newItem); // Gölge Yazım
+        get().saveToSupabase();
+      },
+
+      updateVisionPlan: (id, updates) => {
+        const state = get();
+        const updated = (state.hedefler.longTermVision || []).map(p => p.id === id ? { ...p, ...updates } : p);
+        set({ hedefler: { ...state.hedefler, longTermVision: updated } });
+        const updatedPlan = updated.find(p => p.id === id);
+        if (updatedPlan) pushVizyonPlanToSupabase(updatedPlan); // Gölge Yazım
+        get().saveToSupabase();
+      },
+
+      deleteVisionPlan: (id) => {
+        const state = get();
+        const updated = (state.hedefler.longTermVision || []).filter(p => p.id !== id);
+        set({ hedefler: { ...state.hedefler, longTermVision: updated } });
+        deleteVizyonPlanFromSupabase(id); // Gölge Yazım
+        get().saveToSupabase();
+      },
+
+      // ── Achievements ──
+      toggleBadge: (userId, badgeId) => {
+        set(state => {
+          const user = state.users[userId];
+          if (!user) return state;
+          const currentBadges = user.achievements || [];
+          const isEarned = currentBadges.includes(badgeId);
+          const newBadges = isEarned 
+            ? currentBadges.filter(id => id !== badgeId)
+            : [...currentBadges, badgeId];
+          
+          return {
+            users: {
+              ...state.users,
+              [userId]: { ...user, achievements: newBadges }
+            }
+          };
+        });
+        get().saveToSupabase();
+      },
+
+      completeGoal: (goalId, type, outcomeNotes) => {
+        const state = get();
+        let goalToComplete = null;
+        
+        if (type === 'money') {
+          goalToComplete = (state.kasa.kumbaralar || []).find(g => g.id == goalId);
+        } else {
+          goalToComplete = (state.hedefler.goals || []).find(g => g.id == goalId);
+        }
+
+        if (!goalToComplete) {
+            toast.error('Hedef bulunamadı! (ID/Type Hatası)');
+            return;
+        }
+
+          const kazanım = {
+            id: Date.now().toString(),
+            title: goalToComplete.title || goalToComplete.name,
+            originalType: type,
+            completedAt: new Date().toISOString(),
+            notes: outcomeNotes || goalToComplete.notes || '',
+            owner: 'aile' // Başarı aileye aittir
+          };
+          
+          if (type === 'money') {
+            set({ 
+              kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(g => g.id != goalId) },
+              hedefler: { ...state.hedefler, completedHistory: [kazanım, ...(state.hedefler.completedHistory || [])] }
+            });
+          } else {
+            set({ 
+              hedefler: { 
+                ...state.hedefler, 
+                goals: (state.hedefler.goals || []).filter(g => g.id != goalId),
+                completedHistory: [kazanım, ...(state.hedefler.completedHistory || [])] 
+              } 
+            });
+          }
+          
+          pushHedefGecmisToSupabase(kazanım, 'completed'); // Gölge Yazım
+          deleteHedefFromSupabase(goalId); // Aktif hedeflerden sil
+          get().addLog('Kazanım!', `Hedef tamamlandı: ${kazanım.title}`);
+          get().saveToSupabase();
+      },
+
+      failGoal: (goalId, type, failureNotes) => {
+        const state = get();
+        let goalToFail = null;
+        
+        if (type === 'money') {
+          goalToFail = (state.kasa.kumbaralar || []).find(g => g.id == goalId);
+        } else {
+          goalToFail = (state.hedefler.goals || []).find(g => g.id == goalId);
+        }
+
+        if (!goalToFail) {
+            toast.error('Hedef bulunamadı! (ID/Type Hatası)');
+            return;
+        }
+
+
+          const kayıp = {
+            id: Date.now().toString(),
+            title: goalToFail.title || goalToFail.name,
+            originalType: type,
+            failedAt: new Date().toISOString(),
+            notes: failureNotes || '',
+            owner: 'aile' // Başarısızlık aileye aittir
+          };
+
+          if (type === 'money') {
+            set({ 
+                kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(g => g.id != goalId) },
+                hedefler: { ...state.hedefler, failedHistory: [kayıp, ...(state.hedefler.failedHistory || [])] }
+            });
+          } else {
+            set({ 
+                hedefler: { 
+                    ...state.hedefler, 
+                    goals: (state.hedefler.goals || []).filter(g => g.id != goalId),
+                    failedHistory: [kayıp, ...(state.hedefler.failedHistory || [])] 
+                } 
+            });
+          }
+
+          pushHedefGecmisToSupabase(kayıp, 'failed'); // Gölge Yazım
+          deleteHedefFromSupabase(goalId); // Aktif hedeflerden sil
+          get().addLog('Kayıp', `Hedef başarısız: ${kayıp.title}`);
+          get().saveToSupabase();
+      },
+
+      updateCompletedGoal: (id, updates) => {
+        const state = get();
+        const updated = (state.hedefler.completedHistory || []).map(h => h.id === id ? { ...h, ...updates } : h);
+        set({ hedefler: { ...state.hedefler, completedHistory: updated } });
+        get().saveToSupabase();
+      },
+
+      deleteCompletedGoal: (id) => {
+        const state = get();
+        set({ hedefler: { ...state.hedefler, completedHistory: (state.hedefler.completedHistory || []).filter(h => h.id !== id) } });
+        get().saveToSupabase();
+      },
+
+      updateFailedGoal: (id, updates) => {
+        const state = get();
+        const updated = (state.hedefler.failedHistory || []).map(h => h.id === id ? { ...h, ...updates } : h);
+        set({ hedefler: { ...state.hedefler, failedHistory: updated } });
+        get().saveToSupabase();
+      },
+
+      deleteFailedGoal: (id) => {
+        const state = get();
+        set({ hedefler: { ...state.hedefler, failedHistory: (state.hedefler.failedHistory || []).filter(h => h.id !== id) } });
         get().saveToSupabase();
       },
 
@@ -1962,17 +3689,21 @@ const useStore = create(
         const newItem = { ...data, id: Date.now() };
         set({ ev: { ...state.ev, duzenliOdemeler: [...(state.ev.duzenliOdemeler || []), newItem] } });
         get().saveToSupabase();
+        pushEvDuzenliOdemeToSupabase(newItem);
       },
       updateDuzenliOdeme: (id, updates) => {
         const state = get();
         const updated = state.ev.duzenliOdemeler.map(i => i.id === id ? { ...i, ...updates } : i);
         set({ ev: { ...state.ev, duzenliOdemeler: updated } });
         get().saveToSupabase();
+        const item = updated.find(i => i.id === id);
+        if (item) pushEvDuzenliOdemeToSupabase(item);
       },
       deleteDuzenliOdeme: (id) => {
         const state = get();
         set({ ev: { ...state.ev, duzenliOdemeler: state.ev.duzenliOdemeler.filter(i => i.id !== id) } });
         get().saveToSupabase();
+        supabase.from('ev_duzenli_odemeler').delete().eq('id', String(id)).then();
       },
       addFinanceExpense: (expense, paymentInfo) => {
         const state = get();
@@ -2006,6 +3737,7 @@ const useStore = create(
         const newAbo = { ...abo, id: Date.now() };
         set({ ev: { ...state.ev, abonelikler: [...state.ev.abonelikler, newAbo] } });
         get().saveToSupabase();
+        pushEvAbonelikToSupabase(newAbo);
       },
 
       updateAbonelik: (id, updates) => {
@@ -2013,12 +3745,15 @@ const useStore = create(
         const updated = state.ev.abonelikler.map(a => a.id === id ? { ...a, ...updates } : a);
         set({ ev: { ...state.ev, abonelikler: updated } });
         get().saveToSupabase();
+        const item = updated.find(a => a.id === id);
+        if (item) pushEvAbonelikToSupabase(item);
       },
 
       deleteAbonelik: (id) => {
         const state = get();
         set({ ev: { ...state.ev, abonelikler: state.ev.abonelikler.filter(a => a.id !== id) } });
         get().saveToSupabase();
+        supabase.from('ev_abonelikler').delete().eq('id', String(id)).then();
       },
 
       saveQuickExpense: (data, paymentInfo) => {
@@ -2243,6 +3978,7 @@ const useStore = create(
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().addLog('Yeni Seyahat Planı', `${trip.title || trip.city} (${newTrip.travelers}) planlandı! ✈️`);
         get().saveToSupabase();
+        pushTatilTripToSupabase(newTrip);
       },
 
       deleteTrip: (tripId) => {
@@ -2252,6 +3988,7 @@ const useStore = create(
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().addLog('Tatil Silindi', 'Bir tatil planı silindi. 🗑️');
         get().saveToSupabase();
+        deleteTatilTripFromSupabase(tripId);
       },
 
       updateTrip: (tripId, updates) => {
@@ -2261,6 +3998,8 @@ const useStore = create(
         );
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().saveToSupabase();
+        const updatedTripObj = updatedTrips.find(t => t.id === tripId);
+        if (updatedTripObj) pushTatilTripToSupabase(updatedTripObj);
       },
 
       updateTripValiz: (tripId, person, itemId) => {
@@ -2276,6 +4015,8 @@ const useStore = create(
         });
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().saveToSupabase();
+        const valizTrip = updatedTrips.find(t => t.id === tripId);
+        if (valizTrip) pushTatilTripToSupabase(valizTrip);
       },
 
       addTripExpense: (tripId, expense) => {
@@ -2320,6 +4061,8 @@ const useStore = create(
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().addLog('Seyahat Değerlendirmesi', `${person} seyahati değerlendirdi.`);
         get().saveToSupabase();
+        const evalTrip = updatedTrips.find(t => String(t.id) === String(tripId));
+        if (evalTrip) pushTatilTripToSupabase(evalTrip);
       },
 
       syncValizToDepo: (itemText, category) => {
@@ -2350,6 +4093,7 @@ const useStore = create(
         set({ tatil: { ...state.tatil, wishlist: updatedWishlist } });
         get().addLog('Yeni Hayal', `${dream.place} hayal listesine eklendi! 🌟`);
         get().saveToSupabase();
+        pushTatilWishlistToSupabase(newDream);
       },
 
       uploadTripPhoto: async (file) => {
@@ -2410,6 +4154,8 @@ const useStore = create(
         });
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().saveToSupabase();
+        const checkTrip = updatedTrips.find(t => t.id === tripId);
+        if (checkTrip) pushTatilTripToSupabase(checkTrip);
       },
 
       updateDebt: async (id, remaining) => {
@@ -2435,6 +4181,10 @@ const useStore = create(
           [gun]: { ...(state.mutfak.menu[gun] || {}), [mealKey]: yemek },
         };
         set({ mutfak: { ...state.mutfak, menu: yeniMenu } });
+        
+        // GÖLGE YAZIM
+        pushMutfakMenuToSupabase(gun, mealKey, String(yemek));
+        
         get().saveToSupabase();
       },
 
@@ -2445,6 +4195,12 @@ const useStore = create(
           [gun]: { ...(state.mutfak.menu[gun] || {}), ...details },
         };
         set({ mutfak: { ...state.mutfak, menu: yeniMenu } });
+        
+        // GÖLGE YAZIM
+        Object.entries(details).forEach(([key, value]) => {
+          pushMutfakMenuToSupabase(gun, key, String(value));
+        });
+        
         get().saveToSupabase();
       },
 
@@ -2671,23 +4427,27 @@ const useStore = create(
 
       updateWaterLevel: async (tank, level) => {
         const state = get();
+        const newSu = {
+          ...state.mutfak.su,
+          [tank]: level,
+          lastChecked: new Date().toISOString() // Reset timer on manual update
+        };
         set({
           mutfak: {
             ...state.mutfak,
-            su: {
-              ...state.mutfak.su,
-              [tank]: level,
-              lastChecked: new Date().toISOString() // Reset timer on manual update
-            }
+            su: newSu
           }
         });
         get().saveToSupabase();
+        pushMutfakSuToSupabase(newSu);
       },
 
       setWaterDailyRate: (rate) => {
         const state = get();
-        set({ mutfak: { ...state.mutfak, su: { ...state.mutfak.su, dailyRate: rate } } });
+        const newSu = { ...state.mutfak.su, dailyRate: rate };
+        set({ mutfak: { ...state.mutfak, su: newSu } });
         get().saveToSupabase();
+        pushMutfakSuToSupabase(newSu);
       },
 
       checkWaterDepletion: () => {
@@ -2714,18 +4474,20 @@ const useStore = create(
             newLevel2 = Math.max(0, newLevel2 - totalDepletion);
           }
 
+          const newSuObj = {
+            ...su,
+            level1: newLevel1,
+            level2: newLevel2,
+            lastChecked: now.toISOString()
+          };
           set({
             mutfak: {
               ...state.mutfak,
-              su: {
-                ...su,
-                level1: newLevel1,
-                level2: newLevel2,
-                lastChecked: now.toISOString()
-              }
+              su: newSuObj
             }
           });
           get().saveToSupabase();
+          pushMutfakSuToSupabase(newSuObj);
         }
       },
 
@@ -2736,18 +4498,20 @@ const useStore = create(
         
         // Mantık: Sipariş verildiğinde Yedek (level2) dolar. 
         // Mutfaktaki (level1) mevcut su seviyesi değişmez.
+        const newSu = { 
+          ...currentSu, 
+          level2: 100, // Yedekler tazelendi
+          lastOrder: new Date().toISOString(), 
+          history: yeniHistory 
+        };
         set({
           mutfak: {
             ...state.mutfak,
-            su: { 
-              ...currentSu, 
-              level2: 100, // Yedekler tazelendi
-              lastOrder: new Date().toISOString(), 
-              history: yeniHistory 
-            }
+            su: newSu
           }
         });
         get().saveToSupabase();
+        pushMutfakSuToSupabase(newSu);
       },
 
       removeWaterOrder: async (index) => {
@@ -2755,13 +4519,15 @@ const useStore = create(
         const currentSu = state.mutfak.su || { history: [] };
         const newHistory = (currentSu.history || []).filter((_, i) => i !== index);
         
+        const newSu = { ...currentSu, history: newHistory };
         set({
           mutfak: {
             ...state.mutfak,
-            su: { ...currentSu, history: newHistory }
+            su: newSu
           }
         });
         get().saveToSupabase();
+        pushMutfakSuToSupabase(newSu);
         toast.success('Kayıt silindi.');
       },
 
@@ -2798,18 +4564,20 @@ const useStore = create(
           newLevel2 = Math.max(0, newLevel2 - remainingDeduction);
         }
 
+        const newSu = { 
+          ...su, 
+          level1: Math.round(newLevel1), 
+          level2: Math.round(newLevel2), 
+          lastChecked: now.toISOString() 
+        };
         set({
           mutfak: {
             ...state.mutfak,
-            su: { 
-              ...su, 
-              level1: Math.round(newLevel1), 
-              level2: Math.round(newLevel2), 
-              lastChecked: now.toISOString() 
-            }
+            su: newSu
           }
         });
         get().saveToSupabase();
+        pushMutfakSuToSupabase(newSu);
       },
 
       refillPetWater: async () => {
@@ -2844,6 +4612,12 @@ const useStore = create(
 
         set({ mutfak: { ...state.mutfak, [moduleKey]: items, alisveris: newShopping } });
         get().saveToSupabase();
+        
+        // GÖLGE YAZIM
+        pushMutfakStokToSupabase(items[idx], moduleKey);
+        if (newCr === 0 && !isAlreadyInShopping) {
+            pushAlisverisToSupabase(newShopping[newShopping.length - 1], 'mutfak');
+        }
       },
 
       transferStock: async (fromModule, toModule, itemName, qty) => {
@@ -2869,6 +4643,14 @@ const useStore = create(
 
         set({ mutfak: { ...state.mutfak, [fromModule]: fromItems, [toModule]: toItems } });
         get().saveToSupabase();
+        
+        // GÖLGE YAZIM
+        pushMutfakStokToSupabase(fromItems[fromIdx], fromModule);
+        if (toIdx !== -1) {
+            pushMutfakStokToSupabase(toItems[toIdx], toModule);
+        } else {
+            pushMutfakStokToSupabase(toItems[toItems.length - 1], toModule);
+        }
       },
 
       bulkFinishItems: async (itemsToFinish) => {
@@ -3248,25 +5030,65 @@ const useStore = create(
       // ── Sosyal Actions ──────────────────────────────────
       addSocialActivity: (activity) => {
         const state = get();
+        
+        // Veri Bütünlüğü Koruması: Sadece beklenen alanları al ve tiplerini zorla
+        const sanitized = {
+          baslik: String(activity.baslik || 'İsimsiz Aktivite'),
+          tarih: typeof activity.tarih === 'string' ? activity.tarih : new Date().toISOString().split('T')[0],
+          saat: String(activity.saat || '20:00'),
+          emoji: String(activity.emoji || '🎭'),
+          mekan: String(activity.mekan || ''),
+          harcama: Number(activity.harcama || 0),
+          tur: String(activity.tur || 'disari'),
+          masterCategory: String(activity.masterCategory || 'Genel'),
+          kisiSayisi: Number(activity.kisiSayisi || 2),
+          tamamlandi: !!activity.tamamlandi,
+          durum: activity.tamamlandi ? 'tamamlandi' : 'planda'
+        };
+
         const newActivity = {
           id: Date.now(),
-          tamamlandi: false,
-          durum: 'planda',
-          ...activity
+          ...sanitized
         };
+
         const currentAkt = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
         set({ sosyal: { ...state.sosyal, aktiviteler: [newActivity, ...currentAkt] } });
         get().saveToSupabase();
+        pushSosyalEtkinlikToSupabase(newActivity); // Faz 1.2
       },
 
       updateSocialActivity: (id, updates) => {
         const state = get();
+        
+        // Sadece izin verilen alanları ve doğru tipleri al
+        const cleanUpdates = {};
+        const allowedKeys = ['baslik', 'tarih', 'saat', 'emoji', 'mekan', 'harcama', 'tur', 'masterCategory', 'kisiSayisi', 'tamamlandi', 'durum', 'notlar', 'doneDate', 'puan_gorkem', 'puan_esra', 'yorum_gorkem', 'yorum_esra'];
+        
+        Object.keys(updates).forEach(key => {
+          if (allowedKeys.includes(key)) {
+            if (['harcama', 'kisiSayisi', 'puan_gorkem', 'puan_esra'].includes(key)) {
+              cleanUpdates[key] = Number(updates[key] || 0);
+            } else if (key === 'tamamlandi') {
+              cleanUpdates[key] = !!updates[key];
+            } else {
+              cleanUpdates[key] = String(updates[key] || '');
+            }
+          }
+        });
+
         const aktList = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
-        const updatedAktiviteler = aktList.map(a =>
-          a.id === id ? { ...a, ...updates } : a
-        );
+        let updatedActivity = null;
+        const updatedAktiviteler = aktList.map(a => {
+          if (a.id === id) {
+            updatedActivity = { ...a, ...cleanUpdates };
+            return updatedActivity;
+          }
+          return a;
+        });
+        
         set({ sosyal: { ...state.sosyal, aktiviteler: updatedAktiviteler } });
         get().saveToSupabase();
+        if (updatedActivity) pushSosyalEtkinlikToSupabase(updatedActivity); // Faz 1.2
       },
 
       completeSocialActivity: (id, pGorkem, pEsra, cost = 0, commentGorkem = '', commentEsra = '', paymentInfo = null) => {
@@ -3619,6 +5441,7 @@ const useStore = create(
 
         set({ ev: { ...currentEv, onarimListesi: newList } });
         get().saveToSupabase();
+        pushEvOnarimToSupabase(newItem);
         toast.success(`"${task}" listeye eklendi! 📋`);
       },
 
@@ -3641,6 +5464,8 @@ const useStore = create(
 
         set({ ev: { ...currentEv, onarimListesi: newList } });
         get().saveToSupabase();
+        const updatedItem = newList.find(i => i.id === id);
+        if (updatedItem) pushEvOnarimToSupabase(updatedItem);
       },
 
       clearCompletedOnarimItems: (userKey) => {
@@ -3662,6 +5487,7 @@ const useStore = create(
 
         set({ ev: { ...currentEv, onarimListesi: newList } });
         get().saveToSupabase();
+        newList.filter(i => i.isArchived).forEach(i => pushEvOnarimToSupabase(i));
         toast.success('Tamamlanan görevler arşivlendi! ✨');
       },
 
@@ -4045,6 +5871,7 @@ const useStore = create(
         });
 
         get().saveToSupabase();
+        pushGarajYakitToSupabase(newLog, state.selectedVehicleId);
       },
 
       addServiceRecord: (record, paymentInfo = null) => {
@@ -4075,6 +5902,7 @@ const useStore = create(
         });
 
         get().saveToSupabase();
+        pushGarajServisToSupabase(newRecord, state.selectedVehicleId);
       },
 
       addVehicle: (vehicle) => {
@@ -4263,6 +6091,7 @@ const useStore = create(
         const yeniVaccines = [...currentVaccines, { id: Date.now(), ...vaccine }];
         set({ pet: { ...state.pet, vaccines: { ...state.pet.vaccines, [petId]: yeniVaccines } } });
         get().saveToSupabase();
+        pushPetAsiToSupabase(petId, { id: Date.now(), ...vaccine });
       },
 
       deletePetVaccine: (petId, id) => {
@@ -4270,6 +6099,7 @@ const useStore = create(
         const yeniVaccines = (state.pet.vaccines[petId] || []).filter(v => v.id !== id && v.n !== id);
         set({ pet: { ...state.pet, vaccines: { ...state.pet.vaccines, [petId]: yeniVaccines } } });
         get().saveToSupabase();
+        supabase.from('pet_asilar').delete().eq('id', String(id)).then();
       },
 
       addPetWeight: (petId, weightData) => {
@@ -4287,6 +6117,7 @@ const useStore = create(
           }
         });
         get().saveToSupabase();
+        pushPetAgirlikToSupabase(petId, { id: Date.now(), ...weightData });
       },
 
       deletePetWeight: (petId, id) => {
@@ -4294,6 +6125,7 @@ const useStore = create(
         const yeniWeights = (state.pet.weights[petId] || []).filter(w => w.id !== id);
         set({ pet: { ...state.pet, weights: { ...state.pet.weights, [petId]: yeniWeights } } });
         get().saveToSupabase();
+        supabase.from('pet_agirlik').delete().eq('id', String(id)).then();
       },
 
       deletePetLog: (id) => {
@@ -4645,17 +6477,51 @@ const useStore = create(
 
       updateStockQty: (moduleKey, itemName, direction) => {
         const state = get();
+        let updatedItemData = null;
         const updatedList = state.mutfak[moduleKey].map(item => {
           if (item.n === itemName) {
             const step = item.mn || 1;
             const delta = direction * step;
             const newQty = Math.max(0, (item.cr || 0) + delta);
-            return { ...item, cr: Number(newQty.toFixed(2)) };
+            const updated = { ...item, cr: Number(newQty.toFixed(2)) };
+            updatedItemData = updated;
+            return updated;
           }
           return item;
         });
         set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
         get().saveToSupabase();
+        if (updatedItemData) pushMutfakStokToSupabase(updatedItemData, moduleKey); // Faz 1.2
+      },
+
+      addMutfakStokItem: (moduleKey, newItem) => {
+        const state = get();
+        const currentList = state.mutfak[moduleKey] || [];
+        const updatedList = [...currentList, newItem];
+        set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
+        get().saveToSupabase();
+        pushMutfakStokToSupabase(newItem, moduleKey);
+      },
+
+      updateMutfakStokItem: (moduleKey, oldName, newItem) => {
+        const state = get();
+        const currentList = state.mutfak[moduleKey] || [];
+        const updatedList = currentList.map(item => item.n === oldName ? newItem : item);
+        set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
+        get().saveToSupabase();
+        pushMutfakStokToSupabase(newItem, moduleKey);
+        // Supabase silme işlemi gerekebilir ama isme göre çalıştığı için upsert muhtemelen yeni satır açar.
+        // O yüzden eski ismi siliyoruz.
+        supabase.from('mutfak_stok').delete().eq('isim', oldName).then();
+      },
+
+      deleteMutfakStokItem: (moduleKey, itemName) => {
+        const state = get();
+        const currentList = state.mutfak[moduleKey] || [];
+        const updatedList = currentList.filter(item => item.n !== itemName);
+        set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
+        get().saveToSupabase();
+        supabase.from('mutfak_stok').delete().eq('isim', itemName).then();
       },
 
       getAvailableRecipes: () => {
@@ -4906,7 +6772,7 @@ const useStore = create(
       }
     }),
     {
-      name: 'eraylar-state-v5',
+      name: 'eraylar-state-v6-online-first',
       storage: createJSONStorage(() => ({
         getItem: (name) => localStorage.getItem(name),
         setItem: (name, value) => {

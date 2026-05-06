@@ -25,7 +25,7 @@ const Modaring = () => {
 
   return (
     <AnimatedPage className="modaring-container">
-      <header className="module-header glass" style={{ background: 'linear-gradient(135deg, #fb7185, #e11d48)' }}>
+      <header className="module-header glass" style={{ background: 'var(--modaring)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">✨</span>

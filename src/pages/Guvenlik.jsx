@@ -94,7 +94,7 @@ export default function Guvenlik() {
 
   return (
     <AnimatedPage className="guvenlik-page">
-      <header className="module-header glass" style={{ background: 'var(--txt)', color: 'white', padding: '15px 20px', borderRadius: '0 0 24px 24px' }}>
+      <header className="module-header glass" style={{ background: 'var(--guvenlik)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <button 
             onClick={() => navigate('/profil')} 

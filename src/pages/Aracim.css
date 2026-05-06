@@ -407,7 +407,8 @@
 }
 
 
-.module-header { padding: 12px 16px !important; }
+/* Standard header handled by index.css */
+
 .header-top { margin-bottom: 8px !important; }
 .ai-insight-card { margin: 8px 16px !important; padding: 10px 14px !important; }
 

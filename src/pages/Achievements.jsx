@@ -1,89 +1,103 @@
-import React from 'react';
-import { Award, Trophy, Star, ChevronRight, ArrowLeft, Zap, Heart, TrendingUp, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  Award, Trophy, Star, ChevronRight, ArrowLeft, Zap, 
+  Heart, TrendingUp, Sparkles, CheckCircle, Lock 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
+import { ALL_ACHIEVEMENTS } from '../constants/achievements';
+import toast from 'react-hot-toast';
 import './Achievements.css';
 
 export default function Achievements() {
   const navigate = useNavigate();
-  const { system } = useStore();
-  const achievements = system?.achievements || [];
+  const { users, currentUser } = useStore();
+  
+  const [badgeUser, setBadgeUser] = useState(currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra');
+  const [filter, setFilter] = useState('all');
 
-  const earnedCount = (achievements || []).filter(a => a.earned).length;
+  const userAchievements = users[badgeUser]?.achievements || [];
+  const earnedCount = userAchievements.length;
+
+  const categories = [
+    { id: 'all', label: 'Tümü', icon: '💎' },
+    { id: 'mutfak', label: 'Mutfak', icon: '🍳' },
+    { id: 'tatil', label: 'Tatil', icon: '✈️' },
+    { id: 'finans', label: 'Finans', icon: '💰' },
+    { id: 'hedefler', label: 'Hedefler', icon: '🎯' },
+    { id: 'saglik', label: 'Sağlık', icon: '💖' },
+    { id: 'sosyal', label: 'Sosyal', icon: '🦋' },
+    { id: 'ev', label: 'Ev/Pet', icon: '🏠' },
+  ];
 
   return (
     <AnimatedPage className="achievements-container">
-      <header className="module-header glass achieve-premium-grad">
+      <header className="module-header glass" style={{ background: 'var(--achievements)' }}>
         <div className="header-top">
           <div className="header-title">
-            <span className="header-emoji animate-float">🏆</span>
+            <span className="header-emoji animate-float">🏅</span>
             <div className="header-text-box">
-              <h1>Başarılarım</h1>
-              <p>{earnedCount} Rozet Kazanıldı</p>
+              <h1>Rozet Koleksiyonu</h1>
+              <p>{earnedCount} / {ALL_ACHIEVEMENTS.length} Başarı Tamamlandı</p>
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn-v2" onClick={() => navigate('/')}><ArrowLeft size={20} /></button>
+            <button className="icon-btn-v2" onClick={() => navigate('/profil')}><ArrowLeft size={20} /></button>
           </div>
+        </div>
+
+        <div className="achieve-user-tabs">
+            <button className={badgeUser === 'gorkem' ? 'active' : ''} onClick={() => setBadgeUser('gorkem')}>
+                <span>👨‍💻</span> Görkem
+            </button>
+            <button className={badgeUser === 'esra' ? 'active' : ''} onClick={() => setBadgeUser('esra')}>
+                <span>👩‍🍳</span> Esra
+            </button>
         </div>
       </header>
 
       <div className="achievements-scroll-content">
-        {/* Statistics Recap */}
-        <div className="stats-recap-card glass animate-fadeIn">
-           <div className="src-header">
-             <Zap size={20} color="#f59e0b" />
-             <span>Yıllık Özet (2025)</span>
-           </div>
-           <div className="src-body">
-              <div className="src-item">
-                <strong>42</strong>
-                <small>Haftalık Rapor</small>
-              </div>
-              <div className="src-item">
-                <strong>%92</strong>
-                <small>Ort. Yaşam Skoru</small>
-              </div>
-              <div className="src-item">
-                <strong>12</strong>
-                <small>Hedef Ulaşıldı</small>
-              </div>
-           </div>
-           <button className="src-btn">YouTube Music Tarzı Özet <ChevronRight size={14} /></button>
+        {/* Category Filter */}
+        <div className="achieve-filters">
+            {categories.map(c => (
+                <button 
+                    key={c.id} 
+                    className={`filter-chip ${filter === c.id ? 'active' : ''}`}
+                    onClick={() => setFilter(c.id)}
+                >
+                    {c.icon} {c.label}
+                </button>
+            ))}
         </div>
 
         {/* Badges Grid */}
-        <div className="badges-section mt-24">
-           <div className="section-header-v2">
-             <h3>🥇 Rozet Koleksiyonu</h3>
-           </div>
-           <div className="badges-grid-v2">
-              {achievements.map(a => (
-                <div key={a.id} className={`badge-card-premium glass ${a.earned ? 'earned' : 'locked'}`}>
-                   <div className="bcp-icon">{a.earned ? a.icon : '🔒'}</div>
-                   <div className="bcp-info">
-                     <strong>{a.title}</strong>
-                     <small>{a.earned ? 'Kazanıldı' : 'Henüz Kilitli'}</small>
-                   </div>
-                </div>
-              ))}
-           </div>
-        </div>
-
-        {/* Upcoming Challenges */}
-        <div className="challenges-section mt-24">
-           <div className="section-header-v2">
-             <h3>🎯 Sıradaki Görevler</h3>
-           </div>
-           <div className="challenge-item glass">
-             <div className="ci-icon"><TrendingUp size={18} /></div>
-             <div className="ci-text">
-                <strong>Tasarruf Ustası II</strong>
-                <p>3 ay üst üste bütçe sınırında kal.</p>
-             </div>
-             <div className="ci-perc">%60</div>
-           </div>
+        <div className="badges-grid-v3">
+            {ALL_ACHIEVEMENTS
+                .filter(a => filter === 'all' || a.cat === filter || (filter === 'ev' && (a.cat === 'ev' || a.cat === 'pet')))
+                .map((a, idx) => {
+                    const isEarned = userAchievements.includes(a.id);
+                    return (
+                        <div 
+                            key={a.id} 
+                            className={`badge-card-v3 glass ${isEarned ? 'earned animate-pop' : 'locked'}`}
+                            style={{ animationDelay: `${idx * 0.05}s` }}
+                            onClick={() => {
+                                if (isEarned) toast.success(`${a.title}: ${a.desc}`, { icon: a.icon });
+                                else toast.error(`Bu rozet henüz kilitli!`, { icon: '🔒' });
+                            }}
+                        >
+                            <div className="bcv3-icon">
+                                <span className="emoji">{isEarned ? a.icon : <Lock size={20} opacity={0.3} />}</span>
+                                {isEarned && <div className="earned-mark"><CheckCircle size={12} /></div>}
+                            </div>
+                            <div className="bcv3-info">
+                                <strong>{a.title}</strong>
+                                <p>{a.desc}</p>
+                            </div>
+                        </div>
+                    );
+                })}
         </div>
       </div>
     </AnimatedPage>

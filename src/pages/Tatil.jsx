@@ -294,7 +294,7 @@ export default function Tatil() {
 
   return (
     <AnimatedPage className="tatil-container">
-      <header className="module-header glass tatil-gradient">
+      <header className="module-header glass" style={{ background: 'var(--tatil)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">✈️</span>

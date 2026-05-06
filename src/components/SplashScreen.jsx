@@ -7,17 +7,21 @@ const SplashScreen = ({ finishLoading }) => {
   const [jokeIndex, setJokeIndex] = useState(0);
 
   const jokes = [
-    { t: 'Waffle terlikleri saklıyor... 🐶', m: '🐶' },
-    { t: 'Mayıs klavyenin üstüne oturdu... 🐱', m: '🐱' },
-    { t: 'Görkem gizlice mutfaktan atıştırıyor... 🥪', m: '🥪' },
-    { t: 'Esra "Bugün ne pişirsem?" diye düşünüyor... 🥘', m: '🥘' },
-    { t: 'Fatura canavarları evden kovuluyor... 💸', m: '💸' },
-    { t: 'Modaring vardiya sistemi senkronize ediliyor... 📊', m: '📊' },
-    { t: 'Vizyoner asistan hesaplamaları bitiriyor... 🧠', m: '🧠' },
-    { t: 'Ödeme kanalları onay havuzuna bağlanıyor... 💸', m: '💸' },
-    { t: 'Mühendislik CRM fazları senkronize ediliyor... 💼', m: '💼' },
-    { t: 'Hayat modülü rutinleri optimize ediliyor... ⏳', m: '⏳' },
-    { t: 'Eraylar Hanem %100 Sevgiyle Yükleniyor... ❤️', m: '❤️' }
+    { t: 'Waffle terliklerinizle aşk yaşıyor... 🐶', m: '🐶' },
+    { t: 'Mayıs klavyede yeni bir dil geliştiriyor... 🐱', m: '🐱' },
+    { t: "Waffle'ın kuyruk sallama motoru ısıtılıyor... 🐾", m: '🐾' },
+    { t: 'Mayıs güneş ışığı paketlerini topluyor... ☀️', m: '☀️' },
+    { t: "Eraylar Hanem'de sevgi limitleri zorlanıyor... ❤️", m: '❤️' },
+    { t: 'Waffle mama kabının boş olduğunu fark etti... 😱', m: '😱' },
+    { t: 'Mayıs yüksek yerlerden dünyayı izliyor... 🏰', m: '🏰' },
+    { t: 'Görkem & Esra için yeni anılar hazırlanıyor... ✨', m: '✨' },
+    { t: 'Waffle kapı sesine 0.1 saniyede tepki veriyor... ⚡', m: '⚡' },
+    { t: 'Mayıs "miyav" diyerek tüm sorunları çözdü... 🎵', m: '🎵' },
+    { t: 'Ailemizin neşesi Waffle & Mayıs yükleniyor... 🧸', m: '🧸' },
+    { t: 'Eraylar hanesi huzur moduna alınıyor... 🧘‍♂️', m: '🧘‍♂️' },
+    { t: 'Waffle rüyasında dev bir kemik görüyor... 🦴', m: '🦴' },
+    { t: 'Mayıs patisiyle ekranı temizliyor... 🐾', m: '🐾' },
+    { t: 'Sonsuz mutluluk ve patili günler başlıyor... 🌈', m: '🌈' }
   ];
 
   useEffect(() => {
@@ -34,7 +38,7 @@ const SplashScreen = ({ finishLoading }) => {
         clearInterval(interval);
         setTimeout(finishLoading, 500);
       }
-    }, 1100); // Slightly faster for more items
+    }, 1500); // 1.5s per quote for better readability
     
     return () => {
       clearInterval(interval);
@@ -115,7 +119,7 @@ const SplashScreen = ({ finishLoading }) => {
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: '100%' }}
-          transition={{ duration: 10, ease: "linear" }}
+          transition={{ duration: 15 * 1.5, ease: "linear" }}
           style={{ height: '100%', background: 'white', boxShadow: '0 0 10px white' }}
         />
       </div>
@@ -180,7 +184,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v3.6.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"FİNANSAL SENKRON"</span>
+            v4.0.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"SOCRATES"</span>
           </span>
         </div>
         <span style={{
@@ -190,7 +194,7 @@ const SplashScreen = ({ finishLoading }) => {
           letterSpacing: '0.8px',
           marginTop: '6px'
         }}>
-          SİSTEM STABİLİZE EDİLDİ · GÖRKEM & ESRA © 2026
+          GÖRSEL UNIFICATION TAMAMLANDI · GÖRKEM & ESRA © 2026
         </span>
       </div>
     </motion.div>

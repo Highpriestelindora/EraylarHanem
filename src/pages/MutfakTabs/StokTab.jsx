@@ -8,9 +8,10 @@ import ConfirmModal from '../../components/ConfirmModal';
 
 const StokTab = () => {
   const { 
-    mutfak, setModuleData, setItemFinished, 
-    transferStock, bulkFinishItems, getAvailableRecipes,
-    updateStockQty, addMissingToShopping 
+    mutfak, transferStock, setItemFinished, 
+    updateStockQty, addMissingToShopping,
+    addMutfakStokItem, updateMutfakStokItem, deleteMutfakStokItem,
+    bulkFinishItems, getAvailableRecipes
   } = useStore();
 
   const [subTab, setSubTab] = useState('buzdolabi'); // buzdolabi, kiler, dondurucu
@@ -71,8 +72,7 @@ const StokTab = () => {
       message: `${itemName} stok kartını tamamen silmek istediğine emin misin? Bu işlem geri alınamaz.`,
       icon: '🗑️',
       onConfirm: () => {
-        const updatedItems = items.filter(i => i.n !== itemName);
-        setModuleData('mutfak', { ...mutfak, [subTab]: updatedItems });
+        deleteMutfakStokItem(subTab, itemName);
         setEditingItem(null);
         toast.success(`${itemName} tamamen silindi.`);
         setConfirmModal({ ...confirmModal, open: false });
@@ -136,7 +136,7 @@ const StokTab = () => {
          toast.error('Bu malzeme bu bölümde zaten var!');
          return;
       }
-      updatedItems.push(newItem);
+      addMutfakStokItem(subTab, newItem);
     } else {
       // When editing, check if new name conflicts with OTHER items in the SAME location
       const otherItemsInSameTab = items.filter(i => i.n !== editingItem.item.n);
@@ -144,10 +144,9 @@ const StokTab = () => {
         toast.error('Bu isimde başka bir malzeme zaten var!');
         return;
       }
-      updatedItems = updatedItems.map(x => x.n === editingItem.item.n ? newItem : x);
+      updateMutfakStokItem(subTab, editingItem.item.n, newItem);
     }
 
-    setModuleData('mutfak', { ...mutfak, [subTab]: updatedItems });
     setEditingItem(null);
     toast.success('Stok kartı güncellendi!');
   };

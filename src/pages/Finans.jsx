@@ -309,11 +309,12 @@ const KrediTab = React.memo(({ finans, prv }) => {
   const kartlar = finans?.kartlar || [];
   const borclar = finans?.borclar || [];
   const kartMutabakat = finans?.kartMutabakat || {};
-  const { gercekKartBorcuGir, payLoanInstallment, updateFinansData, payCreditCard } = useStore();
+  const { gercekKartBorcuGir, payLoanInstallment, updateFinansData, payCreditCard, kasa } = useStore();
 
   const [inputMap, setInputMap] = useState({});
   const [expandedKart, setExpandedKart] = useState(null);
   const [editingKart, setEditingKart] = useState(null);
+  const [payingCard, setPayingCard] = useState(null); // { id, amount, type }
   const [deletingKartId, setDeletingKartId] = useState(null);
   const [showKartModal, setShowKartModal] = useState(false);
   const [showBorcModal, setShowBorcModal] = useState(false);
@@ -409,13 +410,13 @@ const KrediTab = React.memo(({ finans, prv }) => {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button 
                         style={{ flex: 1, padding: '10px', borderRadius: '50px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', fontWeight: 'bold', cursor: 'pointer' }}
-                        onClick={() => payCreditCard(kart.id, mut.gercek * (kart.min_pct || 20) / 100, 'min')}
+                        onClick={() => setPayingCard({ id: kart.id, amount: mut.gercek * (kart.min_pct || 20) / 100, type: 'min', name: kart.name })}
                       >
                         ASGARİ ÖDE
                       </button>
                       <button 
                         style={{ flex: 1, padding: '10px', borderRadius: '50px', background: 'var(--finans, #10b981)', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
-                        onClick={() => payCreditCard(kart.id, mut.gercek, 'full')}
+                        onClick={() => setPayingCard({ id: kart.id, amount: mut.gercek, type: 'full', name: kart.name })}
                       >
                         TAMAMINI ÖDE
                       </button>
@@ -469,6 +470,48 @@ const KrediTab = React.memo(({ finans, prv }) => {
         initialData={editingKart}
       />
       <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
+
+      {/* Credit Card Payment Method Selection */}
+      <ActionSheet 
+        isOpen={!!payingCard} 
+        onClose={() => setPayingCard(null)} 
+        title="Ödeme Kaynağı Seçin"
+      >
+        {payingCard && (
+          <div className="payment-select-modal" style={{ padding: '20px' }}>
+            <p style={{ marginBottom: '15px', color: '#1e293b', fontSize: '14px' }}>
+              <strong>{payingCard.name}</strong> kartının <strong>{fmt(payingCard.amount, prv)}</strong> tutarındaki borcunu hangi hesaptan ödeyeceksin?
+            </p>
+            <div className="payment-options" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+               <button className="premium-submit-btn" style={{ background: '#10b981' }} onClick={() => {
+                 payCreditCard(payingCard.id, payingCard.amount, payingCard.type, { type: 'nakit' });
+                 setPayingCard(null);
+               }}>
+                 💵 Nakit (Kasa)
+               </button>
+
+               <div style={{ textAlign: 'center', fontSize: '12px', color: '#64748b' }}>veya banka hesabından:</div>
+
+               <div className="bank-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {(kasa?.bankaHesaplari || []).map(b => (
+                    <button 
+                      key={b.id}
+                      className="glass-btn" 
+                      style={{ width: '100%', padding: '12px', textAlign: 'left', display: 'flex', justifyContent: 'space-between' }}
+                      onClick={() => {
+                        payCreditCard(payingCard.id, payingCard.amount, payingCard.type, { type: 'havale', id: b.id });
+                        setPayingCard(null);
+                      }}
+                    >
+                      <span>🏦 {b.name}</span>
+                      <small>{fmt(b.balance, prv)}</small>
+                    </button>
+                  ))}
+               </div>
+            </div>
+          </div>
+        )}
+      </ActionSheet>
 
       <ConfirmModal 
         isOpen={!!deletingKartId}

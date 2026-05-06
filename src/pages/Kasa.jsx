@@ -10,6 +10,8 @@ import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import ActionSheet from '../components/ActionSheet';
 import ConfirmModal from '../components/ConfirmModal';
+import GoalAdvisor from '../components/GoalAdvisor';
+import GoalSimulator from '../components/GoalSimulator';
 import toast from 'react-hot-toast';
 import { Doughnut } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
@@ -39,6 +41,7 @@ export default function Kasa() {
 
   const [modal, setModal] = useState({ open: false, type: null, data: null });
   const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
+  const [showSimulator, setShowSimulator] = useState(false);
   const privacy = kasa?.privacyMode || false;
   const K = kasa || { bakiyeler: {}, varliklar: [], tasinmazlar: [], kumbaralar: [], rates: { EUR: 35, USD: 32, GBP: 40, GA: 2500 } };
   
@@ -65,6 +68,15 @@ export default function Kasa() {
   const requestConfirm = (message, onConfirm) => {
     setShowConfirm({ open: true, message, onConfirm });
   };
+
+  const unifiedGoalsForSim = useMemo(() => {
+    const goals = useStore.getState().hedefler?.goals || [];
+    const kumbaralar = K.kumbaralar || [];
+    return [
+      ...goals.map(g => ({ ...g, type: 'vision' })),
+      ...kumbaralar.map(g => ({ ...g, type: 'money', title: g.name, targetDate: g.deadline }))
+    ];
+  }, [K.kumbaralar]);
 
   const tabs = [
     { id: 'ozet', label: 'Özet', emoji: '📊' },
@@ -372,7 +384,13 @@ export default function Kasa() {
 
         {activeTab === 'kumbara' && (
           <div className="kumbara-view animate-fadeIn">
-            <div className="section-header-v2">
+            <GoalAdvisor 
+              visionGoals={useStore.getState().hedefler?.goals || []} 
+              moneyGoals={K.kumbaralar || []} 
+              onSimulate={() => setShowSimulator(true)}
+            />
+
+            <div className="section-header-v2" style={{ marginTop: '24px' }}>
               <h3>🎯 Kumbaralar</h3>
               <button className="pill-btn" style={{ background: 'var(--kasa)' }} onClick={() => setModal({ open: true, type: 'addGoal' })}>
                 <Plus size={16} /> Yeni Hedef
@@ -449,6 +467,13 @@ export default function Kasa() {
         }}
         message={showConfirm.message}
       />
+
+      {showSimulator && (
+        <GoalSimulator 
+          goals={unifiedGoalsForSim} 
+          onClose={() => setShowSimulator(false)} 
+        />
+      )}
 
     </AnimatedPage>
   );

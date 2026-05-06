@@ -10,7 +10,7 @@ import './Ayarlar.css';
 
 export default function Ayarlar() {
   const navigate = useNavigate();
-  const { logs, settings, toggleSilentMode } = useStore();
+  const { logs, settings, toggleSilentMode, runPhase1Migration, runGroup1Migration, runGroup2Migration, runGroup3Migration } = useStore();
   const [darkMode, setDarkMode] = useState(false);
   const [notifPermission, setNotifPermission] = useState(Notification.permission);
   
@@ -118,6 +118,35 @@ export default function Ayarlar() {
             <span className="setting-desc">Tüm verilerini JSON olarak indir</span>
           </div>
           <Download size={18} className="chevron" />
+        </div>
+      </div>
+
+      <div className="settings-group">
+        <h4>Gelişmiş Veri Yönetimi</h4>
+        
+        <div className="setting-item clickable" onClick={() => {
+          if (window.confirm("Tüm grupları sırayla aktarmak istiyor musunuz?")) {
+            runPhase1Migration();
+            setTimeout(runGroup1Migration, 2000);
+            setTimeout(runGroup2Migration, 4000);
+            setTimeout(runGroup3Migration, 6000);
+          }
+        }}>
+          <div className="setting-icon" style={{ background: '#f5f3ff', color: '#7c3aed' }}><RefreshCcw size={20} /></div>
+          <div className="setting-content">
+            <span className="setting-title">SQL Veri Senkronizasyonu</span>
+            <span className="setting-desc">Tüm modülleri manuel olarak SQL'e aktarır</span>
+          </div>
+          <ChevronRight size={18} className="chevron" />
+        </div>
+
+        <div className="setting-item clickable" onClick={() => useStore.getState().recoverFromLocalStorage()} style={{ marginTop: '10px', border: '1px dashed #ef4444' }}>
+          <div className="setting-icon" style={{ background: '#fef2f2', color: '#ef4444' }}><Shield size={20} /></div>
+          <div className="setting-content">
+            <span className="setting-title" style={{ color: '#ef4444' }}>🚨 ACİL: Tarayıcıdan Kurtar</span>
+            <span className="setting-desc">Eğer bulut yedeği silindiyse tarayıcı hafızasını tarar</span>
+          </div>
+          <ChevronRight size={18} className="chevron" />
         </div>
       </div>
 

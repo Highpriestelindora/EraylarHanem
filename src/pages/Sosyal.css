@@ -826,9 +826,8 @@
 }
 
 /* Sosyal Compact Overrides */
-.sosyal-container .module-header {
-  padding: 6px 12px !important;
-}
+/* Standard header handled by index.css */
+
 
 .sosyal-container .header-top h1 {
   font-size: 1rem !important;

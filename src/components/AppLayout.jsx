@@ -14,11 +14,35 @@ export default function AppLayout() {
   const currentUser = useStore(state => state.currentUser);
   const isHome = location.pathname === '/';
   
+  const moduleColors = {
+    '/mutfak': 'var(--mutfak)',
+    '/sosyal': 'var(--social)',
+    '/alisveris': 'var(--alisveris)',
+    '/tatil': 'var(--tatil)',
+    '/pet': 'var(--pet)',
+    '/saglik': 'var(--saglik)',
+    '/ev': 'var(--ev)',
+    '/aracim': 'var(--aracim)',
+    '/kasa': 'var(--kasa)',
+    '/finans': 'var(--finans)',
+    '/modaring': 'var(--modaring)',
+    '/muhendislik': 'var(--muhendislik)',
+    '/hedefler': 'var(--hedefler)',
+    '/basarilar': 'var(--achievements)',
+    '/guvenlik': 'var(--guvenlik)',
+    '/profil': 'var(--primary)',
+    '/ayarlar': 'var(--primary)',
+    '/analiz': 'var(--primary)',
+  };
+
+  const headerBg = moduleColors[location.pathname] || 'var(--card)';
+  const isColored = !!moduleColors[location.pathname];
+
   return (
     <div className="app-container">
       {/* Header - Hidden on Home for a cleaner look */}
       {!isHome && (
-        <header className="app-header glass">
+        <header className={`app-header glass ${isColored ? 'colored-header' : ''}`} style={{ background: headerBg }}>
         <div className="header-left">
           <div className="header-title-row" onClick={() => navigate('/')}>
             <img src={logo} alt="Logo" className="header-logo-mini" />

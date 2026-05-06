@@ -1813,7 +1813,7 @@ const Muhendislik = () => {
 
   return (
     <AnimatedPage className="muhendislik-container">
-      <header className="module-header glass" style={{ background: 'linear-gradient(135deg, #1e293b, #0f172a)' }}>
+      <header className="module-header glass" style={{ background: 'var(--muhendislik)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">⚙️</span>

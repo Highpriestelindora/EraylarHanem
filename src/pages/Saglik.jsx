@@ -32,7 +32,7 @@ export default function Saglik() {
 
   return (
     <AnimatedPage className="saglik-container">
-      <header className="module-header glass" style={{ background: 'var(--saglik-header-grad, linear-gradient(135deg, #ef4444, #f87171))' }}>
+      <header className="module-header glass" style={{ background: 'var(--saglik)' }}>
         <div className="header-top">
           <div className="header-title">
             <span className="header-emoji animate-float">🏥</span>

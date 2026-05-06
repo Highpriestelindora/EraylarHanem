@@ -504,7 +504,7 @@ function HaftaTab({ sosyal, onAdd }) {
           <h3 style={{ fontSize: '16px', fontWeight: '900', color: 'var(--txt)', minWidth: '140px', textAlign: 'center' }}>{monthName.toUpperCase()}</h3>
           <button className="nav-arrow" onClick={() => changeMonth(1)}><ArrowRight size={20} /></button>
         </div>
-        <button className="add-btn-main" onClick={onAdd}>
+        <button className="add-btn-main" onClick={() => onAdd()}>
           <Plus size={18} />
           <span>Aktivite</span>
         </button>
@@ -587,7 +587,7 @@ function HaftaTab({ sosyal, onAdd }) {
                       <strong>{recommendedIdea.baslik}</strong>
                       <span>{recommendedIdea.type === 'system' ? 'Akıllı Aile Asistanı Hatırlatması' : 'Sık tercih ettiğiniz veya havuzdaki bir fikir'}</span>
                     </div>
-                    <button className="rg-add" onClick={() => onAdd()} title="Bu Ay İçin Planla">
+                    <button className="rg-add" onClick={() => onAdd(null, recommendedIdea)} title="Bu Ay İçin Planla">
                       <Plus size={16} />
                     </button>
                   </div>
