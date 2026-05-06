@@ -896,8 +896,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
   };
 
   const handleUpdateTrip = (updates) => {
-     const trips = tatil.trips.map(t => t.id === trip.id ? { ...t, ...updates } : t);
-     setModuleData('tatil', { ...tatil, trips });
+     useStore.getState().updateTrip(trip.id, updates);
   };
 
 
@@ -3247,9 +3246,7 @@ function CityPinWizard({ tripId, onClose }) {
     const updatedCities = [...cities];
     updatedCities[idx] = { ...updatedCities[idx], name: editValue.trim() };
     
-    const updatedTrip = { ...currentTrip, visitedCities: updatedCities };
-    const updatedTrips = tatil.trips.map(t => t.id === tripId ? updatedTrip : t);
-    setModuleData('tatil', { ...tatil, trips: updatedTrips });
+    useStore.getState().updateTrip(tripId, { visitedCities: updatedCities });
     setEditingCityIdx(null);
     toast.success('Şehir adı güncellendi! ✨');
   };
@@ -3265,9 +3262,7 @@ function CityPinWizard({ tripId, onClose }) {
       if (LEGACY_CITY_COORDS[cleanName]) {
         const coords = LEGACY_CITY_COORDS[cleanName];
         const updatedCities = [...cities, { name: newCity, ...coords }];
-        const updatedTrip = { ...currentTrip, visitedCities: updatedCities };
-        const updatedTrips = tatil.trips.map(t => t.id === tripId ? updatedTrip : t);
-        setModuleData('tatil', { ...tatil, trips: updatedTrips });
+        useStore.getState().updateTrip(tripId, { visitedCities: updatedCities });
         setNewCity('');
         setLoading(false);
         return;
@@ -3298,9 +3293,7 @@ function CityPinWizard({ tripId, onClose }) {
       if (data.results?.length) {
         const result = data.results[0];
         const updatedCities = [...cities, { name: result.name, lat: result.latitude, lng: result.longitude }];
-        const updatedTrip = { ...currentTrip, visitedCities: updatedCities };
-        const updatedTrips = tatil.trips.map(t => t.id === tripId ? updatedTrip : t);
-        setModuleData('tatil', { ...tatil, trips: updatedTrips });
+        useStore.getState().updateTrip(tripId, { visitedCities: updatedCities });
         setNewCity('');
         toast.success(`${result.name} eklendi! 📍`);
       } else {
@@ -3358,9 +3351,7 @@ function CityPinWizard({ tripId, onClose }) {
                     </span>
                     <button onClick={() => {
                       const updated = cities.filter((_, i) => i !== idx);
-                      const updatedTrip = { ...currentTrip, visitedCities: updated };
-                      const updatedTrips = tatil.trips.map(t => t.id === tripId ? updatedTrip : t);
-                      setModuleData('tatil', { ...tatil, trips: updatedTrips });
+                      useStore.getState().updateTrip(tripId, { visitedCities: updated });
                     }}>
                       <Trash2 size={10} />
                     </button>

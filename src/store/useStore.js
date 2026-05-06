@@ -5322,6 +5322,8 @@ const useStore = create(
 
         set({ sosyal: { ...state.sosyal, aktiviteler: yeniAktiviteler, havuz: yeniHavuz } });
         get().saveToSupabase();
+        const updatedActivity = yeniAktiviteler.find(a => String(a.id) === String(id));
+        if (updatedActivity) pushSosyalEtkinlikToSupabase(updatedActivity);
       },
 
       cancelSocialActivity: (id) => {
@@ -5330,6 +5332,7 @@ const useStore = create(
         const yeniAktiviteler = aktList3.filter(a => String(a.id) !== String(id));
         set({ sosyal: { ...state.sosyal, aktiviteler: yeniAktiviteler } });
         get().saveToSupabase();
+        removeSosyalEtkinlikFromSupabase(id);
       },
 
       addSocialPoolItem: (item) => {
