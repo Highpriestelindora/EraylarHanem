@@ -20,23 +20,19 @@ const AppointmentTab = () => {
 
     let updatedRandevular;
     if (editingRandevu) {
-      updatedRandevular = appointments.map(r => r.id === editingRandevu.id ? { ...form } : r);
+      useStore.getState().updateAppointment(editingRandevu.id, form);
       toast.success('Randevu güncellendi! ✨');
     } else {
-      const newRandevu = { id: Date.now(), ...form };
-      updatedRandevular = [newRandevu, ...appointments];
+      useStore.getState().addAppointment(form);
       toast.success('Randevu eklendi! 🩺');
     }
-
-    setModuleData('saglik', { ...saglik, randevular: updatedRandevular });
     setModalOpenLocal(false);
     setEditingRandevu(null);
     setForm({ kisi: 'Görkem', doktor: '', tarih: '', saat: '', not: '', rekurans: 'yok' });
   };
 
   const handleDelete = (id) => {
-    const updated = appointments.filter(r => r.id !== id);
-    setModuleData('saglik', { ...saglik, randevular: updated });
+    useStore.getState().deleteAppointment(id);
     toast.success('Randevu silindi.');
   };
 

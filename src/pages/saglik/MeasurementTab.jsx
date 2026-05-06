@@ -26,8 +26,7 @@ const MeasurementTab = () => {
   };
 
   const handleDelete = (id) => {
-    const updated = measurements.filter(m => m.id !== id);
-    setModuleData('saglik', { ...saglik, olcumler: updated });
+    useStore.getState().deleteMeasurement(id);
     toast.success('Ölçüm silindi.');
   };
 

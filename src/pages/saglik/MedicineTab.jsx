@@ -116,18 +116,10 @@ const MedicineTab = () => {
     };
 
     if (isEditing && form.id) {
-      const updated = medicines.map(m => m.id === form.id ? { ...form, schedule } : m);
-      setModuleData('saglik', { ...saglik, ilaclar: updated });
+      useStore.getState().updateMedicine(form.id, { ...form, schedule });
       toast.success('İlaç güncellendi! ✨');
     } else {
-      const newIlac = { 
-        id: Date.now(), 
-        ...form, 
-        stok: Number(form.stok), 
-        minStok: Number(form.minStok),
-        schedule
-      };
-      setModuleData('saglik', { ...saglik, ilaclar: [newIlac, ...medicines] });
+      useStore.getState().addMedicine({ ...form, schedule });
       toast.success('İlaç eklendi! 💊');
     }
 
@@ -168,8 +160,7 @@ const MedicineTab = () => {
   };
 
   const handleDelete = (id) => {
-    const updated = medicines.filter(i => i.id !== id);
-    setModuleData('saglik', { ...saglik, ilaclar: updated });
+    useStore.getState().deleteMedicine(id);
     toast.success('İlaç silindi.');
   };
 

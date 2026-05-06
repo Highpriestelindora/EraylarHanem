@@ -873,8 +873,16 @@ async function syncFinansKrediler(borclar) {
       remaining: Number(b.remaining),
       monthly: Number(b.monthly)
     }));
+    // NOTE: Upsert only updates/inserts. Explicit delete functions handle removals.
     if(payloads.length > 0) await supabase.from('finans_krediler').upsert(payloads);
   } catch(e) { console.warn('Supabase Krediler upsert hatası:', e); }
+}
+
+async function deleteFinansKartFromSupabase(id) {
+  try { await supabase.from('finans_kartlar').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteFinansKrediFromSupabase(id) {
+  try { await supabase.from('finans_krediler').delete().eq('id', String(id)); } catch(e){}
 }
 
 async function syncFinansOnayHavuzu(pool) {
@@ -1029,6 +1037,74 @@ async function pushSaglikOlcumToSupabase(o) {
       deger: o.deger || null, tarih: o.tarih || null
     });
   } catch(e) { console.warn('Sağlık Ölçüm Hatası:', e); }
+}
+
+async function pushSaglikMoodToSupabase(m) {
+  try {
+    await supabase.from('saglik_moods').upsert({
+      id: String(m.id),
+      "user": m.user,
+      mood: m.mood,
+      note: m.note || null,
+      kategori: m.kategori || 'Genel',
+      date: m.date || new Date().toISOString()
+    });
+  } catch(e) { console.warn('Sağlık Mood Hatası:', e); }
+}
+
+async function pushSaglikLogToSupabase(l) {
+  try {
+    await supabase.from('saglik_logs').upsert({
+      id: String(l.id),
+      med_id: String(l.medId),
+      ad: l.ad,
+      kisi: l.kisi,
+      slot: l.slot,
+      date: l.date,
+      dt: l.dt
+    });
+  } catch(e) { console.warn('Sağlık Log Hatası:', e); }
+}
+
+// --- Deletion Helpers for Group 2 ---
+async function deleteEvDuzenliOdemeFromSupabase(id) {
+  try { await supabase.from('ev_duzenli_odemeler').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteEvAbonelikFromSupabase(id) {
+  try { await supabase.from('ev_abonelikler').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteEvOnarimFromSupabase(id) {
+  try { await supabase.from('ev_onarim').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteEvDemirbasFromSupabase(id) {
+  try { await supabase.from('ev_demirbaslar').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteEvBakimFromSupabase(id) {
+  try { await supabase.from('ev_bakimlar').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteGarajYakitFromSupabase(id) {
+  try { await supabase.from('garaj_yakit').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteGarajServisFromSupabase(id) {
+  try { await supabase.from('garaj_servis').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteGarajBelgeFromSupabase(id) {
+  try { await supabase.from('garaj_belgeler').delete().eq('id', String(id)); } catch(e){}
+}
+async function deletePetAsiFromSupabase(id) {
+  try { await supabase.from('pet_asilar').delete().eq('id', String(id)); } catch(e){}
+}
+async function deletePetAgirlikFromSupabase(id) {
+  try { await supabase.from('pet_agirlik').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteSaglikRandevuFromSupabase(id) {
+  try { await supabase.from('saglik_randevular').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteSaglikIlacFromSupabase(id) {
+  try { await supabase.from('saglik_ilaclar').delete().eq('id', String(id)); } catch(e){}
+}
+async function deleteSaglikOlcumFromSupabase(id) {
+  try { await supabase.from('saglik_olcumler').delete().eq('id', String(id)); } catch(e){}
 }
 // -----------------------------------------------------------------
 
@@ -1521,6 +1597,8 @@ const useStore = create(
           for (const r of (saglik.randevular || [])) await pushSaglikRandevuToSupabase(r);
           for (const i of (saglik.ilaclar || [])) await pushSaglikIlacToSupabase(i);
           for (const o of (saglik.olcumler || [])) await pushSaglikOlcumToSupabase(o);
+          for (const m of (saglik.moods || [])) await pushSaglikMoodToSupabase(m);
+          for (const l of (saglik.logs || [])) await pushSaglikLogToSupabase(l);
 
           set({ system: { ...state.system, migrationGroup2Done: true } });
           get().saveToSupabase();
@@ -1538,7 +1616,7 @@ const useStore = create(
           const [odemeler, abonelikler, onarim, demirbaslar, bakimlar,
                  yakit, servis, belgeler,
                  asilar, agirliklar,
-                 randevular, ilaclar, olcumler] = await Promise.all([
+                 randevular, ilaclar, olcumler, moods, logs] = await Promise.all([
             supabase.from('ev_duzenli_odemeler').select('*'),
             supabase.from('ev_abonelikler').select('*'),
             supabase.from('ev_onarim').select('*'),
@@ -1552,6 +1630,8 @@ const useStore = create(
             supabase.from('saglik_randevular').select('*'),
             supabase.from('saglik_ilaclar').select('*'),
             supabase.from('saglik_olcumler').select('*'),
+            supabase.from('saglik_moods').select('*').order('date', { ascending: false }).limit(100),
+            supabase.from('saglik_logs').select('*').order('date', { ascending: false }).limit(100),
           ]);
 
           set(state => {
@@ -1561,7 +1641,7 @@ const useStore = create(
             const saglik = { ...state.saglik };
 
             // Ev
-            if (odemeler.data && odemeler.data.length > 0) {
+            if (odemeler.data) {
               ev.duzenliOdemeler = odemeler.data.map(x => ({
                 id: x.id, name: x.name, amount: Number(x.amount || 0),
                 date: Number(x.date || 1), linkedCardId: x.linked_card_id || null,
@@ -1570,7 +1650,7 @@ const useStore = create(
                 contractEndDate: x.contract_end_date || null
               }));
             }
-            if (abonelikler.data && abonelikler.data.length > 0) {
+            if (abonelikler.data) {
               ev.abonelikler = abonelikler.data.map(x => ({
                 id: x.id, name: x.name, amount: Number(x.amount || 0),
                 date: Number(x.date || 1), linkedCardId: x.linked_card_id || null,
@@ -1578,7 +1658,7 @@ const useStore = create(
                 startDate: x.start_date || null
               }));
             }
-            if (onarim.data && onarim.data.length > 0) {
+            if (onarim.data) {
               ev.onarimListesi = onarim.data.map(x => ({
                 id: x.id, task: x.task, status: x.status || 'bekliyor',
                 createdBy: x.created_by, createdAt: x.created_at,
@@ -1587,13 +1667,13 @@ const useStore = create(
                 isArchived: !!x.is_archived
               }));
             }
-            if (demirbaslar.data && demirbaslar.data.length > 0) {
+            if (demirbaslar.data) {
               ev.demirbaslar = demirbaslar.data.map(x => ({
                 id: x.id, name: x.name, brand: x.brand,
                 warrantyDate: x.warranty_date, photo: x.photo
               }));
             }
-            if (bakimlar.data && bakimlar.data.length > 0) {
+            if (bakimlar.data) {
               ev.bakimlar = bakimlar.data.map(x => ({
                 id: x.id, name: x.name, lastDate: x.last_date,
                 intervalDays: Number(x.interval_days || 180), icon: x.icon || '🔧',
@@ -1604,19 +1684,19 @@ const useStore = create(
             // Garaj (ilk aracı güncelle)
             if (garaj.length > 0) {
               const v = { ...garaj[0] };
-              if (yakit.data && yakit.data.length > 0) {
+              if (yakit.data) {
                 v.fuelLogs = yakit.data.filter(x => x.vehicle_id === v.id).map(x => ({
                   id: x.id, tarih: x.tarih, km: Number(x.km), litre: Number(x.litre),
                   tutar: Number(x.tutar), istasyon: x.istasyon, tip: x.tip, dolu: x.dolu
                 }));
               }
-              if (servis.data && servis.data.length > 0) {
+              if (servis.data) {
                 v.services = servis.data.filter(x => x.vehicle_id === v.id).map(x => ({
                   id: x.id, tarih: x.tarih, km: Number(x.km), islem: x.islem,
                   tutar: Number(x.tutar), yer: x.yer, notlar: x.notlar
                 }));
               }
-              if (belgeler.data && belgeler.data.length > 0) {
+              if (belgeler.data) {
                 v.documents = belgeler.data.filter(x => x.vehicle_id === v.id).map(x => ({
                   id: x.id, name: x.name, dueDate: x.due_date, icon: x.icon
                 }));
@@ -1625,7 +1705,7 @@ const useStore = create(
             }
 
             // Pet
-            if (asilar.data && asilar.data.length > 0) {
+            if (asilar.data) {
               const vaccinesByPet = {};
               asilar.data.forEach(x => {
                 if (!vaccinesByPet[x.pet_id]) vaccinesByPet[x.pet_id] = [];
@@ -1634,9 +1714,9 @@ const useStore = create(
                   nextDate: x.sonraki_tarih, done: x.durum === 'tamamlandi', notes: x.notlar
                 });
               });
-              pet.vaccines = { ...pet.vaccines, ...vaccinesByPet };
+              pet.vaccines = vaccinesByPet;
             }
-            if (agirliklar.data && agirliklar.data.length > 0) {
+            if (agirliklar.data) {
               const weightsByPet = {};
               agirliklar.data.forEach(x => {
                 if (!weightsByPet[x.pet_id]) weightsByPet[x.pet_id] = [];
@@ -1644,11 +1724,11 @@ const useStore = create(
                   id: x.id, date: x.tarih, weight: Number(x.kilo), notes: x.notlar
                 });
               });
-              pet.weights = { ...pet.weights, ...weightsByPet };
+              pet.weights = weightsByPet;
             }
 
             // Sağlık
-            if (randevular.data && randevular.data.length > 0) {
+            if (randevular.data) {
               saglik.randevular = randevular.data.map(x => ({
                 id: x.id, kisi: x.kisi, doktor: x.doktor,
                 tarih: x.tarih, saat: x.saat, not: x.not_text, rekurans: x.rekurans
@@ -1662,9 +1742,19 @@ const useStore = create(
                 schedule: x.schedule || { morning: 0, afternoon: 0, evening: 0 }
               }));
             }
-            if (olcumler.data && olcumler.data.length > 0) {
+            if (olcumler.data) {
               saglik.olcumler = olcumler.data.map(x => ({
                 id: x.id, kisi: x.kisi, tur: x.tur, deger: x.deger, tarih: x.tarih
+              }));
+            }
+            if (moods.data) {
+              saglik.moods = moods.data.map(x => ({
+                id: x.id, user: x.user, mood: x.mood, note: x.note, kategori: x.kategori, date: x.date
+              }));
+            }
+            if (logs.data) {
+              saglik.logs = logs.data.map(x => ({
+                id: x.id, medId: x.med_id, ad: x.ad, kisi: x.kisi, slot: x.slot, date: x.date, dt: x.dt
               }));
             }
 
@@ -1770,13 +1860,13 @@ const useStore = create(
                 created_at: x.created_at
               }));
             }
-            if (wishlist.data && wishlist.data.length > 0) {
+            if (wishlist.data) {
               tatil.wishlist = wishlist.data.map(x => ({
                 id: x.id, place: x.place, notes: x.notes,
                 user: x.user, date: x.date
               }));
             }
-            if (pasaport.data && pasaport.data.length > 0) {
+            if (pasaport.data) {
               const ppObj = {};
               pasaport.data.forEach(x => {
                 ppObj[x.kisi] = {
@@ -1787,7 +1877,7 @@ const useStore = create(
               });
               tatil.passport = ppObj;
             }
-            if (vizeler.data && vizeler.data.length > 0) {
+            if (vizeler.data) {
               tatil.visas = vizeler.data.map(x => ({
                 id: x.id, type: x.type, owner: x.owner,
                 start: x.start_date, end: x.end_date,
@@ -1796,21 +1886,21 @@ const useStore = create(
             }
 
             // ── Mühendislik ──
-            if (problems.data && problems.data.length > 0) {
+            if (problems.data) {
               muhendislik.problemBank = problems.data.map(x => ({
                 id: x.id, title: x.title, description: x.description,
                 category: x.category, priority: x.priority, status: x.status,
                 solution: x.solution, date: x.date, ...(x.extra || {})
               }));
             }
-            if (decisions.data && decisions.data.length > 0) {
+            if (decisions.data) {
               muhendislik.decisionLog = decisions.data.map(x => ({
                 id: x.id, title: x.title, description: x.description,
                 category: x.category, result: x.result,
                 pros: x.pros, cons: x.cons, date: x.date, ...(x.extra || {})
               }));
             }
-            if (crmCustomers.data && crmCustomers.data.length > 0) {
+            if (crmCustomers.data) {
               muhendislik.crm = { ...muhendislik.crm };
               muhendislik.crm.customers = crmCustomers.data.map(x => ({
                 id: x.id, name: x.name, company: x.company,
@@ -1818,7 +1908,7 @@ const useStore = create(
                 status: x.status, date: x.date, ...(x.extra || {})
               }));
             }
-            if (crmDeals.data && crmDeals.data.length > 0) {
+            if (crmDeals.data) {
               muhendislik.crm = { ...muhendislik.crm };
               muhendislik.crm.deals = crmDeals.data.map(x => ({
                 id: x.id, customerId: x.customer_id, title: x.title,
@@ -1826,14 +1916,14 @@ const useStore = create(
                 notes: x.notes, date: x.date, ...(x.extra || {})
               }));
             }
-            if (proceler.data && proceler.data.length > 0) {
+            if (proceler.data) {
               muhendislik.zihniProceler = proceler.data.map(x => ({
                 id: x.id, title: x.title, description: x.description,
                 category: x.category, completed: x.completed,
                 date: x.date, ...(x.extra || {})
               }));
             }
-            if (lifeRoutines.data && lifeRoutines.data.length > 0) {
+            if (lifeRoutines.data) {
               muhendislik.life = { ...muhendislik.life };
               muhendislik.life.routines = lifeRoutines.data.map(x => ({
                 id: x.id, title: x.title, category: x.category,
@@ -1841,7 +1931,7 @@ const useStore = create(
                 completed: x.completed, date: x.date, ...(x.extra || {})
               }));
             }
-            if (lifePrograms.data && lifePrograms.data.length > 0) {
+            if (lifePrograms.data) {
               muhendislik.life = { ...muhendislik.life };
               muhendislik.life.programs = lifePrograms.data.map(x => ({
                 id: x.id, title: x.title, description: x.description,
@@ -1850,33 +1940,33 @@ const useStore = create(
             }
 
             // ── Modaring ──
-            if (personel.data && personel.data.length > 0) {
+            if (personel.data) {
               modaring.personel = personel.data.map(x => ({
                 id: x.id, name: x.name, hourlyRate: Number(x.hourly_rate || 0),
                 color: x.color, emoji: x.emoji, active: x.active
               }));
             }
-            if (vardiya.data && vardiya.data.length > 0) {
+            if (vardiya.data) {
               modaring.vardiya = vardiya.data.map(x => ({
                 id: x.id, personelId: x.personel_id, date: x.date,
                 startTime: x.start_time, endTime: x.end_time,
                 totalPay: Number(x.total_pay || 0), status: x.status
               }));
             }
-            if (kasaItems.data && kasaItems.data.length > 0) {
+            if (kasaItems.data) {
               modaring.kasa = kasaItems.data.map(x => ({
                 id: x.id, date: x.date, type: x.type,
                 amount: Number(x.amount || 0), method: x.method,
                 note: x.note, bankId: x.bank_id
               }));
             }
-            if (bankalar.data && bankalar.data.length > 0) {
+            if (bankalar.data) {
               modaring.bankalar = bankalar.data.map(x => ({
                 id: x.id, name: x.name, type: x.type,
                 balance: Number(x.balance || 0), color: x.color, icon: x.icon
               }));
             }
-            if (tedarik.data && tedarik.data.length > 0) {
+            if (tedarik.data) {
               modaring.tedarik = tedarik.data.map(x => ({
                 id: x.id, name: x.name, link: x.link,
                 category: x.category, contact: x.contact, note: x.note
@@ -1969,6 +2059,7 @@ const useStore = create(
         const updatedMoods = [newMood, ...(state.saglik.moods || [])].slice(0, 100);
         set({ saglik: { ...state.saglik, moods: updatedMoods } });
         get().saveToSupabase();
+        pushSaglikMoodToSupabase(newMood);
       },
 
       takeMedicine: (medId, slot = 'morning') => {
@@ -2000,6 +2091,85 @@ const useStore = create(
 
         get().saveToSupabase();
         pushSaglikIlacToSupabase(meds[idx]);
+        pushSaglikLogToSupabase(log);
+      },
+
+      deleteMedicine: (id) => {
+        const state = get();
+        const updated = (state.saglik.ilaclar || []).filter(m => String(m.id) !== String(id));
+        set({ saglik: { ...state.saglik, ilaclar: updated } });
+        get().saveToSupabase();
+        deleteSaglikIlacFromSupabase(id);
+      },
+
+      deleteAppointment: (id) => {
+        const state = get();
+        const updated = (state.saglik.randevular || []).filter(r => String(r.id) !== String(id));
+        set({ saglik: { ...state.saglik, randevular: updated } });
+        get().saveToSupabase();
+        deleteSaglikRandevuFromSupabase(id);
+      },
+
+      deleteMeasurement: (id) => {
+        const state = get();
+        const updated = (state.saglik.olcumler || []).filter(o => String(o.id) !== String(id));
+        set({ saglik: { ...state.saglik, olcumler: updated } });
+        get().saveToSupabase();
+        deleteSaglikOlcumFromSupabase(id);
+      },
+
+      addMeasurement: (form) => {
+        const state = get();
+        const newOlcum = { id: Date.now(), ...form };
+        const updated = [newOlcum, ...(state.saglik.olcumler || [])];
+        set({ saglik: { ...state.saglik, olcumler: updated } });
+        get().saveToSupabase();
+        pushSaglikOlcumToSupabase(newOlcum);
+      },
+
+      addAppointment: (form) => {
+        const state = get();
+        const newRandevu = { id: Date.now(), ...form };
+        const updated = [newRandevu, ...(state.saglik.randevular || [])];
+        set({ saglik: { ...state.saglik, randevular: updated } });
+        get().saveToSupabase();
+        pushSaglikRandevuToSupabase(newRandevu);
+      },
+
+      addMedicine: (form) => {
+        const state = get();
+        const newIlac = { id: Date.now(), ...form };
+        const updated = [newIlac, ...(state.saglik.ilaclar || [])];
+        set({ saglik: { ...state.saglik, ilaclar: updated } });
+        get().saveToSupabase();
+        pushSaglikIlacToSupabase(newIlac);
+      },
+
+      updateMedicine: (id, updates) => {
+        const state = get();
+        const updated = (state.saglik.ilaclar || []).map(m => String(m.id) === String(id) ? { ...m, ...updates } : m);
+        set({ saglik: { ...state.saglik, ilaclar: updated } });
+        get().saveToSupabase();
+        const item = updated.find(m => String(m.id) === String(id));
+        if (item) pushSaglikIlacToSupabase(item);
+      },
+
+      updateAppointment: (id, updates) => {
+        const state = get();
+        const updated = (state.saglik.randevular || []).map(r => String(r.id) === String(id) ? { ...r, ...updates } : r);
+        set({ saglik: { ...state.saglik, randevular: updated } });
+        get().saveToSupabase();
+        const item = updated.find(r => String(r.id) === String(id));
+        if (item) pushSaglikRandevuToSupabase(item);
+      },
+
+      updateMeasurement: (id, updates) => {
+        const state = get();
+        const updated = (state.saglik.olcumler || []).map(o => String(o.id) === String(id) ? { ...o, ...updates } : o);
+        set({ saglik: { ...state.saglik, olcumler: updated } });
+        get().saveToSupabase();
+        const item = updated.find(o => String(o.id) === String(id));
+        if (item) pushSaglikOlcumToSupabase(item);
       },
 
       checkSystemNotifications: () => {
@@ -2414,21 +2584,15 @@ const useStore = create(
 
           set(state => {
             const f = { ...state.finans };
-            if (dbKartlar && dbKartlar.length > 0) {
+            if (dbKartlar) {
               f.kartlar = dbKartlar.map(k => {
                 const legacy = DEFAULT_STATE.finans.kartlar.find(dk => dk.id === k.id) || {};
                 return { id: k.id, name: k.name, owner: k.owner, cutoff_day: k.cutoff_day, color: k.color, min_pct: k.min_pct, limit: legacy.limit || 100000, balance: legacy.balance || 0, due_day_offset: legacy.due_day_offset || 10 };
               });
-            } else if (dbKartlar && dbKartlar.length === 0) {
-              f.kartlar = DEFAULT_STATE.finans.kartlar;
-              syncFinansKartlar(f.kartlar); // Supabase'e geri yükle
             }
 
-            if (dbBorclar && dbBorclar.length > 0) {
+            if (dbBorclar) {
               f.borclar = dbBorclar.map(b => ({ id: b.id, name: b.name, due_day: b.due_day, total: b.total, remaining: b.remaining, monthly: b.monthly }));
-            } else if (dbBorclar && dbBorclar.length === 0) {
-              f.borclar = DEFAULT_STATE.finans.borclar;
-              syncFinansKrediler(f.borclar); // Supabase'e geri yükle
             }
 
             if (dbOnayHavuzu && dbOnayHavuzu.length > 0) {
@@ -2733,6 +2897,22 @@ const useStore = create(
         if (key === 'borclar') syncFinansKrediler(data);
         if (key === 'approvalPool') syncFinansOnayHavuzu(data);
         get().saveToSupabase();
+      },
+
+      deleteFinansKart: (id) => {
+        const state = get();
+        const updated = (state.finans.kartlar || []).filter(k => String(k.id) !== String(id));
+        set({ finans: { ...state.finans, kartlar: updated } });
+        get().saveToSupabase();
+        deleteFinansKartFromSupabase(id);
+      },
+
+      deleteFinansKredi: (id) => {
+        const state = get();
+        const updated = (state.finans.borclar || []).filter(b => String(b.id) !== String(id));
+        set({ finans: { ...state.finans, borclar: updated } });
+        get().saveToSupabase();
+        deleteFinansKrediFromSupabase(id);
       },
       addExpense: (expense) => {
         const state = get();
@@ -3703,7 +3883,7 @@ const useStore = create(
         const state = get();
         set({ ev: { ...state.ev, duzenliOdemeler: state.ev.duzenliOdemeler.filter(i => i.id !== id) } });
         get().saveToSupabase();
-        supabase.from('ev_duzenli_odemeler').delete().eq('id', String(id)).then();
+        deleteEvDuzenliOdemeFromSupabase(id);
       },
       addFinanceExpense: (expense, paymentInfo) => {
         const state = get();
@@ -3753,7 +3933,7 @@ const useStore = create(
         const state = get();
         set({ ev: { ...state.ev, abonelikler: state.ev.abonelikler.filter(a => a.id !== id) } });
         get().saveToSupabase();
-        supabase.from('ev_abonelikler').delete().eq('id', String(id)).then();
+        deleteEvAbonelikFromSupabase(id);
       },
 
       saveQuickExpense: (data, paymentInfo) => {
@@ -5506,6 +5686,11 @@ const useStore = create(
         const list = state.ev[listType].filter(item => item.id !== id);
         set({ ev: { ...state.ev, [listType]: list } });
         get().saveToSupabase();
+
+        // SQL Sync
+        if (listType === 'duzenliOdemeler') deleteEvDuzenliOdemeFromSupabase(id);
+        else if (listType === 'abonelikler') deleteEvAbonelikFromSupabase(id);
+        else if (listType === 'demirbaslar') deleteEvDemirbasFromSupabase(id);
       },
 
       updateHomeSecurity: (updates) => {
@@ -5561,6 +5746,7 @@ const useStore = create(
 
         set({ ev: { ...currentEv, bakimlar: updated } });
         get().saveToSupabase();
+        deleteEvBakimFromSupabase(id);
         toast.success('Bakım kaydı silindi.');
       },
 
@@ -5570,6 +5756,7 @@ const useStore = create(
         const updated = currentList.filter(item => item.id !== id);
         set({ ev: { ...currentEv, onarimListesi: updated } });
         get().saveToSupabase();
+        deleteEvOnarimFromSupabase(id);
         toast.success('Onarım kaydı arşivden silindi.');
       },
 
@@ -6004,6 +6191,7 @@ const useStore = create(
         );
         set({ garaj: updatedGaraj });
         get().saveToSupabase();
+        deleteGarajServisFromSupabase(serviceId);
       },
 
       deleteDocument: (vehicleId, docId) => {
@@ -6013,6 +6201,7 @@ const useStore = create(
         );
         set({ garaj: updatedGaraj });
         get().saveToSupabase();
+        deleteGarajBelgeFromSupabase(docId);
       },
 
       addDocument: (vehicleId, doc, paymentInfo = null) => {
@@ -6082,6 +6271,7 @@ const useStore = create(
         );
         set({ garaj: updatedGaraj });
         get().saveToSupabase();
+        deleteGarajYakitFromSupabase(logId);
       },
 
       // ── Pet Actions ────────────────────────────────────
@@ -6099,7 +6289,7 @@ const useStore = create(
         const yeniVaccines = (state.pet.vaccines[petId] || []).filter(v => v.id !== id && v.n !== id);
         set({ pet: { ...state.pet, vaccines: { ...state.pet.vaccines, [petId]: yeniVaccines } } });
         get().saveToSupabase();
-        supabase.from('pet_asilar').delete().eq('id', String(id)).then();
+        deletePetAsiFromSupabase(id);
       },
 
       addPetWeight: (petId, weightData) => {
@@ -6125,7 +6315,7 @@ const useStore = create(
         const yeniWeights = (state.pet.weights[petId] || []).filter(w => w.id !== id);
         set({ pet: { ...state.pet, weights: { ...state.pet.weights, [petId]: yeniWeights } } });
         get().saveToSupabase();
-        supabase.from('pet_agirlik').delete().eq('id', String(id)).then();
+        deletePetAgirlikFromSupabase(id);
       },
 
       deletePetLog: (id) => {

@@ -518,8 +518,7 @@ const KrediTab = React.memo(({ finans, prv }) => {
         title="Kartı Sil"
         message="Bu kredi kartını silmek istediğine emin misin? Bu karta bağlı tüm mutabakat verileri de silinecektir."
         onConfirm={() => {
-          const newKartlar = kartlar.filter(k => k.id !== deletingKartId);
-          updateFinansData('kartlar', newKartlar);
+          useStore.getState().deleteFinansKart(deletingKartId);
           toast.success('Kart silindi!');
           setDeletingKartId(null);
         }}
