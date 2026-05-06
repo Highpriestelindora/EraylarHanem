@@ -316,8 +316,10 @@ const Home = () => {
   }, [calculateGlobalScore]);
 
   // Daily Wellness Trigger
+  const syncing = useStore(state => state.syncing);
+
   useEffect(() => {
-    if (!currentUser) return;
+    if (!currentUser || syncing) return;
     
     const today = new Date().toDateString();
     const userName = currentUser.name.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
@@ -328,10 +330,12 @@ const Home = () => {
     );
     
     if (!hasEnteredToday) {
-      const timer = setTimeout(() => setShowMoodCheck(true), 2500);
+      const timer = setTimeout(() => setShowMoodCheck(true), 3000);
       return () => clearTimeout(timer);
+    } else {
+      setShowMoodCheck(false);
     }
-  }, [saglik?.moods, currentUser]);
+  }, [saglik?.moods, currentUser, syncing]);
 
   const handleMoodSubmit = () => {
     if (!selectedMood) return;

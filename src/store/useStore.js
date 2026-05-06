@@ -32,20 +32,9 @@ const DEFAULT_STATE = {
       'esra-garanti': { beklenen: 0, gercek: null, ay: null },
       'esra-enpara': { beklenen: 0, gercek: null, ay: null },
     },
-    borclar: [
-      { id: 1, name: 'Konut Kredisi', total: 1200000, remaining: 850000, monthly: 15400, due_day: 15, type: 'kredi' },
-      { id: 2, name: 'Araç Kredisi', total: 400000, remaining: 120000, monthly: 8500, due_day: 5, type: 'kredi' }
-    ],
-    kartlar: [
-      { id: 'gorkem-ziraat', name: 'Ziraat Kart', limit: 150000, balance: 0, cutoff_day: 25, due_day_offset: 10, min_pct: 20, owner: 'gorkem', color: '#e11d48' },
-      { id: 'gorkem-ykb', name: 'Yapı Kredi', limit: 120000, balance: 0, cutoff_day: 15, due_day_offset: 10, min_pct: 20, owner: 'gorkem', color: '#1d4ed8' },
-      { id: 'esra-garanti', name: 'Garanti Bonus', limit: 100000, balance: 0, cutoff_day: 10, due_day_offset: 10, min_pct: 20, owner: 'esra', color: '#15803d' },
-      { id: 'esra-enpara', name: 'Enpara Kart', limit: 60000, balance: 0, cutoff_day: 5, due_day_offset: 10, min_pct: 20, owner: 'esra', color: '#5b21b6' }
-    ],
-    rekurans: [
-      { id: 1, title: 'Netflix', amount: 229, category: 'Abonelik', date: '2026-04-25', icon: '📺', owner: 'ortak', paid: false },
-      { id: 2, title: 'Spotify', amount: 59, category: 'Abonelik', date: '2026-04-20', icon: '🎵', owner: 'ortak', paid: true }
-    ],
+    borclar: [],
+    kartlar: [],
+    rekurans: [],
     limits: { Mutfak: 15000, Sosyal: 5000, Saglik: 3000 }
   },
   users: {
@@ -74,50 +63,20 @@ const DEFAULT_STATE = {
   },
   kasa: {
     bakiyeler: { gorkem: 15000, esra: 12000, ortak: 5000 },
-    tasinmazlar: [
-      {
-        id: 1, name: 'Antalya Kepez Daire', city: 'Antalya', district: 'Kepez', neighborhood: 'Ulus',
-        type: 'Kat İrtifakı (Daire)', adaParsel: '1382 / 7', unit: '7', floor: '1', area: '648.51', share: '4/40',
-        nitelik: 'Mesken', propertyNo: '16783065', icon: '🏢', status: 'Mülk Sahibi',
-        income: 0, expense: 0, tax: 1500, taxPaid: false, value: 5500000
-      },
-      {
-        id: 2, name: 'Didim Prefabrik Ev', city: 'Aydın', district: 'Didim', neighborhood: 'Akyeniköy',
-        type: 'Ana Taşınmaz', adaParsel: '1268 / 20', unit: '-', floor: '0', area: '300', share: 'Tam',
-        nitelik: 'Tek Katlı Prefabrik Ev', propertyNo: '14680312', icon: '🏡', status: 'Mülk Sahibi',
-        income: 0, expense: 500, tax: 800, taxPaid: true, value: 3200000
-      },
-      {
-        id: 3, name: 'Eskişehir Tepebaşı Arsa', city: 'Eskişehir', district: 'Tepebaşı', neighborhood: 'Ömerağa',
-        type: 'Arsa + Kat İrtifakı', adaParsel: '1012 / 38', unit: '5', floor: '-', area: '232.55', share: '1/8',
-        nitelik: 'Arsa', propertyNo: '13738275', icon: '🗺️', status: 'Mülk Sahibi',
-        income: 0, expense: 0, tax: 1200, taxPaid: false, value: 4800000
-      }
-    ],
-    varliklar: [
-      { id: 1, name: 'Altın Birikimi', amount: 125, unit: 'gr', price: 2500, type: 'gold', icon: '🟡' },
-      { id: 2, name: 'Borsa Portföy', amount: 1500, unit: 'lot', price: 45.5, type: 'stock', icon: '📈' },
-      { id: 3, name: 'Euro Nakit', amount: 1200, unit: 'EUR', price: 35.2, type: 'currency', icon: '💶' }
-    ],
-    kumbaralar: [
-      { id: 1, name: 'Yeni Araba', target: 1500000, current: 450000, icon: '🚗', deadline: '2027-06-01', priority: 'Yüksek', category: 'Birikim', owner: 'ortak' },
-      { id: 2, name: 'Yaz Tatili', target: 80000, current: 25000, icon: '🌴', deadline: '2026-07-15', priority: 'Orta', category: 'Tatil', owner: 'ortak' },
-      { id: Date.now(), name: 'iPhone 17 Pro Max', target: 120000, current: 30000, icon: '📱', deadline: '2026-10-25', priority: 'Orta', category: 'Teknoloji', owner: 'gorkem' }
-    ],
-    bankaHesaplari: [
-      { id: 'gorkem-ykb', name: 'Yapı Kredi (Maaş)', bank: 'Yapı Kredi', iban: '', balance: 45000, owner: 'gorkem', icon: '🏦' },
-      { id: 'esra-garanti', name: 'Garanti (Birikim)', bank: 'Garanti BBVA', iban: '', balance: 12000, owner: 'esra', icon: '🏦' }
-    ],
+    tasinmazlar: [],
+    varliklar: [],
+    kumbaralar: [],
+    bankaHesaplari: [],
     privacyMode: false,
     rates: { EUR: 35.2, USD: 32.5 }
   },
   mutfak: {
     menu: {},
-    buzdolabi: INITIAL_FRIDGE,
-    kiler: INITIAL_PANTRY,
-    dondurucu: INITIAL_FROZEN,
+    buzdolabi: [],
+    kiler: [],
+    dondurucu: [],
     alisveris: [],
-    tarifler: INITIAL_RECIPES,
+    tarifler: [],
     siparisler: [],    // { id, dt, fr, wh, pr, u, tm }
     restaurantlar: [], // list of strings for auto-fill
     su: {
@@ -131,28 +90,14 @@ const DEFAULT_STATE = {
     consumption: {},
     sohbet: [],
     arsiv: [],
-    history: [
-      { id: 1714045200000, t: 'Akşama ne yesek? Mantı var dondurucuda.', w: 'Esra', d: '2026-04-25T17:00:00Z' },
-      { id: 1714048800000, t: 'Olur, yanına da yoğurt sosu yaparız.', w: 'Görkem', d: '2026-04-25T18:00:00Z' },
-      { id: 1714052400000, t: 'Waffle\'ın aşısı yaklaşıyor, hatırlatıcı kurdum.', w: 'Esra', d: '2026-04-25T19:00:00Z' },
-      { id: 1713958800000, t: 'Marketten süt ve ekmek aldım.', w: 'Görkem', d: '2026-04-24T18:00:00Z' }
-    ],
+    history: [],
     priceHistory: {},
     ekmeklik: [],      // { id, tip, ic, raf, mk, adet, dt }
   },
   saglik: {
-    randevular: [
-      { id: 1, kisi: 'Esra', doktor: 'Diş Hekimi (Kontrol)', tarih: '2026-04-30', saat: '14:00', not: 'Alt dolgu kontrolü', rekurans: 'yok' },
-      { id: 2, kisi: 'Görkem', doktor: 'Göz Hastalıkları', tarih: '2026-05-15', saat: '10:30', not: 'Numara ölçümü', rekurans: 'Yıllık' }
-    ],
-    ilaclar: [
-      { id: 1, kisi: 'Esra', ad: 'Magnesium', dozaj: '1 Adet', siklik: 'Günde 1', stok: 20, minStok: 5, schedule: { morning: 0, afternoon: 0, evening: 1 } },
-      { id: 2, kisi: 'Görkem', ad: 'Vitamin D', dozaj: '10 Damla', siklik: 'Günde 1', stok: 15, minStok: 5, schedule: { morning: 1, afternoon: 0, evening: 0 } }
-    ],
-    olcumler: [
-      { id: 1, kisi: 'Görkem', tur: 'Tansiyon', deger: '12/8', tarih: '2026-04-20' },
-      { id: 2, kisi: 'Esra', tur: 'Ateş', deger: '36.5', tarih: '2026-04-25' }
-    ],
+    randevular: [],
+    ilaclar: [],
+    olcumler: [],
     moods: [],
     sleep: [],
     sleepGoals: { gorkem: 6, esra: 9 },
@@ -215,11 +160,8 @@ const DEFAULT_STATE = {
     failedHistory: []
   },
   sosyal: {
-    aktiviteler: INITIAL_SOCIAL.aktiviteler || [],
-    rutinler: [
-      { id: 'r1', aktivite: 'Spor Salonu', kisi: 'Görkem', vakit: 'sabah', gunler: ['Pzt', 'Çar', 'Cum'], saati: '08:00', ucret: 0 },
-      { id: 'r2', aktivite: 'Haftalık Temizlik', kisi: 'İkisi', vakit: 'öğle', gunler: ['Cmt'], saati: '11:00', ucret: 0 }
-    ],
+    aktiviteler: [],
+    rutinler: [],
     havuz: [], // User custom ideas
     poolItems: INITIAL_SOCIAL_POOL || [], // The 50 activities
     routinePackages: SOCIAL_ROUTINES || [], // The 10 routines
@@ -235,18 +177,10 @@ const DEFAULT_STATE = {
       plaka: '34 HH 1144',
       km: 41452,
       marketValue: 1550000,
-      parts: [
-        { id: 'oil', name: 'Motor Yağı', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🛢️' },
-        { id: 'filter', name: 'Hava Filtresi', lastKM: 42000, intervalKM: 15000, lastDate: '2025-10-15', intervalDays: 365, icon: '🌪️' },
-        { id: 'brakes', name: 'Fren Balataları', lastKM: 35000, intervalKM: 30000, lastDate: '2025-05-10', intervalDays: 730, icon: '🛑' }
-      ],
-      fuelLogs: INITIAL_VEHICLE.yakitlar,
-      services: INITIAL_VEHICLE.hs,
-      documents: [
-        { id: 'muayene', name: 'TÜVTÜRK Muayene', dueDate: '2027-06-15', icon: '🔍' },
-        { id: 'kasko', name: 'Kasko Sigortası', dueDate: '2026-11-20', icon: '🛡️' },
-        { id: 'trafik', name: 'Trafik Sigortası', dueDate: '2026-11-20', icon: '📋' }
-      ],
+      parts: [],
+      fuelLogs: [],
+      services: [],
+      documents: [],
       tireStatus: { type: 'Yazlık', changeDate: '2026-04-01', condition: 'İyi' },
       lastCleaned: '2026-04-23',
       parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false },
@@ -258,43 +192,17 @@ const DEFAULT_STATE = {
   ],
   ev: {
     depo: [], // { id, nm, qt, dt, pr, cardId, payer }
-    faturalar: [
-      { id: 1, name: 'Elektrik', provider: 'EnerjiSa', amount: 850, dueDate: '2026-04-20', status: 'Ödendi', autoPay: true, icon: '⚡' },
-      { id: 2, name: 'İnternet', provider: 'TurkNet', amount: 399, dueDate: '2026-04-25', status: 'Bekliyor', autoPay: true, icon: '🌐' },
-      { id: 3, name: 'Doğalgaz', provider: 'İGDAŞ', amount: 1250, dueDate: '2026-04-15', status: 'Ödendi', autoPay: false, icon: '🔥' }
-    ],
-    bakimlar: [
-      { id: 'klima', name: 'Klima Temizliği', lastDate: '2025-06-15', intervalDays: 180, icon: '❄️', brand: '', model: '', partNo: '' },
-      { id: 'hava-filtre', name: 'Hava Filtresi Temizliği', lastDate: new Date().toISOString().split('T')[0], intervalDays: 90, icon: '🍃', brand: '', model: '', partNo: '' }
-    ],
-    demirbaslar: [
-      { id: 1, name: 'Buzdolabı', brand: 'Samsung', warrantyDate: '2027-05-10', photo: null },
-      { id: 2, name: 'Çamaşır Mak.', brand: 'LG', warrantyDate: '2026-12-15', photo: null }
-    ],
+    faturalar: [],
+    bakimlar: [],
+    demirbaslar: [],
     tamirListesi: [], // Deprecated: use onarimListesi
     bakimListesi: [],  // Deprecated: use onarimListesi
     onarimListesi: [], // { id, task, status, createdBy, createdAt, completedBy, completedAt, clearedBy, clearedAt, isArchived }
     onarimLog: [], // Detailed history logs if needed
-    ustaRehberi: [
-      { id: 1, name: 'Tesisatçı Ahmet Usta', phone: '0555 123 4567', category: 'Tesisat', rating: 5 }
-    ],
-    duzenliOdemeler: [
-      { id: 201, name: 'Site Aidatı', amount: 1500, date: 1, linkedCardId: 'esra-garanti', autoPay: true, icon: '🏢' },
-      { id: 202, name: 'Bireysel Emeklilik (BES)', amount: 2500, date: 5, linkedCardId: 'gorkem-ziraat', autoPay: true, icon: '🛡️' },
-      { id: 203, name: 'Kira Ödemesi', amount: 0, date: 1, linkedCardId: 'gorkem-ykb', autoPay: false, icon: '🔑' },
-      { id: 204, name: 'İnternet', provider: 'Superonline', amount: 399, date: 25, linkedCardId: 'gorkem-ykb', autoPay: true, icon: '🌐', customerNo: '554433', contractEndDate: '2025-10-15' },
-      { id: 205, name: 'Digiturk', provider: 'Bein Media', amount: 249, date: 3, linkedCardId: 'gorkem-ziraat', autoPay: true, icon: '⚽', customerNo: '100223344' }
-    ],
-    abonelikler: [
-      { id: 101, name: 'Netflix', amount: 229, date: 15, linkedCardId: 'esra-enpara', autoPay: true, icon: '🎬', startDate: '2021-05-20' },
-      { id: 102, name: 'YouTube Prem.', amount: 59, date: 10, linkedCardId: 'esra-enpara', autoPay: true, icon: '📺', startDate: '2022-03-15' },
-      { id: 103, name: 'Gemini Advanced', amount: 719, date: 27, linkedCardId: 'gorkem-ziraat', autoPay: true, icon: '🧠', startDate: '2024-02-01' },
-      { id: 104, name: 'Spotify Family', amount: 99, date: 22, linkedCardId: 'esra-garanti', autoPay: true, icon: '🎵' },
-      { id: 105, name: 'Amazon Prime', amount: 39, date: 12, linkedCardId: 'gorkem-ykb', autoPay: true, icon: '📦' }
-    ],
-    bitkiler: [
-      { id: 1, name: 'Salon Çiçeği', lastWatered: '2026-04-22', interval: 3 }
-    ],
+    ustaRehberi: [],
+    duzenliOdemeler: [],
+    abonelikler: [],
+    bitkiler: [],
     guvenlik: {
       wifiMain: { ssid: 'superonline_wifi_1023', pass: 'MAUMFUFTH74L' },
       wifiGuest: { ssid: 'Tombis Yiğit', pass: 'Love2013' },
@@ -302,9 +210,7 @@ const DEFAULT_STATE = {
       alarm: { code: '****', status: 'Armed' },
       fireExt: '2027-01-01'
     },
-    yillikPlan: [
-      { id: 1, task: 'Boya Badana', date: '2026-06-01', status: 'Planned' }
-    ],
+    yillikPlan: [],
     timeAnalysis: {
       gorkem: { home: 45, work: 40, other: 15, interpretation: "Bu hafta iş dengen gayet iyi görünüyor Görkem! ⚖️" },
       esra: { home: 60, work: 20, other: 20, interpretation: "Evde verimli bir hafta geçirdin Esra, sanat projelerine odaklanabilirsin. 🎨" }
@@ -316,15 +222,8 @@ const DEFAULT_STATE = {
       "Bugün yeni bir yemek tarifi denemek için harika bir gün! 🍲"
     ],
     emergencyKits: {
-      deprem: [
-        { id: 1, item: "Su (5L)", buyDate: "2026-01-01", expDate: "2027-01-01" },
-        { id: 2, item: "Konserve Gıda", buyDate: "2026-02-01", expDate: "2028-02-01" },
-        { id: 3, item: "Piller", buyDate: "2026-03-01", expDate: "2030-03-01" }
-      ],
-      ilkyardim: [
-        { id: 1, item: "Ağrı Kesici", buyDate: "2026-01-10", expDate: "2027-01-10" },
-        { id: 2, item: "Sargı Bezi", buyDate: "2025-05-15", expDate: "2028-05-15" }
-      ]
+      deprem: [],
+      ilkyardim: []
     },
     tracking: {
       home: { lat: 36.8841, lng: 30.7056, radius: 100, label: 'Evim', address: 'Kepez/Antalya' },
@@ -357,18 +256,15 @@ const DEFAULT_STATE = {
   },
   pet: {
     meta: PET_META,
-    vaccines: VACCINES,
-    weights: INITIAL_WEIGHTS,
+    vaccines: [],
+    weights: [],
     history: [],
     supplies: { waffle: { mama: 'var', kum: 'var' }, mayis: { mama: 'var', kum: 'var' } },
     gallery: { waffle: [], mayis: [] }
   },
   tatil: {
-    trips: INITIAL_TRIPS,
-    wishlist: [
-      { id: 1, place: 'Tokyo, Japonya', notes: 'Kiraz çiçekleri zamanı gitmeli 🌸', user: 'Görkem', date: '2026-04-26T10:00:00Z' },
-      { id: 2, place: 'İzlanda', notes: 'Kuzey ışıkları ve road trip 🇮🇸', user: 'Esra', date: '2026-04-26T11:00:00Z' }
-    ],
+    trips: [],
+    wishlist: [],
     passport: {
       gorkem: {
         name: 'Görkem',
@@ -391,10 +287,7 @@ const DEFAULT_STATE = {
         birthPlace: 'Antalya'
       }
     },
-    visas: [
-      { id: 1, type: 'Schengen', owner: 'gorkem', start: '2025-05-01', end: '2026-05-01', entries: 'Multi', country: 'Almanya' },
-      { id: 2, type: 'Schengen', owner: 'esra', start: '2025-05-01', end: '2026-05-01', entries: 'Multi', country: 'Almanya' }
-    ],
+    visas: [],
     ttab: 'trips'
   },
   achievements: ACHIEVEMENTS,
@@ -477,6 +370,25 @@ async function pushToSupabase(appData) {
 // ── Finans Supabase Helpers ──────────────────────────────────
 // Not: RLS politikaları gereği family_id gönderimi zorunludur.
 const DEFAULT_FID = 'eraylar-family-shared-id';
+
+// ── Generic Helpers for SSOT Migration ──────────────────────────────────
+async function pushGenericToSupabase(tableName, payload) {
+  try {
+    const { error } = await supabase.from(tableName).upsert(payload);
+    if (error) throw error;
+  } catch (e) {
+    console.warn(`Supabase ${tableName} upsert hatası:`, e);
+  }
+}
+
+async function removeGenericFromSupabase(tableName, id) {
+  try {
+    const { error } = await supabase.from(tableName).delete().eq('id', String(id));
+    if (error) throw error;
+  } catch (e) {
+    console.warn(`Supabase ${tableName} delete hatası:`, e);
+  }
+}
 
 // Çok daha güvenilir UUID oluşturucu
 const generateUniqueId = () => {
@@ -1614,9 +1526,10 @@ const useStore = create(
       fetchGroup2Data: async () => {
         try {
           const [odemeler, abonelikler, onarim, demirbaslar, bakimlar,
-                 yakit, servis, belgeler,
-                 asilar, agirliklar,
-                 randevular, ilaclar, olcumler, moods, logs] = await Promise.all([
+                 yakit, servis, belgeler, parts,
+                 asilar, agirliklar, supplies, petLogs,
+                 randevular, ilaclar, olcumler, moods, logs, sleep,
+                 depo, faturalar, ustaRehberi, bitkiler] = await Promise.all([
             supabase.from('ev_duzenli_odemeler').select('*'),
             supabase.from('ev_abonelikler').select('*'),
             supabase.from('ev_onarim').select('*'),
@@ -1625,138 +1538,97 @@ const useStore = create(
             supabase.from('garaj_yakit').select('*'),
             supabase.from('garaj_servis').select('*'),
             supabase.from('garaj_belgeler').select('*'),
+            supabase.from('garaj_parts').select('*'),
             supabase.from('pet_asilar').select('*'),
             supabase.from('pet_agirlik').select('*'),
+            supabase.from('pet_supplies').select('*'),
+            supabase.from('pet_logs').select('*'),
             supabase.from('saglik_randevular').select('*'),
             supabase.from('saglik_ilaclar').select('*'),
             supabase.from('saglik_olcumler').select('*'),
             supabase.from('saglik_moods').select('*').order('date', { ascending: false }).limit(100),
             supabase.from('saglik_logs').select('*').order('date', { ascending: false }).limit(100),
+            supabase.from('saglik_sleep').select('*'),
+            supabase.from('ev_depo').select('*'),
+            supabase.from('ev_faturalar').select('*'),
+            supabase.from('ev_usta_rehberi').select('*'),
+            supabase.from('ev_bitkiler').select('*')
           ]);
 
           set(state => {
             const ev = { ...state.ev };
+            if (odemeler.data) ev.duzenliOdemeler = odemeler.data;
+            if (abonelikler.data) ev.abonelikler = abonelikler.data;
+            if (onarim.data) ev.onarimListesi = onarim.data;
+            if (demirbaslar.data) ev.demirbaslar = demirbaslar.data;
+            if (bakimlar.data) ev.bakimlar = bakimlar.data;
+            if (depo.data) ev.depo = depo.data;
+            if (faturalar.data) ev.faturalar = faturalar.data;
+            if (ustaRehberi.data) ev.ustaRehberi = ustaRehberi.data;
+            if (bitkiler.data) ev.bitkiler = bitkiler.data;
+
             const garaj = [...state.garaj];
-            const pet = { ...state.pet };
-            const saglik = { ...state.saglik };
-
-            // Ev
-            if (odemeler.data) {
-              ev.duzenliOdemeler = odemeler.data.map(x => ({
-                id: x.id, name: x.name, amount: Number(x.amount || 0),
-                date: Number(x.date || 1), linkedCardId: x.linked_card_id || null,
-                autoPay: !!x.auto_pay, icon: x.icon || '💳',
-                provider: x.provider || null, customerNo: x.customer_no || null,
-                contractEndDate: x.contract_end_date || null
-              }));
-            }
-            if (abonelikler.data) {
-              ev.abonelikler = abonelikler.data.map(x => ({
-                id: x.id, name: x.name, amount: Number(x.amount || 0),
-                date: Number(x.date || 1), linkedCardId: x.linked_card_id || null,
-                autoPay: !!x.auto_pay, icon: x.icon || '📺',
-                startDate: x.start_date || null
-              }));
-            }
-            if (onarim.data) {
-              ev.onarimListesi = onarim.data.map(x => ({
-                id: x.id, task: x.task, status: x.status || 'bekliyor',
-                createdBy: x.created_by, createdAt: x.created_at,
-                completedBy: x.completed_by, completedAt: x.completed_at,
-                clearedBy: x.cleared_by, clearedAt: x.cleared_at,
-                isArchived: !!x.is_archived
-              }));
-            }
-            if (demirbaslar.data) {
-              ev.demirbaslar = demirbaslar.data.map(x => ({
-                id: x.id, name: x.name, brand: x.brand,
-                warrantyDate: x.warranty_date, photo: x.photo
-              }));
-            }
-            if (bakimlar.data) {
-              ev.bakimlar = bakimlar.data.map(x => ({
-                id: x.id, name: x.name, lastDate: x.last_date,
-                intervalDays: Number(x.interval_days || 180), icon: x.icon || '🔧',
-                brand: x.brand, model: x.model, partNo: x.part_no
-              }));
-            }
-
-            // Garaj (ilk aracı güncelle)
-            if (garaj.length > 0) {
-              const v = { ...garaj[0] };
-              if (yakit.data) {
-                v.fuelLogs = yakit.data.filter(x => x.vehicle_id === v.id).map(x => ({
-                  id: x.id, tarih: x.tarih, km: Number(x.km), litre: Number(x.litre),
-                  tutar: Number(x.tutar), istasyon: x.istasyon, tip: x.tip, dolu: x.dolu
-                }));
-              }
-              if (servis.data) {
-                v.services = servis.data.filter(x => x.vehicle_id === v.id).map(x => ({
-                  id: x.id, tarih: x.tarih, km: Number(x.km), islem: x.islem,
-                  tutar: Number(x.tutar), yer: x.yer, notlar: x.notlar
-                }));
-              }
-              if (belgeler.data) {
-                v.documents = belgeler.data.filter(x => x.vehicle_id === v.id).map(x => ({
-                  id: x.id, name: x.name, dueDate: x.due_date, icon: x.icon
-                }));
-              }
-              garaj[0] = v;
-            }
-
-            // Pet
-            if (asilar.data) {
-              const vaccinesByPet = {};
-              asilar.data.forEach(x => {
-                if (!vaccinesByPet[x.pet_id]) vaccinesByPet[x.pet_id] = [];
-                vaccinesByPet[x.pet_id].push({
-                  id: x.id, name: x.asi_adi, lastDate: x.son_tarih,
-                  nextDate: x.sonraki_tarih, done: x.durum === 'tamamlandi', notes: x.notlar
-                });
+            // Match records to vehicles by vehicle_id or default to first vehicle
+            if (yakit.data) {
+              yakit.data.forEach(y => {
+                const v = garaj.find(gv => gv.id === y.vehicle_id) || garaj[0];
+                if (v && !v.fuelLogs.some(l => l.id === y.id)) v.fuelLogs.push(y);
               });
-              pet.vaccines = vaccinesByPet;
+            }
+            if (servis.data) {
+              servis.data.forEach(s => {
+                const v = garaj.find(gv => gv.id === s.vehicle_id) || garaj[0];
+                if (v && !v.services.some(ls => ls.id === s.id)) v.services.push(s);
+              });
+            }
+            if (belgeler.data) {
+              belgeler.data.forEach(b => {
+                const v = garaj.find(gv => gv.id === b.vehicle_id) || garaj[0];
+                if (v && !v.documents.some(ld => ld.id === b.id)) v.documents.push(b);
+              });
+            }
+            if (parts.data) {
+              parts.data.forEach(p => {
+                const v = garaj.find(gv => gv.id === p.vehicle_id) || garaj[0];
+                if (v) {
+                  const pIdx = v.parts.findIndex(vp => vp.id === p.id);
+                  if (pIdx !== -1) v.parts[pIdx] = { ...v.parts[pIdx], ...p };
+                  else v.parts.push(p);
+                }
+              });
+            }
+
+            const pet = { ...state.pet };
+            if (asilar.data) {
+              asilar.data.forEach(a => {
+                if (!pet.vaccines[a.pet_name]) pet.vaccines[a.pet_name] = [];
+                if (!pet.vaccines[a.pet_name].some(v => v.id === a.id)) pet.vaccines[a.pet_name].push(a);
+              });
             }
             if (agirliklar.data) {
-              const weightsByPet = {};
-              agirliklar.data.forEach(x => {
-                if (!weightsByPet[x.pet_id]) weightsByPet[x.pet_id] = [];
-                weightsByPet[x.pet_id].push({
-                  id: x.id, date: x.tarih, weight: Number(x.kilo), notes: x.notlar
-                });
+              agirliklar.data.forEach(w => {
+                if (!pet.weights[w.pet_name]) pet.weights[w.pet_name] = [];
+                if (!pet.weights[w.pet_name].some(lw => lw.id === w.id)) pet.weights[w.pet_name].push(w);
               });
-              pet.weights = weightsByPet;
+            }
+            if (supplies.data) {
+              supplies.data.forEach(s => {
+                if (!pet.supplies[s.pet_name]) pet.supplies[s.pet_name] = {};
+                pet.supplies[s.pet_name][s.supply_type] = s.status;
+              });
+            }
+            if (petLogs.data) {
+              // Assuming petLogs go to pet.history or a separate field
+              pet.history = [...(pet.history || []), ...petLogs.data].slice(0, 50);
             }
 
-            // Sağlık
-            if (randevular.data) {
-              saglik.randevular = randevular.data.map(x => ({
-                id: x.id, kisi: x.kisi, doktor: x.doktor,
-                tarih: x.tarih, saat: x.saat, not: x.not_text, rekurans: x.rekurans
-              }));
-            }
-            if (ilaclar.data && ilaclar.data.length > 0) {
-              saglik.ilaclar = ilaclar.data.map(x => ({
-                id: x.id, kisi: x.kisi, ad: x.ad,
-                dozaj: x.dozaj, siklik: x.siklik,
-                stok: Number(x.stok || 0), minStok: Number(x.min_stok || 5),
-                schedule: x.schedule || { morning: 0, afternoon: 0, evening: 0 }
-              }));
-            }
-            if (olcumler.data) {
-              saglik.olcumler = olcumler.data.map(x => ({
-                id: x.id, kisi: x.kisi, tur: x.tur, deger: x.deger, tarih: x.tarih
-              }));
-            }
-            if (moods.data) {
-              saglik.moods = moods.data.map(x => ({
-                id: x.id, user: x.user, mood: x.mood, note: x.note, kategori: x.kategori, date: x.date
-              }));
-            }
-            if (logs.data) {
-              saglik.logs = logs.data.map(x => ({
-                id: x.id, medId: x.med_id, ad: x.ad, kisi: x.kisi, slot: x.slot, date: x.date, dt: x.dt
-              }));
-            }
+            const saglik = { ...state.saglik };
+            if (randevular.data) saglik.randevular = randevular.data;
+            if (ilaclar.data) saglik.ilaclar = ilaclar.data;
+            if (olcumler.data) saglik.olcumler = olcumler.data;
+            if (moods.data) saglik.moods = moods.data;
+            if (logs.data) saglik.logs = logs.data;
+            if (sleep.data) saglik.sleep = sleep.data;
 
             return { ev, garaj, pet, saglik };
           });
@@ -1818,7 +1690,8 @@ const useStore = create(
           const [
             trips, wishlist, pasaport, vizeler,
             problems, decisions, crmCustomers, crmDeals, proceler, lifeRoutines, lifePrograms,
-            personel, vardiya, kasaItems, bankalar, tedarik, siparisler, ajanda, refika
+            personel, vardiya, kasaItems, bankalar, tedarik, siparisler, ajanda, refika,
+            mutfakSiparisler, mutfakRestaurants, mutfakArsiv
           ] = await Promise.all([
             supabase.from('tatil_trips').select('*'),
             supabase.from('tatil_wishlist').select('*'),
@@ -1839,12 +1712,16 @@ const useStore = create(
             supabase.from('modaring_siparisler').select('*'),
             supabase.from('modaring_ajanda').select('*'),
             supabase.from('modaring_refika').select('*'),
+            supabase.from('mutfak_siparisler').select('*'),
+            supabase.from('mutfak_restaurantlar').select('*'),
+            supabase.from('mutfak_arsiv').select('*')
           ]);
 
           set(state => {
             const tatil = { ...state.tatil };
             const muhendislik = { ...state.muhendislik };
             const modaring = { ...state.modaring };
+            const mutfak = { ...state.mutfak };
 
             // ── Tatil ──
             if (trips.data && trips.data.length > 0) {
@@ -1993,7 +1870,12 @@ const useStore = create(
               }));
             }
 
-            return { tatil, muhendislik, modaring };
+            // ── Mutfak ──
+            if (mutfakSiparisler.data) mutfak.siparisler = mutfakSiparisler.data;
+            if (mutfakRestaurants.data) mutfak.restaurantlar = mutfakRestaurants.data.map(r => r.isim);
+            if (mutfakArsiv.data) mutfak.arsiv = mutfakArsiv.data;
+
+            return { tatil, muhendislik, modaring, mutfak };
           });
         } catch (error) {
           console.error("❌ fetchGroup3Data error:", error);
@@ -3440,6 +3322,8 @@ const useStore = create(
         const yeniVarliklar = state.kasa.varliklar.map(v => v.id === id ? { ...v, ...updates } : v);
         set({ kasa: { ...state.kasa, varliklar: yeniVarliklar } });
         get().saveToSupabase();
+        const updatedVarlik = yeniVarliklar.find(v => v.id === id);
+        if (updatedVarlik) pushGenericToSupabase('kasa_varliklar', updatedVarlik);
       },
 
       addVarlik: async (varlik) => {
@@ -3448,6 +3332,7 @@ const useStore = create(
         set({ kasa: { ...state.kasa, varliklar: [newItem, ...(state.kasa.varliklar || [])] } });
         get().addLog('Varlık Eklendi', `${newItem.name}: ${newItem.amount} ${newItem.unit}`);
         get().saveToSupabase();
+        pushGenericToSupabase('kasa_varliklar', newItem);
       },
 
       deleteVarlik: async (id) => {
@@ -3456,6 +3341,7 @@ const useStore = create(
         set({ kasa: { ...state.kasa, varliklar: state.kasa.varliklar.filter(x => x.id !== id) } });
         if (v) get().addLog('Varlık Silindi', `${v.name}`);
         get().saveToSupabase();
+        removeGenericFromSupabase('kasa_varliklar', id);
       },
 
       updateTasinmaz: async (id, updates) => {
@@ -3463,6 +3349,8 @@ const useStore = create(
         const yeniTasinmazlar = state.kasa.tasinmazlar.map(t => t.id === id ? { ...t, ...updates } : t);
         set({ kasa: { ...state.kasa, tasinmazlar: yeniTasinmazlar } });
         get().saveToSupabase();
+        const updatedTasinmaz = yeniTasinmazlar.find(t => t.id === id);
+        if (updatedTasinmaz) pushGenericToSupabase('kasa_tasinmazlar', updatedTasinmaz);
       },
 
       transferKasa: async (from, to, amount) => {
@@ -3500,6 +3388,7 @@ const useStore = create(
         pushHedefToSupabase(newGoal); // Gölge Yazım
         get().addLog('Hedef Eklendi', `Yeni hedef: ${goal.name}`);
         get().saveToSupabase();
+        pushGenericToSupabase('kasa_kumbaralar', newGoal);
       },
 
       updateGoal: (id, updates) => {
@@ -3507,7 +3396,10 @@ const useStore = create(
         const updated = (state.kasa.kumbaralar || []).map(g => g.id === id ? { ...g, ...updates } : g);
         set({ kasa: { ...state.kasa, kumbaralar: updated } });
         const updatedGoal = updated.find(g => g.id === id);
-        if (updatedGoal) pushHedefToSupabase(updatedGoal); // Gölge Yazım
+        if (updatedGoal) {
+          pushHedefToSupabase(updatedGoal); // Gölge Yazım
+          pushGenericToSupabase('kasa_kumbaralar', updatedGoal);
+        }
         get().saveToSupabase();
       },
 
@@ -3518,6 +3410,7 @@ const useStore = create(
         deleteHedefFromSupabase(id); // Gölge Yazım
         if (g) get().addLog('Hedef Silindi', `${g.name}`);
         get().saveToSupabase();
+        removeGenericFromSupabase('kasa_kumbaralar', id);
       },
 
       // --- Vision Goal Actions ---
@@ -3728,6 +3621,7 @@ const useStore = create(
         set({ kasa: { ...state.kasa, bankaHesaplari: [...(state.kasa.bankaHesaplari || []), newHesap] } });
         get().addLog('Banka', `Yeni banka hesabı eklendi: ${hesap.name}`);
         get().saveToSupabase();
+        pushGenericToSupabase('kasa_bankalar', newHesap);
       },
       updateBankaHesabi: (id, updates) => {
         const state = get();
@@ -3739,18 +3633,23 @@ const useStore = create(
         } : h);
         set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
         get().saveToSupabase();
+        const updatedHesap = updated.find(h => h.id === id);
+        if (updatedHesap) pushGenericToSupabase('kasa_bankalar', updatedHesap);
       },
       deleteBankaHesabi: (id) => {
         const state = get();
         const updated = (state.kasa.bankaHesaplari || []).filter(h => h.id !== id);
         set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
         get().saveToSupabase();
+        removeGenericFromSupabase('kasa_bankalar', id);
       },
       updateBankaBakiye: (id, newBalance) => {
         const state = get();
         const updated = (state.kasa.bankaHesaplari || []).map(h => h.id === id ? { ...h, balance: Number(newBalance) } : h);
         set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
         get().saveToSupabase();
+        const updatedHesap = updated.find(h => h.id === id);
+        if (updatedHesap) pushGenericToSupabase('kasa_bankalar', updatedHesap);
       },
 
       payDebt: async (debtId, amount, payer) => {
@@ -4098,6 +3997,7 @@ const useStore = create(
         set({ alisveris: { ...state.alisveris, [owner]: updatedList } });
         get().addLog('Alışveriş Listesi', `${owner} listesine eklendi: ${item.nm}`);
         get().saveToSupabase();
+        pushAlisverisToSupabase(newItem, owner);
       },
 
       toggleShoppingItem: (owner, itemId) => {
@@ -4120,6 +4020,8 @@ const useStore = create(
         });
         set({ alisveris: { ...state.alisveris, [owner]: list } });
         get().saveToSupabase();
+        const updatedItem = list.find(i => i.id === itemId);
+        if (updatedItem) pushAlisverisToSupabase(updatedItem, owner);
       },
 
       deleteShoppingItem: (owner, itemId) => {
@@ -4127,6 +4029,7 @@ const useStore = create(
         const updatedList = state.alisveris[owner].filter(item => item.id !== itemId);
         set({ alisveris: { ...state.alisveris, [owner]: updatedList } });
         get().saveToSupabase();
+        removeAlisverisFromSupabase(itemId);
       },
 
       addTrip: (trip) => {
@@ -4477,6 +4380,12 @@ const useStore = create(
 
         set({ mutfak: { ...state.mutfak, restaurantlar: yeniRestaurants } });
         get().updateMenuDetail(dt, details);
+        get().saveToSupabase();
+
+        // Push restaurant to SQL if new
+        if (fr) {
+          pushGenericToSupabase('mutfak_restaurantlar', { id: fr, isim: fr });
+        }
       },
 
       setDelivery: async (dt, ml, info, paymentInfo) => {
@@ -4517,6 +4426,16 @@ const useStore = create(
 
         set({ mutfak: { ...state.mutfak, siparisler: yeniSiparisler, restaurantlar: yeniRestaurants } });
         get().updateMenuDetail(dt, details);
+        get().saveToSupabase();
+
+        pushGenericToSupabase('mutfak_siparisler', {
+          id: String(newOrder.id),
+          tarih: newOrder.dt,
+          nereden: newOrder.fr || newOrder.wh,
+          ne_kadar: newOrder.pr,
+          kim_odedi: newOrder.u,
+          notlar: newOrder.tm
+        });
       },
 
       addRecipe: async (recipe) => {
@@ -5341,14 +5260,24 @@ const useStore = create(
           id: Date.now(),
           title: item.baslik || item.title,
           icon: item.emoji || item.icon || '💡',
-          category: item.tur === 'disari' ? 'Dışarı' : item.tur === 'evde' ? 'Evde' : (item.category || 'Genel'),
-          cost: item.harcama ? `${item.harcama} TL` : (item.cost || '0 TL'),
-          duration: '1 saat',
-          ...item
+          type: item.tur || item.type || 'Eğlence',
+          frequency: item.freq || item.frequency || 'Ayda 1',
+          count: 0,
+          lastDone: null
         };
         const currentHavuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
         set({ sosyal: { ...state.sosyal, havuz: [newItem, ...currentHavuz] } });
         get().saveToSupabase();
+        
+        // SQL Sync
+        pushGenericToSupabase('sosyal_havuz', {
+          id: String(newItem.id),
+          baslik: newItem.title,
+          tur: newItem.type,
+          emoji: newItem.icon,
+          freq: newItem.frequency,
+          count: 0
+        });
       },
 
       updateSocialPoolItem: (id, updates) => {
@@ -5357,6 +5286,19 @@ const useStore = create(
         const newHavuz = havuz.map(item => item.id === id ? { ...item, ...updates } : item);
         set({ sosyal: { ...state.sosyal, havuz: newHavuz } });
         get().saveToSupabase();
+
+        const updated = newHavuz.find(i => i.id === id);
+        if (updated) {
+          pushGenericToSupabase('sosyal_havuz', {
+            id: String(updated.id),
+            baslik: updated.title,
+            tur: updated.type,
+            emoji: updated.icon,
+            freq: updated.frequency,
+            count: updated.count,
+            last_done: updated.lastDone
+          });
+        }
       },
 
       deleteSocialPoolItem: (id) => {
@@ -5372,6 +5314,7 @@ const useStore = create(
           }
         });
         get().saveToSupabase();
+        removeGenericFromSupabase('sosyal_havuz', id);
       },
 
       addSocialRoutinePackage: (pkg) => {
@@ -5426,6 +5369,7 @@ const useStore = create(
         const currentRut = Array.isArray(state.sosyal.rutinler) ? state.sosyal.rutinler : [];
         set({ sosyal: { ...state.sosyal, rutinler: [newRutin, ...currentRut] } });
         get().saveToSupabase();
+        pushGenericToSupabase('sosyal_rutinler', newRutin);
       },
 
       deleteRutin: (id) => {
@@ -5433,6 +5377,7 @@ const useStore = create(
         const yeniRutinler = state.sosyal.rutinler.filter(r => r.id !== id);
         set({ sosyal: { ...state.sosyal, rutinler: yeniRutinler } });
         get().saveToSupabase();
+        removeGenericFromSupabase('sosyal_rutinler', id);
       },
 
 
@@ -5459,6 +5404,7 @@ const useStore = create(
         });
 
         get().saveToSupabase();
+        pushGenericToSupabase('ev_faturalar', newFatura);
         toast.success('Fatura kaydedildi ve Finans\'a aktarıldı! 🧾');
       },
 
@@ -5473,6 +5419,8 @@ const useStore = create(
 
         set({ ev: { ...state.ev, faturalar: updatedFaturalar } });
         get().saveToSupabase();
+        const updatedFatura = updatedFaturalar.find(f => f.id === id);
+        if (updatedFatura) pushGenericToSupabase('ev_faturalar', updatedFatura);
         toast.success(`${fatura.name} faturası ödendi! 💸`);
       },
 
@@ -5532,6 +5480,7 @@ const useStore = create(
           finans: { ...state.finans, rekurans: updatedRekurans }
         });
         get().saveToSupabase();
+        pushGenericToSupabase('kasa_tasinmazlar', newItem);
         toast.success('Yeni taşınmaz portföye eklendi ve finansal takibe alındı! 🏗️');
       },
 
@@ -5587,6 +5536,8 @@ const useStore = create(
           finans: { ...state.finans, rekurans: updatedRekurans }
         });
         get().saveToSupabase();
+        const updatedTasinmaz = updatedTasinmazlar.find(t => t.id === id);
+        if (updatedTasinmaz) pushGenericToSupabase('kasa_tasinmazlar', updatedTasinmaz);
       },
 
       deleteTasinmaz: (id) => {
@@ -5601,6 +5552,7 @@ const useStore = create(
           finans: { ...state.finans, rekurans: updatedRekurans }
         });
         get().saveToSupabase();
+        removeGenericFromSupabase('kasa_tasinmazlar', id);
         toast.success('Taşınmaz kaydı ve ilgili finansal takipçiler silindi.');
       },
 
@@ -6265,6 +6217,13 @@ const useStore = create(
         });
         set({ garaj: updatedGaraj });
         get().saveToSupabase();
+
+        // Push part update to SQL
+        const vehicle = updatedGaraj.find(v => v.id === vehicleId);
+        const part = vehicle?.parts.find(p => p.id === partId);
+        if (part) {
+          pushGenericToSupabase('garaj_parts', { ...part, vehicle_id: vehicleId });
+        }
       },
 
       deleteFuelLog: (vehicleId, logId) => {
@@ -6422,6 +6381,7 @@ const useStore = create(
         }
 
         get().saveToSupabase();
+        pushPetAsiToSupabase(petId, vaccines[petId][vIdx]);
       },
 
       updatePetSupply: (petId, supplyType, status) => {
@@ -6430,6 +6390,14 @@ const useStore = create(
         if (!supplies[petId]) supplies[petId] = { mama: 'var', kum: 'var' };
         supplies[petId] = { ...supplies[petId], [supplyType]: status };
         set({ pet: { ...state.pet, supplies } });
+        get().saveToSupabase();
+
+        pushGenericToSupabase('pet_supplies', { 
+          id: `${petId}-${supplyType}`, 
+          pet_name: petId, 
+          supply_type: supplyType, 
+          status: status 
+        });
 
         if (status === 'azaldi') {
           get().addLog('Pet Uyarısı', `${state.pet.meta[petId].name} için ${supplyType} azalıyor!`);
@@ -6581,6 +6549,14 @@ const useStore = create(
 
         set({ ev: { ...state.ev, depo: updatedDepo } });
         get().saveToSupabase();
+        
+        // Find the newly added or updated item and push to SQL
+        const syncedItem = updatedDepo.find(i => 
+          (i.name || i.nm)?.toLowerCase() === name.toLowerCase()
+        );
+        if (syncedItem) {
+          pushGenericToSupabase('ev_depo', syncedItem);
+        }
       },
 
       deleteDepoItem: (id) => {
@@ -6588,6 +6564,7 @@ const useStore = create(
         const updatedDepo = (state.ev.depo || []).filter(item => String(item.id) !== String(id));
         set({ ev: { ...state.ev, depo: updatedDepo } });
         get().saveToSupabase();
+        removeGenericFromSupabase('ev_depo', id);
         toast.success('Ürün depodan silindi.');
       },
 
@@ -6595,7 +6572,7 @@ const useStore = create(
         const state = get();
         set({ ev: { ...state.ev, depo: [] } });
         get().saveToSupabase();
-        toast.success('Depo sıfırlandı. ✨');
+        toast.success('Depo sıfırlandı. ✨ (SQL tablosu elle temizlenmeli)');
       },
 
       syncValizToDepo: (name, source, qty = 1) => {
