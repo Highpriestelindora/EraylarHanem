@@ -29,15 +29,28 @@ const MedicineTab = () => {
   const medicines = saglik.ilaclar || [];
   const logs = saglik.logs || [];
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const getLocalDate = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  const todayStr = getLocalDate(new Date());
+  const yesterdayStr = getLocalDate(new Date(Date.now() - 86400000));
+  
   const todayLogs = logs.filter(l => l.date === todayStr);
+  const yesterdayLogs = logs.filter(l => l.date === yesterdayStr);
 
-  const getSlotStatus = (medId, slot, count) => {
+  const getSlotStatus = (medId, slot, count, isYesterday = false) => {
     if (!count || count <= 0) return 'none';
-    const log = todayLogs.find(l => l.medId === medId && l.slot === slot);
+    const hour = new Date().getHours();
+    
+    // SMART LOGIC: If it's early morning (before 5 AM), 'evening' slot should reflect yesterday's result
+    // because the user is likely still finishing their 'previous' day's cycle.
+    const effectiveYesterday = isYesterday || (slot === 'evening' && hour < 5);
+    const activeLogs = effectiveYesterday ? yesterdayLogs : todayLogs;
+    
+    const log = activeLogs.find(l => String(l.medId) === String(medId) && l.slot === slot);
     if (log) return 'taken';
 
-    const hour = new Date().getHours();
+    // If we are checking for "yesterday", everything not taken is missed
+    if (effectiveYesterday) return 'missed';
+
     if (slot === 'morning' && hour >= 12) return 'missed';
     if (slot === 'afternoon' && hour >= 18) return 'missed';
     if (slot === 'evening' && hour >= 23) return 'missed';
@@ -57,7 +70,6 @@ const MedicineTab = () => {
       });
     }
 
-    // Check for missed and pending doses
     const missedList = [];
     const pendingList = [];
     const currentHour = new Date().getHours();
@@ -67,14 +79,24 @@ const MedicineTab = () => {
     else if (currentHour >= 12 && currentHour < 18) currentSlot = 'afternoon';
     else if (currentHour >= 18 && currentHour < 23) currentSlot = 'evening';
 
+    // Check Yesterday (Until 5 AM today)
+    const isEarlyMorning = currentHour < 5;
+    
     medicines.forEach(m => {
       if (m.schedule) {
-        // Check missed
+        // Yesterday's missed doses check
+        if (isEarlyMorning) {
+          if (getSlotStatus(m.id, 'morning', m.schedule.morning, true) === 'missed') missedList.push(`${m.ad} (Dün Sabah)`);
+          if (getSlotStatus(m.id, 'afternoon', m.schedule.afternoon, true) === 'missed') missedList.push(`${m.ad} (Dün Öğle)`);
+          if (getSlotStatus(m.id, 'evening', m.schedule.evening, true) === 'missed') missedList.push(`${m.ad} (Dün Akşam)`);
+        }
+
+        // Today's missed
         if (getSlotStatus(m.id, 'morning', m.schedule.morning) === 'missed') missedList.push(`${m.ad} (Sabah)`);
         if (getSlotStatus(m.id, 'afternoon', m.schedule.afternoon) === 'missed') missedList.push(`${m.ad} (Öğle)`);
         if (getSlotStatus(m.id, 'evening', m.schedule.evening) === 'missed') missedList.push(`${m.ad} (Akşam)`);
         
-        // Check pending for current active slot
+        // Today's pending
         if (currentSlot !== 'none' && getSlotStatus(m.id, currentSlot, m.schedule[currentSlot]) === 'pending') {
           pendingList.push(m.ad);
         }
@@ -151,7 +173,12 @@ const MedicineTab = () => {
     const hour = new Date().getHours();
     let targetSlot = null;
 
-    if ((med.schedule?.morning || 0) > 0 && getSlotStatus(med.id, 'morning', med.schedule?.morning) !== 'taken') {
+    // SMART PRIORITY: If it's early morning (before 5 AM), prioritize 'evening' (likely yesterday's)
+    if (hour < 5 && (med.schedule?.evening || 0) > 0 && getSlotStatus(med.id, 'evening', med.schedule?.evening) !== 'taken') {
+      targetSlot = 'evening';
+    } 
+    // Regular priority: morning -> afternoon -> evening
+    else if ((med.schedule?.morning || 0) > 0 && getSlotStatus(med.id, 'morning', med.schedule?.morning) !== 'taken') {
       targetSlot = 'morning';
     } else if ((med.schedule?.afternoon || 0) > 0 && getSlotStatus(med.id, 'afternoon', med.schedule?.afternoon) !== 'taken') {
       targetSlot = 'afternoon';

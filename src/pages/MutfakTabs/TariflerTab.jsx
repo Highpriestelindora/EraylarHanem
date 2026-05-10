@@ -83,43 +83,53 @@ const RecipesTab = () => {
     }
   };
 
-  const handleSaveRecipe = (e) => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveRecipe = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    if (isSaving) return;
     
-    // Parse ingredients: format "Name: Qty Unit"
-    const igRows = Array.from(e.target.querySelectorAll('.ig-row'));
-    const ig = igRows.map(row => {
-      const name = row.querySelector('.ig-name').value.trim();
-      const qty = row.querySelector('.ig-qty').value.trim();
-      const unit = row.querySelector('.ig-unit').value;
-      if(!name) return null;
-      return `${name}${qty || unit ? `:${qty} ${unit}` : ''}`;
-    }).filter(Boolean);
+    setIsSaving(true);
+    try {
+      const formData = new FormData(e.target);
+      
+      const igRows = Array.from(e.target.querySelectorAll('.ig-row'));
+      const ig = igRows.map(row => {
+        const name = row.querySelector('.ig-name').value.trim();
+        const qty = row.querySelector('.ig-qty').value.trim();
+        const unit = row.querySelector('.ig-unit').value;
+        if(!name) return null;
+        return `${name}${qty || unit ? `:${qty} ${unit}` : ''}`;
+      }).filter(Boolean);
 
-    // Parse steps: multi-line text to array
-    const stepsText = formData.get('st');
-    const st = stepsText.split('\n').map(s => s.trim()).filter(Boolean);
+      const stepsText = formData.get('st');
+      const st = stepsText.split('\n').map(s => s.trim()).filter(Boolean);
 
-    const newRecipe = {
-      n: formData.get('n'),
-      e: formData.get('e') || '🍽️',
-      c: formData.get('c'),
-      t: parseInt(formData.get('t')) || 20,
-      d: parseInt(formData.get('d')) || 1,
-      ig,
-      st
-    };
+      const newRecipe = {
+        n: formData.get('n'),
+        e: formData.get('e') || '🍽️',
+        c: formData.get('c'),
+        t: parseInt(formData.get('t')) || 20,
+        d: parseInt(formData.get('d')) || 1,
+        ig,
+        st
+      };
 
-    if (editingRecipe.isNew) {
-      addRecipe(newRecipe);
-      toast.success('Yeni tarif eklendi!');
-    } else {
-      updateRecipe(editingRecipe.item.id, newRecipe);
-      setSelectedRecipe({ ...editingRecipe.item, ...newRecipe }); // Update modal view if open
-      toast.success('Tarif güncellendi!');
+      if (editingRecipe.isNew) {
+        const success = await addRecipe(newRecipe);
+        if (success) {
+          setEditingItem(null);
+        }
+      } else {
+        await updateRecipe(editingRecipe.item.id, newRecipe);
+        setSelectedRecipe({ ...editingRecipe.item, ...newRecipe }); 
+        setEditingItem(null);
+      }
+    } catch (err) {
+      toast.error('Hata: ' + err.message);
+    } finally {
+      setIsSaving(false);
     }
-    setEditingItem(null);
   };
 
   const handleAddMissingToShopping = async (missing) => {
@@ -418,8 +428,30 @@ const RecipesTab = () => {
             <textarea name="st" defaultValue={(editingRecipe?.item?.st || []).join('\n')} rows={6} required placeholder="1. Adım..." style={{ width: '100%', padding: '16px', borderRadius: '16px', border: '1px solid var(--brd)', fontFamily: 'inherit', fontSize: '14px', lineHeight: '1.6' }} />
           </div>
 
-          <button type="submit" className="submit-btn" style={{ width: '100%', padding: '18px', background: 'var(--mutfak)', color: '#fff', border: 'none', borderRadius: '20px', fontWeight: '900', fontSize: '16px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', boxShadow: '0 10px 20px rgba(236, 72, 153, 0.2)', marginBottom: '40px' }}>
-            <Save size={20} /> {editingRecipe?.isNew ? 'Tarifi Kaydet' : 'Değişiklikleri Uygula'}
+          <button 
+            type="submit" 
+            className="submit-btn" 
+            disabled={isSaving}
+            style={{ 
+              width: '100%', 
+              padding: '18px', 
+              background: isSaving ? '#ccc' : 'var(--mutfak)', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: '20px', 
+              fontWeight: '900', 
+              fontSize: '16px', 
+              cursor: isSaving ? 'not-allowed' : 'pointer', 
+              display: 'flex', 
+              justifyContent: 'center', 
+              alignItems: 'center', 
+              gap: '10px', 
+              boxShadow: isSaving ? 'none' : '0 10px 20px rgba(236, 72, 153, 0.2)', 
+              marginBottom: '40px' 
+            }}
+          >
+            <Save size={20} /> 
+            {isSaving ? 'Kaydediliyor...' : (editingRecipe?.isNew ? 'Tarifi Kaydet' : 'Değişiklikleri Uygula')}
           </button>
         </form>
       </ActionSheet>

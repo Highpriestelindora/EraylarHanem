@@ -6,10 +6,32 @@ import ConfirmModal from '../../components/ConfirmModal';
 import PaymentSelector from '../../components/PaymentSelector';
 
 export default function SuTakipTab() {
-  const { mutfak, updateWaterLevel, addWaterOrder, removeWaterOrder, addExpense, setWaterDailyRate, processDailyWaterDeduction } = useStore();
+  const { 
+    mutfak, 
+    updateWaterLevel, 
+    addWaterOrder, 
+    removeWaterOrder, 
+    addExpense, 
+    setWaterDailyRate, 
+    processDailyWaterDeduction,
+    setWaterEditing,
+    saveWaterSettings
+  } = useStore();
+  
   const water = mutfak.su || {};
-  const level1 = water?.level1 ?? 100;
-  const level2 = water?.level2 ?? 100;
+  const isEditing = water.isEditing || false;
+  
+  // Düzenleme modunda geçici değerleri tutmak için local state
+  const [tempLevels, setTempLevels] = useState({
+    level1: water.level1 || 0,
+    level2: water.level2 || 0,
+    dailyRate: water.dailyRate || 20
+  });
+
+  const level1 = isEditing ? tempLevels.level1 : (water?.level1 ?? 100);
+  const level2 = isEditing ? tempLevels.level2 : (water?.level2 ?? 100);
+  const dailyRate = isEditing ? tempLevels.dailyRate : (water?.dailyRate ?? 20);
+  
   const history = water?.history || [];
   const lastOrder = water?.lastOrder ? new Date(water.lastOrder) : null;
 
@@ -21,9 +43,20 @@ export default function SuTakipTab() {
     processDailyWaterDeduction();
   }, []);
 
+  // Düzenleme modu açıldığında değerleri eşitle
+  useEffect(() => {
+    if (isEditing) {
+      setTempLevels({
+        level1: water.level1 || 0,
+        level2: water.level2 || 0,
+        dailyRate: water.dailyRate || 20
+      });
+    }
+  }, [isEditing, water.level1, water.level2, water.dailyRate]);
+
   const calculateDaysLeft = () => {
     const totalLevel = level1 + level2; 
-    const rate = water.dailyRate || 20;
+    const rate = dailyRate || 20;
     const days = Math.floor(totalLevel / rate);
     return days > 0 ? days : 0;
   };
@@ -60,10 +93,15 @@ export default function SuTakipTab() {
 
   const handleSwap = () => {
     if (level2 <= 0) return toast.error('Yedek su kalmadı! 😱');
+    if (isEditing) return toast.error('Lütfen önce düzenlemeyi kaydedin!');
     
     updateWaterLevel('level1', 100);
     updateWaterLevel('level2', Math.max(0, level2 - 50)); 
     toast.success('Yeni damacana takıldı! ✨');
+  };
+
+  const handleSave = () => {
+    saveWaterSettings(tempLevels.level1, tempLevels.level2, tempLevels.dailyRate);
   };
 
   const handleDelete = () => {
@@ -77,11 +115,20 @@ export default function SuTakipTab() {
   const daysLeft = calculateDaysLeft();
 
   return (
-    <div className="su-tab animate-fadeIn">
+    <div className={`su-tab animate-fadeIn ${isEditing ? 'editing-active' : ''}`}>
       <div className="su-hero glass">
-        <div className="su-logic-info">
-          <Info size={14} />
-          <span><strong>Mutfak:</strong> Açık olan su. <strong>Yedek:</strong> Bekleyen damacanalar.</span>
+        <div className="su-header-row">
+           <div className="su-logic-info">
+            <Info size={14} />
+            <span><strong>Mutfak:</strong> Açık. <strong>Yedek:</strong> Stok.</span>
+          </div>
+          <button 
+            className={`su-edit-toggle ${isEditing ? 'active-save' : ''}`}
+            onClick={() => isEditing ? handleSave() : setWaterEditing(true)}
+          >
+            {isEditing ? <RefreshCw size={16} className="animate-spin-slow" /> : <Droplets size={16} />}
+            <span>{isEditing ? 'KAYDET VE BAŞLAT' : 'DÜZENLE'}</span>
+          </button>
         </div>
 
         <div className="su-stats">
@@ -98,27 +145,43 @@ export default function SuTakipTab() {
 
         <div className="water-tanks-container">
           <div className="water-tanks">
-            <WaterTank label="Mutfak" level={level1} onLevelChange={(v) => updateWaterLevel('level1', v)} />
+            <WaterTank 
+              label="Mutfak" 
+              level={level1} 
+              isEditing={isEditing}
+              onLevelChange={(v) => setTempLevels(prev => ({ ...prev, level1: v }))} 
+            />
             
-            <button className="swap-btn-premium" onClick={handleSwap} title="Yedekle Değiştir">
+            <button className={`swap-btn-premium ${isEditing ? 'disabled' : ''}`} onClick={handleSwap} title="Yedekle Değiştir">
               <RefreshCw size={20} />
               <small>Değiştir</small>
             </button>
 
-            <WaterTank label="Yedek" level={level2} onLevelChange={(v) => updateWaterLevel('level2', v)} />
+            <WaterTank 
+              label="Yedek" 
+              level={level2} 
+              isEditing={isEditing}
+              onLevelChange={(v) => setTempLevels(prev => ({ ...prev, level2: v }))} 
+            />
           </div>
         </div>
 
-        <div className="daily-consumption-ctrl glass">
+        <div className={`daily-consumption-ctrl glass ${isEditing ? 'editing-pulse' : ''}`}>
           <div className="dc-label">
             <strong>GÜNLÜK TÜKETİM HIZI</strong>
             <small>Günde % kaç azalıyor?</small>
           </div>
           <div className="dc-val">
-             <span>%{water.dailyRate || 20}</span>
+             <span>%{dailyRate}</span>
              <div className="dc-btns">
-              <button onClick={() => setWaterDailyRate(Math.max(5, (water.dailyRate || 20) - 5))}>-</button>
-              <button onClick={() => setWaterDailyRate(Math.min(100, (water.dailyRate || 20) + 5))}>+</button>
+              <button 
+                className={!isEditing ? 'disabled' : ''}
+                onClick={() => isEditing && setTempLevels(prev => ({ ...prev, dailyRate: Math.max(5, prev.dailyRate - 5) }))}
+              >-</button>
+              <button 
+                className={!isEditing ? 'disabled' : ''}
+                onClick={() => isEditing && setTempLevels(prev => ({ ...prev, dailyRate: Math.min(100, prev.dailyRate + 5) }))}
+              >+</button>
             </div>
           </div>
         </div>
@@ -131,9 +194,9 @@ export default function SuTakipTab() {
         
         <div className="su-actions" style={{ marginTop: '20px' }}>
           <button 
-            className={`order-btn ${!available ? 'disabled' : ''}`} 
+            className={`order-btn ${!available || isEditing ? 'disabled' : ''}`} 
             onClick={handleOrder}
-            disabled={!available}
+            disabled={!available || isEditing}
           >
             <Droplets size={20} />
             <span>{available ? '2 Damacana Söyle (📞)' : 'Sipariş Saatleri Dışında'}</span>
@@ -186,17 +249,23 @@ export default function SuTakipTab() {
 }
 
 
-function WaterTank({ label, level, onLevelChange }) {
+function WaterTank({ label, level, isEditing, onLevelChange }) {
   return (
-    <div className="tank-container">
+    <div className={`tank-container ${isEditing ? 'editing-focus' : ''}`}>
       <div className="tank-visual">
         <div className="water-level" style={{ height: `${level}%` }} />
         <span className="level-text">%{level}</span>
       </div>
       <span className="tank-label">{label}</span>
       <div className="tank-ctrl">
-        <button onClick={() => onLevelChange(Math.max(0, level - 10))}><Minus size={14} /></button>
-        <button onClick={() => onLevelChange(Math.min(100, level + 10))}><Plus size={14} /></button>
+        <button 
+          className={!isEditing ? 'disabled' : ''}
+          onClick={() => isEditing && onLevelChange(Math.max(0, level - 5))}
+        ><Minus size={14} /></button>
+        <button 
+          className={!isEditing ? 'disabled' : ''}
+          onClick={() => isEditing && onLevelChange(Math.min(100, level + 5))}
+        ><Plus size={14} /></button>
       </div>
     </div>
   );

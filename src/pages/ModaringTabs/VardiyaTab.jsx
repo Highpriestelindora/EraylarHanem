@@ -137,13 +137,10 @@ const VardiyaTab = () => {
     toast.success('Kaydedildi');
   }, [updateModaringVardiya, addModaringVardiya]);
 
-    // executeClear handles bulk delete. For simplicity, we can loop or add a store action.
-    // For now, let's just delete them one by one or implement a bulk action.
-    // Actually, let's keep it simple for Phase 3 and just use a bulk update if needed, 
-    // but the goal is to sever JSON link.
+  const executeClear = useCallback(() => {
+    const currentShifts = useStore.getState().modaring.vardiya || [];
+    const msg = viewMode === 'daily' ? 'Gün temizlendi' : 'Hafta temizlendi';
     
-    // Better: implement a clear action in store.
-    // I'll just use the existing logic but call delete for each.
     const shiftsToDelete = currentShifts.filter(s => {
       if (viewMode === 'daily') return String(s?.date || "").trim() === String(formattedDateStr).trim();
       if (viewMode === 'weekly') {

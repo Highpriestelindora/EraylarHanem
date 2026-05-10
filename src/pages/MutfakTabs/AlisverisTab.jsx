@@ -254,30 +254,51 @@ const AlisverisTab = () => {
         title="🛒 Kasaya Git"
       >
         <div className="modal-form">
-          <div className="checkout-items-list" style={{ maxHeight: '35vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '15px', background: 'var(--bg)', borderRadius: '24px', border: '1px solid var(--brd)' }}>
-            <label style={{ fontSize: '11px', fontWeight: 900, opacity: 0.5, letterSpacing: '1px', marginBottom: '5px' }}>ÜRÜN BAZLI FİYAT VE MİKTAR</label>
-            {checkoutItems.map(item => (
-              <div key={item.id} className="checkout-item-row" style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: '10px', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.nm}</span>
-                <input 
-                  type="text" 
-                  value={item.qt} 
-                  placeholder="Miktar"
-                  onChange={(e) => updateCheckoutItemQty(item.id, e.target.value)}
-                  style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px solid var(--brd)', fontSize: '12px', textAlign: 'center', background: 'white' }}
-                />
-                <div style={{ position: 'relative' }}>
-                  <input 
-                    type="number" 
-                    value={item.price} 
-                    placeholder="₺"
-                    onChange={(e) => updateCheckoutItemPrice(item.id, e.target.value)}
-                    style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px solid var(--brd)', fontSize: '12px', textAlign: 'center', background: 'white' }}
-                    inputMode="decimal"
-                  />
+          <div className="checkout-items-list" style={{ maxHeight: '40vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', padding: '15px', background: 'var(--bg)', borderRadius: '24px', border: '1px solid var(--brd)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 5px 8px', borderBottom: '1px solid var(--brd)', marginBottom: '5px' }}>
+              <label style={{ fontSize: '10px', fontWeight: 900, opacity: 0.4, letterSpacing: '1px' }}>ÜRÜN ADI</label>
+              <label style={{ fontSize: '10px', fontWeight: 900, opacity: 0.4, letterSpacing: '1px' }}>MİKTAR</label>
+            </div>
+            {checkoutItems.map(item => {
+              const qtParts = (item.qt || '1 adet').split(' ');
+              const val = qtParts[0];
+              const unit = qtParts.slice(1).join(' ') || 'adet';
+              
+              const units = ['adet', 'kg', 'gr', 'paket', 'litre', 'ml', 'kaşık', 'bardak'];
+
+              return (
+                <div key={item.id} className="checkout-item-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--txt)', flex: 1, marginRight: '10px' }}>{item.nm}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input 
+                      type="text" 
+                      value={val || ''} 
+                      placeholder="0"
+                      onChange={(e) => updateCheckoutItemQty(item.id, `${e.target.value} ${unit}`)}
+                      style={{ width: '55px', padding: '8px', borderRadius: '12px', border: '1px solid var(--brd)', fontSize: '13px', fontWeight: '800', textAlign: 'center', background: 'white' }}
+                    />
+                    <select 
+                      value={unit} 
+                      onChange={(e) => updateCheckoutItemQty(item.id, `${val} ${e.target.value}`)}
+                      style={{ 
+                        padding: '8px 4px', 
+                        borderRadius: '10px', 
+                        border: '1px solid var(--brd)', 
+                        fontSize: '11px', 
+                        fontWeight: '700', 
+                        color: 'var(--mutfak)',
+                        background: 'rgba(236, 72, 153, 0.05)',
+                        cursor: 'pointer',
+                        outline: 'none',
+                        minWidth: '55px'
+                      }}
+                    >
+                      {units.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="form-group">

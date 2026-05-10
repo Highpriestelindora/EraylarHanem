@@ -12,23 +12,31 @@ const AppointmentTab = () => {
 
   const appointments = saglik.randevular || [];
 
-  const handleSave = () => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
     if (!form.doktor || !form.tarih) {
       toast.error('Doktor ve tarih alanları zorunludur!');
       return;
     }
 
-    let updatedRandevular;
-    if (editingRandevu) {
-      useStore.getState().updateAppointment(editingRandevu.id, form);
-      toast.success('Randevu güncellendi! ✨');
-    } else {
-      useStore.getState().addAppointment(form);
-      toast.success('Randevu eklendi! 🩺');
+    setIsSaving(true);
+    try {
+      if (editingRandevu) {
+        await useStore.getState().updateAppointment(editingRandevu.id, form);
+        toast.success('Randevu güncellendi! ✨');
+      } else {
+        await useStore.getState().addAppointment(form);
+        toast.success('Randevu eklendi! 🩺');
+      }
+      setModalOpenLocal(false);
+      setEditingRandevu(null);
+      setForm({ kisi: 'Görkem', doktor: '', tarih: '', saat: '', not: '', rekurans: 'yok' });
+    } catch (e) {
+      toast.error('Kayıt sırasında bir hata oluştu.');
+    } finally {
+      setIsSaving(false);
     }
-    setModalOpenLocal(false);
-    setEditingRandevu(null);
-    setForm({ kisi: 'Görkem', doktor: '', tarih: '', saat: '', not: '', rekurans: 'yok' });
   };
 
   const handleDelete = (id) => {
@@ -109,8 +117,13 @@ const AppointmentTab = () => {
         }}
         title={editingRandevu ? "🩺 Randevuyu Düzenle" : "🩺 Yeni Randevu"}
         footer={
-          <button className="submit-btn primary" onClick={handleSave}>
-            {editingRandevu ? "Güncellemeleri Kaydet" : "Randevuyu Ekle"}
+          <button 
+            className="submit-btn primary" 
+            onClick={handleSave}
+            disabled={isSaving}
+            style={{ opacity: isSaving ? 0.7 : 1 }}
+          >
+            {isSaving ? "İşleniyor..." : (editingRandevu ? "Güncellemeleri Kaydet" : "Randevuyu Ekle")}
           </button>
         }
       >

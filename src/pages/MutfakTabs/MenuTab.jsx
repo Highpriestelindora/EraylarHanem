@@ -44,24 +44,36 @@ export default function MenuTab() {
     }
   };
 
-  // Date Helpers
+  // Date Helpers - Local Time Fixed
+  const getLocalISO = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
+
   const getDays = (offset) => {
     const today = new Date();
+    // Saati sıfırla ki gün hesaplamaları etkilenmesin
+    today.setHours(0, 0, 0, 0); 
+
+    const dayOfWeek = today.getDay(); // 0: Paz, 1: Pzt...
+    // Pazartesi'ye olan uzaklığı hesapla (Pazartesi=1)
+    const diff = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek; 
+    
     const firstDay = new Date(today);
-    const dayOfWeek = today.getDay(); // 0: Sun, 1: Mon...
-    const diff = (dayOfWeek === 0 ? -6 : 1) - dayOfWeek; // Adjust to Monday
     firstDay.setDate(today.getDate() + diff + (offset * 7));
 
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(firstDay);
       d.setDate(firstDay.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
+      const iso = getLocalISO(d);
       return {
         iso,
         dayName: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][i],
         dayNum: d.getDate(),
         month: d.getMonth() + 1,
-        isToday: iso === new Date().toISOString().slice(0, 10)
+        isToday: iso === getLocalISO(new Date())
       };
     });
   };

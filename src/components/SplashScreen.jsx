@@ -26,7 +26,17 @@ const SplashScreen = ({ finishLoading }) => {
     { t: 'Mayıs yine en sevdiğin koltuğu kaptı... 🛋️', m: '🛋️' },
     { t: 'Waffle "hav" diyerek tüm dikkatleri üzerine çekti... 📣', m: '📣' },
     { t: 'Huzur dolu bir günün kapıları aralanıyor... 🚪', m: '🚪' },
-    { t: 'Eraylar Hanesi\'nde her şey yolunda! 🛸', m: '🛸' }
+    { t: "Waffle & Mayıs yine iş birliği içinde... 🕵️‍♂️", m: "🕵️‍♂️" },
+    { t: "Eraylar Hanem'de yeni bir vizyoner gün başlıyor... 🚀", m: "🚀" },
+    { t: "Mayıs kutu bulma şampiyonu seçildi... 📦", m: "📦" },
+    { t: "Waffle bugün 12 saat uyku hedefine ulaştı... 😴", m: "😴" },
+    { t: "Görkem & Esra için her şeyin en güzeli yükleniyor... 💖", m: "💖" },
+    { t: "Eraylar Malikanesi'nde patili sesler yükseliyor... 🏰", m: "🏰" },
+    { t: "Mayıs yine Görkem'in sandalyesini kaptı... 🪑", m: "🪑" },
+    { t: "Waffle kapıda kuyruk sallama antrenmanı yapıyor... 🐕", m: "🐕" },
+    { t: "En güzel anılar bu kapının ardında... 🏠", m: "🏠" },
+    { t: "Sevgiyle örülen bir yuva hazırlanıyor... ✨", m: "✨" },
+    { t: "Eraylar Hanesi'nde her şey yolunda! 🛸", m: "🛸" }
   ];
 
   // Pick 4 random jokes on mount
@@ -194,7 +204,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v4.0.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"SOCRATES"</span>
+            v4.2.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"ARISTOTLE"</span>
           </span>
         </div>
         <span style={{

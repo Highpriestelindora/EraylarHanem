@@ -1126,3 +1126,75 @@ input[type="time"] {
   font-style: italic;
 }
 
+/* --- Water Module Enhancements --- */
+.su-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.su-edit-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  font-weight: 800;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.su-edit-toggle.active-save {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  animation: pulseGreen 2s infinite;
+}
+
+@keyframes pulseGreen {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.editing-active .glass {
+  border: 1px solid #10b981 !important;
+}
+
+.editing-pulse {
+  animation: editingPulse 2s infinite;
+}
+
+@keyframes editingPulse {
+  0% { background: rgba(16, 185, 129, 0.02); }
+  50% { background: rgba(16, 185, 129, 0.08); }
+  100% { background: rgba(16, 185, 129, 0.02); }
+}
+
+.tank-container.editing-focus {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+.tank-ctrl button.disabled, 
+.dc-btns button.disabled,
+.swap-btn-premium.disabled,
+.order-btn.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+  filter: grayscale(1);
+}
+
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -85,6 +85,7 @@ const DEFAULT_STATE = {
       dailyRate: 20,
       lastChecked: new Date().toISOString(),
       lastOrder: new Date().toISOString(),
+      isEditing: false,
       history: []
     },
     consumption: {},
@@ -105,7 +106,7 @@ const DEFAULT_STATE = {
   },
   // ── Global System ──────────────────────────────────
   system: {
-    version: '3.1.5 "VIZYONER"',
+    version: '4.2.0 "ARISTOTLE"',
     clientId: typeof window !== 'undefined' ? (localStorage.getItem('eraylar_client_id') || Math.random().toString(36).substring(2)) : 'ssr',
     globalScore: 85,
     onboardingComplete: false,
@@ -987,30 +988,54 @@ async function pushPetAgirlikToSupabase(petId, entry) {
   } catch(e) { console.warn('Pet Ağırlık Hatası:', e); }
 }
 
-async function pushSaglikRandevuToSupabase(r, familyId) {
+async function pushSaglikIlacToSupabase(i) {
   try {
-    await supabase.from('saglik_randevular').upsert({
-      id: String(r.id), 
-      family_id: familyId,
-      kisi: r.kisi, doktor: r.doktor || null,
-      tarih: r.tarih || null, saat: r.saat || null,
-      not_text: r.not || null, rekurans: r.rekurans || 'yok'
-    });
-  } catch(e) { console.warn('Sağlık Randevu Hatası:', e); }
+    const payload = {
+      id: String(i.id),
+      family_id: DEFAULT_FID,
+      kisi: i.kisi,
+      ad: i.ad,
+      dozaj: i.dozaj || null,
+      siklik: i.siklik || i.sıklık || null,
+      stok: Number(i.stok || 0),
+      min_stok: Number(i.minStok || 5),
+      morning: Number(i.morning || 0),
+      afternoon: Number(i.afternoon || 0),
+      evening: Number(i.evening || 0)
+    };
+
+    const { error } = await supabase.from('saglik_ilaclar').upsert(payload);
+    if (error) {
+      console.error('❌ Supabase İlaç Hatası:', error);
+      toast.error('İlaç kaydedilemedi: ' + error.message);
+    }
+  } catch(e) { 
+    console.error('❌ Sağlık İlaç Catch:', e); 
+  }
 }
 
-async function pushSaglikIlacToSupabase(i, familyId) {
+async function pushSaglikRandevuToSupabase(r) {
   try {
-    await supabase.from('saglik_ilaclar').upsert({
-      id: String(i.id), 
-      family_id: familyId,
-      kisi: i.kisi, ad: i.ad,
-      dozaj: i.dozaj || null, siklik: i.siklik || i.sıklık || null,
-      stok: Number(i.stok || 0), min_stok: Number(i.minStok || 5),
-      schedule: i.schedule || { morning: 0, afternoon: 0, evening: 0 }
-    });
-  } catch(e) { console.warn('Sağlık İlaç Hatası:', e); }
+    const payload = {
+      id: String(r.id),
+      kisi: r.kisi,
+      doktor: r.doktor || null,
+      tarih: r.tarih || null,
+      saat: r.saat || null,
+      not_text: r.not || null,
+      rekurans: r.rekurans || 'yok'
+    };
+
+    const { error } = await supabase.from('saglik_randevular').upsert(payload);
+    if (error) {
+      console.error('❌ Supabase Randevu Hatası:', error);
+      toast.error('Randevu kaydedilemedi: ' + error.message);
+    }
+  } catch(e) { 
+    console.error('❌ Sağlık Randevu Catch:', e); 
+  }
 }
+
 
 async function pushSaglikOlcumToSupabase(o, familyId) {
   try {
@@ -1037,9 +1062,9 @@ async function pushSaglikMoodToSupabase(m, familyId) {
   } catch(e) { console.warn('Sağlık Mood Hatası:', e); }
 }
 
-async function pushSaglikLogToSupabase(l, familyId) {
+async function pushSaglikLogToSupabase(l, familyId = DEFAULT_FID) {
   try {
-    await supabase.from('saglik_logs').upsert({
+    const { error } = await supabase.from('saglik_logs').upsert({
       id: String(l.id),
       family_id: familyId,
       med_id: String(l.medId),
@@ -1047,9 +1072,41 @@ async function pushSaglikLogToSupabase(l, familyId) {
       kisi: l.kisi,
       slot: l.slot,
       date: l.date,
-      dt: l.dt
+      dt: l.dt || null
     });
-  } catch(e) { console.warn('Sağlık Log Hatası:', e); }
+    if (error) {
+      console.error('❌ Supabase İlaç Log Hatası:', error);
+      toast.error('İlaç kaydı buluta işlenemedi: ' + error.message);
+    }
+  } catch(e) { 
+    console.error('❌ Sağlık Log Catch:', e); 
+  }
+}
+
+async function pushSaglikSleepToSupabase(s) {
+  try {
+    const payload = {
+      id: String(s.id),
+      kisi: s.kisi,
+      tarih: s.tarih,
+      saat: Number(s.sure || 0),
+      kalite: String(s.kalite || '3')
+    };
+
+    const { error } = await supabase.from('saglik_sleep').upsert(payload);
+    if (error) {
+      console.error('❌ Supabase Uyku Hatası:', error);
+      toast.error('Uyku verisi kaydedilemedi: ' + error.message);
+    }
+  } catch(e) { 
+    console.error('❌ Sağlık Uyku Catch:', e); 
+  }
+}
+
+async function deleteSaglikSleepFromSupabase(id) {
+  try {
+    await supabase.from('saglik_sleep').delete().eq('id', String(id));
+  } catch(e) { console.warn('Sağlık Uyku Silme Hatası:', e); }
 }
 
 // --- Deletion Helpers for Group 2 ---
@@ -1822,29 +1879,29 @@ const useStore = create(
                  asilar, agirliklar, supplies, petLogs,
                  randevular, ilaclar, olcumler, moods, logs, sleep,
                  depo, faturalar, ustaRehberi, bitkiler] = await Promise.all([
-            supabase.from('ev_duzenli_odemeler').select('*'),
-            supabase.from('ev_abonelikler').select('*'),
-            supabase.from('ev_onarim').select('*'),
-            supabase.from('ev_demirbaslar').select('*'),
-            supabase.from('ev_bakimlar').select('*'),
-            supabase.from('garaj_yakit').select('*'),
-            supabase.from('garaj_servis').select('*'),
-            supabase.from('garaj_belgeler').select('*'),
-            supabase.from('garaj_parts').select('*'),
-            supabase.from('pet_asilar').select('*'),
-            supabase.from('pet_agirlik').select('*'),
-            supabase.from('pet_supplies').select('*'),
-            supabase.from('pet_logs').select('*'),
+            supabase.from('ev_duzenli_odemeler').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_abonelikler').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_onarim').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_demirbaslar').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_bakimlar').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('garaj_yakit').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('garaj_servis').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('garaj_belgeler').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('garaj_parts').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('pet_asilar').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('pet_agirlik').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('pet_supplies').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('pet_logs').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('saglik_randevular').select('*'),
             supabase.from('saglik_ilaclar').select('*'),
             supabase.from('saglik_olcumler').select('*'),
-            supabase.from('saglik_moods').select('*').order('date', { ascending: false }).limit(100),
-            supabase.from('saglik_logs').select('*').order('date', { ascending: false }).limit(100),
+            supabase.from('saglik_moods').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.eq.ERAYLAR`).order('date', { ascending: false }).limit(100),
+            supabase.from('saglik_logs').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.eq.ERAYLAR`).order('date', { ascending: false }).limit(200),
             supabase.from('saglik_sleep').select('*'),
-            supabase.from('ev_depo').select('*'),
-            supabase.from('ev_faturalar').select('*'),
-            supabase.from('ev_usta_rehberi').select('*'),
-            supabase.from('ev_bitkiler').select('*')
+            supabase.from('ev_depo').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_faturalar').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_usta_rehberi').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_bitkiler').select('*').eq('family_id', DEFAULT_FID)
           ]);
 
           set(state => {
@@ -1915,7 +1972,27 @@ const useStore = create(
             }
 
             const saglik = { ...state.saglik };
-            if (randevular.data) saglik.randevular = randevular.data;
+            if (randevular.data) {
+              // Sort by date and time descending (newest first)
+              const sortedRandevular = [...randevular.data].sort((a, b) => {
+                const dateA = a.tarih || '';
+                const dateB = b.tarih || '';
+                if (dateA !== dateB) return dateB.localeCompare(dateA);
+                const timeA = a.saat || '';
+                const timeB = b.saat || '';
+                return timeB.localeCompare(timeA);
+              });
+
+              saglik.randevular = sortedRandevular.map(r => ({
+                id: r.id,
+                kisi: r.kisi,
+                doktor: r.doktor,
+                tarih: r.tarih,
+                saat: r.saat,
+                not: r.not_text,
+                rekurans: r.rekurans
+              }));
+            }
             if (ilaclar.data) {
               saglik.ilaclar = ilaclar.data.map(i => ({
                 id: i.id, kisi: i.kisi, ad: i.ad, dozaj: i.dozaj, sıklık: i.siklik,
@@ -1925,11 +2002,29 @@ const useStore = create(
             if (olcumler.data) saglik.olcumler = olcumler.data;
             if (moods.data) saglik.moods = moods.data;
             if (logs.data) {
-              saglik.logs = logs.data.map(l => ({
+              const sortedLogs = [...logs.data].sort((a, b) => b.id - a.id); // Newest ID first
+              saglik.logs = sortedLogs.map(l => ({
                 id: l.id, medId: l.med_id, ad: l.ad, kisi: l.kisi, slot: l.slot, date: l.date, dt: l.dt
               }));
             }
-            if (sleep.data) saglik.sleep = sleep.data;
+            if (sleep.data) {
+              const sortedSleep = [...sleep.data].sort((a, b) => {
+                const dateA = a.tarih || '';
+                const dateB = b.tarih || '';
+                return dateB.localeCompare(dateA);
+              });
+              saglik.sleep = sortedSleep.map(s => ({
+                id: s.id,
+                kisi: s.kisi,
+                tarih: s.tarih,
+                saat: s.saat,
+                sure: Number(s.saat || 0),
+                kalite: s.kalite,
+                yatis: '',
+                kalkis: '',
+                not: ''
+              }));
+            }
 
             return { ev, garaj, pet, saglik };
           });
@@ -2248,7 +2343,7 @@ const useStore = create(
         pushSaglikMoodToSupabase(newMood);
       },
 
-      takeMedicine: (medId, slot = 'morning') => {
+      takeMedicine: async (medId, slot = 'morning') => {
         const state = get();
         const meds = [...state.saglik.ilaclar];
         const idx = meds.findIndex(m => m.id === medId);
@@ -2258,14 +2353,25 @@ const useStore = create(
         const newStok = Math.max(0, (med.stok || 0) - 1);
         meds[idx] = { ...med, stok: newStok };
 
+        const now = new Date();
+        let logDate = new Date(now);
+        
+        // If taking evening dose in the early morning (before 5 AM), attribute it to yesterday
+        if (slot === 'evening' && now.getHours() < 5) {
+          logDate.setDate(now.getDate() - 1);
+        }
+
+        const localDate = logDate.getFullYear() + '-' + String(logDate.getMonth() + 1).padStart(2, '0') + '-' + String(logDate.getDate()).padStart(2, '0');
+        const localTime = now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
         const log = {
           id: Date.now(),
           medId: med.id,
           ad: med.ad,
           kisi: med.kisi,
           slot: slot,
-          date: new Date().toISOString().split('T')[0],
-          dt: new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+          date: localDate,
+          dt: localTime
         };
         const updatedLogs = [log, ...(state.saglik.logs || [])].slice(0, 100);
 
@@ -2277,9 +2383,10 @@ const useStore = create(
           get().addLog('İlaç Azaldı', `${med.ad} stoğu kritik seviyeye düştü (${newStok} adet kaldı). Yenisini almayı unutmayın!`);
         }
 
-
-        pushSaglikIlacToSupabase(meds[idx], state.family_id);
-        pushSaglikLogToSupabase(log, state.family_id);
+        await Promise.all([
+          pushSaglikIlacToSupabase(meds[idx], state.family_id || DEFAULT_FID),
+          pushSaglikLogToSupabase(log, state.family_id || DEFAULT_FID)
+        ]);
       },
 
       deleteMedicine: (id) => {
@@ -2306,58 +2413,74 @@ const useStore = create(
         deleteSaglikOlcumFromSupabase(id);
       },
 
-      addMeasurement: (form) => {
+      addSleepData: async (data) => {
+        const state = get();
+        const updated = [data, ...(state.saglik.sleep || [])];
+        set({ saglik: { ...state.saglik, sleep: updated } });
+
+        await pushSaglikSleepToSupabase(data, state.family_id || DEFAULT_FID);
+      },
+
+      deleteSleepData: async (id) => {
+        const state = get();
+        const updated = (state.saglik.sleep || []).filter(s => String(s.id) !== String(id));
+        set({ saglik: { ...state.saglik, sleep: updated } });
+
+        await deleteSaglikSleepFromSupabase(id);
+      },
+
+      addMeasurement: async (form) => {
         const state = get();
         const newOlcum = { id: Date.now(), ...form };
         const updated = [newOlcum, ...(state.saglik.olcumler || [])];
         set({ saglik: { ...state.saglik, olcumler: updated } });
 
-        pushSaglikOlcumToSupabase(newOlcum);
+        await pushSaglikOlcumToSupabase(newOlcum, state.family_id || DEFAULT_FID);
       },
 
-      addAppointment: (form) => {
+      addAppointment: async (form) => {
         const state = get();
         const newRandevu = { id: Date.now(), ...form };
         const updated = [newRandevu, ...(state.saglik.randevular || [])];
         set({ saglik: { ...state.saglik, randevular: updated } });
 
-        pushSaglikRandevuToSupabase(newRandevu, state.family_id);
+        await pushSaglikRandevuToSupabase(newRandevu, state.family_id || DEFAULT_FID);
       },
 
-      addMedicine: (form) => {
+      addMedicine: async (form) => {
         const state = get();
         const newIlac = { id: Date.now(), ...form };
         const updated = [newIlac, ...(state.saglik.ilaclar || [])];
         set({ saglik: { ...state.saglik, ilaclar: updated } });
 
-        pushSaglikIlacToSupabase(newIlac, state.family_id);
+        await pushSaglikIlacToSupabase(newIlac, state.family_id || DEFAULT_FID);
       },
 
-      updateMedicine: (id, updates) => {
+      updateMedicine: async (id, updates) => {
         const state = get();
         const updated = (state.saglik.ilaclar || []).map(m => String(m.id) === String(id) ? { ...m, ...updates } : m);
         set({ saglik: { ...state.saglik, ilaclar: updated } });
 
         const item = updated.find(m => String(m.id) === String(id));
-        if (item) pushSaglikIlacToSupabase(item, state.family_id);
+        if (item) await pushSaglikIlacToSupabase(item, state.family_id || DEFAULT_FID);
       },
 
-      updateAppointment: (id, updates) => {
+      updateAppointment: async (id, updates) => {
         const state = get();
         const updated = (state.saglik.randevular || []).map(r => String(r.id) === String(id) ? { ...r, ...updates } : r);
         set({ saglik: { ...state.saglik, randevular: updated } });
 
         const item = updated.find(r => String(r.id) === String(id));
-        if (item) pushSaglikRandevuToSupabase(item, state.family_id);
+        if (item) await pushSaglikRandevuToSupabase(item, state.family_id || DEFAULT_FID);
       },
 
-      updateMeasurement: (id, updates) => {
+      updateMeasurement: async (id, updates) => {
         const state = get();
         const updated = (state.saglik.olcumler || []).map(o => String(o.id) === String(id) ? { ...o, ...updates } : o);
         set({ saglik: { ...state.saglik, olcumler: updated } });
 
         const item = updated.find(o => String(o.id) === String(id));
-        if (item) pushSaglikOlcumToSupabase(item);
+        if (item) await pushSaglikOlcumToSupabase(item, state.family_id || DEFAULT_FID);
       },
 
       checkSystemNotifications: () => {
@@ -2435,6 +2558,13 @@ const useStore = create(
 
           set({ syncing: true });
           await get().loadFromSupabase();
+          
+          // Fetch Group 2 (Ev, Garaj, Pet, Saglik) and Group 3 (Tatil, Modaring, Muh) in parallel
+          await Promise.all([
+            get().fetchGroup2Data(),
+            get().fetchGroup3Data()
+          ]);
+
           get().subscribeToSupabase();
 
           // Veri yüklendikten sonra bildirimleri kontrol et
@@ -5108,13 +5238,13 @@ const useStore = create(
 
       addRecipe: async (recipe) => {
         const state = get();
-        // Mükerrer Kontrolü (Aynı isimli tarif)
         const isDuplicate = (state.mutfak.tarifler || []).some(
-          r => r.title?.toLowerCase().trim() === recipe.title?.toLowerCase().trim()
+          r => r.n?.toLowerCase().trim() === recipe.n?.toLowerCase().trim()
         );
+        
         if (isDuplicate) {
           toast.error('Bu isimde bir tarif zaten mevcut! 🍲');
-          return;
+          return false;
         }
 
         const newRecipe = {
@@ -5125,7 +5255,6 @@ const useStore = create(
         };
         const yeniTarifler = [newRecipe, ...state.mutfak.tarifler];
 
-        // Auto-add ingredients to stock if missing
         let updatedMutfak = { ...state.mutfak, tarifler: yeniTarifler };
         const allStock = [
           ...(updatedMutfak.buzdolabi || []),
@@ -5146,12 +5275,13 @@ const useStore = create(
               ic: '📦',
               bt: new Date().toISOString()
             });
-            stockNames.push(name.toLowerCase()); // prevent adding same ingredient twice within one recipe save
+            stockNames.push(name.toLowerCase());
           }
         });
 
         set({ mutfak: updatedMutfak });
-
+        await pushMutfakTarifToSupabase(newRecipe);
+        return true;
       },
 
       updateRecipe: async (id, updates) => {
@@ -5191,14 +5321,21 @@ const useStore = create(
         const state = get();
         const yeniTarifler = state.mutfak.tarifler.filter(r => r.id !== id);
         set({ mutfak: { ...state.mutfak, tarifler: yeniTarifler } });
-
+        
+        // SQL SYNC
+        await pushGenericDeleteFromSupabase('mutfak_tarifler', id);
       },
 
       toggleFavorite: async (id) => {
         const state = get();
-        const yeniTarifler = state.mutfak.tarifler.map(r => r.id === id ? { ...r, f: !r.f } : r);
+        const recipe = state.mutfak.tarifler.find(r => r.id === id);
+        if (!recipe) return;
+        const updatedRecipe = { ...recipe, f: !recipe.f };
+        const yeniTarifler = state.mutfak.tarifler.map(r => r.id === id ? updatedRecipe : r);
         set({ mutfak: { ...state.mutfak, tarifler: yeniTarifler } });
-
+        
+        // SQL SYNC
+        await pushMutfakTarifToSupabase(updatedRecipe);
       },
 
       updateWaterLevel: async (tank, level) => {
@@ -5308,14 +5445,16 @@ const useStore = create(
       processDailyWaterDeduction: () => {
         const state = get();
         const su = state.mutfak.su || {};
-        if (!su.lastChecked) return;
+        // Eğer düzenleme modundaysa veya tarih yoksa işlem yapma
+        if (!su.lastChecked || su.isEditing) return;
 
         const now = new Date();
         const last = new Date(su.lastChecked);
         const diffMs = now - last;
         const diffDays = diffMs / (1000 * 60 * 60 * 24);
 
-        if (diffDays < 0.1) return; // 2.4 saatten azsa işlem yapma
+        // En az %1'lik bir düşüş (veya 1 saat) bekleyelim ki sürekli render olmasın
+        if (diffMs < 1000 * 60 * 60) return; 
 
         const rate = su.dailyRate || 20;
         const totalDeduction = diffDays * rate;
@@ -5333,17 +5472,26 @@ const useStore = create(
           newLevel1 = 0;
         }
 
-        // Sonra yedektekini düş
+        // Sonra yedektekini düş (Yedek su genellikle damacana bazlıdır ama burada yüzde tutuluyor)
         if (remainingDeduction > 0) {
           newLevel2 = Math.max(0, newLevel2 - remainingDeduction);
         }
 
+        // KRİTİK DÜZELTME: Sonucu en yakın %5'in katına yuvarla (%61 -> %60)
+        // Eğer %1'den az kaldıysa sıfırla
+        const finalL1 = newLevel1 < 1 ? 0 : Math.round(newLevel1 / 5) * 5;
+        const finalL2 = newLevel2 < 1 ? 0 : Math.round(newLevel2 / 5) * 5;
+
+        // Eğer yuvarlama sonrası seviye DEĞİŞMEDİYSE lastChecked'ı güncelleme ki birikmeye devam etsin
+        if (finalL1 === su.level1 && finalL2 === su.level2) return;
+
         const newSu = { 
           ...su, 
-          level1: Math.round(newLevel1), 
-          level2: Math.round(newLevel2), 
+          level1: finalL1, 
+          level2: finalL2, 
           lastChecked: now.toISOString() 
         };
+        
         set({
           mutfak: {
             ...state.mutfak,
@@ -5351,6 +5499,29 @@ const useStore = create(
           }
         });
         pushMutfakSuToSupabase(newSu);
+      },
+
+      setWaterEditing: (val) => {
+        const state = get();
+        const su = state.mutfak.su || {};
+        set({ mutfak: { ...state.mutfak, su: { ...su, isEditing: val } } });
+      },
+
+      saveWaterSettings: (l1, l2, rate) => {
+        const state = get();
+        const su = state.mutfak.su || {};
+        const now = new Date().toISOString();
+        const newSu = {
+          ...su,
+          level1: l1,
+          level2: l2,
+          dailyRate: rate,
+          lastChecked: now, // Kaydedildiği an zamanlayıcı sıfırlanır
+          isEditing: false
+        };
+        set({ mutfak: { ...state.mutfak, su: newSu } });
+        pushMutfakSuToSupabase(newSu);
+        toast.success('Su ayarları kaydedildi ve sayaç başlatıldı! 💧');
       },
 
       refillPetWater: async () => {
@@ -7569,8 +7740,12 @@ const useStore = create(
 
         // 3. Add Finance Record
         if (totalPrice > 0) {
+          const expenseTitle = items.length === 1 
+            ? `${items[0].nm} (${market || 'Market'})` 
+            : `Mutfak Alışverişi (Diğer)`;
+
           get().addExpense({
-            title: `Mutfak Alışverişi (${market || 'Market'})`,
+            title: expenseTitle,
             amount: totalPrice,
             category: 'Mutfak',
             payer: state.currentUser?.name || 'Görkem',

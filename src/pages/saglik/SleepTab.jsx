@@ -91,7 +91,9 @@ const SleepTab = () => {
   const currentStats = calculateStats(form.kisi);
   const insights = getInsights(currentStats);
 
-  const handleSave = () => {
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async () => {
     // Auto-calculate duration if times are provided
     let duration = form.sure;
     if (form.yatis && form.kalkis) {
@@ -103,9 +105,16 @@ const SleepTab = () => {
     }
 
     const newEntry = { id: Date.now(), ...form, sure: duration };
-    setModuleData('saglik', { ...saglik, sleep: [newEntry, ...allSleepData] });
-    setModalOpen(false);
-    toast.success('Uyku verisi kaydedildi! 😴');
+    setIsSaving(true);
+    try {
+      await useStore.getState().addSleepData(newEntry);
+      setModalOpen(false);
+      toast.success('Uyku verisi kaydedildi! 😴');
+    } catch (e) {
+      toast.error('Kayıt yapılamadı.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleUpdateGoal = (newGoal) => {
@@ -118,8 +127,7 @@ const SleepTab = () => {
   };
 
   const handleDelete = (id) => {
-    const updated = allSleepData.filter(s => s.id !== id);
-    setModuleData('saglik', { ...saglik, sleep: updated });
+    useStore.getState().deleteSleepData(id);
     toast.success('Kayıt silindi.');
   };
 
@@ -272,8 +280,20 @@ const SleepTab = () => {
             />
           </div>
 
-          <button className="submit-btn primary sleep-btn" onClick={handleSave} style={{ width: '100%', padding: '18px', borderRadius: '20px', background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: 'white', border: 'none', fontWeight: '900', fontSize: '16px', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)', marginTop: '10px' }}>
-            Kaydı Ekle ✨
+          <button 
+            className="submit-btn primary sleep-btn" 
+            onClick={handleSave} 
+            disabled={isSaving}
+            style={{ 
+              width: '100%', padding: '18px', borderRadius: '20px', 
+              background: 'linear-gradient(135deg, #6366f1, #818cf8)', 
+              color: 'white', border: 'none', fontWeight: '900', 
+              fontSize: '16px', boxShadow: '0 10px 20px rgba(99, 102, 241, 0.2)', 
+              marginTop: '10px',
+              opacity: isSaving ? 0.7 : 1
+            }}
+          >
+            {isSaving ? "İşleniyor..." : "Kaydı Ekle ✨"}
           </button>
         </div>
       </ActionSheet>
