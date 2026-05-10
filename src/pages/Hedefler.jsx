@@ -143,8 +143,8 @@ export default function Hedefler() {
   const tabs = [
     { id: 'kisa', label: 'Kısa', emoji: '⏱️' },
     { id: 'uzun', label: 'Uzun', emoji: '🔭' },
-    { id: 'kazanimlar', label: 'Kazanımlar', emoji: '✅' },
-    { id: 'kayiplar', label: 'Kayıplar', emoji: '❌' },
+    { id: 'kazanimlar', label: 'Kazanım', emoji: '✅' },
+    { id: 'kayiplar', label: 'Kayıp', emoji: '❌' },
     { id: 'vizyon', label: 'Vizyon', emoji: '🌟' }
   ];
 
@@ -233,59 +233,54 @@ export default function Hedefler() {
 
   return (
     <AnimatedPage className="hedefler-container">
-      <header className="module-header glass" style={{ background: 'var(--hedefler)' }}>
-        <div className="header-top">
-          <div className="header-title">
-            <span className="header-emoji animate-float">🎯</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h1>Eraylar Hedefler</h1>
-              <p>{moodboard?.quote || "Gelecek, ona hazırlananlarındır."}</p>
-            </div>
+      <header className="module-header-v3" style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)' }}>
+        <div className="m-h-content">
+          <div className="m-h-top">
+             <div className="m-h-info">
+                <span className="m-h-emoji animate-float">🎯</span>
+                <div className="m-h-text">
+                   <h1>Eraylar Hedefler</h1>
+                   <p>{moodboard?.quote || "Büyük işler, küçük başlangıçlarla olur."}</p>
+                </div>
+             </div>
+             <button className="m-h-back" onClick={() => navigate('/')}>
+                <ArrowLeft size={20} />
+             </button>
           </div>
-          <div className="header-actions">
-            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
-              <ArrowLeft size={20} />
-            </button>
+          
+          <div className="m-h-tabs-v3">
+            {tabs.map(t => (
+              <button 
+                key={t.id} 
+                className={`m-h-tab-v3 ${activeTab === t.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(t.id)}
+              >
+                <div className="t-icon">{t.id === 'kisa' ? <Clock size={16} /> : t.id === 'uzun' ? <TrendingUp size={16} /> : t.id === 'kazanimlar' ? <CheckCircle size={16} /> : t.id === 'kayiplar' ? <XCircle size={16} /> : <Target size={16} />}</div>
+                <span>{t.label.toUpperCase()}</span>
+              </button>
+            ))}
           </div>
         </div>
-
-        <nav className="tab-nav">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </nav>
       </header>
 
       <div className="hedefler-scroll-content">
-        
-        {(activeTab === 'kisa' || activeTab === 'uzun') && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div className="owner-filter-chips">
-                    {['all', 'gorkem', 'esra', 'ortak'].map(o => (
-                    <button 
-                        key={o} 
-                        className={`chip ${filterOwner === o ? 'active' : ''}`}
-                        onClick={() => setFilterOwner(o)}
-                    >
-                        {o === 'all' && 'Tümü'}
-                        {o === 'gorkem' && 'Görkem'}
-                        {o === 'esra' && 'Esra'}
-                        {o === 'ortak' && 'Aile'}
-                    </button>
-                    ))}
-                </div>
-                <button className="pill-btn-premium" onClick={() => { setSelectedGoal(null); setIsEditing(true); setShowGoalModal(true); }}>
-                    <Plus size={16} /> HEDEF EKLE
+         <div className="filter-actions-row">
+            <div className="owner-filter-chips-v3">
+              {['Tümü', 'Görkem', 'Esra', 'Aile'].map(o => (
+                <button 
+                  key={o} 
+                  className={`chip-v3 ${ownerFilter === o ? 'active' : ''}`}
+                  onClick={() => setOwnerFilter(o)}
+                >
+                  {o}
                 </button>
+              ))}
             </div>
-        )}
+            
+            <button className="add-goal-btn-v3" onClick={() => { setSelectedGoal(null); setIsEditing(true); setShowGoalModal(true); }}>
+               HEDEF EKLE
+            </button>
+         </div>
 
         {/* İşte Bu Kadar! Celebration Banner */}
         {pendingCompletions.length > 0 && (activeTab === 'kisa' || activeTab === 'uzun') && (

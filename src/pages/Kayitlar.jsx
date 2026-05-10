@@ -108,25 +108,25 @@ export default function Kayitlar() {
     });
 
     Object.values(medGroups).forEach(groupLogs => {
-      const sorted = [...groupLogs].sort((a, b) => a.id - b.id);
+      const sorted = [...groupLogs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       const first = sorted[0];
       const last = sorted[sorted.length - 1];
       const count = sorted.length;
       
-      const d1 = new Date(first.id);
-      const d2 = new Date(last.id);
+      const d1 = new Date(first.date);
+      const d2 = new Date(last.date);
       
       // Calculate calendar days difference
       const s1 = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate());
       const s2 = new Date(d2.getFullYear(), d2.getMonth(), d2.getDate());
-      const diffDays = Math.round(Math.abs(s2 - s1) / (1000 * 60 * 60 * 24)) + 1;
+      const diffDays = isNaN(s1.getTime()) || isNaN(s2.getTime()) ? 1 : Math.round(Math.abs(s2 - s1) / (1000 * 60 * 60 * 24)) + 1;
 
       records.push({
-        id: `med-agg-${first.id}`,
+        id: `med-agg-${first.ad}-${first.kisi}`,
         category: 'İlaç Takibi',
         icon: <HeartIcon size={18} />,
         title: `${first.ad} (${diffDays} Günlük Takip / Toplam ${count} Doz)`,
-        date: last.id, // Timestamp of the very last dose taken
+        date: last.date, 
         type: 'medicine',
         user: first.kisi,
         onDelete: () => toast.error('Tıbbi geçmiş kayıtları değiştirilemez.')

@@ -1624,10 +1624,19 @@ const useStore = create(
 
             const saglik = { ...state.saglik };
             if (randevular.data) saglik.randevular = randevular.data;
-            if (ilaclar.data) saglik.ilaclar = ilaclar.data;
+            if (ilaclar.data) {
+              saglik.ilaclar = ilaclar.data.map(i => ({
+                id: i.id, kisi: i.kisi, ad: i.ad, dozaj: i.dozaj, sıklık: i.siklik,
+                stok: i.stok, minStok: i.min_stok, schedule: i.schedule
+              }));
+            }
             if (olcumler.data) saglik.olcumler = olcumler.data;
             if (moods.data) saglik.moods = moods.data;
-            if (logs.data) saglik.logs = logs.data;
+            if (logs.data) {
+              saglik.logs = logs.data.map(l => ({
+                id: l.id, medId: l.med_id, ad: l.ad, kisi: l.kisi, slot: l.slot, date: l.date, dt: l.dt
+              }));
+            }
             if (sleep.data) saglik.sleep = sleep.data;
 
             return { ev, garaj, pet, saglik };
@@ -1966,6 +1975,8 @@ const useStore = create(
         const updatedLogs = [log, ...(state.saglik.logs || [])].slice(0, 100);
 
         set({ saglik: { ...state.saglik, ilaclar: meds, logs: updatedLogs } });
+
+        get().addLog('İlaç Takibi', `${med.kisi} - ${med.ad} ilacının ${slot === 'morning' ? 'Sabah' : slot === 'afternoon' ? 'Öğle' : 'Akşam'} dozunu içti. ✅`);
 
         if (newStok <= (med.minStok || 5)) {
           get().addLog('İlaç Azaldı', `${med.ad} stoğu kritik seviyeye düştü (${newStok} adet kaldı). Yenisini almayı unutmayın!`);
