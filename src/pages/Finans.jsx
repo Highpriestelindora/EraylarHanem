@@ -3,7 +3,7 @@ import {
   TrendingDown, CreditCard, Clock, Check, X, AlertCircle,
   ChevronDown, ChevronUp, Calendar, ArrowLeft, Eye, EyeOff,
   Landmark, RotateCcw, Plus, History, Wallet, PieChart,
-  Settings, Trash2, Edit
+  Settings, Trash2, Edit, RefreshCcw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -327,11 +327,39 @@ const KrediTab = React.memo(({ finans, prv }) => {
     setInputMap(p => ({ ...p, [kartId]: '' }));
   };
 
+  const toplamBeklenen = kartlar.reduce((s, k) => s + (kartMutabakat[k.id]?.beklenen || 0), 0);
+  const toplamGercek = kartlar.reduce((s, k) => s + (kartMutabakat[k.id]?.gercek || 0), 0);
+
   return (
     <div className="f-tab-content animate-fadeIn">
+      <div className="ozet-grid" style={{ marginBottom: '24px' }}>
+        <div className="ozet-card glass">
+          <small>TOPLAM BEKLENEN</small>
+          <h2 style={{ color: '#f59e0b' }}>{fmt(toplamBeklenen, prv)}</h2>
+        </div>
+        <div className="ozet-card glass primary">
+          <small>GİRİLEN EKSTRE</small>
+          <h2>{fmt(toplamGercek, prv)}</h2>
+        </div>
+      </div>
+
       <div className="ozet-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>💳 Kredi Kartlarım</span>
-        <button className="icon-btn" onClick={() => setShowKartModal(true)} style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}><Settings size={16} /></button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            className="icon-btn" 
+            onClick={async () => {
+              const { fetchPhase3Data, getBuAyHarcamalar } = useStore.getState();
+              await fetchPhase3Data();
+              await getBuAyHarcamalar();
+              toast.success('Veriler güncellendi! 🔄');
+            }} 
+            style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}
+          >
+            <RefreshCcw size={16} />
+          </button>
+          <button className="icon-btn" onClick={() => setShowKartModal(true)} style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}><Settings size={16} /></button>
+        </div>
       </div>
 
       {kartlar.map(kart => {

@@ -2463,18 +2463,31 @@ const useStore = create(
           const { data: dbHedefler } = await supabase.from('hedefler_aktif').select('*');
           const { data: dbGecmis } = await supabase.from('hedefler_gecmis').select('*');
           const { data: dbVizyon } = await supabase.from('hedefler_vizyon').select('*');
+          const { data: dbMutabakat } = await supabase.from('finans_kart_mutabakat').select('*');
 
           set(state => {
             const f = { ...state.finans };
-            if (dbKartlar) {
+            if (dbKartlar && dbKartlar.length > 0) {
               f.kartlar = dbKartlar.map(k => {
                 const legacy = DEFAULT_STATE.finans.kartlar.find(dk => dk.id === k.id) || {};
-                return { id: k.id, name: k.name, owner: k.owner, cutoff_day: k.cutoff_day, color: k.color, min_pct: k.min_pct, limit: legacy.limit || 100000, balance: legacy.balance || 0, due_day_offset: legacy.due_day_offset || 10 };
+                return { id: k.id, name: k.name, owner: k.owner, cutoff_day: k.cutoff_day, color: k.color, min_pct: k.min_pct, limit: Number(k.limit || legacy.limit || 100000), balance: Number(k.balance || legacy.balance || 0), due_day_offset: Number(k.due_day_offset || legacy.due_day_offset || 10) };
               });
+            } else if (dbKartlar && dbKartlar.length === 0) {
+              f.kartlar = DEFAULT_STATE.finans.kartlar;
             }
 
-            if (dbBorclar) {
+            if (dbBorclar && dbBorclar.length > 0) {
               f.borclar = dbBorclar.map(b => ({ id: b.id, name: b.name, due_day: b.due_day, total: b.total, remaining: b.remaining, monthly: b.monthly }));
+            } else {
+              f.borclar = [];
+            }
+
+            if (dbMutabakat && dbMutabakat.length > 0) {
+              const newMut = { ...f.kartMutabakat };
+              dbMutabakat.forEach(m => {
+                newMut[m.kart_id] = { beklenen: m.beklenen || 0, gercek: m.gercek, ay: m.ay, paid: m.paid, paymentType: m.payment_type };
+              });
+              f.kartMutabakat = newMut;
             }
 
             if (dbOnayHavuzu && dbOnayHavuzu.length > 0) {
@@ -3190,12 +3203,14 @@ const useStore = create(
         const state = get();
         const data = await fetchBuAyHarcamalar(state.family_id);
 
-        // Kart mutabakatını da yeniden hesapla
-        const yeniMutabakat = { ...state.finans.kartMutabakat };
         const buAy = new Date().toISOString().slice(0, 7);
-        Object.keys(yeniMutabakat).forEach(k => {
-          yeniMutabakat[k] = { ...yeniMutabakat[k], beklenen: 0, ay: buAy };
+        // Kart mutabakatını kartlar dizisine göre tazeleyerek oluştur (Stale ID'lerden kurtul)
+        const yeniMutabakat = {};
+        (state.finans.kartlar || []).forEach(k => {
+          const current = state.finans.kartMutabakat?.[k.id] || {};
+          yeniMutabakat[k.id] = { ...current, beklenen: 0, ay: buAy };
         });
+
         data.forEach(h => {
           if (h.kart_id) {
             if (!yeniMutabakat[h.kart_id]) {
@@ -5855,15 +5870,17 @@ const useStore = create(
           }
         }
 
-        const newLog = { date: today, type: effectiveType, durationMinutes: minutes, timestamp: now };
-        updatedLogs = [newLog, ...updatedLogs].slice(0, 2000);
+        const userId = state.currentUser?.id || (state.currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem');
+        const newLog = { date: today, type: effectiveType, durationMinutes: minutes, timestamp: now, user: userId };
+        updatedLogs = [newLog, ...updatedLogs].slice(0, 5000);
 
         const dateObj = new Date(now);
         const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dateObj.getDay()];
         const hour = dateObj.getHours().toString().padStart(2, '0');
         const habitKey = `${day}-${hour}`;
 
-        const currentHabits = tracking.weeklyHabits || {};
+        const userHabits = tracking.userHabits || {};
+        const currentHabits = userHabits[userId] || {};
         const slot = currentHabits[habitKey] || { home: 0, work: 0, other: 0, tatil: 0 };
         slot[effectiveType] = (slot[effectiveType] || 0) + 1;
 
@@ -5874,7 +5891,7 @@ const useStore = create(
               ...tracking,
               logs: updatedLogs,
               lastCheck: { type: effectiveType, timestamp: now },
-              weeklyHabits: { ...currentHabits, [habitKey]: slot }
+              userHabits: { ...userHabits, [userId]: { ...currentHabits, [habitKey]: slot } }
             }
           }
         });
@@ -5884,14 +5901,12 @@ const useStore = create(
       updateCachedAnalysis: (analysisData) => {
         const currentEv = get().ev || {};
         const tracking = currentEv.tracking || {};
-        const today = new Date().toISOString().split('T')[0];
         set({
           ev: {
             ...currentEv,
             tracking: {
               ...tracking,
-              cachedAnalysis: analysisData,
-              lastAnalysisDate: today
+              ...analysisData
             }
           }
         });

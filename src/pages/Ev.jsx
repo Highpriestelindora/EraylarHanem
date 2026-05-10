@@ -44,13 +44,17 @@ const YEKTA_QUOTES = [
 ];
 
 // Standing data helper moved outside for better hoisting and scope
-function getAggregatedData(evData, daysCount, tatilData) {
-  if (!evData || !evData.tracking) return { labels: [], datasets: [] };
-  
-  const routine = evData.tracking.routine || {};
-  const stats = { home: 0, work: 0, tatil: 0, other: 0 };
-  const logs = evData.tracking.logs || [];
-  const habits = evData.tracking.weeklyHabits || {};
+ function getAggregatedData(evData, daysCount, tatilData, userId) {
+   if (!evData || !evData.tracking) return { labels: [], datasets: [] };
+   
+   const routine = evData.tracking.routine || {};
+   const stats = { home: 0, work: 0, tatil: 0, other: 0 };
+   // Filter logs by user if they have user field (legacy logs will be ignored or matched to default)
+   const allLogs = evData.tracking.logs || [];
+   const logs = allLogs.filter(l => !l.user || l.user === userId);
+   
+   const userHabits = evData.tracking.userHabits || {};
+   const habits = userHabits[userId] || evData.tracking.weeklyHabits || {};
   
   for (let d = 0; d < daysCount; d++) {
     const targetDate = new Date();
@@ -296,24 +300,29 @@ export default function Ev() {
     }, 2000);
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().slice(0, 10);
   const { weeklyData, monthlyData } = useMemo(() => {
-    // If we have a fresh analysis from today, use it to save system load
-    if (ev.tracking?.lastAnalysisDate === today && ev.tracking?.cachedAnalysis) {
-      return ev.tracking.cachedAnalysis;
+    const userId = currentUser?.id || (currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem');
+    
+    // Cache per user and per day
+    const cacheKey = `cachedAnalysis_${userId}`;
+    if (ev.tracking?.lastAnalysisDate === today && ev.tracking?.[cacheKey]) {
+      return ev.tracking[cacheKey];
     }
     return {
-      weeklyData: getAggregatedData(ev, 7, tatil),
-      monthlyData: getAggregatedData(ev, 30, tatil)
+      weeklyData: getAggregatedData(ev, 7, tatil, userId),
+      monthlyData: getAggregatedData(ev, 30, tatil, userId)
     };
-  }, [ev.tracking?.logs, ev.tracking?.weeklyHabits, tatil, today]);
+  }, [ev.tracking?.logs, ev.tracking?.userHabits, tatil, today, currentUser?.id]);
 
-  // Save the calculated analysis once a day
+  // Save the calculated analysis once a day per user
   useEffect(() => {
-    if (ev.tracking?.lastAnalysisDate !== today) {
-      updateCachedAnalysis({ weeklyData, monthlyData });
+    const userId = currentUser?.id || (currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem');
+    const cacheKey = `cachedAnalysis_${userId}`;
+    if (ev.tracking?.lastAnalysisDate !== today || !ev.tracking?.[cacheKey]) {
+      updateCachedAnalysis({ [cacheKey]: { weeklyData, monthlyData }, lastAnalysisDate: today });
     }
-  }, [weeklyData, monthlyData, today]);
+  }, [weeklyData, monthlyData, today, currentUser?.id]);
 
   const doughnutOptions = {
     plugins: { legend: { display: false } },
