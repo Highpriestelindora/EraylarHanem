@@ -105,7 +105,7 @@ const StokTab = () => {
       n: formData.get('n'),
       ic: formData.get('ic') || '📦',
       u: formData.get('u') || 'adet',
-      mn: parseFloat(formData.get('mn')) || 1,
+      mn: formData.get('mn') !== '' ? parseFloat(formData.get('mn')) : 0,
       cr: parseFloat(formData.get('cr')) || 0,
       ct: formData.get('ct') || 'Diğer',
       br: formData.get('br') || '',

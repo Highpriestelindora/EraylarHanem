@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Droplets, Refrigerator, BookOpen,
+  Droplets, Refrigerator, BookOpen, Package,
   ShoppingCart, Calendar, MessageSquare, Wheat,
   ArrowLeft, ChevronRight
 } from 'lucide-react';
@@ -16,6 +16,7 @@ import EkmeklikTab from './MutfakTabs/EkmeklikTab';
 import AlisverisTab from './MutfakTabs/AlisverisTab';
 import SohbetTab from './MutfakTabs/SohbetTab';
 import TariflerTab from './MutfakTabs/TariflerTab';
+import UrunKutuphanesi from './MutfakTabs/UrunKutuphanesi';
 
 import './Mutfak.css';
 
@@ -58,6 +59,14 @@ export default function Mutfak() {
           <div className="header-actions">
               <button 
                 className="icon-btn" 
+                onClick={() => setActiveTab('kutuphane')}
+                style={{ background: activeTab === 'kutuphane' ? 'white' : 'rgba(255,255,255,0.25)', color: activeTab === 'kutuphane' ? 'var(--mutfak)' : 'white', marginRight: '8px' }}
+                title="Ürün Kütüphanesi"
+              >
+                <Package size={20} />
+              </button>
+              <button 
+                className="icon-btn" 
                 onClick={() => setActiveTab(prev => prev === 'tarifler' ? 'menu' : 'tarifler')}
                 style={{ background: activeTab === 'tarifler' ? 'white' : 'rgba(255,255,255,0.25)', color: activeTab === 'tarifler' ? '#ea580c' : 'white' }}
                 title="Tarifler"
@@ -92,6 +101,7 @@ export default function Mutfak() {
         {activeTab === 'alisveris' && <AlisverisTab />}
         {activeTab === 'sohbet' && <SohbetTab />}
         {activeTab === 'tarifler' && <TariflerTab />}
+        {activeTab === 'kutuphane' && <UrunKutuphanesi onBack={() => setActiveTab('stok')} />}
       </main>
     </AnimatedPage>
   );

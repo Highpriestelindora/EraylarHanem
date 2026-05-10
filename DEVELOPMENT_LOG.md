@@ -27,7 +27,12 @@
 ## 🛠️ Teknik Fixler
 - **Import Fix:** `useEffect` ve `ArcElement` eksiklikleri giderildi.
 - **Syntax Fix:** İç içe geçen `useMemo` blokları ve ReferenceError'lar temizlendi.
-- **Versiyon:** Uygulama sürümü `v2.31.0` (Smart Life Update) seviyesine yükseltildi.
+### 5. "The Great Purge" - Modaring SQL Migration (10 Mayıs 2026)
+- **Mimari Devrim:** Modaring modülünün monolitik JSON yapısı tamamen tasfiye edildi. Artık tüm veriler (Personel, Vardiya, Kasa, Bankalar, Tedarik, Siparişler, Ajanda, Refika) atomik SQL tablolarında saklanıyor.
+- **2. Milat Standartları:** Tüm mutasyonlar `DEFAULT_FID` scoping ve kompozit ID (`id-familyId`) yapısına geçirildi.
+- **Real-time Sync:** `subscribeToSupabase` dinleyicisi genişletilerek 8 yeni Modaring tablosu için anlık senkronizasyon sağlandı.
+- **UI Refactor:** Modaring tab bileşenleri tamamen SQL-first aksiyonlara (`addModaringPersonel`, `updateModaringVardiya` vb.) bağlandı.
+- **Versiyon:** Uygulama sürümü `v4.0.0` (SQL-First Era) seviyesine yükseltildi.
 
 ---
 *Bu notlar projenin kök dizinindeki DEVELOPMENT_LOG.md dosyasında saklanmaktadır.*

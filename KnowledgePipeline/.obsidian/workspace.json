@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "7ae0d913d11d9f48",
+        "id": "64757412a96aad49",
         "type": "tabs",
         "children": [
           {
-            "id": "5e925c771014c6a3",
+            "id": "a322a0982e62c6ff",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "raw/legacy/Index.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "Index"
+              "title": "Yeni sekme"
             }
           }
         ]
@@ -184,22 +180,23 @@
       "bases:Yeni taban oluştur": false
     }
   },
-  "active": "5e925c771014c6a3",
+  "active": "a322a0982e62c6ff",
   "lastOpenFiles": [
+    "sources/legacy_docs.md",
+    "raw/legacy/Mutfak_Modulu.md",
+    "raw/legacy/Index.md",
+    "Başlıksız 2.canvas",
     "decisions/2_milat_mimari.md",
     "decisions/2_milat_anayasasi.md",
     "decisions/tek_tablo_jsonb_depolama.md",
     "index.md",
     "2026-05-10.md",
-    "Başlıksız 2.canvas",
     "Başlıksız 1.canvas",
-    "raw/legacy/Index.md",
     "Başlıksız.canvas",
     "decisions/ikinci_beyin_mimarisi.md",
     "decisions/ios_oncelikli_test.md",
     "concepts/senkronizasyon_stratejisi.md",
     "log.md",
-    "sources/legacy_docs.md",
     "entities/finans_ve_kasa.md",
     "entities/mutfak_modulu.md",
     "sources/codebase.md",
@@ -213,7 +210,6 @@
     "entities/pet.md",
     "decisions/stok_bazli_tarif_gosterimi.md",
     "raw/legacy/Ev_ve_Yasam.md",
-    "concepts/merkezi_state_yonetimi.md",
-    "raw/legacy/Aracim_ve_Ulasim.md"
+    "concepts/merkezi_state_yonetimi.md"
   ]
 }

@@ -8,7 +8,12 @@ import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const TedarikTab = () => {
-  const { modaring, setModuleData, forceSaveToSupabase } = useStore();
+  const { 
+    modaring, 
+    addModaringTedarik, updateModaringTedarik, deleteModaringTedarik,
+    addModaringSiparis, updateModaringSiparis, deleteModaringSiparis,
+    addModaringKasaItem
+  } = useStore();
   const suppliers = modaring?.tedarik || [];
   const orders = modaring?.siparisler || [];
   const bankalar = modaring?.bankalar || [];
@@ -28,47 +33,43 @@ const TedarikTab = () => {
   }, [suppliers, searchTerm]);
 
   const handleSaveSupplier = (supplier) => {
-    let updated;
     if (supplier.id) {
-      updated = suppliers.map(s => s.id === supplier.id ? supplier : s);
+      updateModaringTedarik(supplier.id, supplier);
     } else {
-      updated = [...suppliers, { ...supplier, id: Date.now().toString() }];
+      addModaringTedarik(supplier);
     }
-    setModuleData('modaring', { tedarik: updated });
     setShowSupplierModal(false);
     setEditingSupplier(null);
     toast.success('Tedarikçi kaydedildi');
-    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const handleDeleteSupplier = (id) => {
     setConfirmModal({
       show: true,
       onConfirm: () => {
-        const updated = suppliers.filter(s => s.id !== id);
-        const updatedOrders = orders.filter(o => o.supplierId !== id);
-        setModuleData('modaring', { tedarik: updated, siparisler: updatedOrders });
+        deleteModaringTedarik(id);
+        // Note: Related orders should be deleted too.
+        const relatedOrders = orders.filter(o => o.supplierId === id);
+        relatedOrders.forEach(ro => deleteModaringSiparis(ro.id));
+        
         setConfirmModal({ show: false });
         setShowSupplierModal(false);
         setSelectedSupplier(null);
         toast.error('Tedarikçi ve tüm siparişleri silindi');
-        setTimeout(() => forceSaveToSupabase(), 500);
       }
     });
   };
 
   const handleSaveOrder = (order) => {
-    let updatedOrders;
     if (order.id) {
-      updatedOrders = orders.map(o => o.id === order.id ? order : o);
+      updateModaringSiparis(order.id, order);
     } else {
-      updatedOrders = [{ ...order, id: Date.now().toString() }, ...orders];
+      addModaringSiparis(order);
     }
 
     // If it's a payment/expense, sync with Kasa
-    if (order.syncWithKasa && order.paid > 0) {
+    if (order.syncWithKasa && Number(order.paid) > 0) {
       const kasaEntry = {
-        id: Date.now().toString() + '_sync',
         date: order.date,
         type: 'out',
         amount: order.paid,
@@ -76,22 +77,16 @@ const TedarikTab = () => {
         bankId: order.bankId,
         note: `${suppliers.find(s => s.id === order.supplierId)?.name} Ödemesi (${order.items || 'Sipariş'})`
       };
-      const updatedKasa = [kasaEntry, ...(modaring?.kasa || [])];
-      setModuleData('modaring', { siparisler: updatedOrders, kasa: updatedKasa });
-    } else {
-      setModuleData('modaring', { siparisler: updatedOrders });
+      addModaringKasaItem(kasaEntry);
     }
 
     setShowOrderModal(false);
     toast.success('Sipariş/Ödeme kaydedildi');
-    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const handleDeleteOrder = (id) => {
-    const updated = orders.filter(o => o.id !== id);
-    setModuleData('modaring', { siparisler: updated });
+    deleteModaringSiparis(id);
     toast.error('Sipariş silindi');
-    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
 
@@ -178,10 +173,8 @@ const TedarikTab = () => {
                           className={`qs-btn ${order.status === s.label ? 'active' : ''}`}
                           style={{ '--active-bg': s.color }}
                           onClick={() => {
-                            const updated = orders.map(o => o.id === order.id ? { ...o, status: s.label } : o);
-                            setModuleData('modaring', { siparisler: updated });
+                            updateModaringSiparis(order.id, { status: s.label });
                             toast.success(`Durum: ${s.label}`);
-                            setTimeout(() => forceSaveToSupabase(), 500);
                           }}
                         >
                           {s.icon}

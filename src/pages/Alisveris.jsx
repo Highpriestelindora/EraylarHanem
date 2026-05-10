@@ -386,15 +386,7 @@ export default function Alisveris() {
           onClose={() => setShowAddModal(false)} 
           initialOwner={activeTab}
           onAdd={(owner, item) => {
-            if (owner === 'market') {
-              const updatedMutfak = { 
-                ...mutfak, 
-                alisveris: [{ id: Date.now(), ...item }, ...(mutfak.alisveris || [])] 
-              };
-              useStore.getState().setModuleData('mutfak', updatedMutfak);
-            } else {
-              addShoppingItem(owner, item);
-            }
+            addShoppingItem(owner, item);
           }}
         />
       )}

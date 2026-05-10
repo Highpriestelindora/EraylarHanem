@@ -42,46 +42,42 @@ export default function AppLayout() {
     <div className="app-container">
       {/* Header - Shown only on Home if needed, but Home has its own. 
           Hiding on modules to allow immersive module headers. */}
-      {false && (
-        <header className={`app-header glass ${isColored ? 'colored-header' : ''}`} style={{ background: headerBg }}>
+      <header className={`app-header glass ${isColored ? 'colored-header' : ''}`} style={{ background: isColored ? headerBg : 'rgba(255, 255, 255, 0.8)' }}>
         <div className="header-left">
           <div className="header-title-row" onClick={() => navigate('/')}>
             <img src={logo} alt="Logo" className="header-logo-mini" />
             <div className="header-title-main">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <h1>Eraylar Hanem</h1>
                 <div 
                   className={`status-dot ${isSaving ? 'syncing' : (isOnline ? 'online' : 'offline')}`} 
                   title={isSaving ? 'Senkronize ediliyor...' : (isOnline ? 'Bulut Bağlantısı Aktif' : 'Çevrimdışı')} 
                 />
               </div>
-              <small>Hoş geldin, {currentUser?.name || 'Misafir'}</small>
+              {!isColored && <small>Hoş geldin, {currentUser?.name || 'Görkem'}</small>}
             </div>
           </div>
         </div>
-        <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="header-actions">
           <button 
-            className="icon-btn" 
-            style={{ background: 'var(--bg)', border: '1px solid var(--brd)', borderRadius: '12px', padding: '8px', cursor: 'pointer', color: 'var(--txt)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="header-action-btn" 
             onClick={() => navigate('/analiz')}
-            title="İstatistikler ve Analiz"
+            title="İstatistikler"
           >
             <BarChart2 size={20} />
           </button>
           <button 
-            className="icon-btn" 
-            style={{ background: 'var(--bg)', border: '1px solid var(--brd)', borderRadius: '12px', padding: '8px', cursor: 'pointer', color: 'var(--txt)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            className="header-action-btn" 
             onClick={() => navigate('/ayarlar')}
-            title="Genel Ayarlar"
+            title="Ayarlar"
           >
             <Settings size={20} />
           </button>
-          <div className="avatar clickable" onClick={() => navigate('/profil')} title="Profilim">
-            {currentUser?.emoji || '👤'}
+          <div className="avatar-container clickable" onClick={() => navigate('/profil')} title="Profilim">
+            <span className="avatar-emoji">{currentUser?.emoji || '👤'}</span>
           </div>
         </div>
       </header>
-      )}
 
       {/* Main Content Area */}
       <main className="app-content">

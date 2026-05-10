@@ -8,7 +8,11 @@ import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const KasaTab = () => {
-  const { modaring, setModuleData, forceSaveToSupabase } = useStore();
+  const { 
+    modaring, 
+    addModaringKasaItem, updateModaringKasaItem, deleteModaringKasaItem,
+    addModaringBank, updateModaringBank, deleteModaringBank 
+  } = useStore();
   const kasa = modaring?.kasa || [];
   const bankalar = modaring?.bankalar || [];
 
@@ -42,31 +46,25 @@ const KasaTab = () => {
   }, [kasa, bankalar]);
 
   const handleSave = (transaction) => {
-    let updatedKasa;
     if (transaction.id) {
-      updatedKasa = kasa.map(item => item.id === transaction.id ? transaction : item);
+      updateModaringKasaItem(transaction.id, transaction);
     } else {
-      updatedKasa = [{ ...transaction, id: Date.now().toString() }, ...kasa];
+      addModaringKasaItem(transaction);
     }
 
-    setModuleData('modaring', { kasa: updatedKasa });
     setShowModal(false);
     setEditingItem(null);
     toast.success('İşlem kaydedildi');
-    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const handleSaveBank = (bank) => {
-    let updatedBanks;
     if (bank.id) {
-      updatedBanks = bankalar.map(b => b.id === bank.id ? bank : b);
+      updateModaringBank(bank.id, bank);
     } else {
-      updatedBanks = [...bankalar, { ...bank, id: Date.now().toString() }];
+      addModaringBank(bank);
     }
-    setModuleData('modaring', { bankalar: updatedBanks });
     setShowBankModal(false);
     toast.success('Hesap kaydedildi');
-    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const handleDeleteBank = (id, name) => {
@@ -75,14 +73,17 @@ const KasaTab = () => {
       title: 'Hesabı Sil',
       message: `${name} hesabını ve bu hesaba bağlı tüm kayıtları silmek istediğine emin misin?`,
       onConfirm: () => {
-        const updatedBanks = bankalar.filter(b => b.id !== id);
-        const updatedKasa = kasa.filter(k => k.bankId !== id);
-        setModuleData('modaring', { bankalar: updatedBanks, kasa: updatedKasa });
+        deleteModaringBank(id);
+        // Note: deleteModaringBank should handle related kasa items deletion in store logic
+        // or we do it here. My current deleteModaringBank only deletes the bank.
+        // I'll update the store to handle cascade or do it here.
+        const relatedKasa = kasa.filter(k => k.bankId === id);
+        relatedKasa.forEach(rk => deleteModaringKasaItem(rk.id));
+        
         setConfirmModal({ show: false });
         setShowBankModal(false);
         setEditingBank(null);
         toast.error('Hesap ve bağlı işlemler silindi');
-        setTimeout(() => forceSaveToSupabase(), 500);
       }
     });
   };
@@ -93,13 +94,11 @@ const KasaTab = () => {
       title: 'İşlemi Sil',
       message: 'Bu işlem kaydını silmek istediğine emin misin?',
       onConfirm: () => {
-        const updatedKasa = kasa.filter(item => item.id !== id);
-        setModuleData('modaring', { kasa: updatedKasa });
+        deleteModaringKasaItem(id);
         setEditingItem(null);
         setShowModal(false);
         setConfirmModal({ show: false });
         toast.error('İşlem silindi');
-        setTimeout(() => forceSaveToSupabase(), 500);
       }
     });
   };

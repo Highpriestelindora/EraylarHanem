@@ -15,6 +15,10 @@ export const REYON_IC = {
   'Ambalaj': '📦', 'Evcil Hayvan': '🐾', 'Diğer': '📋'
 };
 
+export const UNITS = [
+  'adet', 'kg', 'gram', 'litre', 'ml', 'paket', 'bağ', 'koli', 'su bardağı', 'yemek kaşığı', 'çay kaşığı'
+];
+
 export const INITIAL_RECIPES = [
   {
     "n": "Makarna Bolonez",

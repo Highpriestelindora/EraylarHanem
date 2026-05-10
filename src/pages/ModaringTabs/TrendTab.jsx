@@ -9,7 +9,7 @@ import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const TrendTab = () => {
-  const { modaring, setModuleData } = useStore();
+  const { modaring, addModaringRefika, deleteModaringRefika } = useStore();
   const savedIdeas = modaring?.refikaFikirleri || [];
   
   const [generating, setGenerating] = useState(false);
@@ -228,15 +228,14 @@ const TrendTab = () => {
       toast.error('Refika bu fikri zaten kaydetmişti tatlım! 🧚');
       return;
     }
-    const updated = [result, ...savedIdeas];
-    setModuleData('modaring', { refikaFikirleri: updated });
+    
+    addModaringRefika(result);
     toast.success('Fikir Refika\'nın Ajandasına kaydedildi! 💎');
   };
 
   const deleteIdea = (e, id) => {
     e.stopPropagation();
-    const updated = savedIdeas.filter(i => i.id !== id);
-    setModuleData('modaring', { refikaFikirleri: updated });
+    deleteModaringRefika(id);
     toast.success('Refika fikri çöpe attı! ✨');
   };
 

@@ -6,7 +6,11 @@ import PaymentSelector from '../../components/PaymentSelector';
 import toast from 'react-hot-toast';
 
 const AlisverisTab = () => {
-  const { mutfak, setModuleData, batchConfirmShopping, addCriticalToShopping, finans, currentUser, addKitchenNote } = useStore();
+  const { 
+    mutfak, setModuleData, batchConfirmShopping, 
+    addCriticalToShopping, finans, currentUser, 
+    addKitchenNote, deleteShoppingItem, addShoppingItem
+  } = useStore();
   const [newItem, setNewItem] = useState('');
   const [search, setSearch] = useState('');
   const [checkedIds, setCheckedIds] = useState([]);
@@ -68,17 +72,13 @@ const AlisverisTab = () => {
       loc: existingStockItem?.loc || 'buz'
     };
 
-    setModuleData('mutfak', { 
-      ...mutfak, 
-      alisveris: [newItemObj, ...alisveris] 
-    });
+    addShoppingItem('mutfak', newItemObj);
     setNewItem('');
     toast.success('Listeye eklendi!');
   };
 
   const deleteItem = (id) => {
-    const updated = alisveris.filter(item => item.id !== id);
-    setModuleData('mutfak', { ...mutfak, alisveris: updated });
+    deleteShoppingItem('mutfak', id);
     setCheckedIds(prev => prev.filter(x => x !== id));
   };
 

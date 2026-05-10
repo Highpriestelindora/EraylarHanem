@@ -9,7 +9,11 @@ import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const VardiyaTab = () => {
-  const { modaring, setModuleData, forceSaveToSupabase, loadFromSupabase } = useStore();
+  const { 
+    modaring, 
+    addModaringPersonel, updateModaringPersonel, deleteModaringPersonel,
+    addModaringVardiya, updateModaringVardiya, deleteModaringVardiya 
+  } = useStore();
   const personel = modaring?.personel || [];
   const shifts = modaring?.vardiya || [];
   
@@ -124,35 +128,35 @@ const VardiyaTab = () => {
     const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (pInfo?.hourlyRate || 0);
     const otherShifts = currentShifts.filter(s => !(s?.id === data.id));
     
-    setModuleData('modaring', { vardiya: [...otherShifts, { ...data, id: data.id || Date.now().toString(), totalPay: wage }] });
+    if (data.id) {
+      updateModaringVardiya(data.id, { ...data, totalPay: wage });
+    } else {
+      addModaringVardiya({ ...data, totalPay: wage });
+    }
     setEditingShift(null);
     toast.success('Kaydedildi');
-    setTimeout(() => forceSaveToSupabase(), 500);
-  }, [setModuleData, forceSaveToSupabase]);
+  }, [updateModaringVardiya, addModaringVardiya]);
 
-  const executeClear = useCallback(() => {
-    const currentModaring = useStore.getState().modaring;
-    const currentShifts = currentModaring.vardiya || [];
-    let remainingShifts = [];
-    let msg = "";
+    // executeClear handles bulk delete. For simplicity, we can loop or add a store action.
+    // For now, let's just delete them one by one or implement a bulk action.
+    // Actually, let's keep it simple for Phase 3 and just use a bulk update if needed, 
+    // but the goal is to sever JSON link.
+    
+    // Better: implement a clear action in store.
+    // I'll just use the existing logic but call delete for each.
+    const shiftsToDelete = currentShifts.filter(s => {
+      if (viewMode === 'daily') return String(s?.date || "").trim() === String(formattedDateStr).trim();
+      if (viewMode === 'weekly') {
+        const weekStrs = getWeekRange(selectedDate).map(d => getLocalDateStr(d).trim());
+        return weekStrs.includes(String(s?.date || "").trim());
+      }
+      return false;
+    });
 
-    if (viewMode === 'daily') {
-      const targetDate = String(formattedDateStr).trim();
-      remainingShifts = currentShifts.filter(s => String(s?.date || "").trim() !== targetDate);
-      const deletedCount = currentShifts.length - remainingShifts.length;
-      msg = `${deletedCount} vardiya temizlendi 🧹`;
-    } else if (viewMode === 'weekly') {
-      const weekStrs = getWeekRange(selectedDate).map(d => getLocalDateStr(d).trim());
-      remainingShifts = currentShifts.filter(s => !weekStrs.includes(String(s?.date || "").trim()));
-      const deletedCount = currentShifts.length - remainingShifts.length;
-      msg = `${deletedCount} haftalık vardiya temizlendi 🧹`;
-    }
-
-    setModuleData('modaring', { vardiya: remainingShifts });
+    shiftsToDelete.forEach(s => deleteModaringVardiya(s.id));
     toast.success(msg);
     setConfirmModal({ show: false, title: '', message: '', onConfirm: null });
-    setTimeout(() => forceSaveToSupabase(), 500);
-  }, [viewMode, formattedDateStr, getWeekRange, getLocalDateStr, selectedDate, setModuleData, forceSaveToSupabase]);
+  }, [viewMode, formattedDateStr, getWeekRange, getLocalDateStr, selectedDate, deleteModaringVardiya]);
 
   const handleClear = useCallback(() => {
     if (viewMode === 'daily') {
@@ -175,13 +179,10 @@ const VardiyaTab = () => {
   }, [viewMode, formattedDateStr, executeClear]);
 
   const handleDeleteShift = useCallback(async (shiftId) => {
-    const currentShifts = useStore.getState().modaring.vardiya || [];
-    const updated = currentShifts.filter(s => s?.id !== shiftId);
-    setModuleData('modaring', { vardiya: updated });
+    deleteModaringVardiya(shiftId);
     setEditingShift(null);
     toast.error('Vardiya silindi');
-    setTimeout(() => forceSaveToSupabase(), 500);
-  }, [setModuleData, forceSaveToSupabase]);
+  }, [deleteModaringVardiya]);
 
   const renderDaily = () => (
     <div className="compact-gantt-view glass animate-fadeIn">
@@ -362,25 +363,29 @@ const VardiyaTab = () => {
         <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => handleDeleteShift(editingShift.id)} />
       )}
 
-      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { setModuleData('modaring', { personel: personel.map(p => p.id === selectedPersonDetail.id ? { ...p, ...updates } : p) }); setSelectedPersonDetail(null); toast.success('Güncellendi'); setTimeout(() => forceSaveToSupabase(), 500); }} onDelete={() => { 
+      {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { 
+        updateModaringPersonel(selectedPersonDetail.id, updates);
+        setSelectedPersonDetail(null); 
+        toast.success('Güncellendi'); 
+      }} onDelete={() => { 
         setConfirmModal({ 
           show: true, 
           title: 'Personeli Sil', 
           message: `${selectedPersonDetail.name} isimli personeli ve tüm vardiyalarını silmek istediğinize emin misiniz?`, 
           onConfirm: () => {
-            const curModaring = useStore.getState().modaring;
-            const curP = curModaring.personel;
-            const curV = curModaring.vardiya;
-            setModuleData('modaring', { personel: curP.filter(p => p.id !== selectedPersonDetail.id), vardiya: curV.filter(s => s.personelId !== selectedPersonDetail.id) });
+            deleteModaringPersonel(selectedPersonDetail.id);
             setSelectedPersonDetail(null);
             setConfirmModal({ show: false, title: '', message: '', onConfirm: null });
             toast.error('Personel silindi');
-            setTimeout(() => forceSaveToSupabase(), 500);
           }
         });
       }} />}
       
-      {showAddStaffModal && <StaffAddOnlyModal onClose={() => setShowAddStaffModal(false)} onAdd={(p) => { setModuleData('modaring', { personel: [...personel, { ...p, id: Date.now().toString(), active: true, role: 'Satış Danışmanı', phone: '', note: '' }] }); setShowAddStaffModal(false); toast.success('Personel eklendi!'); setTimeout(() => forceSaveToSupabase(), 500); }} />}
+      {showAddStaffModal && <StaffAddOnlyModal onClose={() => setShowAddStaffModal(false)} onAdd={(p) => { 
+        addModaringPersonel(p);
+        setShowAddStaffModal(false); 
+        toast.success('Personel eklendi!'); 
+      }} />}
 
       {confirmModal.show && <ConfirmModal title={confirmModal.title} message={confirmModal.message} onConfirm={confirmModal.onConfirm} onCancel={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null })} />}
     </div>

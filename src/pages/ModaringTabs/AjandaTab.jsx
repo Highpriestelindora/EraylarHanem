@@ -8,7 +8,11 @@ import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const AjandaTab = () => {
-  const { modaring, setModuleData, forceSaveToSupabase } = useStore();
+  const { 
+    modaring, 
+    addModaringAjanda, updateModaringAjanda, deleteModaringAjanda,
+    addModaringKasaItem 
+  } = useStore();
   const ajanda = modaring?.ajanda || [];
   const bankalar = modaring?.bankalar || [];
 
@@ -32,30 +36,25 @@ const AjandaTab = () => {
   }, [ajanda, filter]);
 
   const handleSave = (item) => {
-    let updated;
     if (item.id) {
-      updated = ajanda.map(i => i.id === item.id ? item : i);
+      updateModaringAjanda(item.id, item);
     } else {
-      updated = [{ ...item, id: Date.now().toString() }, ...ajanda];
+      addModaringAjanda(item);
     }
-    setModuleData('modaring', { ajanda: updated });
     setShowModal(false);
     setEditingItem(null);
     toast.success('Ajanda güncellendi');
-    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const handleDelete = (id) => {
     setConfirmModal({
       show: true,
       onConfirm: () => {
-        const updated = ajanda.map(i => i.id === id ? { ...i, status: 'deleted' } : i);
-        setModuleData('modaring', { ajanda: updated });
+        updateModaringAjanda(id, { status: 'deleted' });
         setConfirmModal({ show: false });
         setShowModal(false);
         setEditingItem(null);
         toast.error('Kayıt arşive taşındı');
-        setTimeout(() => forceSaveToSupabase(), 500);
       }
     });
   };
@@ -64,41 +63,31 @@ const AjandaTab = () => {
     setConfirmModal({
       show: true,
       onConfirm: () => {
-        const updated = ajanda.filter(i => i.id !== id);
-        setModuleData('modaring', { ajanda: updated });
+        deleteModaringAjanda(id);
         setConfirmModal({ show: false });
         setShowModal(false);
         setEditingItem(null);
         toast.error('Kayıt tamamen silindi');
-        setTimeout(() => forceSaveToSupabase(), 500);
       }
     });
   };
 
   const handleRestore = (id) => {
-    const updated = ajanda.map(i => i.id === id ? { ...i, status: 'pending' } : i);
-    setModuleData('modaring', { ajanda: updated });
+    updateModaringAjanda(id, { status: 'pending' });
     toast.success('Kayıt geri yüklendi');
-    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const handleToggleStatus = (id) => {
-    const updated = ajanda.map(i => {
-      if (i.id === id) {
-        const newStatus = i.status === 'done' ? 'pending' : 'done';
-        if (newStatus === 'done') toast.success('Görev tamamlandı! 🎉');
-        return { ...i, status: newStatus };
-      }
-      return i;
-    });
-    setModuleData('modaring', { ajanda: updated });
-    setTimeout(() => forceSaveToSupabase(), 500);
+    const item = ajanda.find(i => i.id === id);
+    if (!item) return;
+    const newStatus = item.status === 'done' ? 'pending' : 'done';
+    if (newStatus === 'done') toast.success('Görev tamamlandı! 🎉');
+    updateModaringAjanda(id, { status: newStatus });
   };
 
   const handlePay = (item, bankId) => {
     // Record in Kasa
     const kasaEntry = {
-      id: Date.now().toString() + '_pay',
       date: new Date().toISOString().split('T')[0],
       type: 'out',
       amount: item.amount,
@@ -107,12 +96,10 @@ const AjandaTab = () => {
       note: `Ajanda Ödemesi: ${item.title}`
     };
     
-    const updatedKasa = [kasaEntry, ...(modaring?.kasa || [])];
-    const updatedAjanda = ajanda.map(i => i.id === item.id ? { ...i, status: 'done' } : i);
+    addModaringKasaItem(kasaEntry);
+    updateModaringAjanda(item.id, { status: 'done' });
     
-    setModuleData('modaring', { kasa: updatedKasa, ajanda: updatedAjanda });
     toast.success('Ödeme kasaya işlendi ve tamamlandı');
-    setTimeout(() => forceSaveToSupabase(), 500);
   };
 
   const getCategoryIcon = (cat) => {

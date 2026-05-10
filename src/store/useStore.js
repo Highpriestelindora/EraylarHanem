@@ -374,7 +374,16 @@ const DEFAULT_FID = 'eraylar-family-shared-id';
 // ── Generic Helpers for SSOT Migration ──────────────────────────────────
 async function pushGenericToSupabase(tableName, payload) {
   try {
-    const { error } = await supabase.from(tableName).upsert(payload);
+    const familyId = DEFAULT_FID;
+    // Ensure payload has family_id
+    const finalPayload = { ...payload, family_id: familyId };
+    
+    // Optional: Composite ID protection
+    if (finalPayload.id && !String(finalPayload.id).includes(familyId)) {
+      finalPayload.id = `${finalPayload.id}-${familyId}`;
+    }
+
+    const { error } = await supabase.from(tableName).upsert(finalPayload);
     if (error) throw error;
   } catch (e) {
     console.warn(`Supabase ${tableName} upsert hatası:`, e);
@@ -383,7 +392,12 @@ async function pushGenericToSupabase(tableName, payload) {
 
 async function removeGenericFromSupabase(tableName, id) {
   try {
-    const { error } = await supabase.from(tableName).delete().eq('id', String(id));
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    const { error } = await supabase.from(tableName)
+      .delete()
+      .eq('id', finalId)
+      .eq('family_id', familyId);
     if (error) throw error;
   } catch (e) {
     console.warn(`Supabase ${tableName} delete hatası:`, e);
@@ -562,8 +576,9 @@ async function upsertKartMutabakat(kart_id, ay, beklenen, gercek, familyId = DEF
 // --- GRUP 1 (Mutfak, Alışveriş, Sosyal) SUPABASE GÖLGE YAZIM ---
 async function pushMutfakStokToSupabase(item, category) {
   try {
+    const familyId = 'eraylar-family-shared-id';
     const payload = {
-      id: `${category}-${item.n || item.isim}`,
+      id: `${category}-${item.n || item.isim}-${familyId}`,
       kategori: category,
       isim: item.n || item.isim,
       miktar: Number(item.cr || item.miktar || 0),
@@ -574,7 +589,8 @@ async function pushMutfakStokToSupabase(item, category) {
       marka: item.br || item.marka || '',
       market: item.mk || item.market || '',
       paket: item.pk || item.paket || '',
-      son_kullanma: item.ex || item.bt || item.son_kullanma || null
+      son_kullanma: item.ex || item.bt || item.son_kullanma || null,
+      family_id: familyId
     };
     const { error } = await supabase.from('mutfak_stok').upsert(payload);
     if (error) throw error;
@@ -583,14 +599,16 @@ async function pushMutfakStokToSupabase(item, category) {
 
 async function pushMutfakSuToSupabase(suData) {
   try {
+    const familyId = 'eraylar-family-shared-id';
     const payload = {
-      id: 'mutfak_su',
+      id: `mutfak_su-${familyId}`,
       level1: suData.level1 ?? 100,
       level2: suData.level2 ?? 100,
       daily_rate: suData.dailyRate ?? 20,
       last_checked: suData.lastChecked || null,
       last_order: suData.lastOrder || null,
-      history: suData.history || []
+      history: suData.history || [],
+      family_id: familyId
     };
     await supabase.from('mutfak_su').upsert(payload);
   } catch(e) { console.warn('Mutfak Su Hatası:', e); }
@@ -598,14 +616,19 @@ async function pushMutfakSuToSupabase(suData) {
 
 async function removeMutfakStokFromSupabase(id) {
   try {
-    await supabase.from('mutfak_stok').delete().eq('id', String(id));
+    const familyId = 'eraylar-family-shared-id';
+    await supabase.from('mutfak_stok')
+      .delete()
+      .eq('id', String(id))
+      .eq('family_id', familyId);
   } catch(e) { console.warn('Supabase Mutfak Stok delete hatası:', e); }
 }
 
 async function pushMutfakTarifToSupabase(t) {
   try {
+    const familyId = 'eraylar-family-shared-id';
     const payload = {
-      id: String(t.id),
+      id: `${t.id}-${familyId}`,
       isim: t.n || t.isim,
       kategori: t.c || t.kategori,
       sure: Number(t.t || t.sure || 30),
@@ -628,15 +651,24 @@ async function removeMutfakTarifFromSupabase(id) {
 
 async function pushAlisverisToSupabase(item, kime) {
   try {
+    const familyId = useStore.getState().family_id;
+    // Map kime to liste_tipi (gorkem -> genel_gorkem, etc.)
+    let listeTipi = kime;
+    if (['gorkem', 'esra', 'ev'].includes(kime)) {
+      listeTipi = `genel_${kime}`;
+    }
+
     const payload = {
       id: String(item.id),
+      family_id: familyId,
       isim: item.nm || item.isim,
       link: item.link || '',
       fiyat: Number(item.pr || item.fiyat || 0),
       tarih: item.dt || item.tarih || new Date().toISOString(),
-      tamamlandi: !!item.done,
+      alindi: !!item.done,
       tamamlanma_tarihi: item.doneDate || null,
-      kime: kime
+      liste_tipi: listeTipi,
+      ekleyen: 'Sistem'
     };
     const { error } = await supabase.from('alisveris_listesi').upsert(payload);
     if (error) throw error;
@@ -658,14 +690,16 @@ async function pushMutfakMenuToSupabase(day, type, mealName) {
 
 async function removeAlisverisFromSupabase(id) {
   try {
-    await supabase.from('alisveris_listesi').delete().eq('id', String(id));
+    const familyId = useStore.getState().family_id;
+    await supabase.from('alisveris_listesi').delete().eq('id', String(id)).eq('family_id', familyId);
   } catch(e) { console.warn('Supabase Alisveris delete hatası:', e); }
 }
 
 async function pushSosyalEtkinlikToSupabase(activity) {
   try {
+    const familyId = 'eraylar-family-shared-id';
     const payload = {
-      id: String(activity.id),
+      id: `${activity.id}-${familyId}`,
       baslik: activity.baslik || activity.title || 'İsimsiz',
       tarih: (activity.tarih && activity.tarih !== '') ? activity.tarih : ((activity.date && activity.date !== '') ? activity.date : null),
       saat: activity.saat || activity.time || null,
@@ -678,7 +712,8 @@ async function pushSosyalEtkinlikToSupabase(activity) {
       yorum_gorkem: activity.yorum_gorkem || null,
       yorum_esra: activity.yorum_esra || null,
       detaylar: activity.detaylar || null,
-      durum: activity.durum || (activity.tamamlandi ? 'tamamlandi' : 'planda')
+      durum: activity.durum || (activity.tamamlandi ? 'tamamlandi' : 'planda'),
+      family_id: familyId
     };
     const { error } = await supabase.from('sosyal_etkinlikler').upsert(payload);
     if (error) throw error;
@@ -687,7 +722,11 @@ async function pushSosyalEtkinlikToSupabase(activity) {
 
 async function removeSosyalEtkinlikFromSupabase(id) {
   try {
-    await supabase.from('sosyal_etkinlikler').delete().eq('id', String(id));
+    const familyId = 'eraylar-family-shared-id';
+    await supabase.from('sosyal_etkinlikler')
+      .delete()
+      .eq('id', String(id))
+      .eq('family_id', familyId);
   } catch(e) { console.warn('Supabase Sosyal delete hatası:', e); }
 }
 // ----------------------------------------------------------------
@@ -712,8 +751,9 @@ async function upsertArsiv(ay, ozet, familyId = DEFAULT_FID) {
 // --- FAZ 1: HEDEFLER VE FINANS GÖLGE YAZIM YARDIMCILARI ---
 async function pushHedefToSupabase(goal) {
   try {
+    const familyId = DEFAULT_FID;
     const payload = {
-      id: String(goal.id),
+      id: String(goal.id).includes(familyId) ? String(goal.id) : `${goal.id}-${familyId}`,
       title: goal.title || goal.name || '',
       target: Number(goal.target) || 100,
       current: Number(goal.current) || 0,
@@ -723,42 +763,68 @@ async function pushHedefToSupabase(goal) {
       owner: goal.owner || 'ortak',
       notes: goal.notes || null,
       yearly_plan: goal.yearlyPlan || null,
-      type: goal.type || 'vision'
+      type: goal.type || 'vision',
+      family_id: familyId
     };
     await supabase.from('hedefler_aktif').upsert(payload);
   } catch(e) { console.warn('Supabase Hedef upsert hatası:', e); }
 }
 
 async function deleteHedefFromSupabase(id) {
-  try { await supabase.from('hedefler_aktif').delete().eq('id', String(id)); } catch(e){}
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('hedefler_aktif').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
 }
 
 async function pushHedefGecmisToSupabase(historyItem, status) {
   try {
+    const familyId = DEFAULT_FID;
     const payload = {
-      id: String(historyItem.id),
+      id: String(historyItem.id).includes(familyId) ? String(historyItem.id) : `${historyItem.id}-${familyId}`,
       title: historyItem.title || historyItem.name,
       owner: historyItem.owner || 'ortak',
       notes: historyItem.notes || null,
       status: status, 
-      resolved_at: historyItem.completedAt || historyItem.failedAt || new Date().toISOString()
+      resolved_at: historyItem.completedAt || historyItem.failedAt || new Date().toISOString(),
+      family_id: familyId
     };
     await supabase.from('hedefler_gecmis').upsert(payload);
   } catch(e) { console.warn('Supabase Geçmiş upsert hatası:', e); }
 }
 
+async function pushHabitToSupabase(habit) {
+  try {
+    const familyId = DEFAULT_FID;
+    await supabase.from('hedefler_habits').upsert({
+      id: String(habit.id).includes(familyId) ? String(habit.id) : `${habit.id}-${familyId}`,
+      name: habit.name,
+      streak: Number(habit.streak || 0),
+      last_done: habit.lastDone || null,
+      family_id: familyId
+    });
+  } catch(e) { console.warn('Habit Hatası:', e); }
+}
+
 async function pushVizyonPlanToSupabase(plan) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('hedefler_vizyon').upsert({
-      id: String(plan.id),
+      id: String(plan.id).includes(familyId) ? String(plan.id) : `${plan.id}-${familyId}`,
       text: plan.text,
-      owner: plan.owner || 'ortak'
+      owner: plan.owner || 'ortak',
+      family_id: familyId
     });
   } catch(e) { console.warn('Supabase Vizyon upsert hatası:', e); }
 }
 
 async function deleteVizyonPlanFromSupabase(id) {
-  try { await supabase.from('hedefler_vizyon').delete().eq('id', String(id)); } catch(e){}
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('hedefler_vizyon').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e){}
 }
 
 async function syncFinansKartlar(kartlar) {
@@ -988,43 +1054,66 @@ async function pushSaglikLogToSupabase(l, familyId) {
 
 // --- Deletion Helpers for Group 2 ---
 async function deleteEvDuzenliOdemeFromSupabase(id) {
-  try { await supabase.from('ev_duzenli_odemeler').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('ev_duzenli_odemeler').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteEvAbonelikFromSupabase(id) {
-  try { await supabase.from('ev_abonelikler').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('ev_abonelikler').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteEvOnarimFromSupabase(id) {
-  try { await supabase.from('ev_onarim').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('ev_onarim').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteEvDemirbasFromSupabase(id) {
-  try { await supabase.from('ev_demirbaslar').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('ev_demirbaslar').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteEvBakimFromSupabase(id) {
-  try { await supabase.from('ev_bakimlar').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('ev_bakimlar').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteGarajYakitFromSupabase(id) {
-  try { await supabase.from('garaj_yakit').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('garaj_yakit').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteGarajServisFromSupabase(id) {
-  try { await supabase.from('garaj_servis').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('garaj_servis').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteGarajBelgeFromSupabase(id) {
-  try { await supabase.from('garaj_belgeler').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('garaj_belgeler').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deletePetAsiFromSupabase(id) {
-  try { await supabase.from('pet_asilar').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('pet_asilar').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deletePetAgirlikFromSupabase(id) {
-  try { await supabase.from('pet_agirlik').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('pet_agirlik').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
+
+async function pushPetLogToSupabase(log) {
+  try {
+    const familyId = DEFAULT_FID;
+    await supabase.from('pet_logs').upsert({
+      id: String(log.id).includes(familyId) ? String(log.id) : `${log.id}-${familyId}`,
+      pet_name: log.pet,
+      action: log.action,
+      dt: log.dt,
+      type: log.type,
+      family_id: familyId
+    });
+  } catch(e) { console.warn('Pet Log Hatası:', e); }
+}
+
+async function deletePetLogFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('pet_logs').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) { console.warn('Pet Log Delete Hatası:', e); }
+}
+
 async function deleteSaglikRandevuFromSupabase(id) {
-  try { await supabase.from('saglik_randevular').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('saglik_randevular').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteSaglikIlacFromSupabase(id) {
-  try { await supabase.from('saglik_ilaclar').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('saglik_ilaclar').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deleteSaglikOlcumFromSupabase(id) {
-  try { await supabase.from('saglik_olcumler').delete().eq('id', String(id)); } catch(e){}
+  try { await supabase.from('saglik_olcumler').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 // -----------------------------------------------------------------
 
@@ -1057,11 +1146,25 @@ async function pushFinansAyarlarToSupabase(limits) {
 
 async function pushFinansRekuransToSupabase(r) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('finans_rekuranslar').upsert({
-      id: String(r.id), baslik: r.baslik, tutar: Number(r.tutar),
-      kategori: r.kategori, periyot: r.periyot, sonraki_tarih: r.sonraki_tarih
+      id: String(r.id).includes(familyId) ? String(r.id) : `${r.id}-${familyId}`,
+      baslik: r.baslik || r.title,
+      tutar: Number(r.tutar || r.amount),
+      kategori: r.kategori || r.category,
+      periyot: r.periyot || 'Aylık',
+      sonraki_tarih: r.sonraki_tarih || r.date,
+      family_id: familyId
     });
   } catch(e) { console.warn('Finans Rekurans Hatası:', e); }
+}
+
+async function deleteFinansRekuransFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('finans_rekuranslar').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) { console.warn('Finans Rekurans Delete Hatası:', e); }
 }
 
 async function pushSaglikAyarlarToSupabase(sleepGoals) {
@@ -1139,84 +1242,114 @@ async function pushTatilVizeToSupabase(visa) {
 // --- Mühendislik ---
 async function pushMuhendislikProblemToSupabase(p) {
   try {
+    const familyId = DEFAULT_FID;
     const { id, title, description, category, priority, status, solution, date, ...rest } = p;
     await supabase.from('muhendislik_problems').upsert({
-      id: String(id), title, description: description || null,
+      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      title, description: description || null,
       category: category || null, priority: priority || 'Orta',
       status: status || 'Açık', solution: solution || null,
-      date: date || new Date().toISOString(), extra: rest
+      date: date || new Date().toISOString(), extra: rest,
+      family_id: familyId
     });
   } catch(e) { console.warn('Mühendislik Problem Hatası:', e); }
 }
 
 async function deleteMuhendislikProblemFromSupabase(id) {
-  try { await supabase.from('muhendislik_problems').delete().eq('id', String(id)); }
-  catch(e) { console.warn('Problem Silme Hatası:', e); }
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('muhendislik_problems').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) { console.warn('Problem Silme Hatası:', e); }
 }
 
 async function pushMuhendislikDecisionToSupabase(d) {
   try {
+    const familyId = DEFAULT_FID;
     const { id, title, description, category, result, pros, cons, date, ...rest } = d;
     await supabase.from('muhendislik_decisions').upsert({
-      id: String(id), title, description: description || null,
+      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      title, description: description || null,
       category: category || null, result: result || null,
       pros: pros || null, cons: cons || null,
-      date: date || new Date().toISOString(), extra: rest
+      date: date || new Date().toISOString(), extra: rest,
+      family_id: familyId
     });
   } catch(e) { console.warn('Mühendislik Karar Hatası:', e); }
 }
 
 async function deleteMuhendislikDecisionFromSupabase(id) {
-  try { await supabase.from('muhendislik_decisions').delete().eq('id', String(id)); }
-  catch(e) { console.warn('Karar Silme Hatası:', e); }
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('muhendislik_decisions').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) { console.warn('Karar Silme Hatası:', e); }
 }
 
 async function pushCrmCustomerToSupabase(c) {
   try {
+    const familyId = DEFAULT_FID;
     const { id, name, company, phone, email, notes, status, date, ...rest } = c;
     await supabase.from('muhendislik_crm_customers').upsert({
-      id: String(id), name, company: company || null, phone: phone || null,
+      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      name, company: company || null, phone: phone || null,
       email: email || null, notes: notes || null, status: status || 'aktif',
-      date: date || new Date().toISOString(), extra: rest
+      date: date || new Date().toISOString(), extra: rest,
+      family_id: familyId
     });
   } catch(e) { console.warn('CRM Müşteri Hatası:', e); }
 }
 
 async function deleteCrmCustomerFromSupabase(id) {
-  try { await supabase.from('muhendislik_crm_customers').delete().eq('id', String(id)); }
-  catch(e) { console.warn('CRM Müşteri Silme Hatası:', e); }
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('muhendislik_crm_customers').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) { console.warn('CRM Müşteri Silme Hatası:', e); }
 }
 
 async function pushCrmDealToSupabase(d) {
   try {
+    const familyId = DEFAULT_FID;
     const { id, customerId, title, amount, status, notes, date, ...rest } = d;
     await supabase.from('muhendislik_crm_deals').upsert({
-      id: String(id), customer_id: customerId || null, title: title || null,
+      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      customer_id: customerId || null, title: title || null,
       amount: Number(amount || 0), status: status || 'pipeline',
-      notes: notes || null, date: date || new Date().toISOString(), extra: rest
+      notes: notes || null, date: date || new Date().toISOString(), extra: rest,
+      family_id: familyId
     });
   } catch(e) { console.warn('CRM Deal Hatası:', e); }
 }
 
 async function deleteCrmDealFromSupabase(id) {
-  try { await supabase.from('muhendislik_crm_deals').delete().eq('id', String(id)); }
-  catch(e) { console.warn('CRM Deal Silme Hatası:', e); }
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('muhendislik_crm_deals').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) { console.warn('CRM Deal Silme Hatası:', e); }
 }
 
 async function pushZihniProceToSupabase(p) {
   try {
+    const familyId = DEFAULT_FID;
     const { id, title, description, category, completed, date, ...rest } = p;
     await supabase.from('muhendislik_proceler').upsert({
-      id: String(id), title, description: description || null,
+      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      title, description: description || null,
       category: category || null, completed: !!completed,
-      date: date || new Date().toISOString(), extra: rest
+      date: date || new Date().toISOString(), extra: rest,
+      family_id: familyId
     });
   } catch(e) { console.warn('Zihni Proce Hatası:', e); }
 }
 
 async function deleteZihniProceFromSupabase(id) {
-  try { await supabase.from('muhendislik_proceler').delete().eq('id', String(id)); }
-  catch(e) { console.warn('Zihni Proce Silme Hatası:', e); }
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('muhendislik_proceler').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) { console.warn('Zihni Proce Silme Hatası:', e); }
 }
 
 async function pushLifeRoutineToSupabase(r) {
@@ -1253,89 +1386,191 @@ async function deleteLifeProgramFromSupabase(id) {
 // --- Modaring ---
 async function pushModaringPersonelToSupabase(p) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('modaring_personel').upsert({
-      id: String(p.id), name: p.name, hourly_rate: Number(p.hourlyRate || 0),
-      color: p.color || '#6366f1', emoji: p.emoji || '👤', active: p.active !== false
+      id: String(p.id).includes(familyId) ? String(p.id) : `${p.id}-${familyId}`,
+      name: p.name,
+      hourly_rate: Number(p.hourlyRate || 0),
+      color: p.color || '#fb7185',
+      emoji: p.emoji || '👤',
+      active: p.active !== false,
+      family_id: familyId
     });
   } catch(e) { console.warn('Modaring Personel Hatası:', e); }
 }
 
 async function deleteModaringPersonelFromSupabase(id) {
-  try { await supabase.from('modaring_personel').delete().eq('id', String(id)); }
-  catch(e) { console.warn('Modaring Personel Silme:', e); }
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('modaring_personel').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
 }
 
 async function pushModaringVardiyaToSupabase(v) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('modaring_vardiya').upsert({
-      id: String(v.id), personel_id: v.personelId || null, date: v.date || null,
-      start_time: v.startTime || null, end_time: v.endTime || null,
-      total_pay: Number(v.totalPay || 0), status: v.status || 'aktif'
+      id: String(v.id).includes(familyId) ? String(v.id) : `${v.id}-${familyId}`,
+      personel_id: String(v.personelId),
+      date: v.date || null,
+      start_time: v.startTime,
+      end_time: v.endTime,
+      total_pay: Number(v.totalPay || 0),
+      status: v.status || 'aktif',
+      family_id: familyId
     });
   } catch(e) { console.warn('Modaring Vardiya Hatası:', e); }
 }
 
 async function deleteModaringVardiyaFromSupabase(id) {
-  try { await supabase.from('modaring_vardiya').delete().eq('id', String(id)); }
-  catch(e) { console.warn('Modaring Vardiya Silme:', e); }
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('modaring_vardiya').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
 }
 
 async function pushModaringKasaToSupabase(k) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('modaring_kasa').upsert({
-      id: String(k.id), date: k.date || null, type: k.type || null,
-      amount: Number(k.amount || 0), method: k.method || null,
-      note: k.note || null, bank_id: k.bankId || null
+      id: String(k.id).includes(familyId) ? String(k.id) : `${k.id}-${familyId}`,
+      date: k.date,
+      type: k.type,
+      amount: Number(k.amount || 0),
+      method: k.method,
+      note: k.note || null,
+      bank_id: k.bankId || null,
+      family_id: familyId
     });
   } catch(e) { console.warn('Modaring Kasa Hatası:', e); }
 }
 
+async function deleteModaringKasaFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('modaring_kasa').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
+}
+
 async function pushModaringBankaToSupabase(b) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('modaring_bankalar').upsert({
-      id: String(b.id), name: b.name, type: b.type || null,
-      balance: Number(b.balance || 0), color: b.color || '#3b82f6', icon: b.icon || '🏦'
+      id: String(b.id).includes(familyId) ? String(b.id) : `${b.id}-${familyId}`,
+      name: b.name,
+      type: b.type,
+      balance: Number(b.balance || 0),
+      color: b.color || null,
+      icon: b.icon || null,
+      family_id: familyId
     });
   } catch(e) { console.warn('Modaring Banka Hatası:', e); }
 }
 
+async function deleteModaringBankaFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('modaring_bankalar').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
+}
+
 async function pushModaringTedarikToSupabase(t) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('modaring_tedarik').upsert({
-      id: String(t.id), name: t.name, link: t.link || null,
-      category: t.category || null, contact: t.contact || null, note: t.note || null
+      id: String(t.id).includes(familyId) ? String(t.id) : `${t.id}-${familyId}`,
+      name: t.name,
+      link: t.link || null,
+      category: t.category || null,
+      contact: t.contact || null,
+      note: t.note || null,
+      family_id: familyId
     });
   } catch(e) { console.warn('Modaring Tedarik Hatası:', e); }
 }
 
+async function deleteModaringTedarikFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('modaring_tedarik').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
+}
+
 async function pushModaringSiparisToSupabase(s) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('modaring_siparisler').upsert({
-      id: String(s.id), supplier_id: s.supplierId || null, date: s.date || null,
-      items: s.items || [], total: Number(s.total || 0), paid: !!s.paid,
-      status: s.status || 'bekliyor', bank_id: s.bankId || null
+      id: String(s.id).includes(familyId) ? String(s.id) : `${s.id}-${familyId}`,
+      supplier_id: String(s.supplierId),
+      date: s.date,
+      items: s.items || [],
+      total: Number(s.total || 0),
+      paid: !!s.paid,
+      status: s.status || 'bekliyor',
+      bank_id: s.bankId || null,
+      family_id: familyId
     });
   } catch(e) { console.warn('Modaring Sipariş Hatası:', e); }
 }
 
+async function deleteModaringSiparisFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('modaring_siparisler').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
+}
+
 async function pushModaringAjandaToSupabase(a) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('modaring_ajanda').upsert({
-      id: String(a.id), title: a.title, due_date: a.dueDate || null,
-      amount: Number(a.amount || 0), status: a.status || 'bekliyor'
+      id: String(a.id).includes(familyId) ? String(a.id) : `${a.id}-${familyId}`,
+      title: a.title,
+      due_date: a.dueDate || null,
+      amount: Number(a.amount || 0),
+      status: a.status || 'bekliyor',
+      family_id: familyId
     });
   } catch(e) { console.warn('Modaring Ajanda Hatası:', e); }
 }
 
+async function deleteModaringAjandaFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('modaring_ajanda').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
+}
+
 async function pushModaringRefikaToSupabase(r) {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('modaring_refika').upsert({
-      id: String(r.id), title: r.title || null, description: r.desc || null,
-      cost: Number(r.cost || 0), price: Number(r.price || 0),
-      strategy: r.strategy || null, context: r.context || null,
-      date: r.date || new Date().toISOString()
+      id: String(r.id).includes(familyId) ? String(r.id) : `${r.id}-${familyId}`,
+      title: r.title || null,
+      description: r.desc || null,
+      cost: Number(r.cost || 0),
+      price: Number(r.price || 0),
+      strategy: r.strategy || null,
+      context: r.context || null,
+      date: r.date || new Date().toISOString(),
+      family_id: familyId
     });
   } catch(e) { console.warn('Modaring Refika Hatası:', e); }
+}
+
+async function deleteModaringRefikaFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
+    await supabase.from('modaring_refika').delete().eq('id', finalId).eq('family_id', familyId);
+  } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1400,7 +1635,7 @@ const useStore = create(
         };
         const updatedLogs = [newLog, ...state.logs].slice(0, 15);
         set({ logs: updatedLogs });
-        get().saveToSupabase();
+
       },
 
       runPhase1Migration: async () => {
@@ -1441,7 +1676,7 @@ const useStore = create(
           if (borclar.length > 0) await syncFinansKrediler(borclar);
 
           set({ system: { ...state.system, migrationPhase1Done: true } });
-          get().saveToSupabase();
+
 
           toast.dismiss(loadId);
           toast.success('Geçmiş verileriniz kayıpsız bir şekilde Supabase\'e aktarıldı! 🎉');
@@ -1512,7 +1747,7 @@ const useStore = create(
           }
 
           set({ system: { ...state.system, migrationGroup1Done: true } });
-          get().saveToSupabase();
+
 
           toast.dismiss(loadId);
           toast.success('Mükemmel! Tüm verileriniz eksiksiz aktarıldı. 🎉');
@@ -1570,7 +1805,7 @@ const useStore = create(
           for (const l of (saglik.logs || [])) await pushSaglikLogToSupabase(l);
 
           set({ system: { ...state.system, migrationGroup2Done: true } });
-          get().saveToSupabase();
+
 
           toast.dismiss(loadId);
           toast.success('Grup 2 aktarımı tamamlandı! Ev, Garaj, Pet ve Sağlık verileri SQL\'de. 🎉');
@@ -1741,7 +1976,7 @@ const useStore = create(
           for (const r of (mod.refikaFikirleri || [])) await pushModaringRefikaToSupabase(r);
 
           set({ system: { ...state.system, migrationGroup3Done: true } });
-          get().saveToSupabase();
+
 
           toast.dismiss(loadId);
           toast.success('Grup 3 aktarımı tamamlandı! Tatil, Mühendislik ve Modaring verileri SQL\'de. 🎉');
@@ -1960,7 +2195,7 @@ const useStore = create(
         } else {
           set({ [moduleName]: data });
         }
-        get().saveToSupabase();
+
 
         // GRUP 2 GÖLGE YAZIM: setModuleData üzerinden yapılan güncellemeler
         if (moduleName === 'saglik' && isObject) {
@@ -1983,7 +2218,7 @@ const useStore = create(
         const newValue = !state.settings.silentMode;
         set({ settings: { ...state.settings, silentMode: newValue } });
         get().addLog('Sistem Ayarı', `Sessiz Mod ${newValue ? 'Açıldı' : 'Kapatıldı'}`);
-        get().saveToSupabase();
+
       },
 
       updateUser: (userId, updates) => {
@@ -1994,7 +2229,7 @@ const useStore = create(
         };
         set({ users: updatedUsers });
         get().addLog('Profil Güncelleme', `${state.users[userId].name} bilgilerini güncelledi.`);
-        get().saveToSupabase();
+
       },
 
       addMood: (user, mood, note, kategori) => {
@@ -2009,7 +2244,7 @@ const useStore = create(
         };
         const updatedMoods = [newMood, ...(state.saglik.moods || [])].slice(0, 100);
         set({ saglik: { ...state.saglik, moods: updatedMoods } });
-        get().saveToSupabase();
+
         pushSaglikMoodToSupabase(newMood);
       },
 
@@ -2042,7 +2277,7 @@ const useStore = create(
           get().addLog('İlaç Azaldı', `${med.ad} stoğu kritik seviyeye düştü (${newStok} adet kaldı). Yenisini almayı unutmayın!`);
         }
 
-        get().saveToSupabase();
+
         pushSaglikIlacToSupabase(meds[idx], state.family_id);
         pushSaglikLogToSupabase(log, state.family_id);
       },
@@ -2051,7 +2286,7 @@ const useStore = create(
         const state = get();
         const updated = (state.saglik.ilaclar || []).filter(m => String(m.id) !== String(id));
         set({ saglik: { ...state.saglik, ilaclar: updated } });
-        get().saveToSupabase();
+
         deleteSaglikIlacFromSupabase(id);
       },
 
@@ -2059,7 +2294,7 @@ const useStore = create(
         const state = get();
         const updated = (state.saglik.randevular || []).filter(r => String(r.id) !== String(id));
         set({ saglik: { ...state.saglik, randevular: updated } });
-        get().saveToSupabase();
+
         deleteSaglikRandevuFromSupabase(id);
       },
 
@@ -2067,7 +2302,7 @@ const useStore = create(
         const state = get();
         const updated = (state.saglik.olcumler || []).filter(o => String(o.id) !== String(id));
         set({ saglik: { ...state.saglik, olcumler: updated } });
-        get().saveToSupabase();
+
         deleteSaglikOlcumFromSupabase(id);
       },
 
@@ -2076,7 +2311,7 @@ const useStore = create(
         const newOlcum = { id: Date.now(), ...form };
         const updated = [newOlcum, ...(state.saglik.olcumler || [])];
         set({ saglik: { ...state.saglik, olcumler: updated } });
-        get().saveToSupabase();
+
         pushSaglikOlcumToSupabase(newOlcum);
       },
 
@@ -2085,7 +2320,7 @@ const useStore = create(
         const newRandevu = { id: Date.now(), ...form };
         const updated = [newRandevu, ...(state.saglik.randevular || [])];
         set({ saglik: { ...state.saglik, randevular: updated } });
-        get().saveToSupabase();
+
         pushSaglikRandevuToSupabase(newRandevu, state.family_id);
       },
 
@@ -2094,7 +2329,7 @@ const useStore = create(
         const newIlac = { id: Date.now(), ...form };
         const updated = [newIlac, ...(state.saglik.ilaclar || [])];
         set({ saglik: { ...state.saglik, ilaclar: updated } });
-        get().saveToSupabase();
+
         pushSaglikIlacToSupabase(newIlac, state.family_id);
       },
 
@@ -2102,7 +2337,7 @@ const useStore = create(
         const state = get();
         const updated = (state.saglik.ilaclar || []).map(m => String(m.id) === String(id) ? { ...m, ...updates } : m);
         set({ saglik: { ...state.saglik, ilaclar: updated } });
-        get().saveToSupabase();
+
         const item = updated.find(m => String(m.id) === String(id));
         if (item) pushSaglikIlacToSupabase(item, state.family_id);
       },
@@ -2111,7 +2346,7 @@ const useStore = create(
         const state = get();
         const updated = (state.saglik.randevular || []).map(r => String(r.id) === String(id) ? { ...r, ...updates } : r);
         set({ saglik: { ...state.saglik, randevular: updated } });
-        get().saveToSupabase();
+
         const item = updated.find(r => String(r.id) === String(id));
         if (item) pushSaglikRandevuToSupabase(item, state.family_id);
       },
@@ -2120,7 +2355,7 @@ const useStore = create(
         const state = get();
         const updated = (state.saglik.olcumler || []).map(o => String(o.id) === String(id) ? { ...o, ...updates } : o);
         set({ saglik: { ...state.saglik, olcumler: updated } });
-        get().saveToSupabase();
+
         const item = updated.find(o => String(o.id) === String(id));
         if (item) pushSaglikOlcumToSupabase(item);
       },
@@ -2229,7 +2464,7 @@ const useStore = create(
         };
         set({ muhendislik: { ...state.muhendislik, problemBank: [newProblem, ...currentBank] } });
         get().addLog('Mühendislik', `Yeni problem kaydedildi: ${problem.title}`);
-        get().saveToSupabase(true);
+
         pushMuhendislikProblemToSupabase(newProblem);
       },
       updateEngineeringProblem: (id, updates) => {
@@ -2237,7 +2472,7 @@ const useStore = create(
         const currentBank = Array.isArray(state.muhendislik.problemBank) ? state.muhendislik.problemBank : [];
         const updated = currentBank.map(p => p.id === id ? { ...p, ...updates } : p);
         set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
-        get().saveToSupabase(true);
+
         const updatedItem = updated.find(p => p.id === id);
         if (updatedItem) pushMuhendislikProblemToSupabase(updatedItem);
       },
@@ -2245,7 +2480,7 @@ const useStore = create(
         const state = get();
         const updated = state.muhendislik.problemBank.filter(p => p.id !== id);
         set({ muhendislik: { ...state.muhendislik, problemBank: updated } });
-        get().saveToSupabase(true);
+
         deleteMuhendislikProblemFromSupabase(id);
       },
       addEngineeringDecision: (decision) => {
@@ -2257,14 +2492,14 @@ const useStore = create(
         };
         set({ muhendislik: { ...state.muhendislik, decisionLog: [newDecision, ...state.muhendislik.decisionLog] } });
         get().addLog('Karar Günlüğü', `Yeni karar alındı: ${decision.title}`);
-        get().saveToSupabase(true);
+
         pushMuhendislikDecisionToSupabase(newDecision);
       },
       updateEngineeringDecision: (id, updates) => {
         const state = get();
         const updated = state.muhendislik.decisionLog.map(d => d.id === id ? { ...d, ...updates } : d);
         set({ muhendislik: { ...state.muhendislik, decisionLog: updated } });
-        get().saveToSupabase();
+
         const updatedDec = updated.find(d => d.id === id);
         if (updatedDec) pushMuhendislikDecisionToSupabase(updatedDec);
       },
@@ -2272,7 +2507,7 @@ const useStore = create(
         const state = get();
         const updated = state.muhendislik.decisionLog.filter(d => d.id !== id);
         set({ muhendislik: { ...state.muhendislik, decisionLog: updated } });
-        get().saveToSupabase();
+
         deleteMuhendislikDecisionFromSupabase(id);
       },
       togglePinnedConversion: (id) => {
@@ -2285,7 +2520,7 @@ const useStore = create(
           updated = [id, ...current].slice(0, 3);
         }
         set({ muhendislik: { ...state.muhendislik, pinnedConversions: updated } });
-        get().saveToSupabase();
+
       },
 
       // --- Engineering CRM Actions ---
@@ -2294,14 +2529,14 @@ const useStore = create(
         const newCustomer = { id: Date.now(), ...customer, date: new Date().toISOString() };
         const updatedCrm = { ...state.muhendislik.crm, customers: [newCustomer, ...(state.muhendislik.crm.customers || [])] };
         set({ muhendislik: { ...state.muhendislik, crm: updatedCrm } });
-        get().saveToSupabase(true);
+
         pushCrmCustomerToSupabase(newCustomer);
       },
       updateCrmCustomer: (id, updates) => {
         const state = get();
         const updatedCustomers = (state.muhendislik.crm.customers || []).map(c => c.id === id ? { ...c, ...updates } : c);
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, customers: updatedCustomers } } });
-        get().saveToSupabase();
+
         const updatedCust = updatedCustomers.find(c => c.id === id);
         if (updatedCust) pushCrmCustomerToSupabase(updatedCust);
       },
@@ -2310,7 +2545,7 @@ const useStore = create(
         const updatedCustomers = (state.muhendislik.crm.customers || []).filter(c => c.id !== id);
         const updatedDeals = (state.muhendislik.crm.deals || []).filter(d => d.customerId !== id);
         set({ muhendislik: { ...state.muhendislik, crm: { customers: updatedCustomers, deals: updatedDeals } } });
-        get().saveToSupabase();
+
         deleteCrmCustomerFromSupabase(id);
       },
       addCrmDeal: (deal) => {
@@ -2318,14 +2553,14 @@ const useStore = create(
         const newDeal = { id: Date.now(), ...deal, date: new Date().toISOString() };
         const updatedDeals = [newDeal, ...(state.muhendislik.crm.deals || [])];
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
-        get().saveToSupabase();
+
         pushCrmDealToSupabase(newDeal);
       },
       updateCrmDeal: (id, updates) => {
         const state = get();
         const updatedDeals = (state.muhendislik.crm.deals || []).map(d => d.id === id ? { ...d, ...updates } : d);
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
-        get().saveToSupabase();
+
         const updatedDeal = updatedDeals.find(d => d.id === id);
         if (updatedDeal) pushCrmDealToSupabase(updatedDeal);
       },
@@ -2333,7 +2568,7 @@ const useStore = create(
         const state = get();
         const updatedDeals = (state.muhendislik.crm.deals || []).filter(d => d.id !== id);
         set({ muhendislik: { ...state.muhendislik, crm: { ...state.muhendislik.crm, deals: updatedDeals } } });
-        get().saveToSupabase(true);
+
         deleteCrmDealFromSupabase(id);
       },
 
@@ -2347,14 +2582,14 @@ const useStore = create(
             zihniProceler: [proce, ...currentProceler] 
           } 
         });
-        get().saveToSupabase(true);
+
         pushZihniProceToSupabase(proce);
       },
       updateZihniProce: (id, updates) => {
         const state = get();
         const updated = (state.muhendislik.zihniProceler || []).map(p => p.id === id ? { ...p, ...updates } : p);
         set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
-        get().saveToSupabase();
+
         const updatedProce = updated.find(p => p.id === id);
         if (updatedProce) pushZihniProceToSupabase(updatedProce);
       },
@@ -2364,7 +2599,7 @@ const useStore = create(
           p.id === id ? { ...p, completed: !p.completed } : p
         );
         set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
-        get().saveToSupabase();
+
         const toggled = updated.find(p => p.id === id);
         if (toggled) pushZihniProceToSupabase(toggled);
       },
@@ -2372,7 +2607,7 @@ const useStore = create(
         const state = get();
         const updated = (state.muhendislik.zihniProceler || []).filter(p => p.id !== id);
         set({ muhendislik: { ...state.muhendislik, zihniProceler: updated } });
-        get().saveToSupabase();
+
         deleteZihniProceFromSupabase(id);
       },
 
@@ -2382,7 +2617,7 @@ const useStore = create(
         const newRoutine = { id: Date.now(), ...routine, completed: false };
         const updatedLife = { ...state.muhendislik.life, routines: [newRoutine, ...(state.muhendislik.life.routines || [])] };
         set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
-        get().saveToSupabase();
+
         pushLifeRoutineToSupabase(newRoutine);
       },
       toggleLifeRoutine: (id) => {
@@ -2391,7 +2626,7 @@ const useStore = create(
           r.id === id ? { ...r, completed: !r.completed } : r
         );
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, routines: updatedRoutines } } });
-        get().saveToSupabase();
+
         const toggledRoutine = updatedRoutines.find(r => r.id === id);
         if (toggledRoutine) pushLifeRoutineToSupabase(toggledRoutine);
       },
@@ -2399,7 +2634,7 @@ const useStore = create(
         const state = get();
         const updatedRoutines = (state.muhendislik.life.routines || []).filter(r => r.id !== id);
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, routines: updatedRoutines } } });
-        get().saveToSupabase();
+
         deleteLifeRoutineFromSupabase(id);
       },
       addLifeProgram: (program) => {
@@ -2407,15 +2642,178 @@ const useStore = create(
         const newProgram = { id: Date.now(), ...program, date: new Date().toISOString() };
         const updatedLife = { ...state.muhendislik.life, programs: [newProgram, ...(state.muhendislik.life.programs || [])] };
         set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
-        get().saveToSupabase();
+
         pushLifeProgramToSupabase(newProgram);
       },
       deleteLifeProgram: (id) => {
         const state = get();
         const updatedPrograms = (state.muhendislik.life.programs || []).filter(p => p.id !== id);
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, programs: updatedPrograms } } });
-        get().saveToSupabase();
+
         deleteLifeProgramFromSupabase(id);
+      },
+
+      // --- Modaring Actions (SQL-First) ---
+      addModaringPersonel: (person) => {
+        const state = get();
+        const newPerson = { id: Date.now(), ...person, active: true };
+        const updated = [...(state.modaring.personel || []), newPerson];
+        set({ modaring: { ...state.modaring, personel: updated } });
+        pushModaringPersonelToSupabase(newPerson);
+      },
+      updateModaringPersonel: (id, updates) => {
+        const state = get();
+        const updated = (state.modaring.personel || []).map(p => p.id === id ? { ...p, ...updates } : p);
+        set({ modaring: { ...state.modaring, personel: updated } });
+        const item = updated.find(p => p.id === id);
+        if (item) pushModaringPersonelToSupabase(item);
+      },
+      deleteModaringPersonel: (id) => {
+        const state = get();
+        const updatedP = (state.modaring.personel || []).filter(p => p.id !== id);
+        const updatedV = (state.modaring.vardiya || []).filter(v => v.personelId !== id);
+        set({ modaring: { ...state.modaring, personel: updatedP, vardiya: updatedV } });
+        deleteModaringPersonelFromSupabase(id);
+      },
+      addModaringVardiya: (shift) => {
+        const state = get();
+        const newShift = { id: Date.now(), ...shift };
+        const updated = [...(state.modaring.vardiya || []), newShift];
+        set({ modaring: { ...state.modaring, vardiya: updated } });
+        pushModaringVardiyaToSupabase(newShift);
+      },
+      updateModaringVardiya: (id, updates) => {
+        const state = get();
+        const updated = (state.modaring.vardiya || []).map(v => v.id === id ? { ...v, ...updates } : v);
+        set({ modaring: { ...state.modaring, vardiya: updated } });
+        const item = updated.find(v => v.id === id);
+        if (item) pushModaringVardiyaToSupabase(item);
+      },
+      deleteModaringVardiya: (id) => {
+        const state = get();
+        const updated = (state.modaring.vardiya || []).filter(v => v.id !== id);
+        set({ modaring: { ...state.modaring, vardiya: updated } });
+        deleteModaringVardiyaFromSupabase(id);
+      },
+      addModaringKasaItem: (item) => {
+        const state = get();
+        const newItem = { id: Date.now(), ...item };
+        const updated = [...(state.modaring.kasa || []), newItem];
+        set({ modaring: { ...state.modaring, kasa: updated } });
+        pushModaringKasaToSupabase(newItem);
+      },
+      updateModaringKasaItem: (id, updates) => {
+        const state = get();
+        const updated = (state.modaring.kasa || []).map(k => k.id === id ? { ...k, ...updates } : k);
+        set({ modaring: { ...state.modaring, kasa: updated } });
+        const item = updated.find(k => k.id === id);
+        if (item) pushModaringKasaToSupabase(item);
+      },
+      deleteModaringKasaItem: (id) => {
+        const state = get();
+        const updated = (state.modaring.kasa || []).filter(k => k.id !== id);
+        set({ modaring: { ...state.modaring, kasa: updated } });
+        deleteModaringKasaFromSupabase(id);
+      },
+      addModaringBank: (bank) => {
+        const state = get();
+        const newBank = { id: Date.now(), ...bank };
+        const updated = [...(state.modaring.bankalar || []), newBank];
+        set({ modaring: { ...state.modaring, bankalar: updated } });
+        pushModaringBankaToSupabase(newBank);
+      },
+      updateModaringBank: (id, updates) => {
+        const state = get();
+        const updated = (state.modaring.bankalar || []).map(b => b.id === id ? { ...b, ...updates } : b);
+        set({ modaring: { ...state.modaring, bankalar: updated } });
+        const item = updated.find(b => b.id === id);
+        if (item) pushModaringBankaToSupabase(item);
+      },
+      deleteModaringBank: (id) => {
+        const state = get();
+        const updated = (state.modaring.bankalar || []).filter(b => b.id !== id);
+        set({ modaring: { ...state.modaring, bankalar: updated } });
+        deleteModaringBankaFromSupabase(id);
+      },
+      addModaringTedarik: (tedarik) => {
+        const state = get();
+        const newItem = { id: Date.now(), ...tedarik };
+        const updated = [...(state.modaring.tedarik || []), newItem];
+        set({ modaring: { ...state.modaring, tedarik: updated } });
+        pushModaringTedarikToSupabase(newItem);
+      },
+      updateModaringTedarik: (id, updates) => {
+        const state = get();
+        const updated = (state.modaring.tedarik || []).map(t => t.id === id ? { ...t, ...updates } : t);
+        set({ modaring: { ...state.modaring, tedarik: updated } });
+        const item = updated.find(t => t.id === id);
+        if (item) pushModaringTedarikToSupabase(item);
+      },
+      deleteModaringTedarik: (id) => {
+        const state = get();
+        const updated = (state.modaring.tedarik || []).filter(t => t.id !== id);
+        set({ modaring: { ...state.modaring, tedarik: updated } });
+        deleteModaringTedarikFromSupabase(id);
+      },
+      addModaringSiparis: (siparis) => {
+        const state = get();
+        const newItem = { id: Date.now(), ...siparis };
+        const updated = [...(state.modaring.siparisler || []), newItem];
+        set({ modaring: { ...state.modaring, siparisler: updated } });
+        pushModaringSiparisToSupabase(newItem);
+      },
+      updateModaringSiparis: (id, updates) => {
+        const state = get();
+        const updated = (state.modaring.siparisler || []).map(s => s.id === id ? { ...s, ...updates } : s);
+        set({ modaring: { ...state.modaring, siparisler: updated } });
+        const item = updated.find(s => s.id === id);
+        if (item) pushModaringSiparisToSupabase(item);
+      },
+      deleteModaringSiparis: (id) => {
+        const state = get();
+        const updated = (state.modaring.siparisler || []).filter(s => s.id !== id);
+        set({ modaring: { ...state.modaring, siparisler: updated } });
+        deleteModaringSiparisFromSupabase(id);
+      },
+      addModaringAjanda: (task) => {
+        const state = get();
+        const newItem = { id: Date.now(), ...task };
+        const updated = [...(state.modaring.ajanda || []), newItem];
+        set({ modaring: { ...state.modaring, ajanda: updated } });
+        pushModaringAjandaToSupabase(newItem);
+      },
+      updateModaringAjanda: (id, updates) => {
+        const state = get();
+        const updated = (state.modaring.ajanda || []).map(a => a.id === id ? { ...a, ...updates } : a);
+        set({ modaring: { ...state.modaring, ajanda: updated } });
+        const item = updated.find(a => a.id === id);
+        if (item) pushModaringAjandaToSupabase(item);
+      },
+      deleteModaringAjanda: (id) => {
+        const state = get();
+        const updated = (state.modaring.ajanda || []).filter(a => a.id !== id);
+        set({ modaring: { ...state.modaring, ajanda: updated } });
+        deleteModaringAjandaFromSupabase(id);
+      },
+      addModaringRefika: (fikir) => {
+        const state = get();
+        const newItem = { id: Date.now(), ...fikir, date: new Date().toISOString() };
+        const updated = [...(state.modaring.refikaFikirleri || []), newItem];
+        set({ modaring: { ...state.modaring, refikaFikirleri: updated } });
+        pushModaringRefikaToSupabase(newItem);
+      },
+      updateModaringRefika: (id, updates) => {
+        const state = get();
+        const updated = (state.modaring.refikaFikirleri || []).map(r => r.id === id ? { ...r, ...updates } : r);
+        set({ modaring: { ...state.modaring, refikaFikirleri: updated } });
+        const item = updated.find(r => r.id === id);
+        if (item) pushModaringRefikaToSupabase(item);
+      },
+      deleteModaringRefika: (id) => {
+        const state = get();
+        const updated = (state.modaring.refikaFikirleri || []).filter(r => r.id !== id);
+        set({ modaring: { ...state.modaring, refikaFikirleri: updated } });
+        deleteModaringRefikaFromSupabase(id);
       },
 
       // --- Focus Session Actions ---
@@ -2427,13 +2825,13 @@ const useStore = create(
           focusSessions: [session, ...currentSessions] 
         };
         set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
-        get().saveToSupabase(true);
+
       },
       deleteFocusSession: (id) => {
         const state = get();
         const updatedSessions = (state.muhendislik.life.focusSessions || []).filter(s => s.id !== id);
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, focusSessions: updatedSessions } } });
-        get().saveToSupabase(true);
+
       },
 
       addLifeActivity: (activity) => {
@@ -2444,13 +2842,13 @@ const useStore = create(
           dailyActivities: [activity, ...currentActivities] 
         };
         set({ muhendislik: { ...state.muhendislik, life: updatedLife } });
-        get().saveToSupabase(true);
+
       },
       deleteLifeActivity: (id) => {
         const state = get();
         const updatedActivities = (state.muhendislik.life.dailyActivities || []).filter(a => a.id !== id);
         set({ muhendislik: { ...state.muhendislik, life: { ...state.muhendislik.life, dailyActivities: updatedActivities } } });
-        get().saveToSupabase(true);
+
       },
 
       loadFromSupabase: async () => {
@@ -2622,16 +3020,17 @@ const useStore = create(
 
       fetchGroup1Data: async () => {
         try {
+          const familyId = get().family_id;
           const [stok, tarifler, alisveris, sosyal, menu, havuz, rutinler, mutfakSu, paketler] = await Promise.all([
-            supabase.from('mutfak_stok').select('*'),
-            supabase.from('mutfak_tarifler').select('*'),
-            supabase.from('alisveris_listesi').select('*'),
-            supabase.from('sosyal_etkinlikler').select('*'),
-            supabase.from('mutfak_menu').select('*'),
-            supabase.from('sosyal_havuz').select('*'),
-            supabase.from('sosyal_rutinler').select('*'),
-            supabase.from('mutfak_su').select('*').eq('id', 'mutfak_su').single(),
-            supabase.from('sosyal_rutin_paketleri').select('*')
+            supabase.from('mutfak_stok').select('*').eq('family_id', familyId),
+            supabase.from('mutfak_tarifler').select('*').eq('family_id', familyId),
+            supabase.from('alisveris_listesi').select('*').eq('family_id', familyId),
+            supabase.from('sosyal_etkinlikler').select('*').eq('family_id', familyId),
+            supabase.from('mutfak_menu').select('*').eq('family_id', familyId),
+            supabase.from('sosyal_havuz').select('*').eq('family_id', familyId),
+            supabase.from('sosyal_rutinler').select('*').eq('family_id', familyId),
+            supabase.from('mutfak_su').select('*').eq('family_id', familyId).maybeSingle(),
+            supabase.from('sosyal_rutin_paketleri').select('*').eq('family_id', familyId)
           ]);
 
           set(state => {
@@ -2694,12 +3093,21 @@ const useStore = create(
 
             // 3. Alışveriş
             if (alisveris.data) {
-              const mapAl = (list) => list.map(x => ({ id: x.id, nm: x.isim, link: x.link, pr: Number(x.fiyat), dt: x.tarih, done: !!x.tamamlandi, doneDate: x.tamamlanma_tarihi }));
-              a.gorkem = mapAl(alisveris.data.filter(x => x.kime === 'gorkem'));
-              a.esra = mapAl(alisveris.data.filter(x => x.kime === 'esra'));
-              a.ev = mapAl(alisveris.data.filter(x => x.kime === 'ev'));
-              a.wishlist = mapAl(alisveris.data.filter(x => x.kime === 'wishlist'));
-              m.alisveris = mapAl(alisveris.data.filter(x => x.kime === 'mutfak'));
+              const mapAl = (list) => list.map(x => ({ 
+                id: x.id, 
+                nm: x.isim, 
+                link: x.link || '', 
+                pr: Number(x.fiyat || 0), 
+                dt: x.tarih || x.created_at, 
+                done: !!x.alindi, 
+                doneDate: x.tamamlanma_tarihi 
+              }));
+              
+              a.gorkem = mapAl(alisveris.data.filter(x => x.liste_tipi === 'genel_gorkem' || x.liste_tipi === 'gorkem'));
+              a.esra = mapAl(alisveris.data.filter(x => x.liste_tipi === 'genel_esra' || x.liste_tipi === 'esra'));
+              a.ev = mapAl(alisveris.data.filter(x => x.liste_tipi === 'genel_ev' || x.liste_tipi === 'ev'));
+              a.wishlist = mapAl(alisveris.data.filter(x => x.liste_tipi === 'wishlist'));
+              m.alisveris = mapAl(alisveris.data.filter(x => x.liste_tipi === 'mutfak'));
             }
 
             // 4. Sosyal
@@ -2841,8 +3249,8 @@ const useStore = create(
               // 6. Grup 3 Tabloları Güncellemesi
               const group3Tables = [
                 'tatil_trips', 'tatil_photos', 'tatil_visited',
-                'muhendislik_problem_bank', 'muhendislik_decision_log', 'muhendislik_customers', 'muhendislik_deals',
-                'modaring_staff', 'modaring_plans'
+                'muhendislik_problems', 'muhendislik_decisions', 'muhendislik_crm_customers', 'muhendislik_crm_deals', 'muhendislik_proceler',
+                'modaring_personel', 'modaring_vardiya', 'modaring_kasa', 'modaring_bankalar', 'modaring_tedarik', 'modaring_siparisler', 'modaring_ajanda', 'modaring_refika'
               ];
               if (group3Tables.includes(table)) {
                 console.log(`🔄 [Realtime] ${table} değişti, Grup 3 verileri eşitleniyor...`);
@@ -2860,61 +3268,17 @@ const useStore = create(
       },
 
       saveToSupabase: async (immediate = false) => {
-        if (saveTimeout) clearTimeout(saveTimeout);
-
-        const runSave = async () => {
-          if (get().isSaving) {
-            if (!immediate) setTimeout(() => get().saveToSupabase(), 2000);
-            return;
-          }
-
-          try {
-            set({ isSaving: true });
-            const state = get();
-
-            if (!state.system.isCloudReady) {
-              console.warn('⚠️ Cloud data not ready. Skipping save.');
-              set({ isSaving: false });
-              return;
-            }
-
-            const dataToPush = extractAppData(state);
-            dataToPush.system = { ...dataToPush.system, lastUpdatedBy: state.system.clientId, updatedAt: Date.now() };
-
-            await pushToSupabase(dataToPush);
-            set({ isOnline: true, isSaving: false });
-            console.log('✨ Data synced to cloud.');
-          } catch (err) {
-            console.error('❌ saveToSupabase error:', err);
-            set({ isSaving: false, isOnline: false });
-            // FAZ 10: Kullanıcıyı sessizce kaybolan veriler konusunda uyar.
-            toast.error('Bağlantı hatası: Son işleminiz buluta kaydedilemedi!', {
-              id: 'sync-error', // Prevent duplicate toasts
-              duration: 4000
-            });
-          }
-          saveTimeout = null;
-        };
-
-        if (immediate) {
-          await runSave();
-        } else {
-          saveTimeout = setTimeout(runSave, 1500);
-        }
+        // [2. Milat - 2. Ayak: Büyük Temizlik]
+        // Monolitik JSON kaydı devre dışı bırakıldı. Artık her veri kendi SQL tablosuna mühürleniyor.
+        // Bu fonksiyon artık emekliye ayrıldı.
+        return;
       },
 
       // KRİTİK: Beklemeden, hemen buluta bas (Silme gibi işlemler için)
       forceSaveToSupabase: async () => {
-        try {
-          set({ isSaving: true });
-          const state = get();
-          const dataToPush = extractAppData(state);
-          dataToPush.system = { ...dataToPush.system, lastUpdatedBy: state.system.clientId };
-          await pushToSupabase(dataToPush);
-          set({ isOnline: true, isSaving: false });
-        } catch (err) {
-          set({ isSaving: false });
-        }
+        // [2. Milat - 2. Ayak: Büyük Temizlik]
+        // Monolitik JSON kaydı (zorunlu) devre dışı bırakıldı.
+        return;
       },
 
       // ── Eraylar Finans Actions ───────────────────────────
@@ -2934,14 +3298,14 @@ const useStore = create(
           }
         }
         
-        get().saveToSupabase(true);
+
       },
 
       deleteFinansKart: (id) => {
         const state = get();
         const updated = (state.finans.kartlar || []).filter(k => String(k.id) !== String(id));
         set({ finans: { ...state.finans, kartlar: updated } });
-        get().saveToSupabase();
+
         deleteFinansKartFromSupabase(id);
       },
 
@@ -2949,7 +3313,7 @@ const useStore = create(
         const state = get();
         const updated = (state.finans.borclar || []).filter(b => String(b.id) !== String(id));
         set({ finans: { ...state.finans, borclar: updated } });
-        get().saveToSupabase();
+
         deleteFinansKrediFromSupabase(id);
       },
       addExpense: (expense) => {
@@ -2984,7 +3348,7 @@ const useStore = create(
         const newPool = [newPoolItem, ...(state.finans.approvalPool || [])];
         set({ finans: { ...state.finans, approvalPool: newPool } });
         syncFinansOnayHavuzu(newPool); // Gölge Yazım
-        get().saveToSupabase();
+
       },
 
       approveExpense: (poolId) => {
@@ -3017,7 +3381,7 @@ const useStore = create(
           kasa: { ...state.kasa, bakiyeler: yeniBakiyeler, bankaHesaplari: updatedBankaHesaplari }
         });
         get().addLog('Harcama Onaylandı', `${item.payer || item.kayit_eden}: ${item.amount || item.tutar}₺ - ${item.title || item.baslik}`);
-        get().saveToSupabase();
+
         toast.success('Harcama onaylandı! ✅');
       },
 
@@ -3116,7 +3480,7 @@ const useStore = create(
             bankaHesaplari: yeniBankaHesaplari
           }
         });
-        get().saveToSupabase(true);
+
       },
 
       // Onay havuzundan alıp Supabase'e yazar
@@ -3137,7 +3501,7 @@ const useStore = create(
         syncFinansOnayHavuzu(updatedPool);
         supabase.from('finans_onay_havuzu').delete().eq('id', String(poolId)).then();
         get().addLog('Harcama Onaylandı (v2)', `${item.title}: ${item.amount}₺`);
-        get().saveToSupabase(true);
+
         toast.success('Harcama onaylandı ve kaydedildi! ✅');
       },
 
@@ -3148,7 +3512,7 @@ const useStore = create(
         set({ finans: { ...state.finans, approvalPool: updatedPool } });
         syncFinansOnayHavuzu(updatedPool); // Gölge Yazım
         supabase.from('finans_onay_havuzu').delete().eq('id', String(poolId)).then();
-        get().saveToSupabase();
+
         toast.success('Harcama reddedildi.');
       },
 
@@ -3204,7 +3568,7 @@ const useStore = create(
           toast.success('Harcama silindi.');
           
           // Beklemeden hemen bulutu güncelle (Hayalet kayıtları engellemek için)
-          get().forceSaveToSupabase();
+
         } catch (err) {
           console.error('❌ Harcama silme hatası:', err);
           toast.error('Silme işlemi başarısız.');
@@ -3276,7 +3640,7 @@ const useStore = create(
           });
           
           toast.success('Harcama güncellendi.');
-          get().saveToSupabase();
+
         } catch (err) {
           console.error('❌ updateHarcama error:', err);
           toast.error('Güncelleme işlemi başarısız.');
@@ -3301,7 +3665,7 @@ const useStore = create(
           },
         };
         set({ finans: { ...state.finans, kartMutabakat: yeniMutabakat } });
-        get().saveToSupabase();
+
         toast.success('Gerçek borç kaydedildi! 💳');
       },
 
@@ -3356,7 +3720,7 @@ const useStore = create(
 
         const kartName = state.finans.kartlar.find(k => k.id === kartId)?.name || kartId;
         get().addLog('Kart Ödemesi', `${kartName} için ${amountNum}₺ ödeme yapıldı (${paymentType === 'full' ? 'Tam' : 'Asgari'}).`);
-        get().saveToSupabase();
+
         toast.success(`${kartName} ödemesi başarıyla kaydedildi! 🎉`);
       },
 
@@ -3464,7 +3828,7 @@ const useStore = create(
         const state = get();
         const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
         set({ finans: { ...state.finans, approvalPool: updatedPool } });
-        get().saveToSupabase();
+
         toast.error('Harcama reddedildi.');
       },
 
@@ -3495,7 +3859,7 @@ const useStore = create(
           }
         });
         get().addLog('Harcama Silindi', `${expense.payer || 'Sistem'}: ${expense.amount}₺ - ${expense.title}`);
-        get().saveToSupabase();
+
       },
 
       togglePrivacyMode: () => {
@@ -3507,7 +3871,7 @@ const useStore = create(
         const state = get();
         const yeniVarliklar = state.kasa.varliklar.map(v => v.id === id ? { ...v, ...updates } : v);
         set({ kasa: { ...state.kasa, varliklar: yeniVarliklar } });
-        get().saveToSupabase();
+
         const updatedVarlik = yeniVarliklar.find(v => v.id === id);
         if (updatedVarlik) pushGenericToSupabase('kasa_varliklar', updatedVarlik);
       },
@@ -3517,7 +3881,7 @@ const useStore = create(
         const newItem = { id: Date.now(), type: 'tl', location: 'Banka', ...varlik }; // Default type is TL, location Banka
         set({ kasa: { ...state.kasa, varliklar: [newItem, ...(state.kasa.varliklar || [])] } });
         get().addLog('Varlık Eklendi', `${newItem.name}: ${newItem.amount} ${newItem.unit}`);
-        get().saveToSupabase();
+
         pushGenericToSupabase('kasa_varliklar', newItem);
       },
 
@@ -3526,7 +3890,7 @@ const useStore = create(
         const v = state.kasa.varliklar.find(x => x.id === id);
         set({ kasa: { ...state.kasa, varliklar: state.kasa.varliklar.filter(x => x.id !== id) } });
         if (v) get().addLog('Varlık Silindi', `${v.name}`);
-        get().saveToSupabase();
+
         removeGenericFromSupabase('kasa_varliklar', id);
       },
 
@@ -3534,7 +3898,7 @@ const useStore = create(
         const state = get();
         const yeniTasinmazlar = state.kasa.tasinmazlar.map(t => t.id === id ? { ...t, ...updates } : t);
         set({ kasa: { ...state.kasa, tasinmazlar: yeniTasinmazlar } });
-        get().saveToSupabase();
+
         const updatedTasinmaz = yeniTasinmazlar.find(t => t.id === id);
         if (updatedTasinmaz) pushGenericToSupabase('kasa_tasinmazlar', updatedTasinmaz);
       },
@@ -3558,7 +3922,7 @@ const useStore = create(
         
         await pushKasaBakiyelerToSupabase(yeniBakiyeler);
         get().addLog('Kasa Transferi', `${from} -> ${to}: ${amount}₺`);
-        get().saveToSupabase(true);
+
       },
 
       addGoal: async (goal) => {
@@ -3591,7 +3955,7 @@ const useStore = create(
         set({ kasa: { ...state.kasa, kumbaralar: [newGoal, ...(state.kasa.kumbaralar || [])] } });
         await pushHedefToSupabase(newGoal);
         get().addLog('Hedef Eklendi', `Yeni hedef: ${name}`);
-        get().saveToSupabase(true);
+
         toast.success('Hedef eklendi! 🎯');
       },
 
@@ -3604,7 +3968,7 @@ const useStore = create(
           pushHedefToSupabase(updatedGoal); // Gölge Yazım
           pushGenericToSupabase('kasa_kumbaralar', updatedGoal);
         }
-        get().saveToSupabase();
+
       },
 
       deleteGoal: (id) => {
@@ -3613,7 +3977,7 @@ const useStore = create(
         set({ kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(x => x.id !== id) } });
         deleteHedefFromSupabase(id); // Gölge Yazım
         if (g) get().addLog('Hedef Silindi', `${g.name}`);
-        get().saveToSupabase();
+
         removeGenericFromSupabase('kasa_kumbaralar', id);
       },
 
@@ -3644,7 +4008,7 @@ const useStore = create(
         };
         set({ hedefler: { ...state.hedefler, goals: [newGoal, ...(state.hedefler.goals || [])] } });
         await pushHedefToSupabase(newGoal);
-        get().saveToSupabase(true);
+
         toast.success('Vizyon hedefi eklendi! 🌟');
       },
 
@@ -3654,14 +4018,14 @@ const useStore = create(
         set({ hedefler: { ...state.hedefler, goals: updated } });
         const updatedGoal = updated.find(g => g.id === id);
         if (updatedGoal) pushHedefToSupabase(updatedGoal); // Gölge Yazım
-        get().saveToSupabase();
+
       },
 
       deleteVisionGoal: (id) => {
         const state = get();
         set({ hedefler: { ...state.hedefler, goals: (state.hedefler.goals || []).filter(g => g.id !== id) } });
         deleteHedefFromSupabase(id); // Gölge Yazım
-        get().saveToSupabase();
+
       },
 
       addVisionPlan: (plan) => {
@@ -3669,7 +4033,7 @@ const useStore = create(
         const newItem = { id: Date.now().toString(), ...plan };
         set({ hedefler: { ...state.hedefler, longTermVision: [...(state.hedefler.longTermVision || []), newItem] } });
         pushVizyonPlanToSupabase(newItem); // Gölge Yazım
-        get().saveToSupabase();
+
       },
 
       updateVisionPlan: (id, updates) => {
@@ -3678,7 +4042,7 @@ const useStore = create(
         set({ hedefler: { ...state.hedefler, longTermVision: updated } });
         const updatedPlan = updated.find(p => p.id === id);
         if (updatedPlan) pushVizyonPlanToSupabase(updatedPlan); // Gölge Yazım
-        get().saveToSupabase();
+
       },
 
       deleteVisionPlan: (id) => {
@@ -3686,7 +4050,7 @@ const useStore = create(
         const updated = (state.hedefler.longTermVision || []).filter(p => p.id !== id);
         set({ hedefler: { ...state.hedefler, longTermVision: updated } });
         deleteVizyonPlanFromSupabase(id); // Gölge Yazım
-        get().saveToSupabase();
+
       },
 
       // ── Achievements ──
@@ -3707,7 +4071,7 @@ const useStore = create(
             }
           };
         });
-        get().saveToSupabase();
+
       },
 
       completeGoal: (goalId, type, outcomeNotes) => {
@@ -3752,7 +4116,7 @@ const useStore = create(
           pushHedefGecmisToSupabase(kazanım, 'completed'); // Gölge Yazım
           deleteHedefFromSupabase(goalId); // Aktif hedeflerden sil
           get().addLog('Kazanım!', `Hedef tamamlandı: ${kazanım.title}`);
-          get().saveToSupabase();
+
       },
 
       failGoal: (goalId, type, failureNotes) => {
@@ -3798,33 +4162,33 @@ const useStore = create(
           pushHedefGecmisToSupabase(kayıp, 'failed'); // Gölge Yazım
           deleteHedefFromSupabase(goalId); // Aktif hedeflerden sil
           get().addLog('Kayıp', `Hedef başarısız: ${kayıp.title}`);
-          get().saveToSupabase();
+
       },
 
       updateCompletedGoal: (id, updates) => {
         const state = get();
         const updated = (state.hedefler.completedHistory || []).map(h => h.id === id ? { ...h, ...updates } : h);
         set({ hedefler: { ...state.hedefler, completedHistory: updated } });
-        get().saveToSupabase();
+
       },
 
       deleteCompletedGoal: (id) => {
         const state = get();
         set({ hedefler: { ...state.hedefler, completedHistory: (state.hedefler.completedHistory || []).filter(h => h.id !== id) } });
-        get().saveToSupabase();
+
       },
 
       updateFailedGoal: (id, updates) => {
         const state = get();
         const updated = (state.hedefler.failedHistory || []).map(h => h.id === id ? { ...h, ...updates } : h);
         set({ hedefler: { ...state.hedefler, failedHistory: updated } });
-        get().saveToSupabase();
+
       },
 
       deleteFailedGoal: (id) => {
         const state = get();
         set({ hedefler: { ...state.hedefler, failedHistory: (state.hedefler.failedHistory || []).filter(h => h.id !== id) } });
-        get().saveToSupabase();
+
       },
 
       // ── Kasa Banka Actions ──────────────────────────────
@@ -3838,7 +4202,7 @@ const useStore = create(
         };
         set({ kasa: { ...state.kasa, bankaHesaplari: [...(state.kasa.bankaHesaplari || []), newHesap] } });
         get().addLog('Banka', `Yeni banka hesabı eklendi: ${hesap.name}`);
-        get().saveToSupabase();
+
         pushGenericToSupabase('kasa_bankalar', newHesap);
       },
       updateBankaHesabi: (id, updates) => {
@@ -3850,7 +4214,7 @@ const useStore = create(
           kmh: updates.kmh !== undefined ? Number(updates.kmh) : h.kmh
         } : h);
         set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
-        get().saveToSupabase();
+
         const updatedHesap = updated.find(h => h.id === id);
         if (updatedHesap) pushGenericToSupabase('kasa_bankalar', updatedHesap);
       },
@@ -3858,14 +4222,14 @@ const useStore = create(
         const state = get();
         const updated = (state.kasa.bankaHesaplari || []).filter(h => h.id !== id);
         set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
-        get().saveToSupabase();
+
         removeGenericFromSupabase('kasa_bankalar', id);
       },
       updateBankaBakiye: (id, newBalance) => {
         const state = get();
         const updated = (state.kasa.bankaHesaplari || []).map(h => h.id === id ? { ...h, balance: Number(newBalance) } : h);
         set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
-        get().saveToSupabase();
+
         const updatedHesap = updated.find(h => h.id === id);
         if (updatedHesap) pushGenericToSupabase('kasa_bankalar', updatedHesap);
       },
@@ -3930,7 +4294,7 @@ const useStore = create(
         kits[kitType] = [newItem, ...kits[kitType]];
         set({ ev: { ...state.ev, emergencyKits: kits } });
         get().addLog('Güvenlik', `${newItem.item} ${kitType === 'deprem' ? 'Deprem' : 'İlk Yardım'} çantasına eklendi.`);
-        get().saveToSupabase();
+
       },
 
       addEmergencyToShopping: (item) => {
@@ -3952,7 +4316,7 @@ const useStore = create(
           mutfak: { ...state.mutfak, alisveris: [newItem, ...alisveris] }
         });
         toast.success(`"${newItem.nm}" alışveriş listesine eklendi! 🛒`);
-        get().saveToSupabase();
+
       },
 
       deleteEmergencyItem: (kitType, id) => {
@@ -3962,7 +4326,7 @@ const useStore = create(
 
         kits[kitType] = kits[kitType].filter(item => item.id !== id);
         set({ ev: { ...state.ev, emergencyKits: kits } });
-        get().saveToSupabase();
+
       },
 
       updateKasaBakiye: async (kisi, yeniTutar) => {
@@ -3975,33 +4339,33 @@ const useStore = create(
           }
         });
         await pushKasaBakiyelerToSupabase(yeniBakiyeler);
-        get().saveToSupabase(true);
+
       },
       updateSafePassword: (newPass) => {
         const state = get();
         set({ ev: { ...state.ev, guvenlik: { ...state.ev.guvenlik, safePassword: newPass } } });
-        get().saveToSupabase();
+
       },
 
       addDuzenliOdeme: (data) => {
         const state = get();
         const newItem = { ...data, id: Date.now() };
         set({ ev: { ...state.ev, duzenliOdemeler: [...(state.ev.duzenliOdemeler || []), newItem] } });
-        get().saveToSupabase();
+
         pushEvDuzenliOdemeToSupabase(newItem);
       },
       updateDuzenliOdeme: (id, updates) => {
         const state = get();
         const updated = state.ev.duzenliOdemeler.map(i => i.id === id ? { ...i, ...updates } : i);
         set({ ev: { ...state.ev, duzenliOdemeler: updated } });
-        get().saveToSupabase();
+
         const item = updated.find(i => i.id === id);
         if (item) pushEvDuzenliOdemeToSupabase(item);
       },
       deleteDuzenliOdeme: (id) => {
         const state = get();
         set({ ev: { ...state.ev, duzenliOdemeler: state.ev.duzenliOdemeler.filter(i => i.id !== id) } });
-        get().saveToSupabase();
+
         deleteEvDuzenliOdemeFromSupabase(id);
       },
       addFinanceExpense: (expense, paymentInfo) => {
@@ -4028,14 +4392,14 @@ const useStore = create(
           defaultPay: paymentInfo
         });
 
-        get().saveToSupabase();
+
       },
 
       addAbonelik: (abo) => {
         const state = get();
         const newAbo = { ...abo, id: Date.now() };
         set({ ev: { ...state.ev, abonelikler: [...state.ev.abonelikler, newAbo] } });
-        get().saveToSupabase();
+
         pushEvAbonelikToSupabase(newAbo);
       },
 
@@ -4043,7 +4407,7 @@ const useStore = create(
         const state = get();
         const updated = state.ev.abonelikler.map(a => a.id === id ? { ...a, ...updates } : a);
         set({ ev: { ...state.ev, abonelikler: updated } });
-        get().saveToSupabase();
+
         const item = updated.find(a => a.id === id);
         if (item) pushEvAbonelikToSupabase(item);
       },
@@ -4051,7 +4415,7 @@ const useStore = create(
       deleteAbonelik: (id) => {
         const state = get();
         set({ ev: { ...state.ev, abonelikler: state.ev.abonelikler.filter(a => a.id !== id) } });
-        get().saveToSupabase();
+
         deleteEvAbonelikFromSupabase(id);
       },
 
@@ -4069,7 +4433,7 @@ const useStore = create(
         });
 
         get().addLog('Finans', `${user} tarafından ${amount}₺ hızlı harcama girişi yapıldı.`);
-        get().saveToSupabase();
+
       },
 
       saveInvoiceToFinance: (data) => {
@@ -4099,7 +4463,7 @@ const useStore = create(
 
         set({ ev: updatedEv });
         get().addLog('Sistem', `${user} tarafından yeni ${type === 'abonelik' ? 'abonelik' : 'ödemek'} kaydı oluşturuldu: ${name}`);
-        get().saveToSupabase();
+
       },
 
       unlockSafe: (pass) => {
@@ -4127,7 +4491,7 @@ const useStore = create(
         pages[activeIdx] = { ...pages[activeIdx], notes: note };
 
         set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
-        get().saveToSupabase();
+
       },
 
       addPersonalSafeStamp: (stamp) => {
@@ -4142,7 +4506,7 @@ const useStore = create(
         pages[activeIdx] = { ...pages[activeIdx], stamps: [...currentStamps, stamp] };
 
         set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
-        get().saveToSupabase();
+
       },
 
       clearPersonalSafeStamps: () => {
@@ -4156,7 +4520,7 @@ const useStore = create(
         pages[activeIdx] = { ...pages[activeIdx], stamps: [] };
 
         set({ ev: { ...state.ev, personalSafe: { ...safe, pages } } });
-        get().saveToSupabase();
+
       },
 
       setPersonalSafePage: (idx) => {
@@ -4207,7 +4571,8 @@ const useStore = create(
         const normalizedName = item.nm?.toLowerCase().trim();
         
         // Mükerrer Kontrolü (Aynı isimli ve henüz alınmamış ürün)
-        const currentList = state.alisveris[owner] || [];
+        const targetOwner = owner === 'market' ? 'mutfak' : owner;
+        const currentList = targetOwner === 'mutfak' ? (state.mutfak.alisveris || []) : (state.alisveris[targetOwner] || []);
         const isDuplicate = currentList.some(i => i.nm?.toLowerCase().trim() === normalizedName && !i.done);
 
         if (isDuplicate) {
@@ -4224,44 +4589,84 @@ const useStore = create(
           done: false,
           doneDate: null
         };
-        const updatedList = [newItem, ...(state.alisveris[owner] || [])];
-        set({ alisveris: { ...state.alisveris, [owner]: updatedList } });
-        get().addLog('Alışveriş Listesi', `${owner} listesine eklendi: ${item.nm}`);
-        await pushAlisverisToSupabase(newItem, owner);
-        get().saveToSupabase(true);
+
+        if (targetOwner === 'mutfak') {
+          const updatedMutfak = {
+            ...state.mutfak,
+            alisveris: [newItem, ...(state.mutfak.alisveris || [])]
+          };
+          set({ mutfak: updatedMutfak });
+        } else {
+          const updatedAlisveris = {
+            ...state.alisveris,
+            [targetOwner]: [newItem, ...(state.alisveris[targetOwner] || [])]
+          };
+          set({ alisveris: updatedAlisveris });
+        }
+
+        get().addLog('Alışveriş Listesi', `${targetOwner} listesine eklendi: ${item.nm}`);
+        await pushAlisverisToSupabase(newItem, targetOwner);
+
         toast.success(`"${item.nm}" listeye eklendi! ✨`);
       },
 
-      toggleShoppingItem: (owner, itemId) => {
+      toggleShoppingItem: async (owner, itemId) => {
         const state = get();
-        const list = state.alisveris[owner].map(i => {
-          if (i.id === itemId) {
-            const newDone = !i.done;
-            // If marked as done, send to Finans approval pool
-            if (newDone && i.pr > 0) {
-              get().addExpense({
-                title: `Alışveriş: ${i.nm}`,
-                amount: Number(i.pr),
-                category: 'market',
-                source: 'Alışveriş'
-              });
+        const targetOwner = owner === 'market' ? 'mutfak' : owner;
+        
+        let updatedItem = null;
+        
+        if (targetOwner === 'mutfak') {
+          const list = (state.mutfak.alisveris || []).map(i => {
+            if (i.id === itemId) {
+              const newDone = !i.done;
+              updatedItem = { ...i, done: newDone, doneDate: newDone ? new Date().toISOString() : null };
+              return updatedItem;
             }
-            return { ...i, done: newDone, doneDate: newDone ? new Date().toISOString() : null };
+            return i;
+          });
+          set({ mutfak: { ...state.mutfak, alisveris: list } });
+        } else {
+          const list = (state.alisveris[targetOwner] || []).map(i => {
+            if (i.id === itemId) {
+              const newDone = !i.done;
+              updatedItem = { ...i, done: newDone, doneDate: newDone ? new Date().toISOString() : null };
+              return updatedItem;
+            }
+            return i;
+          });
+          set({ alisveris: { ...state.alisveris, [targetOwner]: list } });
+        }
+
+        if (updatedItem) {
+          // If marked as done, send to Finans approval pool
+          if (updatedItem.done && updatedItem.pr > 0) {
+            get().addExpense({
+              title: `Alışveriş: ${updatedItem.nm}`,
+              amount: Number(updatedItem.pr),
+              category: 'market',
+              source: 'Alışveriş'
+            });
           }
-          return i;
-        });
-        set({ alisveris: { ...state.alisveris, [owner]: list } });
-        get().saveToSupabase();
-        const updatedItem = list.find(i => i.id === itemId);
-        if (updatedItem) pushAlisverisToSupabase(updatedItem, owner);
+          await pushAlisverisToSupabase(updatedItem, targetOwner);
+        }
+
       },
 
-      deleteShoppingItem: (owner, itemId) => {
+      deleteShoppingItem: async (owner, itemId) => {
         const state = get();
-        const updatedList = state.alisveris[owner].filter(item => item.id !== itemId);
-        set({ alisveris: { ...state.alisveris, [owner]: updatedList } });
-        get().saveToSupabase();
-        removeAlisverisFromSupabase(itemId);
+        const targetOwner = owner === 'market' ? 'mutfak' : owner;
+
+        if (targetOwner === 'mutfak') {
+          const updatedList = (state.mutfak.alisveris || []).filter(item => item.id !== itemId);
+          set({ mutfak: { ...state.mutfak, alisveris: updatedList } });
+        } else {
+          const updatedList = (state.alisveris[targetOwner] || []).filter(item => item.id !== itemId);
+          set({ alisveris: { ...state.alisveris, [targetOwner]: updatedList } });
+        }
+        
+
+        await removeAlisverisFromSupabase(itemId);
       },
 
       addTrip: async (trip) => {
@@ -4301,7 +4706,7 @@ const useStore = create(
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         await pushTatilTripToSupabase(newTrip);
         get().addLog('Yeni Seyahat Planı', `${newTrip.title || newTrip.city} (${newTrip.travelers}) planlandı! ✈️`);
-        get().saveToSupabase(true);
+
       },
 
       deleteTrip: (tripId) => {
@@ -4310,7 +4715,7 @@ const useStore = create(
         const updatedTrips = state.tatil.trips.filter(t => String(t.id) !== String(tripId));
         set({ tatil: { ...state.tatil, trips: updatedTrips } });
         get().addLog('Tatil Silindi', 'Bir tatil planı silindi. 🗑️');
-        get().saveToSupabase();
+
         deleteTatilTripFromSupabase(tripId);
       },
 
@@ -4331,7 +4736,7 @@ const useStore = create(
           }
           
           // 3. JSON state'i güncelle (Diğer cihazlara haber gitmesi için)
-          await get().saveToSupabase(true); // immediate save
+ // immediate save
           
           console.log('✅ Tatil başarıyla güncellendi ve senkronize edildi.');
         } catch (err) {
@@ -4357,7 +4762,7 @@ const useStore = create(
         if (valizTrip) {
           await pushTatilTripToSupabase(valizTrip);
         }
-        await get().saveToSupabase(true);
+
       },
 
       addTripExpense: (tripId, expense) => {
@@ -4368,7 +4773,7 @@ const useStore = create(
           category: 'tatil',
           source: 'Tatil Modülü'
         });
-        get().saveToSupabase();
+
       },
 
       completeTripEvaluation: async (tripId, person, evalData) => {
@@ -4404,7 +4809,7 @@ const useStore = create(
         if (evalTrip) {
           await pushTatilTripToSupabase(evalTrip);
         }
-        await get().saveToSupabase(true);
+
       },
 
       syncValizToDepo: (itemText, category) => {
@@ -4436,7 +4841,7 @@ const useStore = create(
         get().addLog('Yeni Hayal', `${dream.place} hayal listesine eklendi! 🌟`);
         
         await pushTatilWishlistToSupabase(newDream);
-        await get().saveToSupabase(true);
+
       },
 
       uploadTripPhoto: async (file) => {
@@ -4501,21 +4906,21 @@ const useStore = create(
         if (checkTrip) {
           await pushTatilTripToSupabase(checkTrip);
         }
-        await get().saveToSupabase(true);
+
       },
 
       updateDebt: async (id, remaining) => {
         const state = get();
         const yeniBorclar = state.finans.borclar.map(b => b.id === id ? { ...b, remaining } : b);
         set({ finans: { ...state.finans, borclar: yeniBorclar } });
-        get().saveToSupabase();
+
       },
 
       updateCard: async (id, balance) => {
         const state = get();
         const yeniKartlar = state.finans.kartlar.map(k => k.id === id ? { ...k, balance } : k);
         set({ finans: { ...state.finans, kartlar: yeniKartlar } });
-        get().saveToSupabase();
+
       },
 
       // ── Mutfak Actions ───────────────────────────────────
@@ -4531,7 +4936,7 @@ const useStore = create(
         // GÖLGE YAZIM
         pushMutfakMenuToSupabase(gun, mealKey, String(yemek));
         
-        get().saveToSupabase();
+
       },
 
       updateMenuDetail: async (gun, details) => {
@@ -4547,7 +4952,7 @@ const useStore = create(
           pushMutfakMenuToSupabase(gun, key, String(value));
         });
         
-        get().saveToSupabase();
+
       },
 
       syncRecipesFromData: () => {
@@ -4558,7 +4963,7 @@ const useStore = create(
         const updatedTarifler = INITIAL_RECIPES.map((r, i) => ({ ...r, id: i + 1 }));
 
         set({ mutfak: { ...state.mutfak, tarifler: updatedTarifler } });
-        get().saveToSupabase();
+
         return updatedTarifler.length;
       },
 
@@ -4643,7 +5048,7 @@ const useStore = create(
 
         set({ mutfak: { ...state.mutfak, restaurantlar: yeniRestaurants } });
         get().updateMenuDetail(dt, details);
-        get().saveToSupabase();
+
 
         // Push restaurant to SQL if new
         if (fr) {
@@ -4689,7 +5094,7 @@ const useStore = create(
 
         set({ mutfak: { ...state.mutfak, siparisler: yeniSiparisler, restaurantlar: yeniRestaurants } });
         get().updateMenuDetail(dt, details);
-        get().saveToSupabase();
+
 
         pushGenericToSupabase('mutfak_siparisler', {
           id: String(newOrder.id),
@@ -4746,7 +5151,7 @@ const useStore = create(
         });
 
         set({ mutfak: updatedMutfak });
-        get().saveToSupabase();
+
       },
 
       updateRecipe: async (id, updates) => {
@@ -4779,21 +5184,21 @@ const useStore = create(
         });
 
         set({ mutfak: updatedMutfak });
-        get().saveToSupabase();
+
       },
 
       deleteRecipe: async (id) => {
         const state = get();
         const yeniTarifler = state.mutfak.tarifler.filter(r => r.id !== id);
         set({ mutfak: { ...state.mutfak, tarifler: yeniTarifler } });
-        get().saveToSupabase();
+
       },
 
       toggleFavorite: async (id) => {
         const state = get();
         const yeniTarifler = state.mutfak.tarifler.map(r => r.id === id ? { ...r, f: !r.f } : r);
         set({ mutfak: { ...state.mutfak, tarifler: yeniTarifler } });
-        get().saveToSupabase();
+
       },
 
       updateWaterLevel: async (tank, level) => {
@@ -4809,7 +5214,7 @@ const useStore = create(
             su: newSu
           }
         });
-        get().saveToSupabase();
+
         pushMutfakSuToSupabase(newSu);
       },
 
@@ -4817,7 +5222,7 @@ const useStore = create(
         const state = get();
         const newSu = { ...state.mutfak.su, dailyRate: rate };
         set({ mutfak: { ...state.mutfak, su: newSu } });
-        get().saveToSupabase();
+
         pushMutfakSuToSupabase(newSu);
       },
 
@@ -4857,7 +5262,7 @@ const useStore = create(
               su: newSuObj
             }
           });
-          get().saveToSupabase();
+
           pushMutfakSuToSupabase(newSuObj);
         }
       },
@@ -4881,7 +5286,6 @@ const useStore = create(
             su: newSu
           }
         });
-        get().saveToSupabase();
         pushMutfakSuToSupabase(newSu);
       },
 
@@ -4897,7 +5301,6 @@ const useStore = create(
             su: newSu
           }
         });
-        get().saveToSupabase();
         pushMutfakSuToSupabase(newSu);
         toast.success('Kayıt silindi.');
       },
@@ -4947,7 +5350,6 @@ const useStore = create(
             su: newSu
           }
         });
-        get().saveToSupabase();
         pushMutfakSuToSupabase(newSu);
       },
 
@@ -4982,7 +5384,6 @@ const useStore = create(
         }
 
         set({ mutfak: { ...state.mutfak, [moduleKey]: items, alisveris: newShopping } });
-        get().saveToSupabase();
         
         // GÖLGE YAZIM
         pushMutfakStokToSupabase(items[idx], moduleKey);
@@ -5013,7 +5414,6 @@ const useStore = create(
         }
 
         set({ mutfak: { ...state.mutfak, [fromModule]: fromItems, [toModule]: toItems } });
-        get().saveToSupabase();
         
         // GÖLGE YAZIM
         pushMutfakStokToSupabase(fromItems[fromIdx], fromModule);
@@ -5054,7 +5454,6 @@ const useStore = create(
 
         finalMutfak.alisveris = newShopping;
         set({ mutfak: finalMutfak });
-        get().saveToSupabase();
       },
 
       addMissingToShopping: async (missingItems) => {
@@ -5090,7 +5489,7 @@ const useStore = create(
 
         if (addedCount > 0) {
           set({ mutfak: { ...state.mutfak, alisveris: newShopping } });
-          get().saveToSupabase();
+
         }
         return addedCount;
       },
@@ -5122,7 +5521,7 @@ const useStore = create(
 
         if (addedCount > 0) {
           set({ mutfak: { ...state.mutfak, alisveris: newShopping } });
-          get().saveToSupabase();
+
         }
         return addedCount;
       },
@@ -5143,7 +5542,6 @@ const useStore = create(
 
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, history: yeniHistory } });
         await pushMutfakSohbetToSupabase(newNote);
-        get().saveToSupabase(true);
       },
 
       updateNotePosition: (noteId, x, y) => {
@@ -5152,14 +5550,14 @@ const useStore = create(
           n.id === noteId ? { ...n, x, y } : n
         );
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet } });
-        get().saveToSupabase();
+
       },
 
       markNoteAsRead: (noteId) => {
         const state = get();
         const yeniSohbet = state.mutfak.sohbet.map(n => n.id === noteId ? { ...n, r: true } : n);
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet } });
-        get().saveToSupabase();
+
       },
 
       removeNote: (noteId) => {
@@ -5171,7 +5569,6 @@ const useStore = create(
         const yeniArsiv = note ? [{ ...note, archDate: new Date().toISOString() }, ...state.mutfak.arsiv].slice(0, 100) : state.mutfak.arsiv;
 
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
-        get().saveToSupabase();
       },
 
       archiveNote: (noteId) => {
@@ -5182,7 +5579,7 @@ const useStore = create(
         const yeniArsiv = [{ ...note, archDate: new Date().toISOString() }, ...state.mutfak.arsiv].slice(0, 100);
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
         get().addLog('Not Arşivlendi', `${note.w} tarafından yazılan not arşive kaldırıldı.`);
-        get().saveToSupabase();
+
       },
 
       restoreNote: (noteId) => {
@@ -5193,7 +5590,7 @@ const useStore = create(
         const yeniSohbet = [{ ...note, d: new Date().toISOString() }, ...state.mutfak.sohbet];
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
         get().addLog('Not Geri Yüklendi', `Arşivden bir not geri yüklendi.`);
-        get().saveToSupabase();
+
       },
 
       updateBreadStock: (breadData) => {
@@ -5212,7 +5609,7 @@ const useStore = create(
           }
           set({ mutfak: { ...state.mutfak, ekmeklik: newEkmeklik } });
         }
-        get().saveToSupabase();
+
       },
 
       confirmShoppingItem: async (id, mk, qt, pr, loc, cardId, ct) => {
@@ -5284,7 +5681,7 @@ const useStore = create(
         finalMutfak[targetKey] = itemsInLoc;
 
         set({ mutfak: finalMutfak });
-        get().saveToSupabase();
+
       },
 
       luckyFillWeek: (days) => {
@@ -5332,7 +5729,7 @@ const useStore = create(
               menu: newMenu
             }
           }));
-          get().saveToSupabase();
+
         }
       },
 
@@ -5391,7 +5788,7 @@ const useStore = create(
 
         if (addedAny) {
           set({ mutfak: { ...state.mutfak, alisveris: newItems } });
-          get().saveToSupabase();
+
           return true;
         }
         return false;
@@ -5434,7 +5831,7 @@ const useStore = create(
 
         const currentAkt = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
         set({ sosyal: { ...state.sosyal, aktiviteler: [newActivity, ...currentAkt] } });
-        get().saveToSupabase();
+
         pushSosyalEtkinlikToSupabase(newActivity); // Faz 1.2
       },
 
@@ -5468,7 +5865,7 @@ const useStore = create(
         });
         
         set({ sosyal: { ...state.sosyal, aktiviteler: updatedAktiviteler } });
-        get().saveToSupabase();
+
         if (updatedActivity) pushSosyalEtkinlikToSupabase(updatedActivity); // Faz 1.2
       },
 
@@ -5522,7 +5919,7 @@ const useStore = create(
         });
 
         set({ sosyal: { ...state.sosyal, aktiviteler: yeniAktiviteler, havuz: yeniHavuz } });
-        get().saveToSupabase();
+
         const updatedActivity = yeniAktiviteler.find(a => String(a.id) === String(id));
         if (updatedActivity) pushSosyalEtkinlikToSupabase(updatedActivity);
       },
@@ -5532,7 +5929,7 @@ const useStore = create(
         const aktList3 = Array.isArray(state.sosyal.aktiviteler) ? state.sosyal.aktiviteler : [];
         const yeniAktiviteler = aktList3.filter(a => String(a.id) !== String(id));
         set({ sosyal: { ...state.sosyal, aktiviteler: yeniAktiviteler } });
-        get().saveToSupabase();
+
         removeSosyalEtkinlikFromSupabase(id);
       },
 
@@ -5558,7 +5955,7 @@ const useStore = create(
         };
         const currentHavuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
         set({ sosyal: { ...state.sosyal, havuz: [newItem, ...currentHavuz] } });
-        get().saveToSupabase();
+
         
         // SQL Sync
         pushGenericToSupabase('sosyal_havuz', {
@@ -5576,7 +5973,7 @@ const useStore = create(
         const havuz = Array.isArray(state.sosyal.havuz) ? state.sosyal.havuz : [];
         const newHavuz = havuz.map(item => item.id === id ? { ...item, ...updates } : item);
         set({ sosyal: { ...state.sosyal, havuz: newHavuz } });
-        get().saveToSupabase();
+
 
         const updated = newHavuz.find(i => i.id === id);
         if (updated) {
@@ -5604,7 +6001,7 @@ const useStore = create(
             poolItems: currentPoolItems.filter(i => String(i.id) !== String(id))
           }
         });
-        get().saveToSupabase();
+
         removeGenericFromSupabase('sosyal_havuz', id);
       },
 
@@ -5626,7 +6023,7 @@ const useStore = create(
         };
         const currentPkgs = Array.isArray(state.sosyal.routinePackages) ? state.sosyal.routinePackages : [];
         set({ sosyal: { ...state.sosyal, routinePackages: [newPkg, ...currentPkgs] } });
-        get().saveToSupabase();
+
         pushGenericToSupabase('sosyal_rutin_paketleri', newPkg);
       },
 
@@ -5635,7 +6032,7 @@ const useStore = create(
         const pkgs = Array.isArray(state.sosyal.routinePackages) ? state.sosyal.routinePackages : [];
         const newPkgs = pkgs.map(p => p.id === id ? { ...p, ...updates } : p);
         set({ sosyal: { ...state.sosyal, routinePackages: newPkgs } });
-        get().saveToSupabase();
+
         
         const updatedPkg = newPkgs.find(p => p.id === id);
         if (updatedPkg) pushGenericToSupabase('sosyal_rutin_paketleri', updatedPkg);
@@ -5645,7 +6042,7 @@ const useStore = create(
         const state = get();
         const currentPkgs = Array.isArray(state.sosyal.routinePackages) ? state.sosyal.routinePackages : [];
         set({ sosyal: { ...state.sosyal, routinePackages: currentPkgs.filter(p => String(p.id) !== String(id)) } });
-        get().saveToSupabase();
+
         removeGenericFromSupabase('sosyal_rutin_paketleri', id);
       },
 
@@ -5695,7 +6092,7 @@ const useStore = create(
         };
         const currentRut = Array.isArray(state.sosyal.rutinler) ? state.sosyal.rutinler : [];
         set({ sosyal: { ...state.sosyal, rutinler: [sanitizedRutin, ...currentRut] } });
-        get().saveToSupabase();
+
         pushGenericToSupabase('sosyal_rutinler', sanitizedRutin);
       },
 
@@ -5703,7 +6100,7 @@ const useStore = create(
         const state = get();
         const yeniRutinler = state.sosyal.rutinler.filter(r => r.id !== id);
         set({ sosyal: { ...state.sosyal, rutinler: yeniRutinler } });
-        get().saveToSupabase();
+
         removeGenericFromSupabase('sosyal_rutinler', id);
       },
 
@@ -5730,7 +6127,7 @@ const useStore = create(
           defaultPay: paymentInfo
         });
 
-        get().saveToSupabase();
+
         pushGenericToSupabase('ev_faturalar', newFatura);
         toast.success('Fatura kaydedildi ve Finans\'a aktarıldı! 🧾');
       },
@@ -5745,7 +6142,7 @@ const useStore = create(
         );
 
         set({ ev: { ...state.ev, faturalar: updatedFaturalar } });
-        get().saveToSupabase();
+
         const updatedFatura = updatedFaturalar.find(f => f.id === id);
         if (updatedFatura) pushGenericToSupabase('ev_faturalar', updatedFatura);
         toast.success(`${fatura.name} faturası ödendi! 💸`);
@@ -5806,8 +6203,10 @@ const useStore = create(
           ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
           finans: { ...state.finans, rekurans: updatedRekurans }
         });
-        get().saveToSupabase();
+
         pushGenericToSupabase('kasa_tasinmazlar', newItem);
+        if (newItem.aidat > 0) pushEvDuzenliOdemeToSupabase(updatedDuzenli[updatedDuzenli.length - 1]);
+        if (newItem.income > 0 && newItem.status === 'Kiracı Var') pushFinansRekuransToSupabase(updatedRekurans[updatedRekurans.length - 1]);
         toast.success('Yeni taşınmaz portföye eklendi ve finansal takibe alındı! 🏗️');
       },
 
@@ -5862,9 +6261,19 @@ const useStore = create(
           ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
           finans: { ...state.finans, rekurans: updatedRekurans }
         });
-        get().saveToSupabase();
+
         const updatedTasinmaz = updatedTasinmazlar.find(t => t.id === id);
-        if (updatedTasinmaz) pushGenericToSupabase('kasa_tasinmazlar', updatedTasinmaz);
+        if (updatedTasinmaz) {
+          pushGenericToSupabase('kasa_tasinmazlar', updatedTasinmaz);
+          
+          const aidatItem = updatedDuzenli.find(d => d.id === `tasinmaz-aidat-${id}`);
+          if (aidatItem) pushEvDuzenliOdemeToSupabase(aidatItem);
+          else deleteEvDuzenliOdemeFromSupabase(`tasinmaz-aidat-${id}`);
+
+          const kiraItem = updatedRekurans.find(r => r.id === `tasinmaz-kira-${id}`);
+          if (kiraItem) pushFinansRekuransToSupabase(kiraItem);
+          else deleteFinansRekuransFromSupabase(`tasinmaz-kira-${id}`);
+        }
       },
 
       deleteTasinmaz: (id) => {
@@ -5878,8 +6287,10 @@ const useStore = create(
           ev: { ...state.ev, duzenliOdemeler: updatedDuzenli },
           finans: { ...state.finans, rekurans: updatedRekurans }
         });
-        get().saveToSupabase();
+
         removeGenericFromSupabase('kasa_tasinmazlar', id);
+        deleteEvDuzenliOdemeFromSupabase(`tasinmaz-aidat-${id}`);
+        deleteFinansRekuransFromSupabase(`tasinmaz-kira-${id}`);
         toast.success('Taşınmaz kaydı ve ilgili finansal takipçiler silindi.');
       },
 
@@ -5902,7 +6313,7 @@ const useStore = create(
         const newList = [newItem, ...currentList];
 
         set({ ev: { ...currentEv, onarimListesi: newList } });
-        get().saveToSupabase();
+
         pushEvOnarimToSupabase(newItem);
         toast.success(`"${task}" listeye eklendi! 📋`);
       },
@@ -5925,7 +6336,7 @@ const useStore = create(
         });
 
         set({ ev: { ...currentEv, onarimListesi: newList } });
-        get().saveToSupabase();
+
         const updatedItem = newList.find(i => i.id === id);
         if (updatedItem) pushEvOnarimToSupabase(updatedItem);
       },
@@ -5948,7 +6359,7 @@ const useStore = create(
         });
 
         set({ ev: { ...currentEv, onarimListesi: newList } });
-        get().saveToSupabase();
+
         newList.filter(i => i.isArchived).forEach(i => pushEvOnarimToSupabase(i));
         toast.success('Tamamlanan görevler arşivlendi! ✨');
       },
@@ -5960,14 +6371,14 @@ const useStore = create(
           item.id === id ? { ...item, status: item.status === 'Completed' ? 'Pending' : 'Completed' } : item
         );
         set({ ev: { ...state.ev, [listType]: list } });
-        get().saveToSupabase();
+
       },
 
       deleteHomeTask: (listType, id) => {
         const state = get();
         const list = state.ev[listType].filter(item => item.id !== id);
         set({ ev: { ...state.ev, [listType]: list } });
-        get().saveToSupabase();
+
 
         // SQL Sync
         if (listType === 'duzenliOdemeler') deleteEvDuzenliOdemeFromSupabase(id);
@@ -5977,8 +6388,10 @@ const useStore = create(
 
       updateHomeSecurity: (updates) => {
         const state = get();
-        set({ ev: { ...state.ev, guvenlik: { ...state.ev.guvenlik, ...updates } } });
-        get().saveToSupabase();
+        const newGuvenlik = { ...state.ev.guvenlik, ...updates };
+        set({ ev: { ...state.ev, guvenlik: newGuvenlik } });
+        
+        pushGenericToSupabase('ev_ayarlar', { id: 'guvenlik', veri: newGuvenlik });
       },
 
       addPeriodicBakim: (item) => {
@@ -5991,7 +6404,8 @@ const useStore = create(
         };
 
         set({ ev: { ...currentEv, bakimlar: [...currentBakimlar, newItem] } });
-        get().saveToSupabase();
+
+        pushEvBakimToSupabase(newItem);
         toast.success('Yeni periyodik bakım eklendi! 🔄');
       },
 
@@ -6004,7 +6418,9 @@ const useStore = create(
         );
 
         set({ ev: { ...currentEv, bakimlar: updated } });
-        get().saveToSupabase();
+
+        const updatedItem = updated.find(b => b.id === id);
+        if (updatedItem) pushEvBakimToSupabase(updatedItem);
         toast.success('Bakım bilgileri güncellendi! 💾');
       },
 
@@ -6017,7 +6433,9 @@ const useStore = create(
         );
 
         set({ ev: { ...currentEv, bakimlar: updated } });
-        get().saveToSupabase();
+
+        const updatedItem = updated.find(b => b.id === id);
+        if (updatedItem) pushEvBakimToSupabase(updatedItem);
         toast.success('Bakım zamanlayıcısı sıfırlandı! 🕒');
       },
 
@@ -6027,7 +6445,7 @@ const useStore = create(
         const updated = currentBakimlar.filter(b => b.id !== id);
 
         set({ ev: { ...currentEv, bakimlar: updated } });
-        get().saveToSupabase();
+
         deleteEvBakimFromSupabase(id);
         toast.success('Bakım kaydı silindi.');
       },
@@ -6037,7 +6455,7 @@ const useStore = create(
         const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
         const updated = currentList.filter(item => item.id !== id);
         set({ ev: { ...currentEv, onarimListesi: updated } });
-        get().saveToSupabase();
+
         deleteEvOnarimFromSupabase(id);
         toast.success('Onarım kaydı arşivden silindi.');
       },
@@ -6047,7 +6465,7 @@ const useStore = create(
         const currentList = Array.isArray(currentMutfak.alisveris?.[listKey]) ? currentMutfak.alisveris[listKey] : [];
         const updated = currentList.filter(item => item.id !== id);
         set({ mutfak: { ...currentMutfak, alisveris: { ...currentMutfak.alisveris, [listKey]: updated } } });
-        get().saveToSupabase();
+
         toast.success('Alışveriş kaydı silindi.');
       },
 
@@ -6063,7 +6481,7 @@ const useStore = create(
         });
 
         set({ pet: { ...currentPet, vaccines: { ...currentPet.vaccines, [petName]: updated } } });
-        get().saveToSupabase();
+
         toast.success('Aşı geçmişi silindi.');
       },
 
@@ -6076,20 +6494,23 @@ const useStore = create(
         // Default radius values if not exist
         const defaultRadius = type === 'home' ? 150 : 250;
 
+        const newTracking = {
+          ...currentTracking,
+          [type]: { 
+            radius: defaultRadius, 
+            ...(currentTracking[type] || {}), 
+            ...updates 
+          }
+        };
+
         set({
           ev: {
             ...currentEv,
-            tracking: {
-              ...currentTracking,
-              [type]: { 
-                radius: defaultRadius, 
-                ...(currentTracking[type] || {}), 
-                ...updates 
-              }
-            }
+            tracking: newTracking
           }
         });
-        get().saveToSupabase();
+
+        pushGenericToSupabase('ev_ayarlar', { id: 'tracking_settings', veri: newTracking });
         toast.success(`${type === 'home' ? 'Ev' : 'İş'} konumu güncellendi! 📍`);
       },
 
@@ -6105,7 +6526,8 @@ const useStore = create(
             tracking: { ...tracking, savedLocations: [newLoc, ...saved] }
           }
         });
-        get().saveToSupabase();
+
+        pushGenericToSupabase('ev_saved_locations', newLoc);
         toast.success('Yeni konum kaydedildi! 📍');
       },
 
@@ -6122,7 +6544,9 @@ const useStore = create(
             tracking: { ...tracking, savedLocations: saved }
           }
         });
-        get().saveToSupabase();
+
+        const updated = saved.find(l => l.id === id);
+        if (updated) pushGenericToSupabase('ev_saved_locations', updated);
         toast.success('Konum güncellendi! 📍');
       },
 
@@ -6137,7 +6561,8 @@ const useStore = create(
             tracking: { ...tracking, savedLocations: saved }
           }
         });
-        get().saveToSupabase();
+
+        removeGenericFromSupabase('ev_saved_locations', id);
         toast.success('Konum silindi.');
       },
 
@@ -6207,7 +6632,7 @@ const useStore = create(
             }
           }
         });
-        get().saveToSupabase();
+
       },
 
       updateCachedAnalysis: (analysisData) => {
@@ -6222,7 +6647,7 @@ const useStore = create(
             }
           }
         });
-        get().saveToSupabase();
+
       },
 
       savePersonalityResults: (testId, traits) => {
@@ -6262,14 +6687,16 @@ const useStore = create(
             }
           }
         });
-        get().saveToSupabase();
+
       },
 
       updateTrackingRoutine: (updates) => {
         const currentEv = get().ev || {};
         const tracking = currentEv.tracking || {};
-        set({ ev: { ...currentEv, tracking: { ...tracking, routine: { ...(tracking.routine || {}), ...updates } } } });
-        get().saveToSupabase();
+        const newRoutine = { ...(tracking.routine || {}), ...updates };
+        set({ ev: { ...currentEv, tracking: { ...tracking, routine: newRoutine } } });
+
+        pushGenericToSupabase('ev_ayarlar', { id: 'tracking_routine', veri: newRoutine });
       },
 
       // ── Eraylar Garaj Actions ──────────────────────────
@@ -6295,7 +6722,7 @@ const useStore = create(
 
         set({ garaj: updatedGaraj });
         get().addLog('Garaj', `Kilometre güncellendi: ${kmVal} KM`);
-        get().saveToSupabase();
+
       },
 
       addFuelLog: (log, paymentInfo = null) => {
@@ -6339,7 +6766,7 @@ const useStore = create(
           ...(paymentInfo ? { defaultPay: paymentInfo } : {})
         });
 
-        get().saveToSupabase();
+
         pushGarajYakitToSupabase(newLog, state.selectedVehicleId);
       },
 
@@ -6370,7 +6797,7 @@ const useStore = create(
           ...(paymentInfo ? { defaultPay: paymentInfo } : {})
         });
 
-        get().saveToSupabase();
+
         pushGarajServisToSupabase(newRecord, state.selectedVehicleId);
       },
 
@@ -6391,14 +6818,14 @@ const useStore = create(
         };
         set({ garaj: [...state.garaj, newVehicle], selectedVehicleId: newVehicle.id });
         get().addLog('Garaj', `Yeni araç eklendi: ${vehicle.model}`);
-        get().saveToSupabase();
+
       },
 
       updateVehicle: (id, updates) => {
         const state = get();
         const updatedGaraj = state.garaj.map(v => String(v.id) === String(id) ? { ...v, ...updates } : v);
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
       },
 
       deleteVehicle: (id) => {
@@ -6406,7 +6833,7 @@ const useStore = create(
         const updatedGaraj = state.garaj.filter(v => v.id !== id);
         const nextId = updatedGaraj.length > 0 ? updatedGaraj[0].id : null;
         set({ garaj: updatedGaraj, selectedVehicleId: nextId });
-        get().saveToSupabase();
+
       },
 
       addWashRecord: (vehicleId, { price, date }, paymentInfo = null) => {
@@ -6431,7 +6858,7 @@ const useStore = create(
           });
         }
 
-        get().saveToSupabase();
+
       },
 
       startParking: (vehicleId, parkData) => {
@@ -6440,7 +6867,7 @@ const useStore = create(
           v.id === vehicleId ? { ...v, parkLocation: { ...parkData, active: true } } : v
         );
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
       },
 
       finishParking: (vehicleId, cost, paymentInfo = null) => {
@@ -6463,7 +6890,7 @@ const useStore = create(
         );
 
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
       },
 
       deleteServiceRecord: (vehicleId, serviceId) => {
@@ -6472,7 +6899,7 @@ const useStore = create(
           v.id === vehicleId ? { ...v, services: v.services.filter(s => s.id !== serviceId) } : v
         );
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
         deleteGarajServisFromSupabase(serviceId);
       },
 
@@ -6482,7 +6909,7 @@ const useStore = create(
           v.id === vehicleId ? { ...v, documents: v.documents.filter(d => d.id !== docId) } : v
         );
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
         deleteGarajBelgeFromSupabase(docId);
       },
 
@@ -6506,7 +6933,7 @@ const useStore = create(
           });
         }
 
-        get().saveToSupabase();
+
       },
 
       updateDocument: (vehicleId, docId, updates) => {
@@ -6519,7 +6946,7 @@ const useStore = create(
           return v;
         });
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
       },
 
       updateSupportContacts: (vehicleId, contacts) => {
@@ -6528,7 +6955,7 @@ const useStore = create(
           v.id === vehicleId ? { ...v, supportContacts: contacts } : v
         );
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
       },
 
       updatePartMaintenance: (vehicleId, partId, { lastKM, lastDate }) => {
@@ -6543,7 +6970,7 @@ const useStore = create(
           return v;
         });
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
 
         // Push part update to SQL
         const vehicle = updatedGaraj.find(v => v.id === vehicleId);
@@ -6559,7 +6986,7 @@ const useStore = create(
           v.id === vehicleId ? { ...v, fuelLogs: v.fuelLogs.filter(l => l.id !== logId) } : v
         );
         set({ garaj: updatedGaraj });
-        get().saveToSupabase();
+
         deleteGarajYakitFromSupabase(logId);
       },
 
@@ -6569,7 +6996,7 @@ const useStore = create(
         const currentVaccines = state.pet.vaccines[petId] || [];
         const yeniVaccines = [...currentVaccines, { id: Date.now(), ...vaccine }];
         set({ pet: { ...state.pet, vaccines: { ...state.pet.vaccines, [petId]: yeniVaccines } } });
-        get().saveToSupabase();
+
         pushPetAsiToSupabase(petId, { id: Date.now(), ...vaccine });
       },
 
@@ -6577,7 +7004,7 @@ const useStore = create(
         const state = get();
         const yeniVaccines = (state.pet.vaccines[petId] || []).filter(v => v.id !== id && v.n !== id);
         set({ pet: { ...state.pet, vaccines: { ...state.pet.vaccines, [petId]: yeniVaccines } } });
-        get().saveToSupabase();
+
         deletePetAsiFromSupabase(id);
       },
 
@@ -6585,25 +7012,27 @@ const useStore = create(
         const state = get();
         const currentWeights = state.pet.weights[petId] || [];
         const yeniWeights = [{ id: Date.now(), ...weightData }, ...currentWeights];
+        const log = { id: Date.now(), pet: petId, action: `Kilo güncellendi: ${weightData.w} kg`, dt: weightData.dt, type: 'weight' };
         set({
           pet: {
             ...state.pet,
             weights: { ...state.pet.weights, [petId]: yeniWeights },
             history: [
-              { id: Date.now(), pet: petId, action: `Kilo güncellendi: ${weightData.w} kg`, dt: weightData.dt, type: 'weight' },
+              log,
               ...(state.pet.history || [])
             ].slice(0, 50)
           }
         });
-        get().saveToSupabase();
+
         pushPetAgirlikToSupabase(petId, { id: Date.now(), ...weightData });
+        pushPetLogToSupabase(log);
       },
 
       deletePetWeight: (petId, id) => {
         const state = get();
         const yeniWeights = (state.pet.weights[petId] || []).filter(w => w.id !== id);
         set({ pet: { ...state.pet, weights: { ...state.pet.weights, [petId]: yeniWeights } } });
-        get().saveToSupabase();
+
         deletePetAgirlikFromSupabase(id);
       },
 
@@ -6628,7 +7057,7 @@ const useStore = create(
         yeniPet.history = (state.pet.history || []).filter(h => h.id !== id);
 
         set({ pet: yeniPet });
-        get().saveToSupabase();
+        deletePetLogFromSupabase(id);
       },
 
       updatePetLog: (id, updates) => {
@@ -6663,7 +7092,7 @@ const useStore = create(
             weights: updatedWeights 
           } 
         });
-        get().saveToSupabase();
+
       },
 
       completePetVaccine: async (petId, vaccineName, data) => {
@@ -6707,7 +7136,7 @@ const useStore = create(
           });
         }
 
-        get().saveToSupabase();
+
         pushPetAsiToSupabase(petId, vaccines[petId][vIdx]);
       },
 
@@ -6717,7 +7146,7 @@ const useStore = create(
         if (!supplies[petId]) supplies[petId] = { mama: 'var', kum: 'var' };
         supplies[petId] = { ...supplies[petId], [supplyType]: status };
         set({ pet: { ...state.pet, supplies } });
-        get().saveToSupabase();
+
 
         pushGenericToSupabase('pet_supplies', { 
           id: `${petId}-${supplyType}`, 
@@ -6729,7 +7158,7 @@ const useStore = create(
         if (status === 'azaldi') {
           get().addLog('Pet Uyarısı', `${state.pet.meta[petId].name} için ${supplyType} azalıyor!`);
         }
-        get().saveToSupabase();
+
       },
 
       addPetPhoto: (petId, photoUrl) => {
@@ -6738,7 +7167,7 @@ const useStore = create(
         if (!gallery[petId]) gallery[petId] = [];
         gallery[petId] = [photoUrl, ...(gallery[petId] || [])].slice(0, 20);
         set({ pet: { ...state.pet, gallery } });
-        get().saveToSupabase();
+        pushGenericToSupabase('pet_gallery', { id: `${petId}-${Date.now()}`, pet_name: petId, photo_url: photoUrl });
       },
 
       // ── Hedefler Actions ───────────────────────────────
@@ -6748,7 +7177,8 @@ const useStore = create(
           g.id === id ? { ...g, current } : g
         );
         set({ hedefler: { ...state.hedefler, goals } });
-        get().saveToSupabase();
+        const updated = goals.find(g => g.id === id);
+        if (updated) pushHedefToSupabase(updated);
       },
 
       toggleHabit: (id) => {
@@ -6766,7 +7196,9 @@ const useStore = create(
           return h;
         });
         set({ hedefler: { ...state.hedefler, habits } });
-        get().saveToSupabase();
+
+        const updated = habits.find(h => h.id === id);
+        if (updated) pushHabitToSupabase(updated);
       },
 
       completeGoal: (id) => {
@@ -6804,8 +7236,11 @@ const useStore = create(
             kumbaralar: updatedMoneyGoals
           }
         });
+
+        deleteHedefFromSupabase(id);
+        pushHedefGecmisToSupabase(newHallItem, 'completed');
         get().addLog('Hedef Tamamlandı', `🌟 Tebrikler! "${newHallItem.title}" hedefine ulaşıldı!`);
-        get().saveToSupabase();
+
       },
 
       setOnlineStatus: (status) => {
@@ -6875,7 +7310,7 @@ const useStore = create(
         }
 
         set({ ev: { ...state.ev, depo: updatedDepo } });
-        get().saveToSupabase();
+
         
         // Find the newly added or updated item and push to SQL
         const syncedItem = updatedDepo.find(i => 
@@ -6890,7 +7325,7 @@ const useStore = create(
         const state = get();
         const updatedDepo = (state.ev.depo || []).filter(item => String(item.id) !== String(id));
         set({ ev: { ...state.ev, depo: updatedDepo } });
-        get().saveToSupabase();
+
         removeGenericFromSupabase('ev_depo', id);
         toast.success('Ürün depodan silindi.');
       },
@@ -6898,7 +7333,7 @@ const useStore = create(
       clearDepo: () => {
         const state = get();
         set({ ev: { ...state.ev, depo: [] } });
-        get().saveToSupabase();
+
         toast.success('Depo sıfırlandı. ✨ (SQL tablosu elle temizlenmeli)');
       },
 
@@ -6938,7 +7373,7 @@ const useStore = create(
         );
         set({ system: { ...state.system, achievements } });
         get().addLog('Başarı Kazandın!', `🏆 "${badgeId}" rozeti koleksiyonuna eklendi!`);
-        get().saveToSupabase();
+
       },
 
       globalSearch: (query) => {
@@ -6969,7 +7404,7 @@ const useStore = create(
       completeOnboarding: () => {
         const state = get();
         set({ system: { ...state.system, onboardingComplete: true } });
-        get().saveToSupabase();
+
       },
 
       updateStockQty: (moduleKey, itemName, direction) => {
@@ -6987,7 +7422,7 @@ const useStore = create(
           return item;
         });
         set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
-        get().saveToSupabase();
+
         if (updatedItemData) pushMutfakStokToSupabase(updatedItemData, moduleKey); // Faz 1.2
       },
 
@@ -7011,7 +7446,7 @@ const useStore = create(
         const currentList = state.mutfak[moduleKey] || [];
         const updatedList = [...currentList, newItem];
         set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
-        get().saveToSupabase();
+
         pushMutfakStokToSupabase(newItem, moduleKey);
       },
 
@@ -7020,11 +7455,15 @@ const useStore = create(
         const currentList = state.mutfak[moduleKey] || [];
         const updatedList = currentList.map(item => item.n === oldName ? newItem : item);
         set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
-        get().saveToSupabase();
+
         pushMutfakStokToSupabase(newItem, moduleKey);
         // Supabase silme işlemi gerekebilir ama isme göre çalıştığı için upsert muhtemelen yeni satır açar.
         // O yüzden eski ismi siliyoruz.
-        supabase.from('mutfak_stok').delete().eq('isim', oldName).then();
+        supabase.from('mutfak_stok')
+          .delete()
+          .eq('isim', oldName)
+          .eq('family_id', 'eraylar-family-shared-id')
+          .then();
       },
 
       deleteMutfakStokItem: (moduleKey, itemName) => {
@@ -7032,8 +7471,12 @@ const useStore = create(
         const currentList = state.mutfak[moduleKey] || [];
         const updatedList = currentList.filter(item => item.n !== itemName);
         set({ mutfak: { ...state.mutfak, [moduleKey]: updatedList } });
-        get().saveToSupabase();
-        supabase.from('mutfak_stok').delete().eq('isim', itemName).then();
+
+        supabase.from('mutfak_stok')
+          .delete()
+          .eq('isim', itemName)
+          .eq('family_id', 'eraylar-family-shared-id')
+          .then();
       },
 
       getAvailableRecipes: () => {
@@ -7136,7 +7579,7 @@ const useStore = create(
         }
 
         set({ mutfak: updatedMutfak });
-        get().saveToSupabase();
+
       },
 
       setCurrentUser: (user) => {
@@ -7184,7 +7627,7 @@ const useStore = create(
           }));
           await pushKasaAyarlarToSupabase(rates, get().kasa.privacyMode);
           console.log('📈 Market rates updated:', rates);
-          get().saveToSupabase(true);
+
         } catch (err) {
           console.error('Exchange rate fetch error:', err);
         }
@@ -7192,7 +7635,7 @@ const useStore = create(
 
       resetMutfak: () => {
         set({ mutfak: DEFAULT_STATE.mutfak });
-        get().saveToSupabase();
+
       },
 
       addLog: (action, detail) => {
@@ -7246,7 +7689,7 @@ const useStore = create(
             kumbaralar: [...(state.kasa.kumbaralar || []), exampleMoneyGoal]
           }
         });
-        get().saveToSupabase();
+
         toast.success("Örnek hedefler yüklendi! 🎯");
       },
 
@@ -7281,7 +7724,7 @@ const useStore = create(
 
         set({ kasa: { ...state.kasa, kumbaralar: updatedKumbaralar } });
         get().addLog('Akıllı Dağıtım', `${totalAmount}₺ hedeflere öncelik sırasına göre dağıtıldı.`);
-        get().saveToSupabase();
+
         toast.success(`${totalAmount}₺ akıllıca dağıtıldı! 🤖💰`);
       }
     }),
