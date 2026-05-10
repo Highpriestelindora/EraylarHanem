@@ -24,9 +24,9 @@ const SplashScreen = ({ finishLoading }) => {
     { t: 'Sonsuz mutluluk ve patili günler başlıyor... 🌈', m: '🌈' }
   ];
 
-  // Pick 6 random jokes on mount
+  // Pick 4 random jokes on mount
   const [jokes] = useState(() => {
-    return [...allJokes].sort(() => Math.random() - 0.5).slice(0, 6);
+    return [...allJokes].sort(() => Math.random() - 0.5).slice(0, 4);
   });
 
   useEffect(() => {
@@ -43,7 +43,7 @@ const SplashScreen = ({ finishLoading }) => {
         clearInterval(interval);
         setTimeout(finishLoading, 500);
       }
-    }, 2000); // 2s per quote for much better readability
+    }, 4000); // 4s per quote for long & relaxed readability
     
     return () => {
       clearInterval(interval);
@@ -124,7 +124,7 @@ const SplashScreen = ({ finishLoading }) => {
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: '100%' }}
-          transition={{ duration: 12, ease: "linear" }}
+          transition={{ duration: 16, ease: "linear" }}
           style={{ height: '100%', background: 'white', boxShadow: '0 0 10px white' }}
         />
       </div>
