@@ -32,45 +32,41 @@ export default function Saglik() {
 
   return (
     <AnimatedPage className="saglik-container">
-      <header className="module-header-v3" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-        <div className="m-h-content">
-          <div className="m-h-top">
-            <div className="m-h-info">
-              <span className="m-h-emoji animate-float">🏥</span>
-              <div className="m-h-text">
-                <h1>Eraylar Sağlık</h1>
-                <p>Randevu · İlaç · Ruh Hali</p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="m-h-back" onClick={() => setShowAddExpense(true)} title="Harcama Ekle">
-                <Plus size={20} />
-              </button>
-              <button className="m-h-back" onClick={() => navigate('/')}>
-                <ArrowLeft size={20} />
-              </button>
+      <header className="module-header glass" style={{ background: 'var(--saglik)' }}>
+        <div className="header-top">
+          <div className="header-title">
+            <span className="header-emoji animate-float">🏥</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1>Eraylar Sağlık</h1>
+              <p>Randevu · İlaç · Ruh Hali</p>
             </div>
           </div>
-
-          <div className="m-h-tabs-v3">
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                className={`m-h-tab-v3 ${activeTab === tab.id ? 'active theme-saglik' : ''}`}
-                onClick={() => {
-                  startTransition(() => {
-                    setActiveTab(tab.id);
-                  });
-                }}
-              >
-                <div className="t-icon">
-                   <span style={{ fontSize: '14px' }}>{tab.emoji}</span>
-                </div>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+          <div className="header-actions">
+            <button className="icon-btn" onClick={() => setShowAddExpense(true)} title="Harcama Ekle">
+              <Plus size={20} />
+            </button>
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+              <ArrowLeft size={20} />
+            </button>
           </div>
         </div>
+
+        <nav className="tab-nav">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+              onClick={() => {
+                startTransition(() => {
+                  setActiveTab(tab.id);
+                });
+              }}
+            >
+              <span style={{ fontSize: '18px', marginBottom: '2px' }}>{tab.emoji}</span>
+              <span style={{ fontSize: '10px' }}>{tab.label}</span>
+            </button>
+          ))}
+        </nav>
       </header>
 
       <div className="saglik-content">

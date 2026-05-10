@@ -333,48 +333,42 @@ export default function Ev() {
 
   return (
     <AnimatedPage className="ev-container">
-      <header className="module-header-v3" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
-        <div className="m-h-content">
-          <div className="m-h-top">
-            <div className="m-h-info">
-              <span className="m-h-emoji animate-float">🏡</span>
-              <div className="m-h-text">
-                <h1>Eraylar Malikanesi</h1>
-                <p>Ev Hub & Operasyon Merkezi</p>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-                <button 
-                  className="m-h-back" 
-                  onClick={() => setActiveTab(prev => prev === 'depo' ? 'yasam' : 'depo')}
-                  style={{ background: activeTab === 'depo' ? 'white' : 'rgba(255,255,255,0.25)', color: activeTab === 'depo' ? '#10b981' : 'white' }}
-                >
-                  <Package size={20} />
-                </button>
-                <button className="m-h-back" onClick={() => navigate('/')}>
-                  <ArrowLeft size={20} />
-                </button>
+      <header className="module-header glass" style={{ background: 'var(--ev)' }}>
+        <div className="header-top">
+          <div className="header-title">
+            <span className="header-emoji animate-float">🏡</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1>Eraylar Malikanesi</h1>
+              <p>Ev Hub & Operasyon Merkezi</p>
             </div>
           </div>
-
-          <div className="m-h-tabs-v3">
-            {tabs.map(t => (
+          <div className="header-actions">
               <button 
-                key={t.id} 
-                className={`m-h-tab-v3 ${activeTab === t.id ? 'active theme-ev' : ''}`}
-                onClick={() => setActiveTab(t.id)}
+                className="icon-btn" 
+                onClick={() => setActiveTab(prev => prev === 'depo' ? 'yasam' : 'depo')}
+                style={{ background: activeTab === 'depo' ? 'white' : 'rgba(255,255,255,0.25)', color: activeTab === 'depo' ? '#10b981' : 'white' }}
+                title="Depo"
               >
-                <div className="t-icon">
-                    {t.id === 'yasam' ? <Activity size={18} /> : 
-                     t.id === 'bakim' ? <Wrench size={18} /> : 
-                     t.id === 'faturalar' ? <FileText size={18} /> : 
-                     <Shield size={18} />}
-                </div>
-                <span>{t.label}</span>
+                <Package size={20} />
               </button>
-            ))}
+              <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+                <ArrowLeft size={20} />
+              </button>
           </div>
         </div>
+
+        <nav className="tab-nav">
+          {tabs.map(t => (
+            <button 
+              key={t.id} 
+              className={`tab-btn ${activeTab === t.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              <span style={{ fontSize: '18px', marginBottom: '2px' }}>{t.emoji}</span>
+              <span style={{ fontSize: '10px' }}>{t.label}</span>
+            </button>
+          ))}
+        </nav>
       </header>
 
       <div className="ev-scroll-content">

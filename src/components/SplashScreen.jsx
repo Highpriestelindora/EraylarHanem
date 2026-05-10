@@ -6,7 +6,7 @@ const SplashScreen = ({ finishLoading }) => {
   const [text, setText] = useState('Eraylar Hanesi Hazırlanıyor...');
   const [jokeIndex, setJokeIndex] = useState(0);
 
-  const jokes = [
+  const allJokes = [
     { t: 'Waffle terliklerinizle aşk yaşıyor... 🐶', m: '🐶' },
     { t: 'Mayıs klavyede yeni bir dil geliştiriyor... 🐱', m: '🐱' },
     { t: "Waffle'ın kuyruk sallama motoru ısıtılıyor... 🐾", m: '🐾' },
@@ -24,6 +24,11 @@ const SplashScreen = ({ finishLoading }) => {
     { t: 'Sonsuz mutluluk ve patili günler başlıyor... 🌈', m: '🌈' }
   ];
 
+  // Pick 6 random jokes on mount
+  const [jokes] = useState(() => {
+    return [...allJokes].sort(() => Math.random() - 0.5).slice(0, 6);
+  });
+
   useEffect(() => {
     // Kalıcı çözüm: Splash ekran süresince body arka planını mor yap (!important ile CSS'i ez)
     const originalBg = document.body.style.backgroundColor;
@@ -38,7 +43,7 @@ const SplashScreen = ({ finishLoading }) => {
         clearInterval(interval);
         setTimeout(finishLoading, 500);
       }
-    }, 1500); // 1.5s per quote for better readability
+    }, 2000); // 2s per quote for much better readability
     
     return () => {
       clearInterval(interval);
@@ -119,7 +124,7 @@ const SplashScreen = ({ finishLoading }) => {
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: '100%' }}
-          transition={{ duration: 15 * 1.5, ease: "linear" }}
+          transition={{ duration: 12, ease: "linear" }}
           style={{ height: '100%', background: 'white', boxShadow: '0 0 10px white' }}
         />
       </div>

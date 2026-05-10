@@ -263,11 +263,14 @@ body:has(.modal-overlay) .app-content {
 
 /* --- Premium Module Header (Mutfak Style) --- */
 .module-header {
-  padding: 8px 16px 12px;
-  border-radius: 0 0 24px 24px;
+  padding: max(16px, env(safe-area-inset-top)) 20px 16px;
+  border-radius: 0;
   margin-bottom: 20px;
   color: white;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 100;
+  width: 100%;
 }
 
 .header-top {
@@ -1122,126 +1125,4 @@ input[type="time"] {
   color: var(--txt-light);
   font-style: italic;
 }
-/* --- PREMIUM GLOBAL MODULE HEADER V3 --- */
-.module-header-v3 {
-  width: 100%;
-  padding-top: 45px; /* iOS Status Bar Buffer */
-  padding-bottom: 24px;
-  color: white;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  position: relative;
-  z-index: 100;
-  transition: all 0.3s ease;
-}
-
-.m-h-content {
-  padding: 0 20px;
-}
-
-.m-h-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-}
-
-.m-h-info {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-}
-
-.m-h-emoji {
-  font-size: 34px;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-}
-
-.m-h-text h1 {
-  font-size: 22px;
-  font-weight: 900;
-  margin: 0;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.m-h-text p {
-  font-size: 11px;
-  opacity: 0.85;
-  margin: 2px 0 0 0;
-  font-weight: 600;
-}
-
-.m-h-back {
-  background: rgba(255,255,255,0.25);
-  border: none;
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transition: all 0.2s;
-}
-
-.m-h-back:active {
-  transform: scale(0.9);
-  background: rgba(255,255,255,0.4);
-}
-
-.m-h-tabs-v3 {
-  display: flex;
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(20px);
-  padding: 4px;
-  border-radius: 18px;
-  gap: 6px;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-.m-h-tab-v3 {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 10px 4px;
-  border: none;
-  background: transparent;
-  color: rgba(255,255,255,0.7);
-  border-radius: 14px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: pointer;
-}
-
-.m-h-tab-v3 .t-icon {
-  opacity: 0.7;
-  transition: all 0.3s;
-}
-
-.m-h-tab-v3 span {
-  font-size: 9px;
-  font-weight: 900;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-}
-
-.m-h-tab-v3.active {
-  background: white;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-}
-
-/* Theme Colors for Active Tabs */
-.m-h-tab-v3.active.theme-hedef { color: #d97706; }
-.m-h-tab-v3.active.theme-mutfak { color: #ea580c; }
-.m-h-tab-v3.active.theme-ev { color: #10b981; }
-.m-h-tab-v3.active.theme-finans { color: #7c3aed; }
-
-.m-h-tab-v3.active .t-icon {
-  opacity: 1;
-  transform: scale(1.1);
-}
-
 

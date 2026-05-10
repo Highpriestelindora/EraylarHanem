@@ -35,54 +35,53 @@ export default function Mutfak() {
 
   return (
     <AnimatedPage className="mutfak-page">
-      <header className="module-header-v3" style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)' }}>
-        <div className="m-h-content">
-          <div className="m-h-top">
-            <div className="m-h-info">
-              <span className="m-h-emoji animate-float">🍲</span>
-              <div className="m-h-text">
-                <h1>Eraylar Mutfak</h1>
-                <p>
-                  {mutfak && (() => {
-                    const shoppingListNames = (mutfak.alisveris || []).map(i => i.n?.toLowerCase() || '');
-                    const criticalCount = ['buzdolabi', 'kiler', 'dondurucu'].reduce((acc, loc) => 
-                      acc + (mutfak[loc] || []).filter(i => 
-                        i.mn > 0 && i.cr <= i.mn && !shoppingListNames.includes(i.n?.toLowerCase() || '')
-                      ).length, 0);
-                    return criticalCount > 0 
-                      ? `${criticalCount} kritik eksik ürün var!` 
-                      : "Mutfak operasyon merkezi";
-                  })()}
-                </p>
-              </div>
+      <header className="module-header glass" style={{ background: 'var(--mutfak)' }}>
+        <div className="header-top">
+          <div className="header-title">
+            <span className="header-emoji animate-float">🍲</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1>Eraylar Mutfak</h1>
+              <p>
+                {mutfak && (() => {
+                  const shoppingListNames = (mutfak.alisveris || []).map(i => i.n?.toLowerCase() || '');
+                  const criticalCount = ['buzdolabi', 'kiler', 'dondurucu'].reduce((acc, loc) => 
+                    acc + (mutfak[loc] || []).filter(i => 
+                      i.mn > 0 && i.cr <= i.mn && !shoppingListNames.includes(i.n?.toLowerCase() || '')
+                    ).length, 0);
+                  return criticalCount > 0 
+                    ? `${criticalCount} kritik eksik ürün var!` 
+                    : "Mutfak operasyon merkezi";
+                })()}
+              </p>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-                <button 
-                className="m-h-back" 
+          </div>
+          <div className="header-actions">
+              <button 
+                className="icon-btn" 
                 onClick={() => setActiveTab(prev => prev === 'tarifler' ? 'menu' : 'tarifler')}
                 style={{ background: activeTab === 'tarifler' ? 'white' : 'rgba(255,255,255,0.25)', color: activeTab === 'tarifler' ? '#ea580c' : 'white' }}
-                >
-                <BookOpen size={20} />
-                </button>
-                <button className="m-h-back" onClick={() => navigate('/')}>
-                <ArrowLeft size={20} />
-                </button>
-            </div>
-          </div>
-
-          <div className="m-h-tabs-v3">
-            {tabs.map(t => (
-              <button 
-                key={t.id} 
-                className={`m-h-tab-v3 ${activeTab === t.id ? 'active theme-mutfak' : ''}`}
-                onClick={() => setActiveTab(t.id)}
+                title="Tarifler"
               >
-                <div className="t-icon"><t.icon size={16} /></div>
-                <span>{t.label}</span>
+                <BookOpen size={20} />
               </button>
-            ))}
+              <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+                <ArrowLeft size={20} />
+              </button>
           </div>
         </div>
+
+        <nav className="tab-nav">
+          {tabs.map(t => (
+            <button 
+              key={t.id} 
+              className={`tab-btn ${activeTab === t.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              <span style={{ fontSize: '18px', marginBottom: '2px' }}>{t.emoji}</span>
+              <span style={{ fontSize: '10px' }}>{t.label}</span>
+            </button>
+          ))}
+        </nav>
       </header>
 
       <main className="mutfak-content">

@@ -233,34 +233,34 @@ export default function Hedefler() {
 
   return (
     <AnimatedPage className="hedefler-container">
-      <header className="module-header-v3" style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)' }}>
-        <div className="m-h-content">
-          <div className="m-h-top">
-             <div className="m-h-info">
-                <span className="m-h-emoji animate-float">🎯</span>
-                <div className="m-h-text">
-                   <h1>Eraylar Hedefler</h1>
-                   <p>{moodboard?.quote || "Büyük işler, küçük başlangıçlarla olur."}</p>
-                </div>
-             </div>
-             <button className="m-h-back" onClick={() => navigate('/')}>
-                <ArrowLeft size={20} />
-             </button>
+      <header className="module-header glass" style={{ background: 'var(--hedefler)' }}>
+        <div className="header-top">
+          <div className="header-title">
+            <span className="header-emoji animate-float">🎯</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <h1>Eraylar Hedefler</h1>
+              <p>{moodboard?.quote || "Büyük işler, küçük başlangıçlarla olur."}</p>
+            </div>
           </div>
-          
-          <div className="m-h-tabs-v3">
-            {tabs.map(t => (
-              <button 
-                key={t.id} 
-                className={`m-h-tab-v3 ${activeTab === t.id ? 'active theme-hedef' : ''}`}
-                onClick={() => setActiveTab(t.id)}
-              >
-                <div className="t-icon">{t.id === 'kisa' ? <Clock size={16} /> : t.id === 'uzun' ? <TrendingUp size={16} /> : t.id === 'kazanimlar' ? <CheckCircle size={16} /> : t.id === 'kayiplar' ? <XCircle size={16} /> : <Target size={16} />}</div>
-                <span>{t.label.toUpperCase()}</span>
-              </button>
-            ))}
+          <div className="header-actions">
+            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
+              <ArrowLeft size={20} />
+            </button>
           </div>
         </div>
+
+        <nav className="tab-nav">
+          {tabs.map(t => (
+            <button 
+              key={t.id} 
+              className={`tab-btn ${activeTab === t.id ? 'active' : ''}`}
+              onClick={() => setActiveTab(t.id)}
+            >
+              <span style={{ fontSize: '18px', marginBottom: '2px' }}>{t.emoji}</span>
+              <span style={{ fontSize: '10px' }}>{t.label}</span>
+            </button>
+          ))}
+        </nav>
       </header>
 
       <div className="hedefler-scroll-content">
@@ -283,7 +283,7 @@ export default function Hedefler() {
             </div>
             
             <button className="add-goal-btn-v3" onClick={() => { setSelectedGoal(null); setIsEditing(true); setShowGoalModal(true); }}>
-               HEDEF EKLE
+               <Plus size={14} /> HEDEF EKLE
             </button>
          </div>
 

@@ -40,8 +40,9 @@ export default function AppLayout() {
 
   return (
     <div className="app-container">
-      {/* Header - Hidden on Home for a cleaner look */}
-      {!isHome && (
+      {/* Header - Shown only on Home if needed, but Home has its own. 
+          Hiding on modules to allow immersive module headers. */}
+      {false && (
         <header className={`app-header glass ${isColored ? 'colored-header' : ''}`} style={{ background: headerBg }}>
         <div className="header-left">
           <div className="header-title-row" onClick={() => navigate('/')}>
