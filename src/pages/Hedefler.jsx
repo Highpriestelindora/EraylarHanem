@@ -143,7 +143,7 @@ export default function Hedefler() {
   const tabs = [
     { id: 'kisa', label: 'Kısa', emoji: '⏱️' },
     { id: 'uzun', label: 'Uzun', emoji: '🔭' },
-    { id: 'kazanimlar', label: 'Kazanım', emoji: '✅' },
+    { id: 'kazanimlar', label: 'Kazanç', emoji: '✅' },
     { id: 'kayiplar', label: 'Kayıp', emoji: '❌' },
     { id: 'vizyon', label: 'Vizyon', emoji: '🌟' }
   ];
@@ -266,13 +266,18 @@ export default function Hedefler() {
       <div className="hedefler-scroll-content">
          <div className="filter-actions-row">
             <div className="owner-filter-chips-v3">
-              {['Tümü', 'Görkem', 'Esra', 'Aile'].map(o => (
+              {[
+                { id: 'all', label: 'Tümü' },
+                { id: 'gorkem', label: 'Görkem' },
+                { id: 'esra', label: 'Esra' },
+                { id: 'ortak', label: 'Aile' }
+              ].map(o => (
                 <button 
-                  key={o} 
-                  className={`chip-v3 ${ownerFilter === o ? 'active' : ''}`}
-                  onClick={() => setOwnerFilter(o)}
+                  key={o.id} 
+                  className={`chip-v3 ${filterOwner === o.id ? 'active' : ''}`}
+                  onClick={() => setFilterOwner(o.id)}
                 >
-                  {o}
+                  {o.label}
                 </button>
               ))}
             </div>
