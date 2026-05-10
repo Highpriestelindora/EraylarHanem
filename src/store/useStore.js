@@ -922,40 +922,47 @@ async function pushPetAgirlikToSupabase(petId, entry) {
   } catch(e) { console.warn('Pet Ağırlık Hatası:', e); }
 }
 
-async function pushSaglikRandevuToSupabase(r) {
+async function pushSaglikRandevuToSupabase(r, familyId) {
   try {
     await supabase.from('saglik_randevular').upsert({
-      id: String(r.id), kisi: r.kisi, doktor: r.doktor || null,
+      id: String(r.id), 
+      family_id: familyId,
+      kisi: r.kisi, doktor: r.doktor || null,
       tarih: r.tarih || null, saat: r.saat || null,
       not_text: r.not || null, rekurans: r.rekurans || 'yok'
     });
   } catch(e) { console.warn('Sağlık Randevu Hatası:', e); }
 }
 
-async function pushSaglikIlacToSupabase(i) {
+async function pushSaglikIlacToSupabase(i, familyId) {
   try {
     await supabase.from('saglik_ilaclar').upsert({
-      id: String(i.id), kisi: i.kisi, ad: i.ad,
-      dozaj: i.dozaj || null, siklik: i.siklik || null,
+      id: String(i.id), 
+      family_id: familyId,
+      kisi: i.kisi, ad: i.ad,
+      dozaj: i.dozaj || null, siklik: i.siklik || i.sıklık || null,
       stok: Number(i.stok || 0), min_stok: Number(i.minStok || 5),
       schedule: i.schedule || { morning: 0, afternoon: 0, evening: 0 }
     });
   } catch(e) { console.warn('Sağlık İlaç Hatası:', e); }
 }
 
-async function pushSaglikOlcumToSupabase(o) {
+async function pushSaglikOlcumToSupabase(o, familyId) {
   try {
     await supabase.from('saglik_olcumler').upsert({
-      id: String(o.id), kisi: o.kisi, tur: o.tur || null,
+      id: String(o.id), 
+      family_id: familyId,
+      kisi: o.kisi, tur: o.tur || null,
       deger: o.deger || null, tarih: o.tarih || null
     });
   } catch(e) { console.warn('Sağlık Ölçüm Hatası:', e); }
 }
 
-async function pushSaglikMoodToSupabase(m) {
+async function pushSaglikMoodToSupabase(m, familyId) {
   try {
     await supabase.from('saglik_moods').upsert({
       id: String(m.id),
+      family_id: familyId,
       "user": m.user,
       mood: m.mood,
       note: m.note || null,
@@ -965,10 +972,11 @@ async function pushSaglikMoodToSupabase(m) {
   } catch(e) { console.warn('Sağlık Mood Hatası:', e); }
 }
 
-async function pushSaglikLogToSupabase(l) {
+async function pushSaglikLogToSupabase(l, familyId) {
   try {
     await supabase.from('saglik_logs').upsert({
       id: String(l.id),
+      family_id: familyId,
       med_id: String(l.medId),
       ad: l.ad,
       kisi: l.kisi,
@@ -1909,9 +1917,9 @@ const useStore = create(
         // GRUP 2 GÖLGE YAZIM: setModuleData üzerinden yapılan güncellemeler
         if (moduleName === 'saglik' && isObject) {
           const merged = { ...state.saglik, ...data };
-          if (data.randevular) merged.randevular.forEach(r => pushSaglikRandevuToSupabase(r));
-          if (data.ilaclar) merged.ilaclar.forEach(i => pushSaglikIlacToSupabase(i));
-          if (data.olcumler) merged.olcumler.forEach(o => pushSaglikOlcumToSupabase(o));
+          if (data.randevular) merged.randevular.forEach(r => pushSaglikRandevuToSupabase(r, state.family_id));
+          if (data.ilaclar) merged.ilaclar.forEach(i => pushSaglikIlacToSupabase(i, state.family_id));
+          if (data.olcumler) merged.olcumler.forEach(o => pushSaglikOlcumToSupabase(o, state.family_id));
         }
         if (moduleName === 'mutfak' && isObject && data.alisveris) {
           data.alisveris.forEach(item => pushAlisverisToSupabase(item, 'mutfak'));
@@ -1987,8 +1995,8 @@ const useStore = create(
         }
 
         get().saveToSupabase();
-        pushSaglikIlacToSupabase(meds[idx]);
-        pushSaglikLogToSupabase(log);
+        pushSaglikIlacToSupabase(meds[idx], state.family_id);
+        pushSaglikLogToSupabase(log, state.family_id);
       },
 
       deleteMedicine: (id) => {
@@ -2030,7 +2038,7 @@ const useStore = create(
         const updated = [newRandevu, ...(state.saglik.randevular || [])];
         set({ saglik: { ...state.saglik, randevular: updated } });
         get().saveToSupabase();
-        pushSaglikRandevuToSupabase(newRandevu);
+        pushSaglikRandevuToSupabase(newRandevu, state.family_id);
       },
 
       addMedicine: (form) => {
@@ -2039,7 +2047,7 @@ const useStore = create(
         const updated = [newIlac, ...(state.saglik.ilaclar || [])];
         set({ saglik: { ...state.saglik, ilaclar: updated } });
         get().saveToSupabase();
-        pushSaglikIlacToSupabase(newIlac);
+        pushSaglikIlacToSupabase(newIlac, state.family_id);
       },
 
       updateMedicine: (id, updates) => {
@@ -2048,7 +2056,7 @@ const useStore = create(
         set({ saglik: { ...state.saglik, ilaclar: updated } });
         get().saveToSupabase();
         const item = updated.find(m => String(m.id) === String(id));
-        if (item) pushSaglikIlacToSupabase(item);
+        if (item) pushSaglikIlacToSupabase(item, state.family_id);
       },
 
       updateAppointment: (id, updates) => {
@@ -2057,7 +2065,7 @@ const useStore = create(
         set({ saglik: { ...state.saglik, randevular: updated } });
         get().saveToSupabase();
         const item = updated.find(r => String(r.id) === String(id));
-        if (item) pushSaglikRandevuToSupabase(item);
+        if (item) pushSaglikRandevuToSupabase(item, state.family_id);
       },
 
       updateMeasurement: (id, updates) => {
@@ -2745,6 +2753,29 @@ const useStore = create(
                 console.log(`🔄 [Realtime] Harcamalar değişti, bakiye güncelleniyor...`);
                 get().getBuAyHarcamalar();
               }
+
+              // 5. Grup 2 Tabloları Güncellemesi
+              const group2Tables = [
+                'ev_duzenli_odemeler', 'ev_abonelikler', 'ev_onarim', 'ev_demirbaslar', 'ev_bakimlar',
+                'garaj_yakit', 'garaj_bakim', 'garaj_belgeler',
+                'pet_asilar', 'pet_agirlik',
+                'saglik_randevular', 'saglik_ilaclar', 'saglik_olcumler', 'saglik_logs', 'saglik_moods'
+              ];
+              if (group2Tables.includes(table)) {
+                console.log(`🔄 [Realtime] ${table} değişti, Grup 2 verileri eşitleniyor...`);
+                get().fetchGroup2Data();
+              }
+
+              // 6. Grup 3 Tabloları Güncellemesi
+              const group3Tables = [
+                'tatil_trips', 'tatil_photos', 'tatil_visited',
+                'muhendislik_problem_bank', 'muhendislik_decision_log', 'muhendislik_customers', 'muhendislik_deals',
+                'modaring_staff', 'modaring_plans'
+              ];
+              if (group3Tables.includes(table)) {
+                console.log(`🔄 [Realtime] ${table} değişti, Grup 3 verileri eşitleniyor...`);
+                get().fetchGroup3Data();
+              }
             }
           )
           .subscribe((status) => {
@@ -3235,23 +3266,32 @@ const useStore = create(
         const data = await fetchBuAyHarcamalar(state.family_id);
 
         const buAy = new Date().toISOString().slice(0, 7);
-        // Kart mutabakatını kartlar dizisine göre tazeleyerek oluştur (Stale ID'lerden kurtul)
-        const yeniMutabakat = {};
-        (state.finans.kartlar || []).forEach(k => {
-          const current = state.finans.kartMutabakat?.[k.id] || {};
-          yeniMutabakat[k.id] = { ...current, beklenen: 0, ay: buAy };
-        });
+        
+        set(state => {
+          // Kart mutabakatını kartlar dizisine göre tazeleyerek oluştur (Stale ID'lerden kurtul)
+          const yeniMutabakat = {};
+          (state.finans.kartlar || []).forEach(k => {
+            const current = state.finans.kartMutabakat?.[k.id] || {};
+            yeniMutabakat[k.id] = { ...current, beklenen: 0, ay: buAy };
+          });
 
-        data.forEach(h => {
-          if (h.kart_id) {
-            if (!yeniMutabakat[h.kart_id]) {
-              yeniMutabakat[h.kart_id] = { beklenen: 0, gercek: null, ay: buAy };
+          data.forEach(h => {
+            if (h.kart_id) {
+              if (!yeniMutabakat[h.kart_id]) {
+                yeniMutabakat[h.kart_id] = { beklenen: 0, gercek: null, ay: buAy };
+              }
+              yeniMutabakat[h.kart_id].beklenen += Number(h.tutar);
             }
-            yeniMutabakat[h.kart_id].beklenen += Number(h.tutar);
-          }
-        });
+          });
 
-        set({ finans: { ...state.finans, buAyHarcamalar: data, kartMutabakat: yeniMutabakat } });
+          return { 
+            finans: { 
+              ...state.finans, 
+              buAyHarcamalar: data, 
+              kartMutabakat: yeniMutabakat 
+            } 
+          };
+        });
       },
 
       // Geçmiş bir ayın harcamalarını Supabase'den çeker (lazy)
@@ -3428,7 +3468,8 @@ const useStore = create(
           notes: '',
           createdAt: new Date().toISOString(),
           createdBy: state.users?.gorkem?.name || 'Sistem', // Default to current user logic if needed
-          ...goal 
+          ...goal,
+          type: 'money'
         };
         set({ kasa: { ...state.kasa, kumbaralar: [...(state.kasa.kumbaralar || []), newGoal] } });
         pushHedefToSupabase(newGoal); // Gölge Yazım
@@ -3469,7 +3510,8 @@ const useStore = create(
           notes: '',
           createdAt: new Date().toISOString(),
           createdBy: 'Görkem', 
-          ...goal
+          ...goal,
+          type: 'vision'
         };
         set({ hedefler: { ...state.hedefler, goals: [...(state.hedefler.goals || []), newGoal] } });
         pushHedefToSupabase(newGoal); // Gölge Yazım

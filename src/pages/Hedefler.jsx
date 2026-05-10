@@ -252,7 +252,7 @@ export default function Hedefler() {
             {tabs.map(t => (
               <button 
                 key={t.id} 
-                className={`m-h-tab-v3 ${activeTab === t.id ? 'active' : ''}`}
+                className={`m-h-tab-v3 ${activeTab === t.id ? 'active theme-hedef' : ''}`}
                 onClick={() => setActiveTab(t.id)}
               >
                 <div className="t-icon">{t.id === 'kisa' ? <Clock size={16} /> : t.id === 'uzun' ? <TrendingUp size={16} /> : t.id === 'kazanimlar' ? <CheckCircle size={16} /> : t.id === 'kayiplar' ? <XCircle size={16} /> : <Target size={16} />}</div>

@@ -8,15 +8,23 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ShoppingCart, Activity, CheckCircle } from 'lucide-react';
 
 const MedicineTab = () => {
-  const { saglik, setModuleData, takeMedicine } = useStore();
+  const { 
+    saglik, setModuleData, takeMedicine, 
+    addMedicine, updateMedicine, deleteMedicine,
+    fetchGroup2Data 
+  } = useStore();
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({ 
-    kisi: 'Görkem', ad: '', dozaj: '', sıklık: 'Günde 1', 
+    kisi: 'Görkem', ad: '', dozaj: '', siklik: 'Günde 1', 
     stok: 30, minStok: 5,
     morning: 1, afternoon: 0, evening: 0
   });
+
+  React.useEffect(() => {
+    fetchGroup2Data();
+  }, []);
 
   const medicines = saglik.ilaclar || [];
   const logs = saglik.logs || [];
@@ -116,16 +124,16 @@ const MedicineTab = () => {
     };
 
     if (isEditing && form.id) {
-      useStore.getState().updateMedicine(form.id, { ...form, schedule });
+      updateMedicine(form.id, { ...form, schedule });
       toast.success('İlaç güncellendi! ✨');
     } else {
-      useStore.getState().addMedicine({ ...form, schedule });
+      addMedicine({ ...form, schedule });
       toast.success('İlaç eklendi! 💊');
     }
 
     setModalOpen(false);
     setIsEditing(false);
-    setForm({ kisi: 'Görkem', ad: '', dozaj: '', sıklık: 'Günde 1', stok: 30, minStok: 5, morning: 1, afternoon: 0, evening: 0 });
+    setForm({ kisi: 'Görkem', ad: '', dozaj: '', siklik: 'Günde 1', stok: 30, minStok: 5, morning: 1, afternoon: 0, evening: 0 });
   };
 
   const handleEdit = (med) => {
@@ -160,7 +168,7 @@ const MedicineTab = () => {
   };
 
   const handleDelete = (id) => {
-    useStore.getState().deleteMedicine(id);
+    deleteMedicine(id);
     toast.success('İlaç silindi.');
   };
 
@@ -371,6 +379,13 @@ const MedicineTab = () => {
           <div className="form-group">
             <label>İlaç / Vitamin Adı</label>
             <input type="text" value={form.ad} onChange={e => setForm({...form, ad: e.target.value})} placeholder="Örn: C Vitamini" className="premium-input" />
+          </div>
+          <div className="form-group">
+            <label>Dozaj & Sıklık</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <input type="text" value={form.dozaj} onChange={e => setForm({...form, dozaj: e.target.value})} placeholder="Örn: 100mg" className="premium-input" />
+              <input type="text" value={form.siklik} onChange={e => setForm({...form, siklik: e.target.value})} placeholder="Örn: Günde 1" className="premium-input" />
+            </div>
           </div>
           
           <div className="form-group">

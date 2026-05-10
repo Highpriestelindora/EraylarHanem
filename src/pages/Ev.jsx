@@ -86,7 +86,7 @@ const YEKTA_QUOTES = [
         Math.abs(l.timestamp - timeMs) < 7.5 * 60 * 1000
       );
       
-      if (log) {
+      if (log && stats[log.type] !== undefined) {
         stats[log.type] += 15;
       } else {
         const habit = habits[habitKey];
@@ -333,48 +333,48 @@ export default function Ev() {
 
   return (
     <AnimatedPage className="ev-container">
-      <header className="module-header glass" style={{ background: 'var(--ev)' }}>
-        <div className="header-top">
-          <div className="header-title">
-            <span className="header-emoji animate-float">🏡</span>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <h1>Eraylar Malikanesi</h1>
-              <p>Ev Hub & Operasyon Merkezi</p>
+      <header className="module-header-v3" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+        <div className="m-h-content">
+          <div className="m-h-top">
+            <div className="m-h-info">
+              <span className="m-h-emoji animate-float">🏡</span>
+              <div className="m-h-text">
+                <h1>Eraylar Malikanesi</h1>
+                <p>Ev Hub & Operasyon Merkezi</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+                <button 
+                  className="m-h-back" 
+                  onClick={() => setActiveTab(prev => prev === 'depo' ? 'yasam' : 'depo')}
+                  style={{ background: activeTab === 'depo' ? 'white' : 'rgba(255,255,255,0.25)', color: activeTab === 'depo' ? '#10b981' : 'white' }}
+                >
+                  <Package size={20} />
+                </button>
+                <button className="m-h-back" onClick={() => navigate('/')}>
+                  <ArrowLeft size={20} />
+                </button>
             </div>
           </div>
-          <div className="header-actions">
-            <button 
-              id="header-depo-btn"
-              className={`icon-btn ${activeTab === 'depo' ? 'active' : ''}`} 
-              onClick={() => setActiveTab(prev => prev === 'depo' ? 'yasam' : 'depo')} 
-              title="Ev Deposu"
-              style={{ 
-                background: activeTab === 'depo' ? 'white' : 'rgba(255,255,255,0.2)', 
-                color: activeTab === 'depo' ? 'var(--ev)' : 'white', 
-                border: '1px solid rgba(255,255,255,0.3)',
-                marginRight: '8px'
-              }}
-            >
-              <Package size={20} color={activeTab === 'depo' ? 'var(--ev)' : 'white'} />
-            </button>
-            <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
-              <ArrowLeft size={20} />
-            </button>
+
+          <div className="m-h-tabs-v3">
+            {tabs.map(t => (
+              <button 
+                key={t.id} 
+                className={`m-h-tab-v3 ${activeTab === t.id ? 'active theme-ev' : ''}`}
+                onClick={() => setActiveTab(t.id)}
+              >
+                <div className="t-icon">
+                    {t.id === 'yasam' ? <Activity size={18} /> : 
+                     t.id === 'bakim' ? <Wrench size={18} /> : 
+                     t.id === 'faturalar' ? <FileText size={18} /> : 
+                     <Shield size={18} />}
+                </div>
+                <span>{t.label}</span>
+              </button>
+            ))}
           </div>
         </div>
-
-        <nav className="tab-nav">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </nav>
       </header>
 
       <div className="ev-scroll-content">
