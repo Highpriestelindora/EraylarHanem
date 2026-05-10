@@ -723,7 +723,8 @@ async function pushHedefToSupabase(goal) {
       priority: goal.priority || 'Orta',
       owner: goal.owner || 'ortak',
       notes: goal.notes || null,
-      yearly_plan: goal.yearlyPlan || null
+      yearly_plan: goal.yearlyPlan || null,
+      type: goal.type || 'vision'
     };
     await supabase.from('hedefler_aktif').upsert(payload);
   } catch(e) { console.warn('Supabase Hedef upsert hatası:', e); }
@@ -1912,6 +1913,9 @@ const useStore = create(
           if (data.ilaclar) merged.ilaclar.forEach(i => pushSaglikIlacToSupabase(i));
           if (data.olcumler) merged.olcumler.forEach(o => pushSaglikOlcumToSupabase(o));
         }
+        if (moduleName === 'mutfak' && isObject && data.alisveris) {
+          data.alisveris.forEach(item => pushAlisverisToSupabase(item, 'mutfak'));
+        }
         if (moduleName === 'ev' && isObject) {
           if (data.bakimlar) data.bakimlar.forEach(b => pushEvBakimToSupabase(b));
           if (data.demirbaslar) data.demirbaslar.forEach(d => pushEvDemirbasToSupabase(d));
@@ -2508,10 +2512,26 @@ const useStore = create(
             const h = { ...state.hedefler };
             const k = { ...state.kasa };
             if (dbHedefler) {
-              const mapped = dbHedefler.map(x => ({ id: x.id, name: x.title, title: x.title, target: x.target, current: x.current, targetDate: x.target_date, duration: x.duration, priority: x.priority, owner: x.owner, notes: x.notes, yearlyPlan: x.yearly_plan }));
+              const mapped = dbHedefler.map(x => ({ 
+                id: x.id, 
+                name: x.title, 
+                title: x.title, 
+                target: x.target, 
+                current: x.current, 
+                targetDate: x.target_date, 
+                duration: x.duration, 
+                priority: x.priority, 
+                owner: x.owner, 
+                notes: x.notes, 
+                yearlyPlan: x.yearly_plan,
+                type: x.type || (x.target > 1000 ? 'money' : 'vision') // Heuristic or explicit
+              }));
+
+              // If type is explicit, use it. Otherwise, use ID existence as fallback.
               const existingKumbaralarIds = new Set(k.kumbaralar?.map(x => String(x.id)) || []);
-              k.kumbaralar = mapped.filter(x => existingKumbaralarIds.has(String(x.id)));
-              h.goals = mapped.filter(x => !existingKumbaralarIds.has(String(x.id)));
+              
+              h.goals = mapped.filter(x => x.type === 'vision' || (!x.type && !existingKumbaralarIds.has(String(x.id))));
+              k.kumbaralar = mapped.filter(x => x.type === 'money' || (!x.type && existingKumbaralarIds.has(String(x.id))));
             }
 
             if (dbGecmis) {

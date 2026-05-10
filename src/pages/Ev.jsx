@@ -584,7 +584,7 @@ export default function Ev() {
 
                 <div className="ai-interpretation mt-32">
                   <Sparkles size={14} color="#10b981" />
-                  <p>{ev.timeAnalysis?.[currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem']?.interpretation || "Yaşam verileriniz analiz ediliyor... ✨"}</p>
+                  <p>{ev.timeAnalysis?.[currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem']?.interpretation || "Yaşam verileriniz analiz ediliyor... ✨"}</p>
                 </div>
             </div>
           </div>

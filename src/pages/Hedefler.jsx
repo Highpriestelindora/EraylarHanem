@@ -313,7 +313,10 @@ export default function Hedefler() {
               </div>
               <div className="goals-grid-v2">
                 {shortTermGoals
-                  .filter(g => filterOwner === 'all' || g.owner === filterOwner || g.owner === 'aile' || g.owner === 'ortak')
+                  .filter(g => {
+                    const owner = (g.owner || 'ortak').toLowerCase();
+                    return filterOwner === 'all' || owner.includes(filterOwner) || owner === 'aile' || owner === 'ortak';
+                  })
                   .map(renderGoalCard)}
               </div>
             </div>
@@ -329,7 +332,10 @@ export default function Hedefler() {
               </div>
               <div className="goals-grid-v2">
                 {longTermGoals
-                  .filter(g => filterOwner === 'all' || g.owner === filterOwner || g.owner === 'aile' || g.owner === 'ortak')
+                  .filter(g => {
+                    const owner = (g.owner || 'ortak').toLowerCase();
+                    return filterOwner === 'all' || owner.includes(filterOwner) || owner === 'aile' || owner === 'ortak';
+                  })
                   .map(renderGoalCard)}
               </div>
             </div>
@@ -345,7 +351,10 @@ export default function Hedefler() {
                 
                 <div className="kazanimlar-list">
                     {completedHistory
-                        .filter(h => filterOwner === 'all' || h.owner === filterOwner || h.owner === 'aile' || h.owner === 'ortak')
+                        .filter(h => {
+                            const owner = (h.owner || 'ortak').toLowerCase();
+                            return filterOwner === 'all' || owner.includes(filterOwner) || owner === 'aile' || owner === 'ortak';
+                        })
                         .map(h => (
                         <div key={h.id} className="kazanim-card success glass">
                             <div className="kc-header">
@@ -454,7 +463,10 @@ export default function Hedefler() {
                     <h4 style={{ fontSize: '14px', marginBottom: '16px', color: '#1e293b' }}>📚 Tüm Vizyon Arşivi</h4>
                     <div className="vizyon-grid-premium">
                         {longTermVision
-                            .filter(p => filterOwner === 'all' || p.owner === filterOwner || p.owner === 'aile' || p.owner === 'ortak')
+                            .filter(p => {
+                                const owner = (p.owner || 'ortak').toLowerCase();
+                                return filterOwner === 'all' || owner.includes(filterOwner) || owner === 'aile' || owner === 'ortak';
+                            })
                             .map(plan => (
                             <div key={plan.id} className="vision-item-premium glass">
                                 <div className="vip-content">
@@ -601,7 +613,7 @@ function GoalForm({ goal, isEditing, activeTab, currentUser, handleFail, handleC
         targetDate: goal?.targetDate || goal?.deadline || '',
         duration: goal?.duration || '',
         priority: goal?.priority || 'Orta',
-        owner: goal?.owner || (currentUser?.name === 'Görkem' ? 'gorkem' : 'esra'),
+        owner: goal?.owner?.toLowerCase() || (currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem'),
         notes: goal?.notes || '',
         yearlyPlan: goal?.yearlyPlan || (isLongTerm ? { year1: '', year2: '', year3: '' } : { month1: '', month2: '', month3: '' })
     });
