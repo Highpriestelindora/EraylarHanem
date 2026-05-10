@@ -293,20 +293,59 @@ const StokTab = () => {
         {editingItem && (
           <form className="modal-form" onSubmit={handleSaveItem}>
             <div className="form-row">
-              <div className="form-group">
+              <div className="form-group" style={{ position: 'relative', flex: 2 }}>
                 <label>Malzeme Adı</label>
-                <input name="n" defaultValue={editingItem.item?.n || ''} required placeholder="Örn: Süt" />
+                <input 
+                  name="n" 
+                  value={editingItem.item?.n || ''} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const allItems = [...(mutfak.buzdolabi || []), ...(mutfak.kiler || []), ...(mutfak.dondurucu || [])];
+                    const suggestion = allItems.find(i => i.n.toLowerCase().trim() === val.toLowerCase().trim());
+                    
+                    setEditingItem({
+                      ...editingItem,
+                      item: { 
+                        ...editingItem.item, 
+                        n: val,
+                        // Auto-fill if found
+                        ic: suggestion ? suggestion.ic : (editingItem.item.ic || '📦'),
+                        u: suggestion ? suggestion.u : (editingItem.item.u || 'adet'),
+                        ct: suggestion ? suggestion.ct : (editingItem.item.ct || 'Diğer')
+                      }
+                    });
+                  }}
+                  required 
+                  placeholder="Örn: Süt" 
+                  autoComplete="off"
+                />
+                {editingItem.isNew && editingItem.item?.n?.length > 1 && (() => {
+                   const val = editingItem.item.n.toLowerCase().trim();
+                   const allItems = [...(mutfak.buzdolabi || []), ...(mutfak.kiler || []), ...(mutfak.dondurucu || [])];
+                   const exists = allItems.some(i => i.n.toLowerCase().trim() === val);
+                   if (exists) return <p style={{ color: '#ef4444', fontSize: '10px', marginTop: '4px', fontWeight: 'bold' }}>⚠️ Bu malzeme zaten kayıtlı!</p>;
+                   return null;
+                })()}
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ flex: 1 }}>
                 <label>İkon (Emoji)</label>
-                <input name="ic" defaultValue={editingItem.item?.ic || '📦'} placeholder="🥛" />
+                <input 
+                  name="ic" 
+                  value={editingItem.item?.ic || '📦'} 
+                  onChange={(e) => setEditingItem({...editingItem, item: { ...editingItem.item, ic: e.target.value }})}
+                  placeholder="🥛" 
+                />
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label>Birim</label>
-                <select name="u" defaultValue={editingItem.item?.u || 'adet'}>
+                <select 
+                  name="u" 
+                  value={editingItem.item?.u || 'adet'}
+                  onChange={(e) => setEditingItem({...editingItem, item: { ...editingItem.item, u: e.target.value }})}
+                >
                   <option value="adet">Adet</option>
                   <option value="kg">KG</option>
                   <option value="gram">Gram</option>
@@ -316,7 +355,11 @@ const StokTab = () => {
               </div>
               <div className="form-group">
                 <label>Reyon/Kategori</label>
-                <select name="ct" defaultValue={editingItem.item?.ct || 'Diğer'}>
+                <select 
+                  name="ct" 
+                  value={editingItem.item?.ct || 'Diğer'}
+                  onChange={(e) => setEditingItem({...editingItem, item: { ...editingItem.item, ct: e.target.value }})}
+                >
                   {REYON_ORDER.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
@@ -325,22 +368,46 @@ const StokTab = () => {
             <div className="form-row">
               <div className="form-group">
                 <label>Kritik Stok Sınırı (mn)</label>
-                <input name="mn" type="number" step="0.1" defaultValue={editingItem.item?.mn || 0} required />
+                <input 
+                  name="mn" 
+                  type="number" 
+                  step="0.1" 
+                  value={editingItem.item?.mn || 0} 
+                  onChange={(e) => setEditingItem({...editingItem, item: { ...editingItem.item, mn: e.target.value }})}
+                  required 
+                />
               </div>
               <div className="form-group">
                 <label>Mevcut Miktar (cr)</label>
-                <input name="cr" type="number" step="0.1" defaultValue={editingItem.item?.cr || 0} required />
+                <input 
+                  name="cr" 
+                  type="number" 
+                  step="0.1" 
+                  value={editingItem.item?.cr || 0} 
+                  onChange={(e) => setEditingItem({...editingItem, item: { ...editingItem.item, cr: e.target.value }})}
+                  required 
+                />
               </div>
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label>Marka Tercihi</label>
-                <input name="mk" defaultValue={editingItem.item?.mk || ''} placeholder="Sütaş, BİM vb." />
+                <input 
+                  name="mk" 
+                  value={editingItem.item?.mk || ''} 
+                  onChange={(e) => setEditingItem({...editingItem, item: { ...editingItem.item, mk: e.target.value }})}
+                  placeholder="Sütaş, BİM vb." 
+                />
               </div>
               <div className="form-group">
                 <label>Paket/Ağırlık Bilgisi</label>
-                <input name="pk" defaultValue={editingItem.item?.pk || ''} placeholder="1L, 500g vb." />
+                <input 
+                  name="pk" 
+                  value={editingItem.item?.pk || ''} 
+                  onChange={(e) => setEditingItem({...editingItem, item: { ...editingItem.item, pk: e.target.value }})}
+                  placeholder="1L, 500g vb." 
+                />
               </div>
             </div>
 

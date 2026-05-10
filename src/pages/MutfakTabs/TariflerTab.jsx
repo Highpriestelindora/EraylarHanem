@@ -339,7 +339,23 @@ const RecipesTab = () => {
         <form onSubmit={handleSaveRecipe} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div className="form-group">
             <label>Tarif Adı</label>
-            <input name="n" defaultValue={editingRecipe?.item?.n} required style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '16px' }} />
+            <input 
+              name="n" 
+              defaultValue={editingRecipe?.item?.n} 
+              onChange={(e) => {
+                const val = e.target.value.toLowerCase().trim();
+                const exists = recipes.some(r => r.id !== editingRecipe?.item?.id && r.n.toLowerCase().trim() === val);
+                if (exists) {
+                  e.target.style.borderColor = '#ef4444';
+                  e.target.parentElement.dataset.error = 'true';
+                } else {
+                  e.target.style.borderColor = 'var(--brd)';
+                  e.target.parentElement.dataset.error = 'false';
+                }
+              }}
+              required 
+              style={{ width: '100%', padding: '14px', borderRadius: '16px', border: '1px solid var(--brd)', fontSize: '16px' }} 
+            />
           </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>

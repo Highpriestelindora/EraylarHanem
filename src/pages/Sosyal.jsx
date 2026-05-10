@@ -43,6 +43,7 @@ export default function Sosyal() {
     aktiviteler: Array.isArray(rawSosyal?.aktiviteler) ? rawSosyal.aktiviteler : [],
     havuz: Array.isArray(rawSosyal?.havuz) ? rawSosyal.havuz : [],
     rutinler: Array.isArray(rawSosyal?.rutinler) ? rawSosyal.rutinler : [],
+    routinePackages: Array.isArray(rawSosyal?.routinePackages) ? rawSosyal.routinePackages : (SOCIAL_ROUTINES || []),
   }), [rawSosyal]);
 
   const [activeTab, setActiveTab] = useState(sosyal.tab || 'hafta');
@@ -175,18 +176,18 @@ function IstTab({ onAdd }) {
   };
 
   const events = [
-    { id: 'e1', title: 'Mert Demir Konseri', date: getDynamicDate(2), place: 'Harbiye Cemil Topuzlu', type: 'Konser', price: '₺800', img: '🎸', category: 'music' },
-    { id: 'e2', title: 'Zengin Mutfağı', date: getDynamicDate(5), place: 'Maximum UNIQ Hall', type: 'Tiyatro', price: '₺450', img: '🎭', category: 'theater' },
-    { id: 'e3', title: 'Dijital Sanat Sergisi', date: getDynamicDate(7), place: 'Tersane İstanbul', type: 'Sergi', price: '₺200', img: '🎨', category: 'art' },
-    { id: 'e4', title: 'Boğazda Kahvaltı', date: getDynamicDate(1), place: 'Emirgan Korusu', type: 'Aktivite', price: '₺500', img: '🥨', category: 'outdoor' },
-    { id: 'e5', title: 'Melike Şahin', date: getDynamicDate(12), place: 'Zorlu PSM', type: 'Konser', price: '₺1200', img: '🎤', category: 'music' },
-    { id: 'e6', title: 'Bir Baba Hamlet', date: getDynamicDate(4), place: 'Moda Sahnesi', type: 'Tiyatro', price: '₺300', img: '🎭', category: 'theater' },
-    { id: 'e7', title: 'Dune: Part Two', date: getDynamicDate(3), place: 'Kanyon Cinemaximum', type: 'Sinema', price: '₺180', img: '🎬', category: 'cinema' },
-    { id: 'e8', title: 'Sushi Workshop', date: getDynamicDate(6), place: 'MSA Maslak', type: 'Atölye', price: '₺1500', img: '🍣', category: 'workshop' },
-    { id: 'e9', title: 'Legoland Gezisi', date: getDynamicDate(8), place: 'Bayrampaşa Forum', type: 'Aile', price: '₺400', img: '🧱', category: 'outdoor' },
-    { id: 'e10', title: 'Galata Kulesi Gezisi', date: getDynamicDate(2), place: 'Beyoğlu', type: 'Turist', price: '₺0', img: '🗼', category: 'outdoor' },
-    { id: 'e11', title: 'Modern Sanat Sergisi', date: getDynamicDate(15), place: 'İstanbul Modern', type: 'Sergi', price: '₺150', img: '🖼️', category: 'art' },
-    { id: 'e12', title: 'Seramik Atölyesi', date: getDynamicDate(9), place: 'Kadıköy Sanat', type: 'Atölye', price: '₺600', img: '🏺', category: 'workshop' },
+    { id: 'e1', title: 'Mor ve Ötesi Senfonik', date: getDynamicDate(3), place: 'Harbiye Cemil Topuzlu', type: 'Konser', price: '₺1200', img: '🎸', category: 'music' },
+    { id: 'e2', title: 'Amadeus', date: getDynamicDate(6), place: 'Zorlu PSM', type: 'Tiyatro', price: '₺850', img: '🎭', category: 'theater' },
+    { id: 'e3', title: 'Arter: Fısıltı Sergisi', date: getDynamicDate(4), place: 'Arter Dolapdere', type: 'Sergi', price: '₺150', img: '🖼️', category: 'art' },
+    { id: 'e4', title: 'Boğazda Mehtap Turu', date: getDynamicDate(2), place: 'Beşiktaş İskele', type: 'Aktivite', price: '₺400', img: '⛴️', category: 'outdoor' },
+    { id: 'e5', title: 'Mabel Matiz', date: getDynamicDate(10), place: 'KüçükÇiftlik Park', type: 'Konser', price: '₺950', img: '🎤', category: 'music' },
+    { id: 'e6', title: 'Saatleri Ayarlama Enstitüsü', date: getDynamicDate(5), place: 'Maximum UNIQ', type: 'Tiyatro', price: '₺550', img: '🎭', category: 'theater' },
+    { id: 'e7', title: 'Sakıp Sabancı Müzesi Gezisi', date: getDynamicDate(1), place: 'Emirgan', type: 'Müze', price: '₺200', img: '🏛️', category: 'art' },
+    { id: 'e8', title: 'İtalyan Mutfağı Atölyesi', date: getDynamicDate(7), place: 'MSA Maslak', type: 'Atölye', price: '₺1800', img: '🍝', category: 'workshop' },
+    { id: 'e9', title: 'Belgrad Ormanı Yürüyüşü', date: getDynamicDate(0), place: 'Sarıyer', type: 'Doğa', price: '₺0', img: '🌳', category: 'outdoor' },
+    { id: 'e10', title: 'Galata Port: Modern Sanat', date: getDynamicDate(3), place: 'Karaköy', type: 'Sergi', price: '₺100', img: '🎨', category: 'art' },
+    { id: 'e11', title: 'Caz Gecesi: Nardis', date: getDynamicDate(2), place: 'Galata', type: 'Konser', price: '₺600', img: '🎷', category: 'music' },
+    { id: 'e12', title: 'Çömlek Yapımı', date: getDynamicDate(8), place: 'Balat Atölye', type: 'Atölye', price: '₺450', img: '🏺', category: 'workshop' },
   ];
 
   const filteredEvents = filter === 'all' ? events : events.filter(e => e.category === filter);
@@ -319,7 +320,7 @@ function HaftaTab({ sosyal, onAdd }) {
     // Only activities explicitly planned (social module) will show up now.
 
     // 4. Trips (All Confirmed & Active) - Show all days
-    (tatil?.trips || []).filter(t => t.isConfirmed || calculateTripStatus(t.startDate, t.endDate) === 'active').forEach(t => {
+    (tatil?.trips || []).filter(t => t.isConfirmed || (t.startDate && t.endDate)).forEach(t => {
       if (t.startDate && t.endDate) {
         const start = new Date(t.startDate);
         const end = new Date(t.endDate);
@@ -718,7 +719,9 @@ function HaftaTab({ sosyal, onAdd }) {
                 )}
 
                 <div className="nostalgic-event-list">
-                  {selectedDay.events.length > 0 ? selectedDay.events.map((e, idx) => (
+                  {(() => {
+                    const currentEvents = allEvents.filter(e => e.date === selectedDay.date);
+                    return currentEvents.length > 0 ? currentEvents.map((e, idx) => (
                     <div key={idx} className={`nostalgic-item ${e.type}`} style={{ marginBottom: '12px', padding: '15px', borderRadius: '16px', background: 'white', border: '1px solid var(--brd)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div className="ni-left" onClick={() => e.type === 'social' && setEditingActivity(e.originalItem)} style={{ cursor: e.type === 'social' ? 'pointer' : 'default', display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                         <span className="ni-icon" style={{ fontSize: '24px' }}>{e.icon}</span>
@@ -754,7 +757,8 @@ function HaftaTab({ sosyal, onAdd }) {
                       <Calendar size={40} style={{ marginBottom: '10px' }} />
                       <p style={{ fontSize: '13px', fontStyle: 'italic' }}>Bugün için bir plan düşülmemiş...</p>
                     </div>
-                  )}
+                  );
+                })()}
                 </div>
               </div>
             </div>
@@ -1059,17 +1063,27 @@ function AddActivityModal({ onClose, initialDate, prefilledData }) {
     if (!searchTerm) return [];
     const term = searchTerm.toLowerCase();
     
-    // Pool items
+    // Static Pool items
     const poolSugg = pool.filter(p => p.title.toLowerCase().includes(term));
     
+    // User's custom ideas (Havuz)
+    const havuzSugg = (sosyal.havuz || [])
+      .filter(h => (h.title || h.baslik || '').toLowerCase().includes(term))
+      .map(h => ({ 
+        title: h.title || h.baslik, 
+        icon: h.icon || h.emoji || '💡', 
+        category: h.category || 'Fikir Havuzu', 
+        id: 'havuz-' + h.id 
+      }));
+
     // Routine items (that are not in pool)
     const routineSugg = routineItems
       .filter(item => item.toLowerCase().includes(term))
       .filter(item => !poolSugg.some(p => p.title === item))
       .map(item => ({ title: item, icon: '🔁', category: 'Rutin Ögesi', id: 'routine-' + item }));
 
-    return [...poolSugg, ...routineSugg].slice(0, 5);
-  }, [searchTerm, pool, routineItems]);
+    return [...poolSugg, ...havuzSugg, ...routineSugg].slice(0, 5);
+  }, [searchTerm, pool, sosyal.havuz, routineItems]);
 
   const selectSuggestion = (p) => {
     setBaslik(p.title);
@@ -1789,9 +1803,23 @@ function HavuzTab({ sosyal, onAdd }) {
 
 
 function AddRutinModal({ onClose }) {
-  const { addRutin } = useStore();
-  const [formData, setFormData] = useState({ aktivite: '', kisi: 'Görkem', gunler: [], saati: '09:00', ucret: 0, sure: 'Belirsiz' });
-  const gunler = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+  const { addRutin, sosyal } = useStore();
+  const [formData, setFormData] = useState({ aktivite: '', kisi: 'İkisi', gunler: [], saati: '09:00', ucret: 0, sure: 'Belirsiz', vakit: 'sabah' });
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const suggestions = useMemo(() => {
+    if (!searchTerm) return [];
+    const pool = [...(sosyal.poolItems || []), ...(sosyal.havuz || [])];
+    return pool
+      .filter(p => p.title?.toLowerCase().includes(searchTerm.toLowerCase()))
+      .slice(0, 5);
+  }, [searchTerm, sosyal]);
+
+  const selectSuggestion = (s) => {
+    setFormData({ ...formData, aktivite: s.title });
+    setShowSuggestions(false);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -1802,9 +1830,40 @@ function AddRutinModal({ onClose }) {
 
   return (
     <form className="modal-form" onSubmit={handleSubmit}>
-      <div className="form-group">
+      <div className="form-group" style={{ position: 'relative' }}>
         <label>Aktivite Adı</label>
-        <input type="text" value={formData.aktivite} onChange={e => setFormData({...formData, aktivite: e.target.value})} placeholder="Ör: Spor Salonu" required />
+        <div style={{ position: 'relative' }}>
+          <input 
+            type="text" 
+            value={formData.aktivite} 
+            onChange={e => {
+              setFormData({...formData, aktivite: e.target.value});
+              setSearchTerm(e.target.value);
+              setShowSuggestions(true);
+            }} 
+            placeholder="Ör: Spor Salonu" 
+            onFocus={() => setShowSuggestions(true)}
+            required 
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="glass suggestions-dropdown" style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+              background: 'white', borderRadius: '12px', border: '1px solid var(--brd)',
+              marginTop: '5px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', overflow: 'hidden'
+            }}>
+              {suggestions.map(s => (
+                <div 
+                  key={s.id} 
+                  onClick={() => selectSuggestion(s)}
+                  style={{ padding: '12px 15px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', borderBottom: '1px solid var(--brd-light)' }}
+                >
+                  <span>{s.icon || s.emoji}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '700' }}>{s.title}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       <div className="form-row">
         <div className="form-group">
@@ -1862,11 +1921,21 @@ function AddRutinModal({ onClose }) {
 }
 
 function AddFikirModal({ onClose }) {
-  const { addSocialPoolItem } = useStore();
+  const { addSocialPoolItem, sosyal } = useStore();
   const [formData, setFormData] = useState({ baslik: '', tur: 'disari', siklik: 3, kisi: 'Ortak' });
+
+  const isDuplicate = useMemo(() => {
+    if (!formData.baslik) return false;
+    const combined = [...(sosyal.poolItems || []), ...(sosyal.havuz || [])];
+    return combined.some(p => p.title?.toLowerCase().trim() === formData.baslik.toLowerCase().trim());
+  }, [formData.baslik, sosyal]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isDuplicate) {
+      toast.error('Bu fikir zaten mevcut!');
+      return;
+    }
     addSocialPoolItem(formData);
     onClose();
     toast.success('Fikir havuza atıldı! 💡');
@@ -1876,7 +1945,15 @@ function AddFikirModal({ onClose }) {
     <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
         <label>Fikir / Yapılacak İş</label>
-        <input type="text" value={formData.baslik} onChange={e => setFormData({...formData, baslik: e.target.value})} placeholder="Ne yapalım?" required />
+        <input 
+          type="text" 
+          value={formData.baslik} 
+          onChange={e => setFormData({...formData, baslik: e.target.value})} 
+          placeholder="Ne yapalım?" 
+          style={{ borderColor: isDuplicate ? '#ef4444' : 'var(--brd)' }}
+          required 
+        />
+        {isDuplicate && <p style={{ color: '#ef4444', fontSize: '11px', marginTop: '5px', fontWeight: '700' }}>⚠️ Bu fikir havuzda zaten mevcut.</p>}
       </div>
       <div className="form-row">
         <div className="form-group">

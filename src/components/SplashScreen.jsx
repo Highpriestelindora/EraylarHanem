@@ -21,7 +21,12 @@ const SplashScreen = ({ finishLoading }) => {
     { t: 'Eraylar hanesi huzur moduna alınıyor... 🧘‍♂️', m: '🧘‍♂️' },
     { t: 'Waffle rüyasında dev bir kemik görüyor... 🦴', m: '🦴' },
     { t: 'Mayıs patisiyle ekranı temizliyor... 🐾', m: '🐾' },
-    { t: 'Sonsuz mutluluk ve patili günler başlıyor... 🌈', m: '🌈' }
+    { t: 'Sonsuz mutluluk ve patili günler başlıyor... 🌈', m: '🌈' },
+    { t: "Görkem & Esra'nın neşesi yükleniyor... 🌟", m: '🌟' },
+    { t: 'Mayıs yine en sevdiğin koltuğu kaptı... 🛋️', m: '🛋️' },
+    { t: 'Waffle "hav" diyerek tüm dikkatleri üzerine çekti... 📣', m: '📣' },
+    { t: 'Huzur dolu bir günün kapıları aralanıyor... 🚪', m: '🚪' },
+    { t: 'Eraylar Hanesi\'nde her şey yolunda! 🛸', m: '🛸' }
   ];
 
   // Pick 4 random jokes on mount
@@ -43,7 +48,7 @@ const SplashScreen = ({ finishLoading }) => {
         clearInterval(interval);
         setTimeout(finishLoading, 500);
       }
-    }, 4000); // 4s per quote for long & relaxed readability
+    }, 3500); // 3.5s per quote - Balanced readability
     
     return () => {
       clearInterval(interval);
@@ -124,7 +129,7 @@ const SplashScreen = ({ finishLoading }) => {
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: '100%' }}
-          transition={{ duration: 16, ease: "linear" }}
+          transition={{ duration: 14, ease: "linear" }}
           style={{ height: '100%', background: 'white', boxShadow: '0 0 10px white' }}
         />
       </div>
