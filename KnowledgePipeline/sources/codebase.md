@@ -1,28 +1,26 @@
 ---
 type: source
 tags: [code, react, architecture]
-source: [[src/App.jsx]]
-date: 2026-04-27
-status: stable
+date: 2026-05-10
+status: updated
 ---
 
-# Source: React Codebase (v2.7.1)
+# Source: React Codebase (v4.0.0)
 
-Eraylar Hanem uygulamasının çekirdek kod tabanı. 
+Eraylar Hanem uygulamasının çekirdek kod tabanı ve mimari desenleri.
 
-## Teknik Yığın (Tech Stack)
-- **Frontend:** React (Vite)
-- **State Yönetimi:** Zustand + Persist Middleware
-- **Backend/DB:** Supabase (Single-table JSONB storage)
-- **Stil:** Vanilla CSS (Modül bazlı)
-- **Bildirimler:** Custom `notificationService`
+## 🧱 Teknik Yığın (Tech Stack)
+- **Frontend:** React (Vite tabanlı)
+- **State Yönetimi:** Zustand (Merkezi Store)
+- **Veritabanı:** Supabase (PostgreSQL + Realtime Sync)
+- **Stil:** Vanilla CSS (iOS Öncelikli)
 
-## Mimari Desenler
-- **Merkezi Depo:** `src/store/useStore.js` tüm uygulama durumunu yönetir.
-- **Gerçek Zamanlı Senkronizasyon:** Supabase `postgres_changes` kanalı üzerinden anlık güncelleme.
-- **Offline-First:** `persist` middleware ile yerel depolama ve online olduğunda senkronizasyon.
+## 🔄 Mimari Desenler
+- **Merkezi Depo:** `src/store/useStore.js` tüm uygulama durumunu ve senkronizasyon mantığını yönetir.
+- **SSOT Mimari:** Veriler modül bazlı SQL tablolarında saklanır. Detaylar için [[decisions/2_milat_mimari|Teknik Mimari]] dökümanına bakınız.
+- **iOS Standartları:** Tasarım ve test süreçleri [[concepts/ios_standartlari|iOS Geliştirme Standartları]] uyarınca yürütülür.
 
-## İlgili Sayfalar
-- [[concepts/merkezi_state_yonetimi]]
-- [[concepts/senkronizasyon_stratejisi]]
-- [[concepts/ios_oncelikli_tasarim]]
+## 📁 Ana Dosya Yapısı
+- `src/pages/`: Modül bazlı sayfalar.
+- `src/store/useStore.js`: Ana state ve SSOT push/fetch fonksiyonları.
+- `src/lib/supabase.js`: Veritabanı bağlantı yapılandırması.

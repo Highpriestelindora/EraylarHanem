@@ -1,4 +1,11 @@
-# 🏆 Hedefler ve Başarılar
+---
+type: entity
+tags: [module, features, goals, achievements]
+date: 2026-05-10
+status: stable
+---
+
+# Entity: Hedefler ve Başarılar
 
 Uygulama kullanımını ve aile içi motivasyonu artıran oyunlaştırma (gamification) katmanıdır.
 
@@ -14,3 +21,6 @@ Belirli kriterler karşılandığında kazanılan dijital rozetlerdir.
 
 ## 📈 İstatistikler
 Haftalık ve aylık bazda uygulamanın ne kadar aktif kullanıldığı ve hedeflere ne kadar yaklaşıldığı raporlanır.
+
+## 🛠️ Teknik Detaylar
+- **SSOT:** Hedef verileri SQL tabanlı SSOT yapısına taşınmıştır.

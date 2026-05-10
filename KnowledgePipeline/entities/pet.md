@@ -1,20 +1,22 @@
 ---
 type: entity
-tags: [module, pet, cats]
-source: [[sources/codebase]]
-date: 2026-04-27
+tags: [module, features, pet]
+date: 2026-05-10
 status: stable
 ---
 
 # Entity: Pet Modülü
 
-Ailenin üyeleri Waffle ve Mayıs'ın sağlık ve bakım takibi.
+Evcil hayvanın tüm yaşam verilerinin saklandığı modüldür.
 
-## Detaylar
-- **Aşı Takibi:** Geçmiş ve gelecek aşı tarihleri.
-- **Kilo Kontrolü:** Tarihsel kilo ölçümleri.
-- **Stok Yönetimi:** Mama ve kum stok durumları.
-- **Sağlık Geçmişi:** Geçirilen hastalıklar ve operasyonlar.
+## 🐾 Pet Yönetimi
+Evcil hayvanın (Mayıs) tüm yaşam verileri burada saklanır:
+- **Aşı Takvimi:** Yapılan ve yapılması gereken aşıların tarihleri.
+- **Kilo Takibi:** Petin gelişimini izlemek için kilo günlükleri.
+- **Sağlık Geçmişi:** Geçmiş operasyonlar, kontroller ve veteriner ziyaretleri.
 
-## Teknik Veri
-`src/constants/data.js` içindeki `PET_META` ve `VACCINES` verilerini temel alır.
+## 📅 Hatırlatıcılar
+Aşı tarihleri ve periyodik kontroller için sistem üzerinden takip sağlanır.
+
+## 🛠️ Teknik Detaylar
+- **Entegrasyon:** Veteriner masrafları direkt Finans modülü ile ilişkilendirilir.

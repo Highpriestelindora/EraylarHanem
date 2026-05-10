@@ -1,36 +1,36 @@
 ---
 type: entity
-tags:
-  - module
-  - finance
-  - asset-management
-source:
-  - - sources/codebase
-date: 2026-04-27
+tags: [module, features, finance]
+date: 2026-05-10
 status: stable
 ---
 
 # Entity: Finans ve Kasa
 
-Eraylar ailesinin tüm mali varlıklarını, harcamalarını ve borçlarını yöneten modüldür.
+Eraylar Hanem'in finansal kalbi, harcamaların takibi ile nakit varlıkların yönetimini tek bir noktada birleştirir.
 
-## Alt Bileşenler
-### 1. Gider Yönetimi (`finans`)
-- **Harcamalar:** Günlük giderlerin takibi.
-- **Onay Havuzu (Approval Pool):** Eşler arası harcama onayı sistemi.
-- **Borçlar/Krediler:** Konut ve araç kredisi gibi uzun vadeli borçların takibi.
-- **Kartlar:** Kredi kartı limit ve hesap kesim takibi.
-- **Abonelikler (Rekurans):** Netflix, Spotify gibi düzenli ödemeler.
+## 🏦 Varlık Yönetimi (Kasa)
+Aile bireylerinin nakit varlıkları üç ana bakiye üzerinden takip edilir:
+- **Görkem:** Kişisel nakit bakiye.
+- **Esra:** Kişisel nakit bakiye.
+- **Ortak:** Aile ortak harcamaları için ayrılan bakiye.
 
-### 2. Varlık Yönetimi (`kasa`)
-- **Bakiyeler:** Görkem, Esra ve Ortak hesap bakiyeleri.
-- **Taşınmazlar:** Antalya, Didim ve Eskişehir'deki mülklerin (ada/parsel/değer) detaylı dökümü.
-- **Varlıklar:** Altın, borsa portföyü ve döviz birikimleri.
-- **Kumbaralar:** Hedef odaklı birikim (Yeni Araba, Yaz Tatili).
+Bakiyeler, harcama girildiğinde seçilen ödeme yöntemine göre otomatik olarak güncellenir.
 
-## Teknik Veri Yapısı
-`useStore.js` içerisinde `finans` ve `kasa` objeleri altında tutulur. `privacyMode` ile hassas verilerin gizlenmesi desteklenir.
+## 💸 Harcama Takibi
+Harcamalar kategorize edilerek saklanır: `mutfak`, `araç`, `sosyal`, `fatura`, `diğer`.
+- **Ödeme Yöntemi:** Nakit (Bakiye düşer) veya Kredi Kartı (Kart borcu artar).
+- **Entegrasyon:** Her harcama hem `finans.harcamalar` listesine hem de `kasa.gecmis` loglarına işlenir.
 
-## İlgili İş Akışları
-- Harcama girildiğinde onay havuzuna düşer.
-- Onaylandığında ilgili kişinin bakiyesinden (nakit ise) düşülür.
+## 💳 Borçlar ve Kartlar
+- **Kredi Kartları:** Limit, güncel borç ve hesap kesim tarihleri takip edilir.
+- **Borçlar (Krediler):** Toplam tutar, kalan miktar ve aylık taksit ödemeleri yönetilir. Borç ödemesi yapıldığında hem bakiye düşer hem de kalan borç güncellenir.
+
+## 📺 Abonelikler (Rekurans)
+Düzenli aylık ödemeler (Netflix, Spotify, Kira vb.) burada listelenir ve aylık finansal yükün analizine dahil edilir.
+
+## 🛠️ Teknik Detaylar
+- **SSOT:** Tüm finansal işlemler 2. Milat Anayasası uyarınca direkt SQL tabanlıdır.
+
+## 📊 Analiz
+Giderlerin kategorik dağılımı ve varlık/borç dengesi görselleştirilerek finansal sağlık takibi yapılır.

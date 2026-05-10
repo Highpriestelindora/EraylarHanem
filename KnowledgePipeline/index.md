@@ -1,35 +1,30 @@
-# Eraylar Hanem Knowledge Index 🏛️🧠
+---
+type: index
+date: 2026-05-10
+---
 
-Bu sayfa tüm wiki içeriğinin ana haritasıdır.
+# Eraylar Hanem Hub 🏛️🧠
 
-## 📁 Katalog
+Bu sayfa projenin "İkinci Beyni" ve ana komuta merkezidir. Tüm modüller ve kararlar burada merkezileştirilmiştir.
 
-### 🚀 2. MİLAT (GÜNCEL MİMARİ)
-- [[decisions/2_milat_anayasasi|🏛️ 2. Milat Anayasası (%100 SQL SSOT)]]
-- [[decisions/2_milat_mimari|📊 2. Milat Teknik Mimari]]
+## 🏛️ 2. MİLAT ANAYASASI (%100 SQL SSOT)
+Uygulamanın değişmez temel kuralı şudur: **Tek Doğruluk Kaynağı (SSOT) her zaman Supabase SQL'dir.**
 
-### 🧱 Modüller ve Varlıklar (Entities)
-- [[entities/mutfak_modulu|Mutfak Modülü]]
-- [[entities/finans_ve_kasa|Finans ve Kasa]]
-- [[entities/saglik|Sağlık Modülü]]
-- [[entities/sosyal_ve_etkinlikler|Sosyal ve Etkinlikler]]
-- [[entities/aracim|Aracım (Garaj)]]
-- [[entities/ev_ve_yasam|Ev ve Yaşam]]
-- [[entities/pet|Pet Modülü]]
-- [[entities/tatil|Tatil Modülü]]
+1.  **SQL Otoritedir:** Lokal veriler (JSON/Cache) asla SQL'den gelen veriyi ezemez.
+2.  **Atomik Güncelleme:** Veritabanı "OK" demeden UI güncellenmez.
+3.  **Hiyerarşi:** Tüm modüller bu anayasaya bağlıdır:
+    - [[entities/mutfak_modulu|🍲 Mutfak]], [[entities/finans_ve_kasa|💎 Finans]], [[entities/saglik|🩺 Sağlık]], [[entities/sosyal_ve_etkinlikler|🎭 Sosyal]], [[entities/aracim|🚗 Aracım]], [[entities/ev_ve_yasam|🏠 Ev]], [[entities/pet|🐾 Pet]], [[entities/tatil|✈️ Tatil]], [[entities/hedefler|🏆 Hedefler]]
 
-### 💡 Kavramlar (Concepts)
-- [[concepts/ios_oncelikli_tasarim|iOS Öncelikli Tasarım]]
-- [[concepts/merkezi_state_yonetimi|Merkezi State Yönetimi (Zustand)]]
-- [[concepts/senkronizasyon_stratejisi|Senkronizasyon Stratejisi (Updated v2)]]
+## 📁 Teknik Rehberler
+- [[decisions/2_milat_mimari|📊 Teknik Mimari & SQL Sync]] (SSOT Kuralları)
+- [[concepts/ios_standartlari|📱 iOS Tasarım ve Test Standartları]]
+- [[sources/codebase|💻 React Codebase (v4.0.0)]]
+- [[concepts/merkezi_state_yonetimi|⚙️ State Yönetimi (Zustand)]]
 
-### 🏛️ Kararlar (Decisions)
-- [[decisions/tek_tablo_jsonb_depolama|Tek Tablo JSONB Depolama (LEGACY - 1. Milat)]]
-- [[decisions/ios_oncelikli_test|iOS Öncelikli Test Süreci]]
-
-### 📚 Kaynaklar (Sources)
-- [[sources/codebase|React Codebase (v4.0.0 - 2. Milat Ready)]]
-- [[sources/legacy_docs|Legacy Documentation (v1.0.0)]]
+## 🧠 Meta: İkinci Beyin Nasıl Çalışır?
+1. **Obsidian** resmi bilgi yönetim merkezidir.
+2. `KnowledgePipeline` klasörü, kodla senkronize yaşayan ana bilgi deposudur.
+3. **Loglar:** [[log|Günlük Değişim Logları]]
 
 ---
-*Son Güncelleme: 10 Mayıs 2026 (2. Milat Tamamlandı)* 🛡️🏦✨
+*Eraylar Hanem: Güvenli, Modüler ve iOS Öncelikli.* 🛡️🏦✨

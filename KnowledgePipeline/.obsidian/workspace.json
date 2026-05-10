@@ -4,17 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "64757412a96aad49",
+        "id": "ccb3257830eb7285",
         "type": "tabs",
         "children": [
           {
-            "id": "a322a0982e62c6ff",
+            "id": "cb59bb7caab4d4c3",
             "type": "leaf",
             "state": {
-              "type": "empty",
+              "type": "graph",
               "state": {},
-              "icon": "lucide-file",
-              "title": "Yeni sekme"
+              "icon": "lucide-git-fork",
+              "title": "Graph view"
             }
           }
         ]
@@ -40,7 +40,7 @@
                 "autoReveal": false
               },
               "icon": "lucide-folder-closed",
-              "title": "Dosya Gezgini"
+              "title": "Files"
             }
           },
           {
@@ -70,8 +70,7 @@
               "title": "Yer İmleri"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -171,45 +170,45 @@
   },
   "left-ribbon": {
     "hiddenItems": {
-      "switcher:Hızlı geçişi aç": false,
-      "graph:Grafik görünümünü aç": false,
-      "canvas:Yeni tuval oluşturun": false,
-      "daily-notes:Bugünün Notunu Aç": false,
-      "templates:Şablon ekle": false,
-      "command-palette:Komut paletini aç": false,
-      "bases:Yeni taban oluştur": false
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
     }
   },
-  "active": "a322a0982e62c6ff",
+  "active": "cb59bb7caab4d4c3",
   "lastOpenFiles": [
-    "sources/legacy_docs.md",
-    "raw/legacy/Mutfak_Modulu.md",
-    "raw/legacy/Index.md",
-    "Başlıksız 2.canvas",
+    "concepts/senkronizasyon_stratejisi.md",
+    "concepts/merkezi_state_yonetimi.md",
+    "sources/codebase.md",
     "decisions/2_milat_mimari.md",
+    "concepts/ios_standartlari.md",
     "decisions/2_milat_anayasasi.md",
-    "decisions/tek_tablo_jsonb_depolama.md",
+    "decisions/ios_oncelikli_test.md",
     "index.md",
+    "decisions/tek_tablo_jsonb_depolama.md",
+    "log.md",
+    "entities/hedefler.md",
+    "sources/legacy_docs.md",
+    "concepts/ios_oncelikli_tasarim.md",
+    "raw/legacy/Tatil_Modulu.md",
+    "entities/aracim.md",
+    "raw/legacy/Aracim_ve_Ulasim.md",
+    "decisions/stok_bazli_tarif_gosterimi.md",
+    "raw/legacy/Index.md",
+    "decisions/ikinci_beyin_mimarisi.md",
     "2026-05-10.md",
+    "Başlıksız 2.canvas",
     "Başlıksız 1.canvas",
     "Başlıksız.canvas",
-    "decisions/ikinci_beyin_mimarisi.md",
-    "decisions/ios_oncelikli_test.md",
-    "concepts/senkronizasyon_stratejisi.md",
-    "log.md",
     "entities/finans_ve_kasa.md",
     "entities/mutfak_modulu.md",
-    "sources/codebase.md",
     "entities/sosyal_ve_etkinlikler.md",
     "entities/tatil.md",
     "entities/saglik.md",
-    "entities/ev_ve_yasam.md",
-    "entities/aracim.md",
-    "concepts/ios_oncelikli_tasarim.md",
-    "raw/legacy/Tatil_Modulu.md",
-    "entities/pet.md",
-    "decisions/stok_bazli_tarif_gosterimi.md",
-    "raw/legacy/Ev_ve_Yasam.md",
-    "concepts/merkezi_state_yonetimi.md"
+    "entities/ev_ve_yasam.md"
   ]
 }

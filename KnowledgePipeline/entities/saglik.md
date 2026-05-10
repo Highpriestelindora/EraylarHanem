@@ -1,20 +1,21 @@
 ---
 type: entity
-tags: [module, health, medicine]
-source: [[sources/codebase]]
-date: 2026-04-27
+tags: [module, features, health]
+date: 2026-05-10
 status: stable
 ---
 
 # Entity: Sağlık Modülü
 
-Kişisel sağlık verileri, randevular ve ilaç takibi için kullanılır.
+Aile bireylerinin sağlık verilerinin merkezi deposudur.
 
-## Özellikler
-- **Randevu Takibi:** Doktor kontrolleri ve rekürens (yıllık/aylık) randevular.
-- **İlaç Takibi:** İlaç stok yönetimi, dozaj ve kritik stok uyarıları.
-- **Ölçümler:** Tansiyon, ateş, kilo gibi verilerin tarihsel kaydı.
-- **Mood (Ruh Hali):** Günlük ruh hali takibi ve notları.
+## 👨‍👩‍👧‍👦 İnsan Sağlığı
+- **Randevular:** Hastane ve doktor randevuları takip edilir.
+- **İlaç Takibi:** Kullanılan ilaçlar, dozajları ve kullanım süreleri yönetilir.
+- **Ölçümler:** Tansiyon, şeker, kilo gibi periyodik ölçümler kaydedilerek gelişim izlenir.
 
-## Kritik Mantık
-- `takeMedicine` fonksiyonu stoğu bir azaltır ve `minStok` altına düştüğünde sistem loglarına uyarı düşer.
+## 📅 Hatırlatıcılar
+İlaç saatleri veya doktor randevuları gibi kritik zamanlar için sistem üzerinden takip sağlanır.
+
+## 🛠️ Teknik Detaylar
+- **Kritik Veri:** İlaç verileri 2. Milat Anayasası uyarınca SQL tabanlı SSOT yapısına taşınmıştır.

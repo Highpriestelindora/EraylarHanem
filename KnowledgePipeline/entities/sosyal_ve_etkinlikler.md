@@ -1,20 +1,28 @@
 ---
 type: entity
-tags: [module, social, events]
-source: [[sources/codebase]]
-date: 2026-04-27
+tags: [module, features, social]
+date: 2026-05-10
 status: stable
 ---
 
 # Entity: Sosyal ve Etkinlikler
 
-Sosyal hayatın planlanması ve aktivite havuzunun yönetilmesi.
+Ailenin dış dünya ile olan etkileşimini ve hafta sonu planlarını yöneten modüldür.
 
-## Bölümler
-- **Aktiviteler:** Planlanmış sosyal etkinlikler.
-- **Rutinler:** Haftalık spor, temizlik gibi düzenli aktiviteler.
-- **Aktivite Havuzu:** 50+ önceden tanımlanmış İstanbul etkinliği ve kullanıcı fikirleri.
-- **Rutin Paketleri:** Önceden hazırlanmış aktivite grupları.
+## 📅 Aktivite Planlayıcı
+Haftalık bazda yapılacak sosyal aktiviteler (yemek, sinema, gezi vb.) planlanır.
+- **Arşiv:** Tamamlanan aktiviteler arşivlenerek aile geçmişinde saklanır.
 
-## Veri Kaynağı
-`src/constants/data.js` içerisindeki `INITIAL_SOCIAL_POOL` ve `SOCIAL_ROUTINES` sabitlerinden beslenir.
+## 🌆 İstanbul Etkinlikleri (IST Tab)
+İstanbul'daki güncel konser, tiyatro ve sergi gibi etkinliklerin listelendiği bölümdür.
+- **Planla:** Bir etkinliğe tıklandığında, etkinlik detayları otomatik olarak "Aktivite Planlayıcı"ya aktarılır.
+- **Filtreleme:** Konser, tiyatro, sanat gibi kategorilere göre etkinlik arama yapılabilir.
+
+## 💡 Fikir Havuzu
+"Ne yapsak?" sorusuna yanıt aranan, henüz planlanmamış aktivite fikirlerinin biriktirildiği havuzdur.
+
+## 🔄 Rutinler
+Düzenli olarak tekrarlanan sosyal alışkanlıklar burada yönetilir.
+
+## 🛠️ Teknik Detaylar
+- **Entegrasyon:** Sosyal harcamalar direkt Finans modülü ile ilişkilendirilir.

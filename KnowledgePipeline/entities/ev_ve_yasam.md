@@ -1,35 +1,26 @@
 ---
 type: entity
-tags: [module, home, maintenance, inventory]
-source: [[sources/codebase]]
-date: 2026-04-28
+tags: [module, features, home]
+date: 2026-05-10
 status: stable
-version: 3.0
 ---
 
-# Entity: Ev ve Yaşam Modülü
+# Entity: Ev ve Yaşam
 
-Eraylar Malikanesi Hub & Operasyon Merkezi. Evin fiziksel bakımı, demirbaş yönetimi, finansal abonelikler ve güvenlik protokollerinin merkezi.
+Evin fiziksel sürdürülebilirliğini ve resmi yükümlülüklerini yöneten modüldür.
 
-## Özellikler (5-Tab Yapısı)
-- **Yaşam (🪴):** Kullanıcı (Görkem/Esra) bazlı zaman analizi, akıllı yaşam asistanı (Advice Motor) ve AI destekli günlük tavsiyeler.
-- **Bakım (🔧):** 
-    - **Periyodik Bakımlar:** Klima, hava arıtma vb. için gün bazlı sayaçlı takip.
-    - **Tamir & Bakım Listeleri:** Dinamik görev takibi.
-    - **Tamir İçin Alınacaklar:** Depo modülü ile entegre parça listesi.
-- **Abonelikler (💳):** Faturalar (Elektrik, Su, Doğalgaz) ve dijital aboneliklerin (Netflix, Youtube vb.) takibi. Finans modülü ile senkronize ödeme onayı.
-- **Taşınmaz (🏗️):** Gayrimenkul portföyü. Piyasa değeri takibi, vergi dönem hatırlatıcıları (Mayıs/Kasım) ve net getiri hesaplama.
-- **Güvenlik (🛡️):** 
-    - **Acil Durum Çantaları:** Deprem ve İlk Yardım çantası envanteri, SKT takibi ve eksik ürün önerileri.
-    - **Premium Wi-Fi Kartları:** Ana hat ve Misafir ağı için QR kod destekli, katlanabilir şık kartlar.
-    - **Şifreli Defter (Vintage Safe):** Kişisel notlar için vintage tasarımlı, şifre korumalı ve "Resmi Mühür" detaylı dijital defter.
+## 📜 Faturalar
+Elektrik, su, doğalgaz, internet gibi periyodik faturaların son ödeme tarihleri ve tutarları takip edilir.
+- **Ödeme Durumu:** Ödenen faturalar işaretlenerek aylık gider analizine aktarılır.
 
-## Envanter Sistemi (Depo v3.5)
-- **Akıllı Yaşam Döngüsü:** Ürünlerin son kullanma tarihlerine göre otomatik uyarı sistemi.
-- **Entegrasyon:** Alışveriş ve Finans modülleri ile tam senkronizasyon.
+## 🛠️ Ev Bakım (Service)
+Beyaz eşya servisleri, tadilatlar, boya-badana gibi ev ile ilgili yapılan teknik işlemler kaydedilir.
 
-## Teknik Detaylar
-- **Bileşen:** `src/pages/Ev.jsx`.
-- **State:** Zustand `ev` objesi. `emergencyKits`, `depo`, `tasinmazlar` (kasa store'dan) verilerini kullanır.
-- **Güvenlik:** `personalSafe` verileri sadece doğru şifre ile belleğe yüklenir.
+## 🛡️ Sigortalar
+DASK, Konut Sigortası gibi poliçelerin bitiş tarihleri takip edilerek gecikmelerin önüne geçilir.
 
+## 💧 Su Takibi
+Damacana su seviyesi ve sipariş geçmişi yönetilir. Kritik seviyeye gelindiğinde uyarı verir.
+
+## 🛠️ Teknik Detaylar
+- **Entegrasyon:** Fatura ödemeleri direkt Finans modülü ile ilişkilendirilir.

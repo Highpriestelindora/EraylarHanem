@@ -1,21 +1,27 @@
 ---
 type: entity
-tags: [module, vehicle, maintenance]
-source: [[sources/codebase]]
-date: 2026-04-27
+tags: [module, features, garage, car]
+date: 2026-05-10
 status: stable
 ---
 
-# Entity: Aracım Modülü
+# Entity: Aracım (Garaj)
 
-Araç (Garaj) yönetimi, periyodik bakımlar ve yakıt takibi.
+Ailenin araç bakım, yakıt ve kullanım verilerinin takip edildiği teknik modüldür.
 
-## Veri Yapısı
-`garaj` dizisi içinde birden fazla araç desteklenir (Varsayılan: `v1 - Volkswagen Tiguan R-Line`).
+## 📈 KM Takibi
+Aracın güncel kilometresi kaydedilir. Bu veri, periyodik bakım sürelerinin otomatik hesaplanmasında kullanılır.
 
-## Takip Edilenler
-- **Parça Ömürleri:** Yağ, filtre, fren balatası gibi parçaların KM bazlı takibi.
-- **Yakıt Günlüğü:** Yakıt alımları ve tüketim analizi.
-- **Dökümanlar:** Muayene, Kasko ve Trafik Sigortası bitiş tarihleri.
-- **Destek:** Yol yardım ve sigorta danışmanı iletişim bilgileri.
-- **Park Konumu:** Aracın bırakıldığı yerin notu ve konumu.
+## 🛠️ Bakım ve Onarım (HS)
+Yapılan her türlü bakım, parça değişimi veya onarım işlemi tarih ve maliyet bilgisiyle saklanır.
+- **Geçmiş:** Aracın servis geçmişi kronolojik olarak listelenir.
+
+## ⛽ Yakıt Günlüğü
+Alınan her yakıt kaydı; litre fiyatı, toplam tutar ve o anki KM bilgisiyle tutulur. Bu veriler üzerinden aracın yakıt tüketim performansı analiz edilebilir.
+
+## 📅 Hatırlatıcılar (Events)
+Muayene, sigorta, kasko gibi tarihe bağlı önemli etkinlikler ve periyodik bakım zamanları bu bölümde takip edilir.
+- **Kalan Süre/KM:** Bakıma veya muayeneye kaç gün/km kaldığı anlık olarak hesaplanır.
+
+## 🛠️ Teknik Detaylar
+- **Görünüm:** UI tarafında "Garaj" sekmesi altında sunulur.
