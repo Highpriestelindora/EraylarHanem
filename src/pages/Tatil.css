@@ -3733,6 +3733,11 @@
 .map-pin-premium.left .pin-label { margin-right: 3px; }
 .map-pin-premium.right .pin-label { margin-left: 3px; }
 
+@keyframes pin-pulse-leaflet {
+  0% { transform: scale(0.5); opacity: 0.5; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
 
 .map-overlay-info {
   position: absolute;

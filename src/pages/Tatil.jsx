@@ -32,7 +32,10 @@ const CITY_TRANSLATIONS = {
   'helsinki': 'helsinki', 'dublin': 'dublin', 'berlin': 'berlin'
 };
 
-const normalizeText = (text) => text?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase();
+const normalizeText = (text) => {
+  if (!text) return "";
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase().trim();
+};
 
 async function fetchWeatherForTrip(city, country, startDate) {
   if (!city) return null;
@@ -2706,7 +2709,7 @@ const LEGACY_CITY_COORDS = {
   'madrid': { lat: 40.4168, lng: -3.7038 },
   'barselona': { lat: 41.3851, lng: 2.1734 },
   'barcelona': { lat: 41.3851, lng: 2.1734 },
-  'amsterdam': { lat: 52.3676, lng: 4.9041 },
+'amsterdam': { lat: 52.3676, lng: 4.9041 },
   'selanik': { lat: 40.6401, lng: 22.9444 },
   'thessaloniki': { lat: 40.6401, lng: 22.9444 },
   'marsilya': { lat: 43.2965, lng: 5.3698 },
@@ -2732,9 +2735,17 @@ function HaritaTab({ tatil, onTabChange }) {
   const [hiddenStats, setHiddenStats] = useState([]); // Array of 'esra', 'gorkem'
   
   const allTripsForMap = useMemo(() => {
-    return (tatil.trips || [])
-      .filter(t => calculateTripStatus(t.startDate, t.endDate) === 'completed')
-      .sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+    // Merge DB trips with INITIAL_TRIPS (master data)
+    const dbTrips = tatil.trips || [];
+    const merged = [...dbTrips];
+
+    // Add initial trips that are not in DB
+    INITIAL_TRIPS.forEach(it => {
+      const exists = merged.some(t => t.id === it.id || (t.title === it.title && t.startDate === it.startDate));
+      if (!exists) merged.push(it);
+    });
+
+    return merged.filter(t => calculateTripStatus(t.startDate, t.endDate) === 'completed');
   }, [tatil.trips]);
 
   const visitedData = useMemo(() => {
@@ -2797,14 +2808,14 @@ function HaritaTab({ tatil, onTabChange }) {
 
   const isTurkeyMode = selectedContinent === 'turkiye';
 
-  // Collect all pins from all trips with deduplication
   const allPins = useMemo(() => {
     const pins = [];
     const seen = new Set();
 
     allTripsForMap.forEach(trip => {
       // Filter by visible travelers toggle
-      if (!visibleTravelers.includes(trip.travelers)) return;
+      const traveler = trip.travelers || 'ikimiz';
+      if (!visibleTravelers.includes(traveler)) return;
 
       const tripPins = [];
       if (trip.visitedCities && trip.visitedCities.length > 0) {
@@ -2812,15 +2823,15 @@ function HaritaTab({ tatil, onTabChange }) {
            if (city.lat && city.lng) tripPins.push(city);
         });
       } else if (trip.city) {
-        const cleanCity = trip.city.toLowerCase().trim();
+        const cleanCity = normalizeText(trip.city);
         const coords = LEGACY_CITY_COORDS[cleanCity];
         if (coords) tripPins.push({ name: trip.city, ...coords });
       }
 
       tripPins.forEach(p => {
-        const key = p.name.toLowerCase().trim();
+        const key = `${p.lat}-${p.lng}`;
         if (!seen.has(key)) {
-          pins.push({ ...p, travelers: trip.travelers });
+          pins.push({ ...p, travelers: traveler });
           seen.add(key);
         }
       });
@@ -3398,20 +3409,23 @@ function LeafletMap({ pins, region }) {
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
 
-    // Add new markers
     pins.forEach(pin => {
       if (pin.lat && pin.lng) {
         const color = pin.travelers === 'esra' ? '#f472b6' : (pin.travelers === 'gorkem' ? '#22c55e' : '#0ea5e9');
-        const icon = window.L.divIcon({
-          className: 'custom-leaflet-pin',
-          html: `<div style="background:${color}; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3)"></div>`,
-          iconSize: [16, 16],
-          iconAnchor: [8, 8]
-        });
-
-        const marker = window.L.marker([pin.lat, pin.lng], { icon })
+        
+        // Use circleMarker for maximum reliability and visibility
+        const marker = window.L.circleMarker([pin.lat, pin.lng], {
+          radius: 10,
+          fillColor: color,
+          color: '#fff',
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.9,
+          className: 'map-pulse-marker'
+        })
           .addTo(mapInstance.current)
-          .bindTooltip(pin.name, { permanent: false, direction: 'top' });
+          .bindTooltip(pin.name, { permanent: false, direction: 'top', className: 'pin-tooltip' });
+        
         markersRef.current.push(marker);
       }
     });
