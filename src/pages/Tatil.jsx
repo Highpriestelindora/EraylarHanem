@@ -1156,10 +1156,21 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
   }, [trip]);
 
   const handleSave = (section) => {
-    const updates = { ...trip };
-    if (section === 'dep') updates.transportation.departure = depForm;
-    if (section === 'ret') updates.transportation.return = retForm;
-    if (section === 'acc') updates.accommodation = accForm;
+    const updates = { 
+      ...trip,
+      transportation: { ...(trip.transportation || {}) },
+      accommodation: { ...(trip.accommodation || {}) }
+    };
+
+    if (section === 'dep') {
+      updates.transportation.departure = depForm;
+    }
+    if (section === 'ret') {
+      updates.transportation.return = retForm;
+    }
+    if (section === 'acc') {
+      updates.accommodation = accForm;
+    }
     
     onUpdate(updates);
     setEditingSection(null);

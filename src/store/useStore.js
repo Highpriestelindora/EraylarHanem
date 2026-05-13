@@ -970,10 +970,12 @@ async function pushGarajBelgeToSupabase(doc, vehicleId = 'v1') {
 async function pushPetAsiToSupabase(petId, vaccine) {
   try {
     await supabase.from('pet_asilar').upsert({
-      id: `${petId}-${vaccine.id || vaccine.name}`, pet_id: petId,
-      asi_adi: vaccine.name || vaccine.asi_adi, son_tarih: vaccine.lastDate || vaccine.son_tarih || null,
+      id: `${petId}-${vaccine.id || vaccine.n || vaccine.name}`, pet_id: petId,
+      asi_adi: vaccine.n || vaccine.name || vaccine.asi_adi, 
+      son_tarih: vaccine.last || vaccine.lastDate || vaccine.son_tarih || null,
       sonraki_tarih: vaccine.nextDate || vaccine.sonraki_tarih || null,
-      durum: vaccine.done ? 'tamamlandi' : 'bekliyor', notlar: vaccine.notes || null
+      durum: vaccine.done ? 'tamamlandi' : 'bekliyor', notlar: vaccine.notes || null,
+      family_id: DEFAULT_FID
     });
   } catch(e) { console.warn('Pet Aşı Hatası:', e); }
 }
@@ -981,9 +983,10 @@ async function pushPetAsiToSupabase(petId, vaccine) {
 async function pushPetAgirlikToSupabase(petId, entry) {
   try {
     await supabase.from('pet_agirlik').upsert({
-      id: String(entry.id || `${petId}-${entry.date || Date.now()}`), pet_id: petId,
-      tarih: entry.date || entry.tarih || new Date().toISOString(),
-      kilo: Number(entry.weight || entry.kilo || 0), notlar: entry.notes || null
+      id: String(entry.id || `${petId}-${entry.dt || entry.date || Date.now()}`), pet_id: petId,
+      tarih: entry.dt || entry.date || entry.tarih || new Date().toISOString(),
+      kilo: Number(entry.w || entry.weight || entry.kilo || 0), notlar: entry.notes || null,
+      family_id: DEFAULT_FID
     });
   } catch(e) { console.warn('Pet Ağırlık Hatası:', e); }
 }
@@ -999,9 +1002,11 @@ async function pushSaglikIlacToSupabase(i) {
       siklik: i.siklik || i.sıklık || null,
       stok: Number(i.stok || 0),
       min_stok: Number(i.minStok || 5),
-      morning: Number(i.morning || 0),
-      afternoon: Number(i.afternoon || 0),
-      evening: Number(i.evening || 0)
+      schedule: i.schedule || {
+        morning: Number(i.morning || 0),
+        afternoon: Number(i.afternoon || 0),
+        evening: Number(i.evening || 0)
+      }
     };
 
     const { error } = await supabase.from('saglik_ilaclar').upsert(payload);
@@ -1147,9 +1152,8 @@ async function pushPetLogToSupabase(log) {
     await supabase.from('pet_logs').upsert({
       id: String(log.id).includes(familyId) ? String(log.id) : `${log.id}-${familyId}`,
       pet_name: log.pet,
-      action: log.action,
-      dt: log.dt,
-      type: log.type,
+      date: log.dt || new Date().toISOString(),
+      notes: log.action || log.notes || '',
       family_id: familyId
     });
   } catch(e) { console.warn('Pet Log Hatası:', e); }
@@ -1950,25 +1954,53 @@ const useStore = create(
             const pet = { ...state.pet };
             if (asilar.data) {
               asilar.data.forEach(a => {
-                if (!pet.vaccines[a.pet_name]) pet.vaccines[a.pet_name] = [];
-                if (!pet.vaccines[a.pet_name].some(v => v.id === a.id)) pet.vaccines[a.pet_name].push(a);
+                const pId = a.pet_id || a.pet_name;
+                if (!pId) return;
+                if (!pet.vaccines[pId]) pet.vaccines[pId] = [];
+                if (!pet.vaccines[pId].some(v => v.id === a.id)) {
+                  pet.vaccines[pId].push({
+                    id: a.id,
+                    n: a.asi_adi,
+                    last: a.son_tarih,
+                    ev: 60, 
+                    done: a.durum === 'tamamlandi',
+                    notes: a.notlar
+                  });
+                }
               });
             }
             if (agirliklar.data) {
               agirliklar.data.forEach(w => {
-                if (!pet.weights[w.pet_name]) pet.weights[w.pet_name] = [];
-                if (!pet.weights[w.pet_name].some(lw => lw.id === w.id)) pet.weights[w.pet_name].push(w);
+                const pId = w.pet_id || w.pet_name;
+                if (!pId) return;
+                if (!pet.weights[pId]) pet.weights[pId] = [];
+                if (!pet.weights[pId].some(lw => lw.id === w.id)) {
+                  pet.weights[pId].push({
+                    id: w.id,
+                    dt: w.tarih,
+                    w: Number(w.kilo || 0),
+                    notes: w.notlar
+                  });
+                }
               });
             }
             if (supplies.data) {
               supplies.data.forEach(s => {
-                if (!pet.supplies[s.pet_name]) pet.supplies[s.pet_name] = {};
-                pet.supplies[s.pet_name][s.supply_type] = s.status;
+                const pId = s.pet_name || s.pet_id;
+                if (!pId) return;
+                if (!pet.supplies[pId]) pet.supplies[pId] = {};
+                pet.supplies[pId][s.supply_type] = s.status;
               });
             }
             if (petLogs.data) {
-              // Assuming petLogs go to pet.history or a separate field
-              pet.history = [...(pet.history || []), ...petLogs.data].slice(0, 50);
+              const mappedLogs = petLogs.data.map(l => ({
+                id: l.id,
+                pet: l.pet_name || l.pet_id,
+                action: l.notes || l.action,
+                dt: l.date || l.dt,
+                type: 'info'
+              }));
+              pet.history = [...mappedLogs].sort((a,b) => new Date(b.dt) - new Date(a.dt)).slice(0, 50);
             }
 
             const saglik = { ...state.saglik };
@@ -4829,6 +4861,11 @@ const useStore = create(
             ]
           },
           budget: { est: Number(trip.budget) || 0, real: 0 },
+          transportation: {
+            departure: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' },
+            return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
+          },
+          accommodation: { hotel: '', address: '', bookingId: '', link: '' },
           ...trip,
           created_at: new Date().toISOString()
         };
@@ -7182,8 +7219,9 @@ const useStore = create(
       addPetWeight: (petId, weightData) => {
         const state = get();
         const currentWeights = state.pet.weights[petId] || [];
-        const yeniWeights = [{ id: Date.now(), ...weightData }, ...currentWeights];
-        const log = { id: Date.now(), pet: petId, action: `Kilo güncellendi: ${weightData.w} kg`, dt: weightData.dt, type: 'weight' };
+        const newId = Date.now();
+        const yeniWeights = [{ id: newId, ...weightData }, ...currentWeights];
+        const log = { id: newId, pet: petId, action: `Kilo güncellendi: ${weightData.w} kg`, dt: weightData.dt, type: 'weight' };
         set({
           pet: {
             ...state.pet,
@@ -7195,7 +7233,7 @@ const useStore = create(
           }
         });
 
-        pushPetAgirlikToSupabase(petId, { id: Date.now(), ...weightData });
+        pushPetAgirlikToSupabase(petId, { id: newId, ...weightData });
         pushPetLogToSupabase(log);
       },
 
@@ -7224,6 +7262,21 @@ const useStore = create(
 
           yeniPet.vaccines = { ...state.pet.vaccines, [petId]: updatedVaccines };
         }
+        
+        // If it's a weight log, remove the corresponding weight record
+        if (logToDelete && logToDelete.type === 'weight') {
+          const petId = logToDelete.pet;
+          const oldWMatch = logToDelete.action.match(/(\d+\.?\d*)/);
+          const oldW = oldWMatch ? parseFloat(oldWMatch[1]) : null;
+          
+          if (oldW !== null) {
+            const wToDelete = (yeniPet.weights[petId] || []).find(w => w.dt === logToDelete.dt && w.w === oldW);
+            if (wToDelete) {
+              yeniPet.weights[petId] = (yeniPet.weights[petId] || []).filter(w => w.id !== wToDelete.id);
+              deletePetAgirlikFromSupabase(wToDelete.id);
+            }
+          }
+        }
 
         yeniPet.history = (state.pet.history || []).filter(h => h.id !== id);
 
@@ -7249,6 +7302,10 @@ const useStore = create(
             updatedWeights[petId] = (updatedWeights[petId] || []).map(w => 
               (w.dt === logToUpdate.dt && w.w === oldW) ? { ...w, w: newW, dt: updates.dt || w.dt } : w
             );
+            
+            // Also push weight update to SQL
+            const updatedWeight = updatedWeights[petId].find(w => w.dt === (updates.dt || w.dt) && w.w === newW);
+            if (updatedWeight) pushPetAgirlikToSupabase(petId, updatedWeight);
           }
         }
 
@@ -7264,6 +7321,20 @@ const useStore = create(
           } 
         });
 
+        // Push log update to SQL
+        const finalLog = updatedHistory.find(h => h.id === id);
+        if (finalLog) pushPetLogToSupabase(finalLog);
+      },
+      
+      addPetLog: (newLog) => {
+        const state = get();
+        set({
+          pet: {
+            ...state.pet,
+            history: [newLog, ...(state.pet.history || [])]
+          }
+        });
+        pushPetLogToSupabase(newLog);
       },
 
       completePetVaccine: async (petId, vaccineName, data) => {
@@ -7964,18 +8035,18 @@ const useStore = create(
             const initialT = initialState.tatil?.trips?.find(it => it.id === t.id);
             const evaluations = t.evaluations || initialT?.evaluations || {};
 
-            const hasNewStructure = t.transportation && t.transportation.departure;
-            if (!hasNewStructure) {
-              return {
-                ...t,
-                evaluations,
-                transportation: {
-                  departure: { flightNo: t.transportation?.flightNo || '', airline: t.transportation?.airline || '', pnr: t.transportation?.pnr || '', time: t.transportation?.time || '', status: 'Planlandı' },
-                  return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
-                }
-              };
-            }
-            return { ...t, evaluations };
+            // Deep check for structure
+            const trans = t.transportation || {};
+            const dep = trans.departure || { flightNo: trans.flightNo || '', airline: trans.airline || '', pnr: trans.pnr || '', time: trans.time || '', status: 'Planlandı' };
+            const ret = trans.return || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' };
+            const acc = t.accommodation || { hotel: '', address: '', bookingId: '', link: '' };
+
+            return {
+              ...t,
+              evaluations,
+              transportation: { departure: dep, return: ret },
+              accommodation: acc
+            };
           });
 
           // Specially update Viyana trip if it's the one from the screenshot

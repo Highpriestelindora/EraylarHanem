@@ -418,7 +418,7 @@ function ManageVaccineContent({ petId, onClose }) {
 }
 
 function AddPetLogContent({ petId, onClose, editingLog }) {
-  const { pet, setModuleData, updatePetLog } = useStore();
+  const { pet, addPetLog, updatePetLog } = useStore();
   const [note, setNote] = useState(editingLog ? editingLog.action : '');
   const [date, setDate] = useState(editingLog ? editingLog.dt : new Date().toLocaleDateString('tr-TR'));
 
@@ -437,7 +437,7 @@ function AddPetLogContent({ petId, onClose, editingLog }) {
         dt: date,
         type: 'manual'
       };
-      setModuleData('pet', { ...pet, history: [newLog, ...(pet.history || [])] });
+      addPetLog(newLog);
       toast.success('Günlük kaydedildi! 📝');
     }
     onClose();
