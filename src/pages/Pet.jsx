@@ -47,6 +47,7 @@ export default function Pet() {
   const [editingLog, setEditingLog] = useState(null);
   const [completingVaccine, setCompletingVaccine] = useState(null);
   const [showAddVaccine, setShowAddVaccine] = useState(false);
+  const [editingVaccine, setEditingVaccine] = useState(null);
   const [showAddWeight, setShowAddWeight] = useState(false);
   const [showAddExpense, setShowAddExpense] = useState(false);
 
@@ -265,6 +266,9 @@ export default function Pet() {
                       <div className="vr-badge" style={{ background: st.color + '20', color: st.color, fontSize: '10px', fontWeight: 900, padding: '4px 8px', borderRadius: '8px' }}>
                         {st.label === 'GECİKMİŞ' ? `-${st.days} g.` : `${st.days} g.`}
                       </div>
+                      <button className="done-btn-mini" onClick={() => { setEditingVaccine(v); setShowAddVaccine(true); }} title="Düzenle">
+                        <Edit2 size={14} />
+                      </button>
                       <button className="done-btn-mini" onClick={() => setCompletingVaccine(v)} title="Yapıldı Olarak İşaretle">
                         <Check size={14} />
                       </button>
@@ -313,8 +317,8 @@ export default function Pet() {
         <ApplyVaccineContent petId={activePet} vaccine={completingVaccine} onClose={() => setCompletingVaccine(null)} />
       </ActionSheet>
 
-      <ActionSheet isOpen={showAddVaccine} onClose={() => setShowAddVaccine(false)} title="💉 Aşı Ekle">
-        <ManageVaccineContent petId={activePet} onClose={() => setShowAddVaccine(false)} />
+      <ActionSheet isOpen={showAddVaccine} onClose={() => { setShowAddVaccine(false); setEditingVaccine(null); }} title={editingVaccine ? "💉 Aşı Düzenle" : "💉 Aşı Ekle"}>
+        <ManageVaccineContent petId={activePet} onClose={() => { setShowAddVaccine(false); setEditingVaccine(null); }} editingVaccine={editingVaccine} />
       </ActionSheet>
 
       <ActionSheet isOpen={showAddWeight} onClose={() => setShowAddWeight(false)} title="⚖️ Kilo Ölçümü">
@@ -369,12 +373,25 @@ function AddPetExpenseContent({ petId, onClose }) {
 
 function AddWeightContent({ petId, onClose }) {
   const { addPetWeight } = useStore();
-  const [formData, setFormData] = useState({ w: '', dt: new Date().toLocaleDateString('tr-TR') });
+  const [formData, setFormData] = useState({ 
+    w: '', 
+    dt: new Date().toISOString().split('T')[0] // Default to YYYY-MM-DD for input type="date"
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.w) return;
-    addPetWeight(petId, { ...formData, w: Number(formData.w) });
+    
+    // Format date to "DD.MM.YYYY dddd"
+    const dateObj = new Date(formData.dt);
+    const formattedDate = dateObj.toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      weekday: 'long'
+    });
+
+    addPetWeight(petId, { w: Number(formData.w), dt: formattedDate });
     onClose();
     toast.success('Kilo kaydedildi! ⚖️');
   };
@@ -385,21 +402,43 @@ function AddWeightContent({ petId, onClose }) {
         <label>Ağırlık (kg)</label>
         <input type="number" step="0.1" value={formData.w} onChange={e => setFormData({...formData, w: e.target.value})} placeholder="10.5" required autoFocus />
       </div>
+      <div className="form-group">
+        <label>Tarih</label>
+        <input type="date" value={formData.dt} onChange={e => setFormData({...formData, dt: e.target.value})} required />
+      </div>
       <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Kaydet</button>
     </form>
   );
 }
 
-function ManageVaccineContent({ petId, onClose }) {
-  const { addPetVaccine } = useStore();
-  const [formData, setFormData] = useState({ n: '', last: new Date().toLocaleDateString('tr-TR'), ev: 60 });
+function ManageVaccineContent({ petId, onClose, editingVaccine }) {
+  const { addPetVaccine, updatePetVaccine, deletePetVaccine } = useStore();
+  const [formData, setFormData] = useState({ 
+    n: editingVaccine ? editingVaccine.n : '', 
+    last: editingVaccine ? editingVaccine.last : new Date().toLocaleDateString('tr-TR'), 
+    ev: editingVaccine ? editingVaccine.ev : 60 
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.n) return;
-    addPetVaccine(petId, formData);
+    
+    if (editingVaccine) {
+      updatePetVaccine(petId, editingVaccine.id || editingVaccine.n, formData);
+      toast.success('Aşı güncellendi! ✨');
+    } else {
+      addPetVaccine(petId, formData);
+      toast.success('Aşı takvime eklendi! 💉');
+    }
     onClose();
-    toast.success('Aşı takvime eklendi! 💉');
+  };
+
+  const handleDelete = () => {
+    if (window.confirm('Bu aşıyı takvimden silmek istediğinize emin misiniz?')) {
+      deletePetVaccine(petId, editingVaccine.id || editingVaccine.n);
+      toast.success('Aşı silindi.');
+      onClose();
+    }
   };
 
   return (
@@ -409,10 +448,21 @@ function ManageVaccineContent({ petId, onClose }) {
         <input type="text" value={formData.n} onChange={e => setFormData({...formData, n: e.target.value})} placeholder="Karma, Kuduz..." required />
       </div>
       <div className="form-group">
+        <label>Son Uygulama Tarihi</label>
+        <input type="text" value={formData.last} onChange={e => setFormData({...formData, last: e.target.value})} placeholder="DD.MM.YYYY" required />
+      </div>
+      <div className="form-group">
         <label>Periyot (Gün)</label>
         <input type="number" value={formData.ev} onChange={e => setFormData({...formData, ev: Number(e.target.value)})} required />
       </div>
-      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Takvime Ekle</button>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        {editingVaccine && (
+          <button type="button" onClick={handleDelete} className="submit-btn" style={{ background: '#ef4444', color: 'white', flex: 1 }}>Sil</button>
+        )}
+        <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white', flex: 2 }}>
+          {editingVaccine ? 'Güncelle' : 'Takvime Ekle'}
+        </button>
+      </div>
     </form>
   );
 }

@@ -7216,20 +7216,41 @@ const useStore = create(
         deletePetAsiFromSupabase(id);
       },
 
+      updatePetVaccine: (petId, vaccineId, updates) => {
+        const state = get();
+        const currentVaccines = state.pet.vaccines[petId] || [];
+        const yeniVaccines = currentVaccines.map(v => 
+          (v.id === vaccineId || v.n === vaccineId) ? { ...v, ...updates } : v
+        );
+        set({ pet: { ...state.pet, vaccines: { ...state.pet.vaccines, [petId]: yeniVaccines } } });
+
+        const updatedVaccine = yeniVaccines.find(v => v.id === vaccineId || v.n === vaccineId);
+        if (updatedVaccine) {
+          pushPetAsiToSupabase(petId, updatedVaccine);
+        }
+      },
+
       addPetWeight: (petId, weightData) => {
         const state = get();
         const currentWeights = state.pet.weights[petId] || [];
         const newId = Date.now();
-        const yeniWeights = [{ id: newId, ...weightData }, ...currentWeights];
+        
+        const parseDate = (str) => {
+          if (!str) return 0;
+          const parts = str.split(' ')[0].split('.');
+          return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+        };
+
+        const yeniWeights = [{ id: newId, ...weightData }, ...currentWeights].sort((a, b) => parseDate(b.dt) - parseDate(a.dt));
         const log = { id: newId, pet: petId, action: `Kilo güncellendi: ${weightData.w} kg`, dt: weightData.dt, type: 'weight' };
+        
+        const yeniHistory = [log, ...(state.pet.history || [])].sort((a, b) => parseDate(b.dt) - parseDate(a.dt));
+
         set({
           pet: {
             ...state.pet,
             weights: { ...state.pet.weights, [petId]: yeniWeights },
-            history: [
-              log,
-              ...(state.pet.history || [])
-            ].slice(0, 50)
+            history: yeniHistory.slice(0, 100)
           }
         });
 
@@ -7266,15 +7287,14 @@ const useStore = create(
         // If it's a weight log, remove the corresponding weight record
         if (logToDelete && logToDelete.type === 'weight') {
           const petId = logToDelete.pet;
-          const oldWMatch = logToDelete.action.match(/(\d+\.?\d*)/);
-          const oldW = oldWMatch ? parseFloat(oldWMatch[1]) : null;
-          
-          if (oldW !== null) {
-            const wToDelete = (yeniPet.weights[petId] || []).find(w => w.dt === logToDelete.dt && w.w === oldW);
-            if (wToDelete) {
-              yeniPet.weights[petId] = (yeniPet.weights[petId] || []).filter(w => w.id !== wToDelete.id);
-              deletePetAgirlikFromSupabase(wToDelete.id);
-            }
+          // Robust deletion: first try by ID (if we saved it in the log), then fallback to date/weight match
+          const wToDelete = (yeniPet.weights[petId] || []).find(w => 
+            w.id === logToDelete.id || (w.dt === logToDelete.dt && logToDelete.action.includes(String(w.w)))
+          );
+
+          if (wToDelete) {
+            yeniPet.weights[petId] = (yeniPet.weights[petId] || []).filter(w => w.id !== wToDelete.id);
+            deletePetAgirlikFromSupabase(wToDelete.id);
           }
         }
 
