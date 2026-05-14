@@ -187,7 +187,7 @@ export default function Pet() {
           <div className="pic-divider" />
           <div className="pic-row">
             <div className="pic-item"><span>Renk</span> <strong>{currentPet.color}</strong></div>
-            <div className="pic-item"><span>Çip No</span> <strong>{currentPet.chip?.slice(-6)}...</strong></div>
+            <div className="pic-item"><span>Çip No</span> <strong style={{ fontSize: currentPet.chip?.length > 10 ? '9px' : '11px', letterSpacing: '-0.2px' }}>{currentPet.chip || '--'}</strong></div>
             <div className="pic-item"><span>Pasaport</span> <strong>{currentPet.passport}</strong></div>
           </div>
         </div>
