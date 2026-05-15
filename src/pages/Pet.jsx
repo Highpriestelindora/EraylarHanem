@@ -220,10 +220,21 @@ export default function Pet() {
                  <div className="weight-chart-container mt-20">
                    <Bar 
                      data={{
-                       labels: [...petWeights].reverse().map(w => w.dt.split('.').slice(0,2).join('.')),
+                       labels: [...petWeights].sort((a, b) => {
+                          const da = a.dt.split(' ')[0].split('.').reverse().join('');
+                          const db = b.dt.split(' ')[0].split('.').reverse().join('');
+                          return da.localeCompare(db);
+                        }).map(w => {
+                          const p = w.dt.split(' ')[0].split('.');
+                          return `${p[0]}.${p[1]}${p[2] !== '2026' ? '/' + p[2].slice(-2) : ''}`;
+                        }),
                        datasets: [{
                          label: 'Kilo',
-                         data: [...petWeights].reverse().map(w => w.w),
+                         data: [...petWeights].sort((a, b) => {
+                          const da = a.dt.split(' ')[0].split('.').reverse().join('');
+                          const db = b.dt.split(' ')[0].split('.').reverse().join('');
+                          return da.localeCompare(db);
+                        }).map(w => w.w),
                          backgroundColor: activePet === 'waffle' ? '#F97316' : '#FB923C',
                          borderRadius: 6,
                          barThickness: 20
@@ -280,15 +291,15 @@ export default function Pet() {
           </div>
         </section>
 
-        {/* Günlük & Geçmiş */}
+        {/* Kilo Geçmişi */}
         <section className="pet-section mt-24">
           <div className="ps-header">
-            <h3>⌛ Sağlık & Bakım Günlüğü</h3>
+            <h3>⚖️ Kilo Geçmişi</h3>
           </div>
-            <div className="history-timeline-premium">
-            {(history || []).filter(h => h.pet === activePet && h.type !== 'vaccine_done').map((h) => (
+          <div className="history-timeline-premium">
+            {(history || []).filter(h => h.pet === activePet && h.type === 'weight').map((h) => (
               <div key={h.id} className="history-card-v2 glass">
-                <div className="hc-icon">{h.type === 'weight' ? '⚖️' : '📝'}</div>
+                <div className="hc-icon">⚖️</div>
                 <div className="hc-info">
                   <p>{h.action}</p>
                   <span className="hc-time">{h.dt}</span>
@@ -299,6 +310,34 @@ export default function Pet() {
                 </div>
               </div>
             ))}
+            {!(history || []).some(h => h.pet === activePet && h.type === 'weight') && (
+              <div className="gallery-empty" style={{ padding: '20px', fontSize: '11px' }}>Kayıtlı kilo verisi yok.</div>
+            )}
+          </div>
+        </section>
+
+        {/* Günlük & Geçmiş (Notlar) */}
+        <section className="pet-section mt-24">
+          <div className="ps-header">
+            <h3>📝 Sağlık & Bakım Günlüğü</h3>
+          </div>
+          <div className="history-timeline-premium">
+            {(history || []).filter(h => h.pet === activePet && h.type !== 'weight' && h.type !== 'vaccine_done').map((h) => (
+              <div key={h.id} className="history-card-v2 note-card glass">
+                <div className="hc-icon">📝</div>
+                <div className="hc-info">
+                  <p>{h.action}</p>
+                  <span className="hc-time">{h.dt}</span>
+                </div>
+                <div className="hc-actions">
+                  <button className="hc-edit" onClick={() => { setEditingLog(h); setShowAddLog(true); }}><Edit2 size={14} /></button>
+                  <button className="hc-del" onClick={() => deletePetLog(h.id)}><Trash2 size={14} /></button>
+                </div>
+              </div>
+            ))}
+            {!(history || []).some(h => h.pet === activePet && h.type !== 'weight' && h.type !== 'vaccine_done') && (
+              <div className="gallery-empty" style={{ padding: '20px', fontSize: '11px' }}>Henüz bir not alınmamış.</div>
+            )}
           </div>
         </section>
 

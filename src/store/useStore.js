@@ -1970,6 +1970,15 @@ const useStore = create(
               });
             }
             if (agirliklar.data) {
+              const parseTurkishDate = (str) => {
+                if (!str) return 0;
+                const datePart = str.split(' ')[0];
+                const parts = datePart.split('.');
+                if (parts.length < 3) return 0;
+                const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                return isNaN(d.getTime()) ? 0 : d.getTime();
+              };
+
               agirliklar.data.forEach(w => {
                 const pId = w.pet_id || w.pet_name;
                 if (!pId) return;
@@ -1983,6 +1992,11 @@ const useStore = create(
                   });
                 }
               });
+
+              // Sort all weight arrays descending (newest first)
+              Object.keys(pet.weights).forEach(pId => {
+                pet.weights[pId].sort((a, b) => parseTurkishDate(b.dt) - parseTurkishDate(a.dt));
+              });
             }
             if (supplies.data) {
               supplies.data.forEach(s => {
@@ -1993,14 +2007,26 @@ const useStore = create(
               });
             }
             if (petLogs.data) {
-              const mappedLogs = petLogs.data.map(l => ({
-                id: l.id,
-                pet: l.pet_name || l.pet_id,
-                action: l.notes || l.action,
-                dt: l.date || l.dt,
-                type: 'info'
-              }));
-              pet.history = [...mappedLogs].sort((a,b) => new Date(b.dt) - new Date(a.dt)).slice(0, 50);
+              const parseTurkishDate = (str) => {
+                if (!str) return 0;
+                const datePart = str.split(' ')[0];
+                const parts = datePart.split('.');
+                if (parts.length < 3) return 0;
+                const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                return isNaN(d.getTime()) ? 0 : d.getTime();
+              };
+
+              const mappedLogs = petLogs.data.map(l => {
+                const actionText = l.notes || l.action || '';
+                return {
+                  id: l.id,
+                  pet: l.pet_name || l.pet_id,
+                  action: actionText,
+                  dt: l.date || l.dt,
+                  type: actionText.includes('Kilo') ? 'weight' : 'note'
+                };
+              });
+              pet.history = [...mappedLogs].sort((a,b) => parseTurkishDate(b.dt) - parseTurkishDate(a.dt)).slice(0, 100);
             }
 
             const saglik = { ...state.saglik };
@@ -7235,16 +7261,23 @@ const useStore = create(
         const currentWeights = state.pet.weights[petId] || [];
         const newId = Date.now();
         
-        const parseDate = (str) => {
+        const parseTurkishDate = (str) => {
           if (!str) return 0;
-          const parts = str.split(' ')[0].split('.');
-          return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+          // Handle "14.05.2026 Perşembe" or "14.05.2026"
+          const datePart = str.split(' ')[0];
+          const parts = datePart.split('.');
+          if (parts.length < 3) return 0;
+          const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+          return isNaN(d.getTime()) ? 0 : d.getTime();
         };
 
-        const yeniWeights = [{ id: newId, ...weightData }, ...currentWeights].sort((a, b) => parseDate(b.dt) - parseDate(a.dt));
+        const yeniWeights = [{ id: newId, ...weightData }, ...currentWeights]
+          .sort((a, b) => parseTurkishDate(b.dt) - parseTurkishDate(a.dt));
+          
         const log = { id: newId, pet: petId, action: `Kilo güncellendi: ${weightData.w} kg`, dt: weightData.dt, type: 'weight' };
         
-        const yeniHistory = [log, ...(state.pet.history || [])].sort((a, b) => parseDate(b.dt) - parseDate(a.dt));
+        const yeniHistory = [log, ...(state.pet.history || [])]
+          .sort((a, b) => parseTurkishDate(b.dt) - parseTurkishDate(a.dt));
 
         set({
           pet: {

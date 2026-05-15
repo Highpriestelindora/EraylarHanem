@@ -170,12 +170,27 @@
 .history-card-v2 {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 12px 16px;
   border-radius: 18px;
   background: white;
   border: 1px solid var(--brd);
   position: relative;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.history-card-v2.note-card {
+  background: #FFFBEB; /* Soft Amber */
+  border: 1.5px solid #FDE68A; /* Amber border */
+}
+
+.history-card-v2.note-card .hc-icon {
+  background: #FEF3C7;
+  color: #D97706;
+}
+
+.history-card-v2.note-card .hc-info p {
+  color: #92400E; /* Dark Amber for better readability */
 }
 
 .hc-icon {
