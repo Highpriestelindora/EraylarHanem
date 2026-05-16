@@ -35,6 +35,7 @@ const DEFAULT_STATE = {
     borclar: [],
     kartlar: [],
     kartOdemeleri: [],
+    taksitler: [],
     rekurans: [],
     limits: { Mutfak: 15000, Sosyal: 5000, Saglik: 3000 }
   },
@@ -557,7 +558,7 @@ async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 12) {
   }
 }
 
-async function upsertKartMutabakat(kart_id, ay, beklenen, gercek, familyId = DEFAULT_FID) {
+async function upsertKartMutabakat(kart_id, ay, beklenen, gercek, guncel, familyId = DEFAULT_FID) {
   try {
     const { error } = await supabase
       .from('finans_kart_mutabakat')
@@ -566,7 +567,8 @@ async function upsertKartMutabakat(kart_id, ay, beklenen, gercek, familyId = DEF
         kart_id,
         ay,
         beklenen_borc: beklenen,
-        gercek_borc: gercek
+        gercek_borc: gercek,
+        guncel_borc: guncel || gercek
     }, { onConflict: 'family_id,kart_id,ay' });
     if (error) throw error;
   } catch (err) {
@@ -608,6 +610,48 @@ async function fetchKartOdemeler(familyId = DEFAULT_FID) {
   } catch (err) {
     console.error('❌ fetchKartOdemeler error:', err);
     return [];
+  }
+}
+
+async function pushTaksitToSupabase(taksit, familyId = DEFAULT_FID) {
+  try {
+    const { error } = await supabase.from('finans_taksitler').upsert({
+      id: taksit.id,
+      family_id: familyId,
+      kart_id: taksit.kart_id,
+      baslik: taksit.baslik,
+      toplam_tutar: Number(taksit.toplam_tutar),
+      taksit_sayisi: Number(taksit.taksit_sayisi),
+      kalan_taksit: Number(taksit.kalan_taksit),
+      baslangic_tarihi: taksit.baslangic_tarihi || new Date().toISOString().split('T')[0],
+      kategori: taksit.kategori || 'Genel'
+    });
+    if (error) throw error;
+  } catch (err) {
+    console.error('❌ pushTaksit error:', err);
+  }
+}
+
+async function fetchTaksitler(familyId = DEFAULT_FID) {
+  try {
+    const { data, error } = await supabase
+      .from('finans_taksitler')
+      .select('*')
+      .eq('family_id', familyId);
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchTaksitler error:', err);
+    return [];
+  }
+}
+
+async function deleteTaksitFromSupabase(id) {
+  try {
+    const { error } = await supabase.from('finans_taksitler').delete().eq('id', id);
+    if (error) throw error;
+  } catch (err) {
+    console.error('❌ deleteTaksit error:', err);
   }
 }
 
@@ -792,20 +836,70 @@ async function pushHedefToSupabase(goal) {
     const familyId = DEFAULT_FID;
     const payload = {
       id: String(goal.id).includes(familyId) ? String(goal.id) : `${goal.id}-${familyId}`,
-      title: goal.title || goal.name || '',
+      title: goal.title || goal.name || 'İsimsiz Hedef',
       target: Number(goal.target) || 100,
       current: Number(goal.current) || 0,
       target_date: goal.targetDate || goal.deadline || null,
       duration: goal.duration ? String(goal.duration) : null,
       priority: goal.priority || 'Orta',
       owner: goal.owner || 'ortak',
+      category: goal.category || 'genel',
       notes: goal.notes || null,
+      milestones: goal.milestones || [],
       yearly_plan: goal.yearlyPlan || null,
-      type: goal.type || 'vision',
+      type: goal.type || (goal.name ? 'money' : 'vision'),
       family_id: familyId
     };
-    await supabase.from('hedefler_aktif').upsert(payload);
-  } catch(e) { console.warn('Supabase Hedef upsert hatası:', e); }
+    const { error } = await supabase.from('hedefler_aktif').upsert(payload);
+    if (error) throw error;
+    console.log(`✅ Hedef SQL'e kaydedildi: ${payload.title}`);
+  } catch(e) { 
+    console.error('❌ Supabase Hedef upsert hatası:', e);
+  }
+}
+
+async function fetchHedefler(familyId = DEFAULT_FID) {
+  try {
+    const { data, error } = await supabase.from('hedefler_aktif').select('*').eq('family_id', familyId);
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchHedefler error:', err);
+    return [];
+  }
+}
+
+async function fetchHedefGecmis(familyId = DEFAULT_FID) {
+  try {
+    const { data, error } = await supabase.from('hedefler_gecmis').select('*').eq('family_id', familyId).order('resolved_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchHedefGecmis error:', err);
+    return [];
+  }
+}
+
+async function fetchVizyonPlanlar(familyId = DEFAULT_FID) {
+  try {
+    const { data, error } = await supabase.from('hedefler_vizyon').select('*').eq('family_id', familyId);
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchVizyonPlanlar error:', err);
+    return [];
+  }
+}
+
+async function fetchHabits(familyId = DEFAULT_FID) {
+  try {
+    const { data, error } = await supabase.from('hedefler_habits').select('*').eq('family_id', familyId);
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchHabits error:', err);
+    return [];
+  }
 }
 
 async function deleteHedefFromSupabase(id) {
@@ -813,19 +907,21 @@ async function deleteHedefFromSupabase(id) {
     const familyId = DEFAULT_FID;
     const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
     await supabase.from('hedefler_aktif').delete().eq('id', finalId).eq('family_id', familyId);
-  } catch(e) {}
+  } catch(e) { console.warn('Hedef Silme Hatası:', e); }
 }
 
-async function pushHedefGecmisToSupabase(historyItem, status) {
+async function pushHedefGecmisToSupabase(h, status = 'completed') {
   try {
     const familyId = DEFAULT_FID;
     const payload = {
-      id: String(historyItem.id).includes(familyId) ? String(historyItem.id) : `${historyItem.id}-${familyId}`,
-      title: historyItem.title || historyItem.name,
-      owner: historyItem.owner || 'ortak',
-      notes: historyItem.notes || null,
+      id: String(h.id).includes(familyId) ? String(h.id) : `${h.id}-${familyId}`,
+      title: h.title || h.name || 'İsimsiz',
+      owner: h.owner || 'ortak',
+      category: h.category || 'genel',
+      notes: h.notes || null,
       status: status, 
-      resolved_at: historyItem.completedAt || historyItem.failedAt || new Date().toISOString(),
+      reflection: h.reflection || null,
+      resolved_at: h.completedAt || h.failedAt || h.date || new Date().toISOString(),
       family_id: familyId
     };
     await supabase.from('hedefler_gecmis').upsert(payload);
@@ -845,13 +941,14 @@ async function pushHabitToSupabase(habit) {
   } catch(e) { console.warn('Habit Hatası:', e); }
 }
 
-async function pushVizyonPlanToSupabase(plan) {
+async function pushVizyonPlanToSupabase(p) {
   try {
     const familyId = DEFAULT_FID;
     await supabase.from('hedefler_vizyon').upsert({
-      id: String(plan.id).includes(familyId) ? String(plan.id) : `${plan.id}-${familyId}`,
-      text: plan.text,
-      owner: plan.owner || 'ortak',
+      id: String(p.id).includes(familyId) ? String(p.id) : `${p.id}-${familyId}`,
+      text: p.text || '',
+      type: p.type || 'career',
+      owner: p.owner || 'ortak',
       family_id: familyId
     });
   } catch(e) { console.warn('Supabase Vizyon upsert hatası:', e); }
@@ -1344,7 +1441,8 @@ async function pushMutfakSohbetToSupabase(msg) {
   } catch(e) { console.warn('Mutfak Sohbet Hatası:', e); }
 }
 
-// ═══════════════════════════════════════════════════════════════════
+// --- Grup 3 Gölge Yazım Yardımcıları ---
+
 // GRUP 3 GÖLGE YAZIM YARDIMCI FONKSİYONLARI
 // Tatil, Mühendislik, Modaring
 // ═══════════════════════════════════════════════════════════════════
@@ -3367,22 +3465,40 @@ const useStore = create(
                 id: x.id, 
                 name: x.title, 
                 title: x.title, 
-                target: x.target, 
-                current: x.current, 
+                target: Number(x.target), 
+                current: Number(x.current), 
                 targetDate: x.target_date, 
                 duration: x.duration, 
                 priority: x.priority, 
                 owner: x.owner, 
                 notes: x.notes, 
                 yearlyPlan: x.yearly_plan,
-                type: x.type || (x.target > 1000 ? 'money' : 'vision') // Heuristic or explicit
+                type: x.type || (x.target > 1000 ? 'money' : 'vision')
               }));
 
-              // If type is explicit, use it. Otherwise, use ID existence as fallback.
-              const existingKumbaralarIds = new Set(k.kumbaralar?.map(x => String(x.id)) || []);
-              
-              h.goals = mapped.filter(x => x.type === 'vision' || (!x.type && !existingKumbaralarIds.has(String(x.id))));
-              k.kumbaralar = mapped.filter(x => x.type === 'money' || (!x.type && existingKumbaralarIds.has(String(x.id))));
+              h.goals = mapped.filter(x => x.type === 'vision');
+              k.kumbaralar = mapped.filter(x => x.type === 'money');
+            }
+
+            // Legacy check: if kasa_kumbaralar still has unique items not in hedefler_aktif, merge them
+            if (dbKumbaralar.data) {
+              dbKumbaralar.data.forEach(g => {
+                const isAlreadyIn = k.kumbaralar.some(ex => String(ex.id) === String(g.id));
+                if (!isAlreadyIn) {
+                  k.kumbaralar.push({
+                    id: g.id,
+                    name: g.name,
+                    target: Number(g.target || 0),
+                    current: Number(g.current || 0),
+                    deadline: g.deadline,
+                    icon: g.icon,
+                    priority: g.priority,
+                    category: g.category,
+                    type: 'money',
+                    ...(g.details || {})
+                  });
+                }
+              });
             }
 
             if (dbGecmis.data) {
@@ -3436,7 +3552,8 @@ const useStore = create(
               }));
             }
 
-            if (dbKumbaralar.data) {
+            if (dbKumbaralar.data && dbKumbaralar.data.length > 0 && k.kumbaralar.length === 0) {
+              // Only if still empty (failsafe)
               k.kumbaralar = dbKumbaralar.data.map(g => ({
                 id: g.id,
                 name: g.name,
@@ -4050,7 +4167,7 @@ const useStore = create(
 
           if (newItem.odenme_turu === 'kart' && newItem.kart_id) {
             if (!yeniMutabakat[newItem.kart_id]) {
-              yeniMutabakat[newItem.kart_id] = { beklenen: 0, gercek: null, ay: buAy };
+              yeniMutabakat[newItem.kart_id] = { beklenen: 0, gercek: null, guncel: null, ay: buAy };
             }
             yeniMutabakat[newItem.kart_id].beklenen = (yeniMutabakat[newItem.kart_id].beklenen || 0) + newTutar;
           } else if (newItem.odenme_turu === 'havale' && newItem.banka_id) {
@@ -4385,13 +4502,44 @@ const useStore = create(
 
       },
 
+      syncAllHedefler: async () => {
+        const state = get();
+        const goals = state.hedefler.goals || [];
+        const moneyGoals = state.kasa.kumbaralar || [];
+        const visionPlans = state.hedefler.longTermVision || [];
+        
+        toast.loading('Hedefler senkronize ediliyor...');
+        
+        try {
+          // Push all goals to hedefler_aktif
+          for (const g of goals) {
+            await pushHedefToSupabase({ ...g, type: 'vision' });
+          }
+          for (const g of moneyGoals) {
+            await pushHedefToSupabase({ ...g, type: 'money' });
+          }
+          // Push vision plans to hedefler_vizyon
+          for (const p of visionPlans) {
+            await pushVizyonPlanToSupabase(p);
+          }
+          
+          toast.dismiss();
+          toast.success('Tüm hedefler SQL ile senkronize edildi! ✅');
+        } catch (err) {
+          toast.dismiss();
+          toast.error('Senkronizasyon sırasında hata oluştu.');
+          console.error(err);
+        }
+      },
+
       addGoal: async (goal) => {
         const state = get();
         const name = goal.name || 'Yeni Hedef';
         
-        // Mükerrer Kontrolü
-        const isDuplicate = (state.kasa.kumbaralar || []).some(
-          g => g.name?.toLowerCase().trim() === name.toLowerCase().trim()
+        // Mükerrer Kontrolü (State üzerinden)
+        const allGoals = [...(state.kasa.kumbaralar || []), ...(state.hedefler.goals || [])];
+        const isDuplicate = allGoals.some(
+          g => (g.name || g.title || '').toLowerCase().trim() === name.toLowerCase().trim()
         );
         
         if (isDuplicate) {
@@ -4426,7 +4574,6 @@ const useStore = create(
         const updatedGoal = updated.find(g => g.id === id);
         if (updatedGoal) {
           pushHedefToSupabase(updatedGoal); // Gölge Yazım
-          pushGenericToSupabase('kasa_kumbaralar', updatedGoal);
         }
 
       },
@@ -4437,8 +4584,6 @@ const useStore = create(
         set({ kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(x => x.id !== id) } });
         deleteHedefFromSupabase(id); // Gölge Yazım
         if (g) get().addLog('Hedef Silindi', `${g.name}`);
-
-        removeGenericFromSupabase('kasa_kumbaralar', id);
       },
 
       // --- Vision Goal Actions ---
@@ -4549,7 +4694,7 @@ const useStore = create(
             return;
         }
 
-          const kazanım = {
+          const kazanim = {
             id: Date.now().toString(),
             title: goalToComplete.title || goalToComplete.name,
             originalType: type,
@@ -4561,21 +4706,21 @@ const useStore = create(
           if (type === 'money') {
             set({ 
               kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(g => g.id != goalId) },
-              hedefler: { ...state.hedefler, completedHistory: [kazanım, ...(state.hedefler.completedHistory || [])] }
+              hedefler: { ...state.hedefler, completedHistory: [kazanim, ...(state.hedefler.completedHistory || [])] }
             });
           } else {
             set({ 
               hedefler: { 
                 ...state.hedefler, 
                 goals: (state.hedefler.goals || []).filter(g => g.id != goalId),
-                completedHistory: [kazanım, ...(state.hedefler.completedHistory || [])] 
+                completedHistory: [kazanim, ...(state.hedefler.completedHistory || [])] 
               } 
             });
           }
           
-          pushHedefGecmisToSupabase(kazanım, 'completed'); // Gölge Yazım
+          pushHedefGecmisToSupabase(kazanim, 'completed'); // Gölge Yazım
           deleteHedefFromSupabase(goalId); // Aktif hedeflerden sil
-          get().addLog('Kazanım!', `Hedef tamamlandı: ${kazanım.title}`);
+          get().addLog('Kazanım!', `Hedef tamamlandı: ${kazanim.title}`);
 
       },
 
@@ -4595,7 +4740,7 @@ const useStore = create(
         }
 
 
-          const kayıp = {
+          const kayip = {
             id: Date.now().toString(),
             title: goalToFail.title || goalToFail.name,
             originalType: type,
@@ -4607,21 +4752,21 @@ const useStore = create(
           if (type === 'money') {
             set({ 
                 kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(g => g.id != goalId) },
-                hedefler: { ...state.hedefler, failedHistory: [kayıp, ...(state.hedefler.failedHistory || [])] }
+                hedefler: { ...state.hedefler, failedHistory: [kayip, ...(state.hedefler.failedHistory || [])] }
             });
           } else {
             set({ 
                 hedefler: { 
                     ...state.hedefler, 
                     goals: (state.hedefler.goals || []).filter(g => g.id != goalId),
-                    failedHistory: [kayıp, ...(state.hedefler.failedHistory || [])] 
+                    failedHistory: [kayip, ...(state.hedefler.failedHistory || [])] 
                 } 
             });
           }
 
-          pushHedefGecmisToSupabase(kayıp, 'failed'); // Gölge Yazım
+          pushHedefGecmisToSupabase(kayip, 'failed'); // Gölge Yazım
           deleteHedefFromSupabase(goalId); // Aktif hedeflerden sil
-          get().addLog('Kayıp', `Hedef başarısız: ${kayıp.title}`);
+          get().addLog('Kayıp', `Hedef başarısız: ${kayip.title}`);
 
       },
 
@@ -4629,26 +4774,28 @@ const useStore = create(
         const state = get();
         const updated = (state.hedefler.completedHistory || []).map(h => h.id === id ? { ...h, ...updates } : h);
         set({ hedefler: { ...state.hedefler, completedHistory: updated } });
-
+        const updatedItem = updated.find(h => h.id === id);
+        if (updatedItem) pushHedefGecmisToSupabase(updatedItem, 'completed');
       },
 
       deleteCompletedGoal: (id) => {
         const state = get();
         set({ hedefler: { ...state.hedefler, completedHistory: (state.hedefler.completedHistory || []).filter(h => h.id !== id) } });
-
+        removeGenericFromSupabase('hedefler_gecmis', id);
       },
 
       updateFailedGoal: (id, updates) => {
         const state = get();
         const updated = (state.hedefler.failedHistory || []).map(h => h.id === id ? { ...h, ...updates } : h);
         set({ hedefler: { ...state.hedefler, failedHistory: updated } });
-
+        const updatedItem = updated.find(h => h.id === id);
+        if (updatedItem) pushHedefGecmisToSupabase(updatedItem, 'failed');
       },
 
       deleteFailedGoal: (id) => {
         const state = get();
         set({ hedefler: { ...state.hedefler, failedHistory: (state.hedefler.failedHistory || []).filter(h => h.id !== id) } });
-
+        removeGenericFromSupabase('hedefler_gecmis', id);
       },
 
       // ── Kasa Banka Actions ──────────────────────────────
@@ -7805,76 +7952,255 @@ const useStore = create(
       },
 
       // ── Hedefler Actions ───────────────────────────────
-      updateGoalProgress: (id, current) => {
+      addVisionGoal: (goal) => {
         const state = get();
-        const goals = state.hedefler.goals.map(g =>
-          g.id === id ? { ...g, current } : g
-        );
-        set({ hedefler: { ...state.hedefler, goals } });
-        const updated = goals.find(g => g.id === id);
-        if (updated) pushHedefToSupabase(updated);
-      },
-
-      toggleHabit: (id) => {
-        const state = get();
-        const today = new Date().toISOString().split('T')[0];
-        const habits = state.hedefler.habits.map(h => {
-          if (h.id === id) {
-            const isDone = h.lastDone === today;
-            return {
-              ...h,
-              lastDone: isDone ? '' : today,
-              streak: isDone ? Math.max(0, h.streak - 1) : h.streak + 1
-            };
-          }
-          return h;
-        });
-        set({ hedefler: { ...state.hedefler, habits } });
-
-        const updated = habits.find(h => h.id === id);
-        if (updated) pushHabitToSupabase(updated);
-      },
-
-      completeGoal: (id) => {
-        const state = get();
-        // Check vision goals
-        let goal = state.hedefler.goals.find(g => g.id === id);
-        let isMoney = false;
-
-        // Check money goals if not found
-        if (!goal) {
-          goal = (state.kasa.kumbaralar || []).find(g => g.id === id);
-          if (goal) isMoney = true;
-        }
-
-        if (!goal) return;
-
-        const updatedVisionGoals = isMoney ? state.hedefler.goals : state.hedefler.goals.filter(g => g.id !== id);
-        const updatedMoneyGoals = isMoney ? (state.kasa.kumbaralar || []).filter(g => g.id !== id) : state.kasa.kumbaralar;
-        
-        const newHallItem = { 
-          ...goal, 
-          title: goal.title || goal.name,
-          completedDate: new Date().toISOString().split('T')[0],
-          reward: isMoney ? 'Finansal Özgürlük Adımı' : 'Vizyon Başarısı'
+        const newGoal = {
+          id: 'v-' + Date.now(),
+          current: 0,
+          target: 100,
+          milestones: [],
+          ...goal
         };
-
         set({
           hedefler: {
             ...state.hedefler,
-            goals: updatedVisionGoals,
-            hallOfFame: [newHallItem, ...(state.hedefler.hallOfFame || [])]
-          },
-          kasa: {
-            ...state.kasa,
-            kumbaralar: updatedMoneyGoals
+            goals: [newGoal, ...(state.hedefler.goals || [])]
           }
         });
+        pushHedefToSupabase(newGoal);
+        toast.success('Yeni hedef eklendi! 🎯');
+      },
 
+      updateVisionGoal: (id, updates) => {
+        const state = get();
+        const updatedGoals = (state.hedefler.goals || []).map(g =>
+          g.id === id ? { ...g, ...updates } : g
+        );
+        set({
+          hedefler: {
+            ...state.hedefler,
+            goals: updatedGoals
+          }
+        });
+        const updated = updatedGoals.find(g => g.id === id);
+        if (updated) pushHedefToSupabase(updated);
+      },
+
+      deleteVisionGoal: (id) => {
+        const state = get();
+        set({
+          hedefler: {
+            ...state.hedefler,
+            goals: (state.hedefler.goals || []).filter(g => g.id !== id)
+          }
+        });
         deleteHedefFromSupabase(id);
-        pushHedefGecmisToSupabase(newHallItem, 'completed');
-        get().addLog('Hedef Tamamlandı', `🌟 Tebrikler! "${newHallItem.title}" hedefine ulaşıldı!`);
+        toast.success('Hedef silindi.');
+      },
 
+      addVisionPlan: (plan) => {
+        const state = get();
+        const newPlan = { id: 'ltv-' + Date.now(), ...plan };
+        set({
+          hedefler: {
+            ...state.hedefler,
+            longTermVision: [newPlan, ...(state.hedefler.longTermVision || [])]
+          }
+        });
+        pushVizyonPlanToSupabase(newPlan);
+      },
+
+      updateVisionPlan: (id, updates) => {
+        const state = get();
+        const updated = (state.hedefler.longTermVision || []).map(p =>
+          p.id === id ? { ...p, ...updates } : p
+        );
+        set({ hedefler: { ...state.hedefler, longTermVision: updated } });
+        const p = updated.find(x => x.id === id);
+        if (p) pushVizyonPlanToSupabase(p);
+      },
+
+      deleteVisionPlan: (id) => {
+        const state = get();
+        set({
+          hedefler: {
+            ...state.hedefler,
+            longTermVision: (state.hedefler.longTermVision || []).filter(p => p.id !== id)
+          }
+        });
+        // Remove from SQL
+        supabase.from('hedefler_vizyon').delete().eq('id', `${id}-${DEFAULT_FID}`).then();
+      },
+
+      syncAllHedefler: async () => {
+        const state = get();
+        const loadId = toast.loading('Hedefler SQL\'e senkronize ediliyor...');
+        try {
+          // 1. Aktif Hedefler (Vision & Money)
+          const goals = state.hedefler?.goals || [];
+          const moneyGoals = state.kasa?.kumbaralar || [];
+          for (const g of goals) await pushHedefToSupabase(g);
+          for (const g of moneyGoals) await pushHedefToSupabase(g);
+
+          // 2. Geçmiş
+          const compHist = state.hedefler?.completedHistory || [];
+          const failHist = state.hedefler?.failedHistory || [];
+          for (const h of compHist) await pushHedefGecmisToSupabase(h, 'completed');
+          for (const h of failHist) await pushHedefGecmisToSupabase(h, 'failed');
+
+          // 3. Vizyon
+          const vizyon = state.hedefler?.longTermVision || [];
+          for (const p of vizyon) await pushVizyonPlanToSupabase(p);
+
+          toast.dismiss(loadId);
+          toast.success('Tüm hedefler SQL ile senkronize edildi! 🚀');
+        } catch (e) {
+          toast.dismiss(loadId);
+          toast.error('Senkronizasyon hatası: ' + e.message);
+        }
+      },
+
+      updateGoalProgress: (id, current) => {
+        const state = get();
+        // Check both vision and money goals
+        let found = false;
+        const updatedVision = (state.hedefler.goals || []).map(g => {
+          if (g.id === id) { found = true; return { ...g, current }; }
+          return g;
+        });
+        
+        if (found) {
+          set({ hedefler: { ...state.hedefler, goals: updatedVision } });
+          pushHedefToSupabase(updatedVision.find(g => g.id === id));
+          return;
+        }
+
+        const updatedMoney = (state.kasa.kumbaralar || []).map(g => {
+          if (g.id === id) { found = true; return { ...g, current }; }
+          return g;
+        });
+
+        if (found) {
+          set({ kasa: { ...state.kasa, kumbaralar: updatedMoney } });
+          pushHedefToSupabase(updatedMoney.find(g => g.id === id));
+        }
+      },
+
+      updateGoal: (id, updates) => {
+        const state = get();
+        const updated = (state.kasa.kumbaralar || []).map(g =>
+          g.id === id ? { ...g, ...updates } : g
+        );
+        set({ kasa: { ...state.kasa, kumbaralar: updated } });
+        const g = updated.find(x => x.id === id);
+        if (g) pushHedefToSupabase(g);
+      },
+
+      deleteGoal: (id) => {
+        const state = get();
+        set({
+          kasa: {
+            ...state.kasa,
+            kumbaralar: (state.kasa.kumbaralar || []).filter(g => g.id !== id)
+          }
+        });
+        deleteHedefFromSupabase(id);
+      },
+
+      completeGoal: (id, type, reflection) => {
+        const state = get();
+        let goal = null;
+        if (type === 'money') {
+          goal = (state.kasa.kumbaralar || []).find(g => g.id === id);
+          if (goal) {
+            get().deleteGoal(id);
+          }
+        } else {
+          goal = (state.hedefler.goals || []).find(g => g.id === id);
+          if (goal) {
+            get().deleteVisionGoal(id);
+          }
+        }
+
+        if (goal) {
+          const completedGoal = { ...goal, status: 'completed', reflection, completedAt: new Date().toISOString() };
+          set({
+            hedefler: {
+              ...state.hedefler,
+              completedHistory: [completedGoal, ...(state.hedefler.completedHistory || [])]
+            }
+          });
+          pushHedefGecmisToSupabase(completedGoal, 'completed');
+        }
+      },
+
+      failGoal: (id, type, reflection) => {
+        const state = get();
+        let goal = null;
+        if (type === 'money') {
+          goal = (state.kasa.kumbaralar || []).find(g => g.id === id);
+          if (goal) {
+            get().deleteGoal(id);
+          }
+        } else {
+          goal = (state.hedefler.goals || []).find(g => g.id === id);
+          if (goal) {
+            get().deleteVisionGoal(id);
+          }
+        }
+
+        if (goal) {
+          const failedGoal = { ...goal, status: 'failed', reflection, failedAt: new Date().toISOString() };
+          set({
+            hedefler: {
+              ...state.hedefler,
+              failedHistory: [failedGoal, ...(state.hedefler.failedHistory || [])]
+            }
+          });
+          pushHedefGecmisToSupabase(failedGoal, 'failed');
+        }
+      },
+
+      updateCompletedGoal: (id, updates) => {
+        const state = get();
+        const updated = (state.hedefler.completedHistory || []).map(h =>
+          h.id === id ? { ...h, ...updates } : h
+        );
+        set({ hedefler: { ...state.hedefler, completedHistory: updated } });
+        const h = updated.find(x => x.id === id);
+        if (h) pushHedefGecmisToSupabase(h, 'completed');
+      },
+
+      deleteCompletedGoal: (id) => {
+        const state = get();
+        set({
+          hedefler: {
+            ...state.hedefler,
+            completedHistory: (state.hedefler.completedHistory || []).filter(h => h.id !== id)
+          }
+        });
+        supabase.from('hedefler_gecmis').delete().eq('id', `${id}-${DEFAULT_FID}`).then();
+      },
+
+      updateFailedGoal: (id, updates) => {
+        const state = get();
+        const updated = (state.hedefler.failedHistory || []).map(h =>
+          h.id === id ? { ...h, ...updates } : h
+        );
+        set({ hedefler: { ...state.hedefler, failedHistory: updated } });
+        const h = updated.find(x => x.id === id);
+        if (h) pushHedefGecmisToSupabase(h, 'failed');
+      },
+
+      deleteFailedGoal: (id) => {
+        const state = get();
+        set({
+          hedefler: {
+            ...state.hedefler,
+            failedHistory: (state.hedefler.failedHistory || []).filter(h => h.id !== id)
+          }
+        });
+        supabase.from('hedefler_gecmis').delete().eq('id', `${id}-${DEFAULT_FID}`).then();
       },
 
       setOnlineStatus: (status) => {

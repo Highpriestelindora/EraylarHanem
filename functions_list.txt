@@ -1,0 +1,123 @@
+﻿
+src\store\useStore.js:321:async function fetchFromSupabase() {
+src\store\useStore.js:339:async function pushToSupabase(appData) {
+src\store\useStore.js:377:async function pushGenericToSupabase(tableName, payload) {
+src\store\useStore.js:395:async function removeGenericFromSupabase(tableName, id) {
+src\store\useStore.js:420:async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
+src\store\useStore.js:467:async function deleteHarcamaFromSupabase(id, familyId = DEFAULT_FID, item = null) {
+src\store\useStore.js:491:async function updateHarcamaInSupabase(id, updates) {
+src\store\useStore.js:512:async function fetchBuAyHarcamalar(familyId = DEFAULT_FID) {
+src\store\useStore.js:529:async function fetchGecmisAyFromSupabase(ay, familyId = DEFAULT_FID) {
+src\store\useStore.js:545:async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 12) {
+src\store\useStore.js:561:async function upsertKartMutabakat(kart_id, ay, beklenen, gercek, guncel, familyId = 
+DEFAULT_FID) {
+src\store\useStore.js:579:async function pushKartOdeme(odeme, familyId = DEFAULT_FID) {
+src\store\useStore.js:600:async function fetchKartOdemeler(familyId = DEFAULT_FID) {
+src\store\useStore.js:616:async function pushTaksitToSupabase(taksit, familyId = DEFAULT_FID) {
+src\store\useStore.js:635:async function fetchTaksitler(familyId = DEFAULT_FID) {
+src\store\useStore.js:649:async function deleteTaksitFromSupabase(id) {
+src\store\useStore.js:659:async function pushMutfakStokToSupabase(item, category) {
+src\store\useStore.js:682:async function pushMutfakSuToSupabase(suData) {
+src\store\useStore.js:699:async function removeMutfakStokFromSupabase(id) {
+src\store\useStore.js:709:async function pushMutfakTarifToSupabase(t) {
+src\store\useStore.js:728:async function removeMutfakTarifFromSupabase(id) {
+src\store\useStore.js:734:async function pushAlisverisToSupabase(item, kime) {
+src\store\useStore.js:760:async function pushMutfakMenuToSupabase(day, type, mealName) {
+src\store\useStore.js:773:async function removeAlisverisFromSupabase(id) {
+src\store\useStore.js:780:async function pushSosyalEtkinlikToSupabase(activity) {
+src\store\useStore.js:805:async function removeSosyalEtkinlikFromSupabase(id) {
+src\store\useStore.js:816:async function upsertArsiv(ay, ozet, familyId = DEFAULT_FID) {
+src\store\useStore.js:834:async function pushHedefToSupabase(goal) {
+src\store\useStore.js:861:async function fetchHedefler(familyId = DEFAULT_FID) {
+src\store\useStore.js:872:async function fetchHedefGecmis(familyId = DEFAULT_FID) {
+src\store\useStore.js:883:async function fetchVizyonPlanlar(familyId = DEFAULT_FID) {
+src\store\useStore.js:894:async function fetchHabits(familyId = DEFAULT_FID) {
+src\store\useStore.js:905:async function deleteHedefFromSupabase(id) {
+src\store\useStore.js:913:async function pushHedefGecmisToSupabase(h, status = 'completed') {
+src\store\useStore.js:931:async function pushHabitToSupabase(habit) {
+src\store\useStore.js:944:async function pushVizyonPlanToSupabase(p) {
+src\store\useStore.js:957:async function deleteVizyonPlanFromSupabase(id) {
+src\store\useStore.js:965:async function syncFinansKartlar(kartlar) {
+src\store\useStore.js:986:async function syncFinansKrediler(borclar) {
+src\store\useStore.js:1005:async function deleteFinansKartFromSupabase(id) {
+src\store\useStore.js:1008:async function deleteFinansKrediFromSupabase(id) {
+src\store\useStore.js:1012:async function syncFinansOnayHavuzu(pool) {
+src\store\useStore.js:1030:async function pushEvDuzenliOdemeToSupabase(item) {
+src\store\useStore.js:1042:async function pushEvAbonelikToSupabase(item) {
+src\store\useStore.js:1053:async function pushEvOnarimToSupabase(item) {
+src\store\useStore.js:1066:async function pushEvDemirbasToSupabase(item) {
+src\store\useStore.js:1075:async function pushEvBakimToSupabase(item) {
+src\store\useStore.js:1085:async function pushGarajYakitToSupabase(log, vehicleId = 'v1') {
+src\store\useStore.js:1100:async function pushGarajServisToSupabase(svc, vehicleId = 'v1') {
+src\store\useStore.js:1116:async function pushGarajBelgeToSupabase(doc, vehicleId = 'v1') {
+src\store\useStore.js:1127:async function deleteGarajBelgeFromSupabase(id) {
+src\store\useStore.js:1134:async function pushGarajAracToSupabase(vehicle) {
+src\store\useStore.js:1151:async function deleteGarajAracFromSupabase(id) {
+src\store\useStore.js:1158:async function pushGarajParkToSupabase(park, vehicleId) {
+src\store\useStore.js:1175:async function pushPetAsiToSupabase(petId, vaccine) {
+src\store\useStore.js:1187:async function pushPetAgirlikToSupabase(petId, entry) {
+src\store\useStore.js:1197:async function pushSaglikIlacToSupabase(i) {
+src\store\useStore.js:1224:async function pushSaglikRandevuToSupabase(r) {
+src\store\useStore.js:1247:async function pushSaglikOlcumToSupabase(o, familyId) {
+src\store\useStore.js:1258:async function pushSaglikMoodToSupabase(m, familyId) {
+src\store\useStore.js:1272:async function pushSaglikLogToSupabase(l, familyId = DEFAULT_FID) {
+src\store\useStore.js:1293:async function pushSaglikSleepToSupabase(s) {
+src\store\useStore.js:1313:async function deleteSaglikSleepFromSupabase(id) {
+src\store\useStore.js:1320:async function deleteEvDuzenliOdemeFromSupabase(id) {
+src\store\useStore.js:1323:async function deleteEvAbonelikFromSupabase(id) {
+src\store\useStore.js:1326:async function deleteEvOnarimFromSupabase(id) {
+src\store\useStore.js:1329:async function deleteEvDemirbasFromSupabase(id) {
+src\store\useStore.js:1332:async function deleteEvBakimFromSupabase(id) {
+src\store\useStore.js:1335:async function deleteGarajYakitFromSupabase(id) {
+src\store\useStore.js:1338:async function deleteGarajServisFromSupabase(id) {
+src\store\useStore.js:1341:async function deletePetAsiFromSupabase(id) {
+src\store\useStore.js:1344:async function deletePetAgirlikFromSupabase(id) {
+src\store\useStore.js:1348:async function pushPetLogToSupabase(log) {
+src\store\useStore.js:1361:async function deletePetLogFromSupabase(id) {
+src\store\useStore.js:1369:async function deleteSaglikRandevuFromSupabase(id) {
+src\store\useStore.js:1372:async function deleteSaglikIlacFromSupabase(id) {
+src\store\useStore.js:1375:async function deleteSaglikOlcumFromSupabase(id) {
+src\store\useStore.js:1384:async function pushKasaBakiyelerToSupabase(bakiyeler) {
+src\store\useStore.js:1394:async function pushKasaAyarlarToSupabase(rates, privacyMode) {
+src\store\useStore.js:1401:async function pushFinansAyarlarToSupabase(limits) {
+src\store\useStore.js:1407:async function pushFinansRekuransToSupabase(r) {
+src\store\useStore.js:1422:async function deleteFinansRekuransFromSupabase(id) {
+src\store\useStore.js:1430:async function pushSaglikAyarlarToSupabase(sleepGoals) {
+src\store\useStore.js:1436:async function pushMutfakSohbetToSupabase(msg) {
+src\store\useStore.js:1451:async function pushTatilTripToSupabase(trip) {
+src\store\useStore.js:1469:async function deleteTatilTripFromSupabase(tripId) {
+src\store\useStore.js:1475:async function pushTatilWishlistToSupabase(item) {
+src\store\useStore.js:1484:async function pushTatilPasaportToSupabase(kisi, data) {
+src\store\useStore.js:1494:async function pushTatilVizeToSupabase(visa) {
+src\store\useStore.js:1505:async function pushMuhendislikProblemToSupabase(p) {
+src\store\useStore.js:1520:async function deleteMuhendislikProblemFromSupabase(id) {
+src\store\useStore.js:1528:async function pushMuhendislikDecisionToSupabase(d) {
+src\store\useStore.js:1543:async function deleteMuhendislikDecisionFromSupabase(id) {
+src\store\useStore.js:1551:async function pushCrmCustomerToSupabase(c) {
+src\store\useStore.js:1565:async function deleteCrmCustomerFromSupabase(id) {
+src\store\useStore.js:1573:async function pushCrmDealToSupabase(d) {
+src\store\useStore.js:1587:async function deleteCrmDealFromSupabase(id) {
+src\store\useStore.js:1595:async function pushZihniProceToSupabase(p) {
+src\store\useStore.js:1609:async function deleteZihniProceFromSupabase(id) {
+src\store\useStore.js:1617:async function pushLifeRoutineToSupabase(r) {
+src\store\useStore.js:1628:async function deleteLifeRoutineFromSupabase(id) {
+src\store\useStore.js:1633:async function pushLifeProgramToSupabase(p) {
+src\store\useStore.js:1643:async function deleteLifeProgramFromSupabase(id) {
+src\store\useStore.js:1649:async function pushModaringPersonelToSupabase(p) {
+src\store\useStore.js:1664:async function deleteModaringPersonelFromSupabase(id) {
+src\store\useStore.js:1672:async function pushModaringVardiyaToSupabase(v) {
+src\store\useStore.js:1688:async function deleteModaringVardiyaFromSupabase(id) {
+src\store\useStore.js:1696:async function pushModaringKasaToSupabase(k) {
+src\store\useStore.js:1712:async function deleteModaringKasaFromSupabase(id) {
+src\store\useStore.js:1720:async function pushModaringBankaToSupabase(b) {
+src\store\useStore.js:1735:async function deleteModaringBankaFromSupabase(id) {
+src\store\useStore.js:1743:async function pushModaringTedarikToSupabase(t) {
+src\store\useStore.js:1758:async function deleteModaringTedarikFromSupabase(id) {
+src\store\useStore.js:1766:async function pushModaringSiparisToSupabase(s) {
+src\store\useStore.js:1783:async function deleteModaringSiparisFromSupabase(id) {
+src\store\useStore.js:1791:async function pushModaringAjandaToSupabase(a) {
+src\store\useStore.js:1805:async function deleteModaringAjandaFromSupabase(id) {
+src\store\useStore.js:1813:async function pushModaringRefikaToSupabase(r) {
+src\store\useStore.js:1830:async function deleteModaringRefikaFromSupabase(id) {
+
+

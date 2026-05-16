@@ -1440,3 +1440,92 @@ input[type="time"] {
   gap: 6px;
   color: var(--txt);
 }
+
+/* --- Bank-style Credit Info --- */
+.kredi-bank-info {
+  padding: 24px;
+  border-radius: 28px;
+  margin-bottom: 20px;
+  background: white;
+  border: 1px solid var(--brd);
+}
+.kbi-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.kbi-item {
+  flex: 1;
+  text-align: center;
+}
+.kbi-val {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--txt);
+  margin-bottom: 4px;
+}
+.kbi-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--txt-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.kbi-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--brd);
+}
+.kbi-dates {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--brd);
+}
+.kbi-date {
+  display: flex;
+  flex-direction: column;
+}
+.kbi-date span { font-size: 11px; color: var(--txt-light); font-weight: 700; }
+.kbi-date strong { font-size: 15px; color: var(--txt); font-weight: 800; }
+
+.kbi-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+.kbi-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.kbi-input-group small { font-size: 10px; font-weight: 800; color: var(--txt-light); text-transform: uppercase; }
+.kbi-input-group input {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--brd);
+  font-weight: 700;
+  width: 100%;
+}
+.kbi-save-btn {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: none;
+  background: var(--txt);
+  color: white;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+@media (max-width: 480px) {
+  .kbi-inputs {
+    grid-template-columns: 1fr;
+  }
+  .kbi-save-btn { width: 100%; }
+}

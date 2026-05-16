@@ -1,0 +1,16 @@
+﻿834: async function pushHedefToSupabase(goal) {
+1917:           for (const g of goals) await pushHedefToSupabase(g);
+1918:           for (const g of moneyGoals) await pushHedefToSupabase(g);
+4516:             await pushHedefToSupabase({ ...g, type: 'vision' });
+4519:             await pushHedefToSupabase({ ...g, type: 'money' });
+4564:         await pushHedefToSupabase(newGoal);
+4576:           pushHedefToSupabase(updatedGoal); // Gölge Yazım
+4615:         await pushHedefToSupabase(newGoal);
+4625:         if (updatedGoal) pushHedefToSupabase(updatedGoal); // Gölge Yazım
+7970:         pushHedefToSupabase(newGoal);
+7986:         if (updated) pushHedefToSupabase(updated);
+8042:           for (const g of goals) await pushHedefToSupabase(g);
+8043:           for (const g of moneyGoals) await pushHedefToSupabase(g);
+8074:           pushHedefToSupabase(updatedVision.find(g => g.id === id));
+8085:           pushHedefToSupabase(updatedMoney.find(g => g.id === id));
+8096:         if (g) pushHedefToSupabase(g);

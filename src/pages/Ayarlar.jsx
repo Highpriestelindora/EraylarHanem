@@ -11,7 +11,7 @@ import './Ayarlar.css';
 
 export default function Ayarlar() {
   const navigate = useNavigate();
-  const { logs, settings, toggleSilentMode, runPhase1Migration, runGroup1Migration, runGroup2Migration, runGroup3Migration } = useStore();
+  const { logs, settings, toggleSilentMode, runPhase1Migration, runGroup1Migration, runGroup2Migration, runGroup3Migration, syncAllHedefler } = useStore();
   const [darkMode, setDarkMode] = useState(false);
   const [notifPermission, setNotifPermission] = useState(Notification.permission);
   const [debugMode] = useState(localStorage.getItem('debug_mode') === 'true');
@@ -138,6 +138,15 @@ export default function Ayarlar() {
           <div className="setting-content">
             <span className="setting-title">SQL Veri Senkronizasyonu</span>
             <span className="setting-desc">Tüm modülleri manuel olarak SQL'e aktarır</span>
+          </div>
+          <ChevronRight size={18} className="chevron" />
+        </div>
+
+        <div className="setting-item clickable" onClick={() => syncAllHedefler()}>
+          <div className="setting-icon" style={{ background: '#fff7ed', color: '#ea580c' }}><RefreshCcw size={20} /></div>
+          <div className="setting-content">
+            <span className="setting-title">Hedefleri SQL'e Aktar</span>
+            <span className="setting-desc">Tüm hedef ve vizyon verilerini SQL'e mühürler</span>
           </div>
           <ChevronRight size={18} className="chevron" />
         </div>

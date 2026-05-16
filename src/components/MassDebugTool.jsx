@@ -1,102 +1,149 @@
-
 import React, { useState } from 'react';
+import { 
+  Play, CheckCircle2, AlertTriangle, XCircle, Database, 
+  Target, Sparkles, TrendingUp, RefreshCcw, ShieldCheck
+} from 'lucide-react';
 import useStore from '../store/useStore';
+import { supabase } from '../lib/supabaseClient';
 import toast from 'react-hot-toast';
-import { ShieldAlert, Play, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function MassDebugTool() {
-  const store = useStore();
-  const [results, setResults] = useState({});
-  const [isRunning, setIsRunning] = useState(false);
+  const [results, setResults] = useState([]);
+  const [isTesting, setIsTesting] = useState(false);
+  const { hedefler, kasa, syncAllHedefler } = useStore();
 
-  const runTest = async (moduleName, testFn, verifyFn) => {
-    setResults(prev => ({ ...prev, [moduleName]: 'RUNNING...' }));
+  const runHedeflerTests = async () => {
+    setIsTesting(true);
+    const newResults = [];
+    const familyId = 'eraylar-family-shared-id';
+
+    const addResult = (name, status, message) => {
+      newResults.push({ name, status, message });
+    };
+
     try {
-      await testFn();
-      // Wait for state update
-      await new Promise(r => setTimeout(r, 1000));
-      
-      const isValid = verifyFn ? verifyFn(useStore.getState()) : true;
-      
-      if (isValid) {
-        setResults(prev => ({ ...prev, [moduleName]: '✅ SUCCESS & VERIFIED' }));
-      } else {
-        setResults(prev => ({ ...prev, [moduleName]: '⚠️ SUCCESS BUT NOT IN STATE' }));
+      // 1. Check Active Money Goals
+      const moneyGoals = kasa?.kumbaralar || [];
+      const { data: dbMoney, error: errMoney } = await supabase
+        .from('hedefler_aktif')
+        .select('id')
+        .eq('family_id', familyId)
+        .eq('type', 'money');
+
+      if (errMoney) addResult('Para Hedefleri (SQL)', 'error', `Sorgu hatası: ${errMoney.message}`);
+      else if (moneyGoals.length === 0) addResult('Para Hedefleri', 'warning', 'Yerel state boş.');
+      else {
+        const missing = moneyGoals.filter(lg => !dbMoney.some(rg => String(rg.id).includes(String(lg.id))));
+        if (missing.length === 0) addResult('Para Hedefleri', 'success', `${moneyGoals.length} hedef SQL ile uyumlu.`);
+        else addResult('Para Hedefleri', 'warning', `${missing.length}/${moneyGoals.length} hedef SQL'de bulunamadı!`);
       }
-    } catch (err) {
-      console.error(`Test Failed [${moduleName}]:`, err);
-      setResults(prev => ({ ...prev, [moduleName]: `❌ FAILED: ${err.message}` }));
+
+      // 2. Check Vision Goals
+      const visionGoals = hedefler?.goals || [];
+      const { data: dbVision, error: errVision } = await supabase
+        .from('hedefler_aktif')
+        .select('id')
+        .eq('family_id', familyId)
+        .eq('type', 'vision');
+
+      if (errVision) addResult('Vizyon Hedefleri (SQL)', 'error', `Sorgu hatası: ${errVision.message}`);
+      else if (visionGoals.length === 0) addResult('Vizyon Hedefleri', 'warning', 'Yerel state boş.');
+      else {
+        const missing = visionGoals.filter(lg => !dbVision.some(rg => String(rg.id).includes(String(lg.id))));
+        if (missing.length === 0) addResult('Vizyon Hedefleri', 'success', `${visionGoals.length} hedef SQL ile uyumlu.`);
+        else addResult('Vizyon Hedefleri', 'warning', `${missing.length}/${visionGoals.length} hedef SQL'de bulunamadı!`);
+      }
+
+      // 3. Check Long Term Vision Plans
+      const visionPlans = hedefler?.longTermVision || [];
+      const { data: dbPlans, error: errPlans } = await supabase
+        .from('hedefler_vizyon')
+        .select('id')
+        .eq('family_id', familyId);
+
+      if (errPlans) addResult('Vizyon Planları (SQL)', 'error', `Sorgu hatası: ${errPlans.message}`);
+      else if (visionPlans.length === 0) addResult('Vizyon Planları', 'warning', 'Yerel state boş.');
+      else {
+        const missing = visionPlans.filter(lp => !dbPlans.some(rp => String(rp.id).includes(String(lp.id))));
+        if (missing.length === 0) addResult('Vizyon Planları', 'success', `${visionPlans.length} plan SQL ile uyumlu.`);
+        else addResult('Vizyon Planları', 'warning', `${missing.length}/${visionPlans.length} plan SQL'de bulunamadı!`);
+      }
+
+    } catch (e) {
+      addResult('Genel Test', 'error', e.message);
     }
+
+    setResults(newResults);
+    setIsTesting(false);
   };
 
-  const runAllTests = async () => {
-    setIsRunning(true);
-    
-    // 1. Kasa (Bankalar)
-    const bankId = `test-bank-${Date.now()}`;
-    await runTest('Kasa (Bankalar)', 
-      async () => {
-        await store.addBankaHesabi({ id: bankId, name: 'Debug Bank', bank: 'Supabase Test', balance: 1234, icon: '🏦' });
-      },
-      (state) => state.kasa.bankaHesaplari.some(b => b.name === 'Debug Bank')
-    );
-
-    // 2. Kasa (Varlıklar)
-    await runTest('Kasa (Varlıklar)', 
-      async () => {
-        await store.addVarlik({ name: 'Debug Altın', amount: 99, unit: 'gr', type: 'altin', location: 'Kasa', icon: '🟡' });
-      },
-      (state) => state.kasa.varliklar.some(v => v.name === 'Debug Altın')
-    );
-
-    // 3. Kasa (Taşınmazlar)
-    await runTest('Kasa (Taşınmazlar)', 
-      async () => {
-        await store.addTasinmaz({ name: 'Debug Daire', city: 'TestCity', district: 'TestDist', value: 500000 });
-      },
-      (state) => state.kasa.tasinmazlar.some(t => t.name === 'Debug Daire')
-    );
-
-    // 4. Ev (Acil Durum)
-    await runTest('Ev (Acil Durum)', 
-      async () => {
-        await store.addEmergencyItem('deprem', { item: 'Debug Fener', amount: '2 Adet', icon: '🔦' }, 'gorkem');
-      },
-      (state) => (state.ev.emergencyKits?.deprem || []).some(i => i.item === 'Debug Fener')
-    );
-
-    setIsRunning(false);
-    toast.success('Tüm testler tamamlandı. Sayfayı yenileyip SQL verilerini kontrol edebilirsiniz!');
+  const handleFullSync = async () => {
+    await syncAllHedefler();
+    runHedeflerTests();
   };
 
   return (
-    <div className="mass-debug-tool glass" style={{ padding: '20px', borderRadius: '20px', border: '2px solid #ef4444', margin: '20px', background: 'rgba(255,255,255,0.05)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-        <ShieldAlert color="#ef4444" />
-        <h3 style={{ margin: 0, color: '#ef4444', fontSize: '16px' }}>Kasa & Ev Senkronizasyon Testi</h3>
+    <div className="mass-debug-card glass">
+      <div className="md-header">
+        <div className="md-title">
+          <Database size={20} className="text-primary" />
+          <h3>Hedefler Senkronizasyon Masası</h3>
+        </div>
+        <div className="md-actions">
+          <button 
+            className={`debug-btn primary ${isTesting ? 'loading' : ''}`}
+            onClick={runHedeflerTests}
+            disabled={isTesting}
+          >
+            <Play size={16} /> Test Et
+          </button>
+          <button 
+            className="debug-btn success"
+            onClick={handleFullSync}
+            disabled={isTesting}
+          >
+            <RefreshCcw size={16} /> SQL'e Gönder
+          </button>
+        </div>
       </div>
-      
-      <div className="test-results" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-        {Object.entries(results).map(([mod, res]) => (
-          <div key={mod} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: '600' }}>
-            <span style={{ color: '#64748b' }}>{mod}</span>
-            <span style={{ color: res.includes('✅') ? '#10b981' : (res.includes('❌') ? '#ef4444' : '#64748b') }}>{res}</span>
+
+      <div className="md-status-grid">
+        <div className="md-status-item">
+          <TrendingUp size={14} />
+          <span>Para: {kasa?.kumbaralar?.length || 0}</span>
+        </div>
+        <div className="md-status-item">
+          <Target size={14} />
+          <span>Vizyon: {hedefler?.goals?.length || 0}</span>
+        </div>
+        <div className="md-status-item">
+          <Sparkles size={14} />
+          <span>Planlar: {hedefler?.longTermVision?.length || 0}</span>
+        </div>
+      </div>
+
+      <div className="md-results">
+        {results.length === 0 ? (
+          <div className="empty-results">
+            <ShieldCheck size={32} />
+            <p>Sistem taraması için "Test Et" butonuna bas.</p>
           </div>
-        ))}
+        ) : (
+          <div className="results-list">
+            {results.map((r, idx) => (
+              <div key={idx} className={`result-row ${r.status}`}>
+                <div className="result-info">
+                  {r.status === 'success' && <CheckCircle2 size={16} className="text-success" />}
+                  {r.status === 'warning' && <AlertTriangle size={16} className="text-warning" />}
+                  {r.status === 'error' && <XCircle size={16} className="text-danger" />}
+                  <span className="result-name">{r.name}</span>
+                </div>
+                <span className="result-message">{r.message}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      <button 
-        className="premium-submit-btn" 
-        onClick={runAllTests} 
-        disabled={isRunning}
-        style={{ background: '#ef4444', border: 'none', padding: '12px', borderRadius: '12px', color: 'white', fontWeight: 'bold', width: '100%', cursor: 'pointer' }}
-      >
-        {isRunning ? 'SENKRONİZASYON KONTROLÜ...' : 'SENKRONİZASYONU DOĞRULA 🚀'}
-      </button>
-
-      <p style={{ fontSize: '11px', marginTop: '10px', opacity: 0.6, color: '#64748b' }}>
-        Bu araç, yeni düzelttiğimiz Kasa ve Ev modüllerinin veritabanına yazılıp yazılmadığını ve state'e girip girmediğini doğrular.
-      </p>
     </div>
   );
 }
