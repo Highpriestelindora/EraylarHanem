@@ -346,7 +346,7 @@ export default function Tatil() {
           />
         )}
         {activeTab === 'anilar' && <AnilarTab tatil={tatil} onSelectTrip={setSelectedTrip} />}
-        {activeTab === 'harita' && <HaritaTab tatil={tatil} onTabChange={updateTab} />}
+        {activeTab === 'harita' && <HaritaTab tatil={tatil} onTabChange={updateTab} deleteTrip={deleteTrip} requestConfirm={requestConfirm} />}
         {activeTab === 'pasaport' && <PasaportTab tatil={tatil} onEdit={setEditingPassport} />}
         {activeTab === 'hayal' && <HayalTab tatil={tatil} requestConfirm={requestConfirm} />}
       </div>
@@ -531,23 +531,7 @@ function AnilarTab({ tatil, onSelectTrip }) {
   const [individualFilter, setIndividualFilter] = useState('all'); // 'all', 'gorkem', 'esra'
   
   const trips = useMemo(() => {
-    const dbTrips = tatil.trips || [];
-    const merged = [...dbTrips].map(t => {
-      const initialMatch = INITIAL_TRIPS.find(it => it.id === t.id || (it.title === t.title && it.startDate === t.startDate));
-      if (initialMatch) {
-        // Fallback photos and other static data from INITIAL_TRIPS if missing in DB
-        return {
-          ...initialMatch,
-          ...t,
-          photos: (t.photos && t.photos.length > 0) ? t.photos : (initialMatch.photos || []),
-          evaluations: { ...initialMatch.evaluations, ...t.evaluations }
-        };
-      }
-      return t;
-    });
-    
-    return merged;
-    return merged;
+    return tatil.trips || [];
   }, [tatil.trips]);
 
   const allPast = trips.filter(t => {
@@ -2739,24 +2723,15 @@ const LEGACY_CITY_COORDS = {
   'prague': { lat: 50.0755, lng: 14.4378 }
 };
 
-function HaritaTab({ tatil, onTabChange }) {
+function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
   const [selectedContinent, setSelectedContinent] = useState('world');
   const [showCityWizard, setShowCityWizard] = useState(null); // trip object
   const [visibleTravelers, setVisibleTravelers] = useState(['gorkem', 'esra', 'ikimiz']);
   const [hiddenStats, setHiddenStats] = useState([]); // Array of 'esra', 'gorkem'
   
   const allTripsForMap = useMemo(() => {
-    // Merge DB trips with INITIAL_TRIPS (master data)
     const dbTrips = tatil.trips || [];
-    const merged = [...dbTrips];
-
-    // Add initial trips that are not in DB
-    INITIAL_TRIPS.forEach(it => {
-      const exists = merged.some(t => t.id === it.id || (t.title === it.title && t.startDate === it.startDate));
-      if (!exists) merged.push(it);
-    });
-
-    return merged.filter(t => calculateTripStatus(t.startDate, t.endDate) === 'completed');
+    return dbTrips.filter(t => calculateTripStatus(t.startDate, t.endDate) === 'completed');
   }, [tatil.trips]);
 
   const visitedData = useMemo(() => {
@@ -2952,22 +2927,38 @@ function HaritaTab({ tatil, onTabChange }) {
         <h4 className="section-title-cute" style={{ marginBottom: '20px' }}>Tüm Seyahatleriniz (Anılar)</h4>
         <div className="rd-list-compact scrollable-history">
           {allTripsForMap.map(t => (
-            <div key={t.id} className="rd-item-small glass animate-slideRight" onClick={() => setShowCityWizard(t)}>
-              <span className="rd-flag-small">{getCountryFlag(t.title, t.city, t.country)}</span>
-              <div className="rd-info-small">
-                <div className="rd-main-line">
-                  <strong>{t.city || t.title}</strong>
-                  <span className="rd-meta-inline">
-                    {t.country} · {new Date(t.startDate).getFullYear()} 
-                    {t.travelers !== 'ikimiz' && <span className="traveler-mini-label">({t.travelers === 'gorkem' ? 'G' : 'E'})</span>}
-                  </span>
+            <div key={t.id} className="rd-item-small glass animate-slideRight">
+              <div className="rd-clickable-area" onClick={() => setShowCityWizard(t)}>
+                <span className="rd-flag-small">{getCountryFlag(t.title, t.city, t.country)}</span>
+                <div className="rd-info-small">
+                  <div className="rd-main-line">
+                    <strong>{t.city || t.title}</strong>
+                    <span className="rd-meta-inline">
+                      {t.country} · {new Date(t.startDate).getFullYear()} 
+                      {t.travelers !== 'ikimiz' && <span className="traveler-mini-label">({t.travelers === 'gorkem' ? 'G' : 'E'})</span>}
+                    </span>
+                  </div>
+                </div>
+                <div className="rd-city-count">
+                   <MapPin size={10} />
+                   <span>{t.visitedCities?.length || 0}/10 Şehir</span>
                 </div>
               </div>
-              <div className="rd-city-count">
-                 <MapPin size={10} />
-                 <span>{t.visitedCities?.length || 0}/10 Şehir</span>
+              <div className="rd-item-actions">
+                <button 
+                  className="rd-delete-btn-mini" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    requestConfirm(`${t.city || t.title} seyahatini ve tüm şehir pinlerini silmek istediğine emin misin?`, () => {
+                      deleteTrip(t.id);
+                      toast.success('Seyahat silindi. 🗑️');
+                    });
+                  }}
+                >
+                  <Trash2 size={12} />
+                </button>
+                <Plus size={14} opacity={0.5} onClick={() => setShowCityWizard(t)} style={{ cursor: 'pointer' }} />
               </div>
-              <Plus size={14} opacity={0.5} />
             </div>
           ))}
           {allTripsForMap.length === 0 && <div className="empty-mini-state">Henüz kaydedilmiş anı yok...</div>}

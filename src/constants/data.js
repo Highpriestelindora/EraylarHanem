@@ -3440,42 +3440,6 @@ export const INITIAL_WEIGHTS = {
 
 export const INITIAL_TRIPS = [
   {
-    id: 't_vienna',
-    title: 'Viyana Kaçamağı',
-    country: 'Avusturya',
-    city: 'Viyana',
-    startDate: '2026-05-10',
-    endDate: '2026-05-14',
-    type: 'yurtdisi',
-    tripType: 'tatil',
-    travelers: 'ikimiz',
-    transportType: 'ucak',
-    who: 'ikisi',
-    schengen: true,
-    status: 'kesin',
-    notes: 'Pegasus ile Viyana kaçamağı! 🇦🇹',
-    valiz: {
-      gorkem: [
-        { id: 1, text: 'Pasaport', done: false },
-        { id: 2, text: 'Viyana Rehberi', done: false }
-      ],
-      esra: [
-        { id: 1, text: 'Pasaport', done: false },
-        { id: 2, text: 'Kamera', done: false }
-      ]
-    },
-    transportation: { 
-      departure: { flightNo: 'PC903', airline: 'Pegasus', pnr: '1TG17K', time: '10:15 (SAW)', status: 'Planlandı' },
-      return: { flightNo: 'PC904', airline: 'Pegasus', pnr: '1TG17K', time: '12:20 (VIE)', status: 'Planlandı' }
-    },
-    accommodation: { 
-      hotel: 'Austria Trend Hotel Europa Wien', 
-      address: 'Kärntner Str. 18, 1010 Wien', 
-      bookingId: '3824.152.941', 
-      link: 'https://www.booking.com/hotel/at/austriatrendhoteleuropa.tr.html' 
-    }
-  },
-  {
     id: 't_kibris',
     title: 'Kıbrıs Turu',
     country: 'KKTC',
@@ -3500,18 +3464,6 @@ export const INITIAL_TRIPS = [
     id:'t2',title:'Londra',country:'İngiltere',city:'Londra',startDate:'2024-02-02',endDate:'2024-02-08',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:false,status:'tamamlandi',notes:'',
     accommodation: { hotel: 'AirBnb', address: 'Piccadilly Circus, Londra' },
     evaluations: { gorkem: { star: 9, note: 'Yağmurluydu ama güzeldi.' }, esra: { star: 10, note: 'Müzeler harikaydı.' } }
-  },
-  {
-    id:'t_saraybosna',title:'Saraybosna & Kotor',country:'Bosna Hersek',city:'Saraybosna',startDate:'2024-09-19',endDate:'2024-09-24',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:false,status:'tamamlandi',notes:'Balkanlar turu!',
-    evaluations: { gorkem: { star: 10, note: 'Kotor harikaydı.' }, esra: { star: 10, note: 'Yemekler süperdi.' } }
-  },
-  {
-    id:'t_kavala',title:'Kavala & Selanik',country:'Yunanistan',city:'Selanik',startDate:'2025-05-15',endDate:'2025-05-18',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'araba',who:'ikisi',schengen:true,status:'tamamlandi',notes:'Araba ile Yunanistan kaçamağı.',
-    evaluations: { gorkem: { star: 9, note: 'Yollar rahattı.' }, esra: { star: 9, note: 'Deniz çok güzeldi.' } }
-  },
-  {
-    id:'t_sofya',title:'Sofya',country:'Bulgaristan',city:'Sofya',startDate:'2026-01-10',endDate:'2026-01-13',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:true,status:'tamamlandi',notes:'Kısa bir kış tatili.',
-    evaluations: { gorkem: { star: 8, note: 'Soğuk ama keyifliydi.' }, esra: { star: 8, note: 'Şehir merkezi güzel.' } }
   },
   {
     id:'t3',title:'Berlin Gezisi',country:'Almanya',city:'Berlin',startDate:'2023-11-10',endDate:'2023-11-13',type:'yurtdisi',tripType:'tatil',travelers:'ikimiz',transportType:'ucak',who:'ikisi',schengen:true,status:'tamamlandi',notes:'Birlikte Berlin turu.',

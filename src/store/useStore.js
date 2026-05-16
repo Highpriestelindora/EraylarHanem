@@ -149,7 +149,6 @@ const DEFAULT_STATE = {
     ],
     habits: [
       { id: 'h1', name: 'Kitap Okuma', streak: 5, lastDone: '' },
-      { id: 'h2', name: 'Su İçme (2L)', streak: 12, lastDone: '' }
     ],
     hallOfFame: [],
     moodboard: { quote: "Büyük işler, küçük başlangıçlarla olur." },
@@ -1316,6 +1315,7 @@ async function pushTatilTripToSupabase(trip) {
       budget_est: Number(trip.budget?.est || 0), budget_real: Number(trip.budget?.real || 0),
       valiz: trip.valiz || {}, evaluations: trip.evaluations || {},
       photos: trip.photos || [], checklists: trip.checklists || [],
+      visited_cities: trip.visitedCities || [],
       created_at: trip.created_at || new Date().toISOString()
     });
   } catch(e) { console.warn('Tatil Trip Hatası:', e); }
@@ -5469,7 +5469,7 @@ const useStore = create(
         set({ mutfak: { ...state.mutfak, tarifler: yeniTarifler } });
         
         // SQL SYNC
-        await pushGenericDeleteFromSupabase('mutfak_tarifler', id);
+        await removeGenericFromSupabase('mutfak_tarifler', id);
       },
 
       toggleFavorite: async (id) => {
@@ -8131,13 +8131,9 @@ const useStore = create(
       })),
       partialize: (state) => extractAppData(state, true),
       merge: (persistedState, initialState) => {
+        // SSOT: Persisted state (from Cloud/LocalStorage) is merged into initialState.
+        // This ensures actions and default values are preserved.
         const merged = { ...initialState, ...persistedState };
-        // Deeply ensure critical modules have their arrays
-        const ensureArray = (obj, key) => {
-          if (obj && key in obj && !Array.isArray(obj[key])) {
-            obj[key] = initialState[key] && Array.isArray(initialState[key]) ? initialState[key] : [];
-          }
-        };
 
         // Fix Sosyal
         if (merged.sosyal) {
@@ -8145,6 +8141,7 @@ const useStore = create(
           if (!Array.isArray(merged.sosyal.havuz)) merged.sosyal.havuz = [];
           if (!Array.isArray(merged.sosyal.rutinler)) merged.sosyal.rutinler = [];
         }
+
         // Fix Mutfak
         if (merged.mutfak) {
           if (!Array.isArray(merged.mutfak.buzdolabi)) merged.mutfak.buzdolabi = [];
@@ -8154,66 +8151,26 @@ const useStore = create(
           if (!Array.isArray(merged.mutfak.arsiv)) merged.mutfak.arsiv = [];
           if (typeof merged.mutfak.priceHistory !== 'object') merged.mutfak.priceHistory = {};
         }
-        // Fix Alisveris
-        if (merged.alisveris) {
-          if (!Array.isArray(merged.alisveris.wishlist)) merged.alisveris.wishlist = [];
+
+        // Fix Tatil
+        if (merged.tatil) {
+          if (!Array.isArray(merged.tatil.trips)) merged.tatil.trips = [];
+          if (!Array.isArray(merged.tatil.wishlist)) merged.tatil.wishlist = [];
+          if (!Array.isArray(merged.tatil.visas)) merged.tatil.visas = [];
         }
+
+        // Fix Pet
+        if (merged.pet) {
+          if (typeof merged.pet.vaccines !== 'object' || Array.isArray(merged.pet.vaccines)) merged.pet.vaccines = {};
+          if (typeof merged.pet.weights !== 'object' || Array.isArray(merged.pet.weights)) merged.pet.weights = {};
+          if (!Array.isArray(merged.pet.history)) merged.pet.history = [];
+        }
+
         // Fix Kasa
         if (merged.kasa) {
           if (!Array.isArray(merged.kasa.tasinmazlar)) merged.kasa.tasinmazlar = [];
-          if (merged.kasa.tasinmazlar.length === 0 && initialState.kasa.tasinmazlar.length > 0) {
-            merged.kasa.tasinmazlar = initialState.kasa.tasinmazlar;
-          }
         }
-        if (merged.ev && !Array.isArray(merged.ev.faturalar)) merged.ev.faturalar = [];
-        if (merged.saglik && !Array.isArray(merged.saglik.randevular)) merged.saglik.randevular = [];
-        if (merged.tatil) {
-          if (!Array.isArray(merged.tatil.trips)) merged.tatil.trips = [];
 
-          // Protection & Migration
-          merged.tatil.trips = merged.tatil.trips.map(t => {
-            const initialT = initialState.tatil?.trips?.find(it => it.id === t.id);
-            const evaluations = t.evaluations || initialT?.evaluations || {};
-
-            // Deep check for structure
-            const trans = t.transportation || {};
-            const dep = trans.departure || { flightNo: trans.flightNo || '', airline: trans.airline || '', pnr: trans.pnr || '', time: trans.time || '', status: 'Planlandı' };
-            const ret = trans.return || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' };
-            const acc = t.accommodation || { hotel: '', address: '', bookingId: '', link: '' };
-
-            return {
-              ...t,
-              evaluations,
-              transportation: { departure: dep, return: ret },
-              accommodation: acc
-            };
-          });
-
-          // Specially update Viyana trip if it's the one from the screenshot
-          const viennaTrip = merged.tatil.trips.find(t => t.title?.includes('Viyana'));
-          if (viennaTrip && !viennaTrip.transportation?.return?.flightNo) {
-            viennaTrip.transportation.departure = { flightNo: 'PC903', airline: 'Pegasus', pnr: '1TG17K', time: '10:15 (SAW)', status: 'Planlandı' };
-            viennaTrip.transportation.return = { flightNo: 'PC904', airline: 'Pegasus', pnr: '1TG17K', time: '12:20 (VIE)', status: 'Planlandı' };
-            viennaTrip.accommodation = {
-              hotel: 'Austria Trend Hotel Europa Wien',
-              address: 'Kärntner Str. 18, 1010 Wien',
-              bookingId: '3824.152.941',
-              link: 'https://www.booking.com/hotel/at/austriatrendhoteleuropa.tr.html'
-            };
-          }
-        }
-        if (merged.pet) {
-          if (merged.pet.vaccines && !Array.isArray(merged.pet.vaccines) && typeof merged.pet.vaccines === 'object') {
-            // Already correct object structure
-          } else {
-            merged.pet.vaccines = initialState.pet.vaccines;
-          }
-          if (merged.pet.weights && !Array.isArray(merged.pet.weights) && typeof merged.pet.weights === 'object') {
-            // Already correct object structure
-          } else {
-            merged.pet.weights = initialState.pet.weights;
-          }
-        }
         if (!Array.isArray(merged.logs)) merged.logs = [];
 
         return merged;

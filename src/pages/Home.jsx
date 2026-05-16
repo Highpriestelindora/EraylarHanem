@@ -81,7 +81,7 @@ const Home = () => {
       const names = lowStock.slice(0, 3).map(i => i.n).join(', ');
       cards.push({
         id: 'mutfak-low', icon: '🍲', text: `${lowStock.length} ürün azalmış`,
-        subtext: names, type: 'warning', color: '#EF4444', module: '/mutfak', priority: 85
+        subtext: names, type: 'warning', color: 'var(--mutfak)', module: '/mutfak', priority: 85
       });
     }
 
@@ -91,7 +91,7 @@ const Home = () => {
       const meal = todayMenu.a || todayMenu.k;
       cards.push({
         id: 'mutfak-menu', icon: '🍽️', text: 'Bugünün menüsü hazır!',
-        subtext: meal, type: 'info', color: '#F97316', module: '/mutfak', priority: 60
+        subtext: meal, type: 'info', color: 'var(--mutfak)', module: '/mutfak', priority: 60
       });
     }
 
@@ -100,7 +100,7 @@ const Home = () => {
     if (shopCount > 0) {
       cards.push({
         id: 'mutfak-shop', icon: '🛒', text: `${shopCount} ürün alışverişte`,
-        subtext: 'Markete uğramayı unutma!', type: 'info', color: '#F59E0B', module: '/mutfak', priority: 55
+        subtext: 'Markete uğramayı unutma!', type: 'info', color: 'var(--alisveris)', module: '/mutfak', priority: 55
       });
     }
 
@@ -110,12 +110,12 @@ const Home = () => {
     if (todayApp) {
       cards.push({
         id: 'saglik-today', icon: '🏥', text: `Bugün ${todayApp.kisi} randevusu`,
-        subtext: `${todayApp.doktor} · ${todayApp.saat}`, type: 'critical', color: '#EF4444', module: '/saglik', priority: 95
+        subtext: `${todayApp.doktor} · ${todayApp.saat}`, type: 'critical', color: 'var(--saglik)', module: '/saglik', priority: 95
       });
     } else if (tomorrowApp) {
       cards.push({
         id: 'saglik-tmrw', icon: '📋', text: `Yarın ${tomorrowApp.kisi} randevusu`,
-        subtext: `${tomorrowApp.doktor} · ${tomorrowApp.saat}`, type: 'warning', color: '#F97316', module: '/saglik', priority: 80
+        subtext: `${tomorrowApp.doktor} · ${tomorrowApp.saat}`, type: 'warning', color: 'var(--saglik)', module: '/saglik', priority: 80
       });
     }
 
@@ -124,7 +124,7 @@ const Home = () => {
     if (lowMeds.length > 0) {
       cards.push({
         id: 'saglik-med', icon: '💊', text: `${lowMeds[0].ad} stoğu azalıyor`,
-        subtext: `${lowMeds[0].kisi} · ${lowMeds[0].stok} adet kaldı`, type: 'critical', color: '#DC2626', module: '/saglik', priority: 90
+        subtext: `${lowMeds[0].kisi} · ${lowMeds[0].stok} adet kaldı`, type: 'critical', color: 'var(--saglik)', module: '/saglik', priority: 90
       });
     }
 
@@ -137,7 +137,7 @@ const Home = () => {
         if (diff >= 0 && diff <= 45) {
           cards.push({
             id: `garaj-doc-${d.id}`, icon: '🚗', text: `${d.name} ${diff} güne bitiyor`,
-            subtext: vehicle.model, type: diff <= 15 ? 'critical' : 'warning', color: '#334155', module: '/aracim', priority: diff <= 15 ? 92 : 70
+            subtext: vehicle.model, type: diff <= 15 ? 'critical' : 'warning', color: 'var(--aracim)', module: '/aracim', priority: diff <= 15 ? 92 : 70
           });
         }
       });
@@ -149,7 +149,7 @@ const Home = () => {
         if (kmSince >= p.intervalKM * 0.9) {
           cards.push({
             id: `garaj-part-${p.id}`, icon: '🔧', text: `${p.name} bakımı gerekiyor`,
-            subtext: `${kmSince.toLocaleString('tr-TR')} km oldu`, type: 'warning', color: '#475569', module: '/aracim', priority: 72
+            subtext: `${kmSince.toLocaleString('tr-TR')} km oldu`, type: 'warning', color: 'var(--aracim)', module: '/aracim', priority: 72
           });
         }
       });
@@ -160,7 +160,7 @@ const Home = () => {
     if (pendingApprovals > 0) {
       cards.push({
         id: 'finans-approval', icon: '💰', text: `${pendingApprovals} harcama onay bekliyor`,
-        subtext: 'Finans modülünden kontrol et', type: 'info', color: '#7C3AED', module: '/finans', priority: 65
+        subtext: 'Finans modülünden kontrol et', type: 'info', color: 'var(--finans)', module: '/finans', priority: 65
       });
     }
 
@@ -173,7 +173,7 @@ const Home = () => {
       if (daysLeft >= 0 && daysLeft <= 14) {
         cards.push({
           id: `ev-bakim-${b.id}`, icon: '🏠', text: `${b.name} ${daysLeft} gün içinde`,
-          subtext: 'Periyodik bakım zamanı', type: daysLeft <= 3 ? 'critical' : 'warning', color: '#10B981', module: '/ev', priority: daysLeft <= 3 ? 88 : 62
+          subtext: 'Periyodik bakım zamanı', type: daysLeft <= 3 ? 'critical' : 'warning', color: 'var(--ev)', module: '/ev', priority: daysLeft <= 3 ? 88 : 62
         });
       }
     });
@@ -183,7 +183,7 @@ const Home = () => {
     if (activeRepairs > 0) {
       cards.push({
         id: 'ev-onarim', icon: '🔨', text: `${activeRepairs} onarım bekliyor`,
-        subtext: 'Ev bakım listesinde', type: 'info', color: '#059669', module: '/ev', priority: 50
+        subtext: 'Ev bakım listesinde', type: 'info', color: 'var(--ev)', module: '/ev', priority: 50
       });
     }
 
@@ -195,7 +195,7 @@ const Home = () => {
     if (upcomingActs.length > 0) {
       cards.push({
         id: 'sosyal-week', icon: '🎯', text: `Bu hafta ${upcomingActs.length} aktivite var`,
-        subtext: upcomingActs[0]?.baslik || 'Eğlenceli planlar!', type: 'info', color: '#DB2777', module: '/sosyal', priority: 58
+        subtext: upcomingActs[0]?.baslik || 'Eğlenceli planlar!', type: 'info', color: 'var(--social)', module: '/sosyal', priority: 58
       });
     }
 
@@ -213,7 +213,7 @@ const Home = () => {
               const petName = store.pet?.meta?.[petId]?.name || petId;
               cards.push({
                 id: `pet-vax-${petId}-${v.n}`, icon: '🐾', text: `${petName} aşısı yaklaşıyor`,
-                subtext: `${v.n} · ${daysLeft} gün kaldı`, type: 'warning', color: '#D97706', module: '/pet', priority: 68
+                subtext: `${v.n} · ${daysLeft} gün kaldı`, type: 'warning', color: 'var(--pet)', module: '/pet', priority: 68
               });
             }
           }
@@ -229,7 +229,7 @@ const Home = () => {
           const what = supply?.mama === 'azaldi' ? 'maması' : 'kumu';
           cards.push({
             id: `pet-supply-${petId}`, icon: '🐶', text: `${petName}'ın ${what} azalıyor`,
-            subtext: 'Pet modülünden kontrol et', type: 'warning', color: '#F59E0B', module: '/pet', priority: 73
+            subtext: 'Pet modülünden kontrol et', type: 'warning', color: 'var(--pet)', module: '/pet', priority: 73
           });
         }
       });
@@ -241,7 +241,7 @@ const Home = () => {
     if (bestHabit && bestHabit.streak >= 3) {
       cards.push({
         id: 'hedef-streak', icon: '🔥', text: `${bestHabit.name}: ${bestHabit.streak} gün seri!`,
-        subtext: 'Harika gidiyorsun, bırakma!', type: 'achievement', color: '#FBBF24', module: '/hedefler', priority: 52
+        subtext: 'Harika gidiyorsun, bırakma!', type: 'achievement', color: 'var(--hedefler)', module: '/hedefler', priority: 52
       });
     }
 
@@ -254,7 +254,7 @@ const Home = () => {
       const diff = daysDiff(upcomingTrip.startDate);
       cards.push({
         id: 'tatil-upcoming', icon: '✈️', text: `${upcomingTrip.title} · ${diff} gün kaldı!`,
-        subtext: upcomingTrip.destination || 'Macera seni bekliyor', type: 'info', color: '#0891B2', module: '/tatil', priority: 56
+        subtext: upcomingTrip.destination || 'Macera seni bekliyor', type: 'info', color: 'var(--tatil)', module: '/tatil', priority: 56
       });
     }
 
@@ -266,16 +266,16 @@ const Home = () => {
     if (topGoal && topGoal.pct > 0 && topGoal.pct < 100) {
       cards.push({
         id: 'kasa-goal', icon: '🎯', text: `${topGoal.name}: %${Math.round(topGoal.pct)}`,
-        subtext: 'Hedefe emin adımlarla!', type: 'achievement', color: '#6D28D9', module: '/kasa', priority: 48
+        subtext: 'Hedefe emin adımlarla!', type: 'achievement', color: 'var(--kasa)', module: '/kasa', priority: 48
       });
     }
 
     // ── FALLBACK: Eğlenceli & Nazik Kartlar ──
     const funCards = [
-      { id: 'fun-1', icon: '💖', text: `Güzel bir gün ${userName}!`, subtext: 'Her şey yolunda görünüyor', type: 'fun', color: '#EC4899', module: null, priority: 10 },
+      { id: 'fun-1', icon: '💖', text: `Güzel bir gün ${userName}!`, subtext: 'Her şey yolunda görünüyor', type: 'fun', color: 'var(--primary)', module: null, priority: 10 },
       { id: 'fun-2', icon: '🌟', text: 'Eraylar Hanem hazır!', subtext: 'Sevgiyle yüklendi, merak etme', type: 'fun', color: '#8B5CF6', module: null, priority: 8 },
       { id: 'fun-3', icon: '☕', text: 'Kahve molası zamanı mı?', subtext: 'Biraz mola da hak ediyorsun', type: 'fun', color: '#78350F', module: null, priority: 7 },
-      { id: 'fun-4', icon: '🐶', text: 'Waffle kuyruk sallıyor!', subtext: 'Seni görünce çok mutlu', type: 'fun', color: '#D97706', module: '/pet', priority: 6 },
+      { id: 'fun-4', icon: '🐶', text: 'Waffle kuyruk sallıyor!', subtext: 'Seni görünce çok mutlu', type: 'fun', color: 'var(--pet)', module: '/pet', priority: 6 },
     ];
 
     // Always keep at least 2 cards
