@@ -208,7 +208,7 @@ export default function Kasa() {
                 
                 return (
                   <div key={type} className="asset-group-v2 mt-20">
-                    <div className="section-header-v2">
+                    <div className="section-header-kasa">
                       <h3 style={{ textTransform: 'capitalize' }}>
                         {type === 'altin' ? '🟡 Altın Birikimi' : 
                          type === 'doviz' ? '💵 Döviz Portföyü' : 
@@ -216,8 +216,12 @@ export default function Kasa() {
                          type === 'borsa' ? '📈 Borsa Hesabı' :
                          '🇹🇷 Türk Lirası Varlıkları'}
                       </h3>
-                      <button className="pill-btn" style={{ background: 'var(--kasa)' }} onClick={() => setModal({ open: true, type: 'addVarlik', data: { type } })}>
-                        <Plus size={16} /> Ekle
+                      <button 
+                        className="kasa-add-btn" 
+                        title={`${type} varlığı ekle`}
+                        onClick={() => setModal({ open: true, type: 'addVarlik', data: { type } })}
+                      >
+                        <Plus size={20} />
                       </button>
                     </div>
                     <div className="asset-list-v3">
@@ -256,55 +260,66 @@ export default function Kasa() {
 
         {activeTab === 'banka' && (
           <div className="banka-view animate-fadeIn">
-            <div className="section-header-v2 mt-20">
+            <div className="section-header-kasa mt-20">
               <h3>🏦 Banka Hesapları</h3>
-              <button className="pill-btn" style={{ background: 'var(--kasa)' }} onClick={() => setModal({ open: true, type: 'addBanka' })}>
-                <Plus size={16} /> Hesap Ekle
+              <button 
+                className="kasa-add-btn" 
+                title="Yeni banka hesabı ekle"
+                onClick={() => setModal({ open: true, type: 'addBanka' })}
+              >
+                <Plus size={20} />
               </button>
             </div>
             <div className="bank-list-v4">
               {(K.bankaHesaplari || []).map(b => (
-                <div key={b.id} className="bank-card glass-premium">
+                <div key={b.id} className={`bank-card premium-card owner-${b.owner}`}>
                   <div className="bc-header">
                     <div className="bc-bank-info">
-                      <span className="bc-icon">{b.icon || '🏦'}</span>
+                      <div className="bc-icon-wrapper">
+                        <span className="bc-icon">{b.icon || '🏦'}</span>
+                        <div className="owner-badge-mini">{b.owner === 'gorkem' ? 'G' : b.owner === 'esra' ? 'E' : 'O'}</div>
+                      </div>
                       <div className="bc-texts">
                         <strong>{b.name}</strong>
-                        <small>
-                          {b.bank} · {
-                            b.owner === 'gorkem' ? 'Görkem' : 
-                            b.owner === 'esra' ? 'Esra' : 
-                            b.owner === 'ortak' ? 'Ortak' : 'Bilinmiyor'
-                          }
-                        </small>
+                        <small>{b.bank} · {b.owner?.toUpperCase()}</small>
                       </div>
                     </div>
                     <div className="bc-actions">
-                      <button onClick={() => setModal({ open: true, type: 'editBanka', data: b })}><Edit3 size={16} /></button>
+                      <button className="edit-btn" onClick={() => setModal({ open: true, type: 'editBanka', data: b })}><Edit3 size={18} /></button>
+                      <button className="delete-btn" onClick={() => requestConfirm(`${b.name} hesabını silmek istediğinize emin misiniz?`, () => useStore.getState().deleteBankaHesabi(b.id))}>
+                        <Trash2 size={18} />
+                      </button>
                     </div>
                   </div>
+                  
                   <div className="bc-body">
                     <div className="bc-main-row">
                       <div className="bc-balance">
                         <small>GÜNCEL BAKİYE</small>
                         <h2 className={b.balance < 0 ? 'neg' : ''}>{formatMoney(b.balance, privacy)}</h2>
                       </div>
-                      {b.kmh > 0 && (
-                        <div className="bc-kmh-info">
-                          <small>KMH LİMİTİ</small>
-                          <strong>{formatMoney(b.kmh, privacy)}</strong>
-                        </div>
-                      )}
+                      <div className="bc-stats-mini">
+                        {b.kmh > 0 && (
+                          <div className="bc-stat-pill">
+                            <small>KMH</small>
+                            <span>{formatMoney(b.kmh, privacy)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                    
                     {b.iban && (
-                      <div className="bc-iban" onClick={() => { navigator.clipboard.writeText(b.iban); toast.success('IBAN kopyalandı!'); }}>
+                      <div className="bc-iban-premium" onClick={() => { navigator.clipboard.writeText(b.iban); toast.success('IBAN kopyalandı!'); }}>
+                        <div className="iban-label">IBAN</div>
                         <code>{b.iban}</code>
+                        <div className="copy-hint">Kopyala</div>
                       </div>
                     )}
                   </div>
+
                   <div className="bc-footer">
-                    <button className="bc-quick-update" onClick={() => setModal({ open: true, type: 'updateBankaBakiye', data: b })}>
-                      <PlusCircle size={14} /> Bakiye Güncelle
+                    <button className="bc-update-btn" onClick={() => setModal({ open: true, type: 'updateBankaBakiye', data: b })}>
+                      <ArrowUpRight size={16} /> Bakiye Güncelle
                     </button>
                   </div>
                 </div>
@@ -390,10 +405,14 @@ export default function Kasa() {
               onSimulate={() => setShowSimulator(true)}
             />
 
-            <div className="section-header-v2" style={{ marginTop: '24px' }}>
+            <div className="section-header-kasa" style={{ marginTop: '24px' }}>
               <h3>🎯 Kumbaralar</h3>
-              <button className="pill-btn" style={{ background: 'var(--kasa)' }} onClick={() => setModal({ open: true, type: 'addGoal' })}>
-                <Plus size={16} /> Yeni Hedef
+              <button 
+                className="kasa-add-btn" 
+                title="Yeni hedef oluştur"
+                onClick={() => setModal({ open: true, type: 'addGoal' })}
+              >
+                <Plus size={20} />
               </button>
             </div>
             <div className="goal-list-v3">

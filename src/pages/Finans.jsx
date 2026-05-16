@@ -289,7 +289,6 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
           </div>
         )}
       </ActionSheet>
-
       <ConfirmModal 
         isOpen={!!deletingId}
         title="Harcamayı Sil"
@@ -305,288 +304,308 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
 });
 
 // ── Kredi Sekmesi ─────────────────────────────────────────────
+const BRAND_LOGOS = {
+  troy: 'TROY',
+  visa: 'VISA',
+  mastercard: 'Mastercard',
+};
+
 const KrediTab = React.memo(({ finans, prv }) => {
   const kartlar = finans?.kartlar || [];
   const borclar = finans?.borclar || [];
   const kartMutabakat = finans?.kartMutabakat || {};
-  const { gercekKartBorcuGir, payLoanInstallment, updateFinansData, payCreditCard, kasa } = useStore();
+  const kartOdemeleri = finans?.kartOdemeleri || [];
+  const { gercekKartBorcuGir, payCreditCard, updateFinansData, payLoanInstallment, getKartOdemeleri, kasa } = useStore();
 
-  const [inputMap, setInputMap] = useState({});
-  const [expandedKart, setExpandedKart] = useState(null);
+  const [selectedKartId, setSelectedKartId] = useState(kartlar[0]?.id || null);
+  const [eksreInput, setEkstreInput] = useState('');
   const [editingKart, setEditingKart] = useState(null);
-  const [payingCard, setPayingCard] = useState(null); // { id, amount, type }
   const [deletingKartId, setDeletingKartId] = useState(null);
   const [showKartModal, setShowKartModal] = useState(false);
   const [showBorcModal, setShowBorcModal] = useState(false);
+  const [payingCard, setPayingCard] = useState(null);
+  const [odemeTuru, setOdemeTuru] = useState('full');
+  const [odemeKaynak, setOdemeKaynak] = useState('havale');
+  const [odemeBankaId, setOdemeBankaId] = useState('');
+  const [odemeOzelTutar, setOdemeOzelTutar] = useState('');
   const buAy = new Date().toISOString().slice(0, 7);
 
-  const handleGercekGir = async (kartId) => {
-    const val = inputMap[kartId];
-    if (!val || isNaN(val)) return toast.error('Geçerli tutar girin');
-    await gercekKartBorcuGir(kartId, val, buAy);
-    setInputMap(p => ({ ...p, [kartId]: '' }));
+  useEffect(() => {
+    if (kartlar.length > 0 && !selectedKartId) setSelectedKartId(kartlar[0].id);
+    getKartOdemeleri?.();
+  }, [kartlar.length]);
+
+  const selectedKart = kartlar.find(k => k.id === selectedKartId) || kartlar[0];
+  const mut = selectedKart ? (kartMutabakat[selectedKart.id] || {}) : {};
+  const beklenen = mut.beklenen || 0;
+  const gercek = mut.gercek ?? null;
+  const fark = gercek != null ? (gercek - beklenen) : null;
+  const limit = selectedKart?.limit || 0;
+  const aktifBorc = gercek != null ? gercek : beklenen;
+  const limitPerc = limit > 0 ? Math.min(100, (aktifBorc / limit) * 100) : 0;
+  const barColor = limitPerc > 90 ? '#ef4444' : limitPerc > 70 ? '#f59e0b' : '#10b981';
+
+  const today = new Date();
+  const cutoffDay = selectedKart?.cutoff_day || 10;
+  const dueOffset = selectedKart?.due_day_offset || 10;
+  const cutoffStr = `Her ayın ${cutoffDay}. günü`;
+  const dueDate = new Date(today.getFullYear(), today.getMonth(), cutoffDay + dueOffset);
+  const dueDateStr = dueDate.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long' });
+
+  const buKartinOdemeleri = kartOdemeleri.filter(o => o.kart_id === selectedKart?.id).slice(0, 5);
+
+  const handleEkstreGir = async () => {
+    if (!eksreInput || isNaN(eksreInput)) return toast.error('Geçerli tutar girin');
+    await gercekKartBorcuGir(selectedKart.id, eksreInput, buAy);
+    setEkstreInput('');
   };
 
-  const toplamBeklenen = kartlar.reduce((s, k) => s + (kartMutabakat[k.id]?.beklenen || 0), 0);
-  const toplamGercek = kartlar.reduce((s, k) => s + (kartMutabakat[k.id]?.gercek || 0), 0);
+  const handleOdeme = async () => {
+    if (!selectedKart) return;
+    let tutar = aktifBorc;
+    if (odemeTuru === 'min') tutar = aktifBorc * ((selectedKart.min_pct || 20) / 100);
+    if (odemeTuru === 'kismi') tutar = Number(odemeOzelTutar);
+    if (!tutar || tutar <= 0) return toast.error('Geçerli tutar girin');
+    const src = odemeKaynak === 'nakit'
+      ? { type: 'nakit' }
+      : { type: 'havale', id: odemeBankaId || (kasa?.bankaHesaplari?.[0]?.id || '') };
+    await payCreditCard(selectedKart.id, tutar, odemeTuru, src);
+    setPayingCard(null);
+  };
+
+  if (kartlar.length === 0) {
+    return (
+      <div className="f-tab-content animate-fadeIn">
+        <div className="f-empty glass" style={{ marginTop: '40px' }}>
+          <CreditCard size={48} opacity={0.2} />
+          <p>Henüz kart tanımlanmamış</p>
+          <button className="submit-btn" style={{ background: 'var(--finans)', width: 'auto', padding: '12px 24px', marginTop: '16px' }} onClick={() => setShowKartModal(true)}>
+            <Plus size={16} /> Kart Ekle
+          </button>
+        </div>
+        <KartYonetimModal isOpen={showKartModal} onClose={() => setShowKartModal(false)} finans={finans} updateFinansData={updateFinansData} />
+      </div>
+    );
+  }
 
   return (
     <div className="f-tab-content animate-fadeIn">
-      <div className="ozet-grid" style={{ marginBottom: '24px' }}>
-        <div className="ozet-card glass">
-          <small>TOPLAM BEKLENEN</small>
-          <h2 style={{ color: '#f59e0b' }}>{fmt(toplamBeklenen, prv)}</h2>
-        </div>
-        <div className="ozet-card glass primary">
-          <small>GİRİLEN EKSTRE</small>
-          <h2>{fmt(toplamGercek, prv)}</h2>
-        </div>
-      </div>
 
-      <div className="ozet-section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>💳 Kredi Kartlarım</span>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button 
-            className="icon-btn" 
-            onClick={async () => {
-              const { fetchPhase3Data, getBuAyHarcamalar } = useStore.getState();
-              await fetchPhase3Data();
-              await getBuAyHarcamalar();
-              toast.success('Veriler güncellendi! 🔄');
-            }} 
-            style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}
-          >
-            <RefreshCcw size={16} />
-          </button>
-          <button className="icon-btn" onClick={() => setShowKartModal(true)} style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}><Settings size={16} /></button>
-        </div>
-      </div>
-
-      {kartlar.map(kart => {
-        const mut = kartMutabakat[kart.id] || {};
-        const fark = (mut.gercek != null) ? (mut.gercek - (mut.beklenen || 0)) : null;
-        
-        // Hesaplamalar
-        const currentDebt = mut.gercek != null ? mut.gercek : (mut.beklenen || 0);
-        const limit = kart.limit || 0;
-        const availableLimit = Math.max(0, limit - currentDebt);
-        const limitPerc = limit > 0 ? Math.min(100, (currentDebt / limit) * 100) : 0;
-        const barColor = limitPerc > 90 ? '#ef4444' : limitPerc > 75 ? '#f59e0b' : '#10b981';
-
-        const today = new Date();
-        const cutoffDateStr = `${String(kart.cutoff_day).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
-        
-        const dueDate = new Date(today.getFullYear(), today.getMonth(), kart.cutoff_day);
-        dueDate.setDate(dueDate.getDate() + (kart.due_day_offset || 10));
-        const dueDateStr = `${String(dueDate.getDate()).padStart(2, '0')}/${String(dueDate.getMonth() + 1).padStart(2, '0')}/${dueDate.getFullYear()}`;
-
-        return (
-          <div key={kart.id} className="premium-cc-container animate-scaleIn">
-            <div 
-              className="premium-cc-card" 
-              style={{ 
-                background: `linear-gradient(135deg, ${kart.color || '#3b82f6'} 0%, #1e293b 100%)` 
-              }}
+      {/* ── Kart Seçici Şeridi ── */}
+      <div className="kredi-kart-strip">
+        {kartlar.map(k => {
+          const m = kartMutabakat[k.id] || {};
+          const borc = m.gercek ?? m.beklenen ?? 0;
+          const isSelected = k.id === selectedKartId;
+          return (
+            <button
+              key={k.id}
+              className={`kredi-strip-btn ${isSelected ? 'active' : ''}`}
+              style={{ borderColor: isSelected ? (k.color || '#6366f1') : 'transparent' }}
+              onClick={() => { setSelectedKartId(k.id); setPayingCard(null); setEkstreInput(''); }}
             >
-              <div className="premium-cc-top">
-                <div className="premium-cc-bank-name">{kart.name}</div>
-                <div className="kmc-actions-box" style={{ marginRight: 0 }}>
-                  <button className="icon-btn-mini" onClick={(e) => { e.stopPropagation(); setEditingKart(kart); }} style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>
-                    <Edit size={12} />
-                  </button>
-                  <button className="icon-btn-mini del" onClick={(e) => { e.stopPropagation(); setDeletingKartId(kart.id); }} style={{ background: 'rgba(239,68,68,0.2)', color: '#fca5a5' }}>
-                    <Trash2 size={12} />
-                  </button>
-                </div>
-              </div>
-              <div className="premium-cc-chip"></div>
-              <div className="premium-cc-number">
-                **** **** **** {kart.card_number || '4287'}
-              </div>
-              <div className="premium-cc-bottom">
-                <div className="premium-cc-holder">{kart.owner === 'gorkem' ? 'GÖRKEM ERAY' : kart.owner === 'esra' ? 'ESRA ERAY' : 'ERAY AİLESİ'}</div>
-                <div className="premium-cc-brand">{kart.brand === 'visa' ? 'VISA' : kart.brand === 'troy' ? 'TROY' : 'Mastercard'}</div>
+              <span className="ksb-name">{k.name}</span>
+              <span className="ksb-borc" style={{ color: borc > 0 ? '#ef4444' : '#10b981' }}>
+                {fmt(borc, prv)}
+              </span>
+              <span className="ksb-owner">{k.owner === 'gorkem' ? 'Görkem' : k.owner === 'esra' ? 'Esra' : 'Ortak'}</span>
+            </button>
+          );
+        })}
+        <button className="kredi-strip-btn add-btn" onClick={() => setShowKartModal(true)}>
+          <Plus size={18} />
+          <span>Ekle</span>
+        </button>
+      </div>
+
+      {selectedKart && (
+        <>
+          {/* ── Kart Görseli ── */}
+          <div
+            className="premium-cc-card"
+            style={{ background: `linear-gradient(135deg, ${selectedKart.color || '#3b82f6'} 0%, #1e293b 100%)`, margin: '16px 0' }}
+          >
+            <div className="premium-cc-top">
+              <div className="premium-cc-bank-name">{selectedKart.name}</div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="icon-btn-mini" onClick={() => setEditingKart(selectedKart)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}><Edit size={12} /></button>
+                <button className="icon-btn-mini del" onClick={() => setDeletingKartId(selectedKart.id)} style={{ background: 'rgba(239,68,68,0.2)', color: '#fca5a5' }}><Trash2 size={12} /></button>
               </div>
             </div>
-
-            <div className="premium-cc-limit-sec">
-              <div className="premium-cc-limit-labels">
-                <div>
-                  <strong>{fmt(availableLimit, prv)}</strong>
-                  <small>Kullanılabilir Limit</small>
-                </div>
-                <div className="right">
-                  <strong>{fmt(limit, prv)}</strong>
-                  <small>Toplam Kart Limiti</small>
-                </div>
+            <div className="premium-cc-chip"></div>
+            <div className="premium-cc-number">**** **** **** {selectedKart.card_number || '••••'}</div>
+            <div className="premium-cc-bottom">
+              <div className="premium-cc-holder">
+                {selectedKart.owner === 'gorkem' ? 'GÖRKEM ERAY' : selectedKart.owner === 'esra' ? 'ESRA ERAY' : 'ERAY AİLESİ'}
               </div>
-              <div className="premium-cc-limit-bar">
-                <div className="premium-cc-limit-fill" style={{ width: `${limitPerc}%`, background: barColor }}></div>
-              </div>
-            </div>
-
-            <div className="premium-cc-details">
-              <div className="premium-cc-detail-item">
-                <strong style={{ color: mut.gercek != null ? '#10b981' : '#f59e0b' }}>
-                  {fmt(currentDebt, prv)}
-                </strong>
-                <small>Güncel Dönem Borcu {mut.gercek == null && '(Sistem)'}</small>
-              </div>
-              <div className="premium-cc-detail-item" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
-                <strong>{mut.paid ? '0₺' : fmt(currentDebt, prv)}</strong>
-                <small>Kalan Hesap Özeti Borcu</small>
-              </div>
-              <div className="premium-cc-detail-item">
-                <strong>{cutoffDateStr}</strong>
-                <small>Hesap Kesim Tarihi</small>
-              </div>
-              <div className="premium-cc-detail-item" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
-                <strong style={{ color: '#ef4444' }}>{dueDateStr}</strong>
-                <small>Son Ödeme Tarihi</small>
-              </div>
-            </div>
-
-            <div style={{ padding: '0 20px 20px', background: 'var(--card)' }}>
-              {fark != null && (
-                <div className={`kmc-fark ${fark > 0 ? 'pozitif' : 'negatif'}`} style={{ margin: '0 0 16px 0' }}>
-                  {fark > 0
-                    ? `⚠️ Sistemin görmediği ${fmt(fark, prv)} var (Sistem: ${fmt(mut.beklenen || 0, prv)})`
-                    : `✅ Beklentiden ${fmt(Math.abs(fark), prv)} az`}
-                </div>
-              )}
-
-              {mut.gercek == null ? (
-                <div className="kmc-input-row" style={{ marginTop: 0 }}>
-                  <input
-                    type="number"
-                    placeholder="Gerçek Ekstre Borcunu Gir (₺)"
-                    value={inputMap[kart.id] || ''}
-                    onChange={e => setInputMap(p => ({ ...p, [kart.id]: e.target.value }))}
-                    style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1.5px solid var(--brd)' }}
-                  />
-                  <button className="kmc-kaydet-btn" onClick={() => handleGercekGir(kart.id)}>
-                    <Check size={16} /> Kaydet
-                  </button>
-                </div>
-              ) : mut.paid ? (
-                <div style={{ padding: '12px', background: '#f0fdf4', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#166534', fontWeight: 'bold', justifyContent: 'center' }}>
-                  <Check size={18} />
-                  <span>Ödendi ({mut.paymentType === 'full' ? 'Tam' : 'Asgari'})</span>
-                </div>
-              ) : (
-                <div className="premium-cc-actions" style={{ padding: 0 }}>
-                  <button 
-                    className="premium-submit-btn"
-                    style={{ background: '#f8fafc', border: '1.5px solid var(--brd)', color: '#334155', boxShadow: 'none' }}
-                    onClick={() => setPayingCard({ id: kart.id, amount: mut.gercek * (kart.min_pct || 20) / 100, type: 'min', name: kart.name })}
-                  >
-                    ASGARİ ÖDE
-                  </button>
-                  <button 
-                    className="premium-submit-btn"
-                    style={{ background: 'var(--finans, #10b981)' }}
-                    onClick={() => setPayingCard({ id: kart.id, amount: mut.gercek, type: 'full', name: kart.name })}
-                  >
-                    TAMAMINI ÖDE
-                  </button>
-                </div>
-              )}
+              <div className="premium-cc-brand">{BRAND_LOGOS[selectedKart.brand] || 'Mastercard'}</div>
             </div>
           </div>
-        );
-      })}
 
-      <div className="ozet-section-title" style={{ marginTop: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span>🏦 Krediler</span>
-        <button className="icon-btn" onClick={() => setShowBorcModal(true)} style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}><Settings size={16} /></button>
-      </div>
-      {borclar.map(loan => {
-        const perc = ((loan.total - loan.remaining) / loan.total) * 100;
-        return (
-          <div key={loan.id} className="loan-card-v2 glass">
-            <div className="lc-header">
-              <strong>{loan.name}</strong>
-              <span className="lc-badge">Her ayın {loan.due_day}'i</span>
+          {/* ── Limit Barı ── */}
+          <div className="premium-cc-limit-sec">
+            <div className="premium-cc-limit-labels">
+              <div><strong>{fmt(Math.max(0, limit - aktifBorc), prv)}</strong><small>Kullanılabilir</small></div>
+              <div className="right"><strong>{fmt(limit, prv)}</strong><small>Limit</small></div>
             </div>
-            <div className="lc-bar-bg"><div className="lc-bar-fill" style={{ width: `${perc}%` }} /></div>
-            <div className="lc-footer">
-              <div>
-                <div className="lc-stat"><small>Kalan</small><strong>{fmt(loan.remaining, prv)}</strong></div>
-                <div className="lc-stat"><small>Aylık Taksit</small><strong style={{ color: '#f59e0b' }}>{fmt(loan.monthly, prv)}</strong></div>
+            <div className="premium-cc-limit-bar">
+              <div className="premium-cc-limit-fill" style={{ width: `${limitPerc}%`, background: barColor }} />
+            </div>
+          </div>
+
+          {/* ── Borç Karşılaştırma ── */}
+          <div className="kredi-compare-card glass">
+            <div className="kcc-row">
+              <div className="kcc-item">
+                <div className="kcc-label">📊 SİSTEM TAHMİNİ</div>
+                <div className="kcc-val amber">{fmt(beklenen, prv)}</div>
+                <div className="kcc-sub">Bu ay girilen harcamalar</div>
               </div>
-              <button className="lc-pay-btn" onClick={() => { payLoanInstallment(loan.id); toast.success(`${loan.name} taksiti ödendi!`); }}>
-                TAKSİT ÖDE
+              <div className="kcc-divider" />
+              <div className="kcc-item">
+                <div className="kcc-label">📄 GERÇEK EKSTRE</div>
+                <div className="kcc-val" style={{ color: gercek != null ? '#1e293b' : '#94a3b8' }}>
+                  {gercek != null ? fmt(gercek, prv) : '—'}
+                </div>
+                <div className="kcc-sub">Bankadan baktığın tutar</div>
+              </div>
+            </div>
+
+            {fark != null && (
+              <div className={`kcc-fark ${Math.abs(fark) < 10 ? 'ok' : fark > 0 ? 'warn' : 'good'}`}>
+                {Math.abs(fark) < 10
+                  ? '✅ Sistem doğru! Tüm harcamalar kayıtlı.'
+                  : fark > 0
+                  ? `⚠️ +${fmt(fark, prv)} fark: Sistemde kayıt dışı harcama var`
+                  : `🎉 ${fmt(Math.abs(fark), prv)} az: Fazla kayıt girilmiş olabilir`}
+              </div>
+            )}
+
+            {/* Ekstre Giriş */}
+            <div className="kcc-ekstre-input">
+              <input
+                type="number"
+                placeholder={gercek != null ? `Mevcut: ${fmt(gercek, prv)} — Güncelle` : 'Bankadan bak ve gir (₺)'}
+                value={eksreInput}
+                onChange={e => setEkstreInput(e.target.value)}
+              />
+              <button onClick={handleEkstreGir}>Kaydet</button>
+            </div>
+          </div>
+
+          {/* ── Tarihler ── */}
+          <div className="kredi-dates-row">
+            <div className="kdr-item"><span>🗓️ Kesim</span><strong>{cutoffStr}</strong></div>
+            <div className="kdr-item right"><span>⏰ Son Ödeme</span><strong style={{ color: '#ef4444' }}>{dueDateStr}</strong></div>
+          </div>
+
+          {/* ── Ödeme Paneli ── */}
+          {!mut.paid ? (
+            <div className="kredi-odeme-panel glass">
+              <div className="kop-title">💰 Ödeme Yap</div>
+
+              {/* Ödeme Türü */}
+              <div className="kop-type-row">
+                {[
+                  { id: 'full', label: 'Tam', val: fmt(aktifBorc, prv) },
+                  { id: 'min', label: 'Asgari', val: fmt(aktifBorc * (selectedKart.min_pct || 20) / 100, prv) },
+                  { id: 'kismi', label: 'Kısmi', val: '—' },
+                ].map(t => (
+                  <button key={t.id} className={`kop-type-btn ${odemeTuru === t.id ? 'active' : ''}`} onClick={() => setOdemeTuru(t.id)}>
+                    <span>{t.label}</span>
+                    <small>{t.val}</small>
+                  </button>
+                ))}
+              </div>
+
+              {odemeTuru === 'kismi' && (
+                <input className="kop-custom-input" type="number" placeholder="Tutar girin (₺)" value={odemeOzelTutar} onChange={e => setOdemeOzelTutar(e.target.value)} />
+              )}
+
+              {/* Kaynak Seçimi */}
+              <div className="kop-kaynak-row">
+                <button className={`kop-kaynak-btn ${odemeKaynak === 'nakit' ? 'active' : ''}`} onClick={() => setOdemeKaynak('nakit')}>💵 Nakit</button>
+                <button className={`kop-kaynak-btn ${odemeKaynak === 'havale' ? 'active' : ''}`} onClick={() => setOdemeKaynak('havale')}>🏦 Havale</button>
+              </div>
+
+              {odemeKaynak === 'havale' && (
+                <select className="kop-banka-select" value={odemeBankaId} onChange={e => setOdemeBankaId(e.target.value)}>
+                  <option value="">Banka seçin...</option>
+                  {(kasa?.bankaHesaplari || []).map(b => (
+                    <option key={b.id} value={b.id}>{b.name} — {fmt(b.balance, prv)}</option>
+                  ))}
+                </select>
+              )}
+
+              <button className="kop-submit-btn" onClick={handleOdeme}>
+                ✅ Ödemeyi Kaydet
               </button>
             </div>
-          </div>
-        );
-      })}
-
-      <KartYonetimModal 
-        isOpen={showKartModal || !!editingKart} 
-        onClose={() => { setShowKartModal(false); setEditingKart(null); }} 
-        finans={finans} 
-        updateFinansData={updateFinansData} 
-        initialData={editingKart}
-      />
-      <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
-
-      {/* Credit Card Payment Method Selection */}
-      <ActionSheet 
-        isOpen={!!payingCard} 
-        onClose={() => setPayingCard(null)} 
-        title="Ödeme Kaynağı Seçin"
-      >
-        {payingCard && (
-          <div className="payment-select-modal" style={{ padding: '20px' }}>
-            <p style={{ marginBottom: '15px', color: '#1e293b', fontSize: '14px' }}>
-              <strong>{payingCard.name}</strong> kartının <strong>{fmt(payingCard.amount, prv)}</strong> tutarındaki borcunu hangi hesaptan ödeyeceksin?
-            </p>
-            <div className="payment-options" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-               <button className="premium-submit-btn" style={{ background: '#10b981' }} onClick={() => {
-                 payCreditCard(payingCard.id, payingCard.amount, payingCard.type, { type: 'nakit' });
-                 setPayingCard(null);
-               }}>
-                 💵 Nakit (Kasa)
-               </button>
-
-               <div style={{ textAlign: 'center', fontSize: '12px', color: '#64748b' }}>veya banka hesabından:</div>
-
-               <div className="bank-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {(kasa?.bankaHesaplari || []).map(b => (
-                    <button 
-                      key={b.id}
-                      className="glass-btn" 
-                      style={{ width: '100%', padding: '12px', textAlign: 'left', display: 'flex', justifyContent: 'space-between' }}
-                      onClick={() => {
-                        payCreditCard(payingCard.id, payingCard.amount, payingCard.type, { type: 'havale', id: b.id });
-                        setPayingCard(null);
-                      }}
-                    >
-                      <span>🏦 {b.name}</span>
-                      <small>{fmt(b.balance, prv)}</small>
-                    </button>
-                  ))}
-               </div>
+          ) : (
+            <div className="kredi-paid-badge">
+              <Check size={20} />
+              <span>Bu ay ödendi ({mut.paymentType === 'full' ? 'Tam' : mut.paymentType === 'min' ? 'Asgari' : 'Kısmi'} — {fmt(mut.paidAmount, prv)})</span>
             </div>
-          </div>
-        )}
-      </ActionSheet>
+          )}
 
-      <ConfirmModal 
-        isOpen={!!deletingKartId}
-        title="Kartı Sil"
-        message="Bu kredi kartını silmek istediğine emin misin? Bu karta bağlı tüm mutabakat verileri de silinecektir."
-        onConfirm={() => {
-          useStore.getState().deleteFinansKart(deletingKartId);
-          toast.success('Kart silindi!');
-          setDeletingKartId(null);
-        }}
-        onCancel={() => setDeletingKartId(null)}
-        confirmText="Evet, Sil"
-        cancelText="Vazgeç"
-        icon="🗑️"
-      />
+          {/* ── Ödeme Geçmişi ── */}
+          {buKartinOdemeleri.length > 0 && (
+            <div className="kredi-odeme-gecmis">
+              <div className="kog-title">📋 Son Ödemeler</div>
+              {buKartinOdemeleri.map(o => (
+                <div key={o.id} className="kog-row">
+                  <div className="kog-left">
+                    <span className="kog-ay">{o.ay}</span>
+                    <span className="kog-turu">{o.turu === 'full' ? 'Tam' : o.turu === 'min' ? 'Asgari' : 'Kısmi'}</span>
+                  </div>
+                  <div className="kog-right">
+                    <strong>{fmt(o.tutar, prv)}</strong>
+                    <small>{o.kaynak === 'nakit' ? '💵 Nakit' : '🏦 Havale'}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── Krediler / Taksitler ── */}
+      {borclar.length > 0 && (
+        <>
+          <div className="ozet-section-title" style={{ marginTop: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>🏦 Krediler & Taksitler</span>
+            <button className="icon-btn" onClick={() => setShowBorcModal(true)} style={{ background: 'rgba(255,255,255,0.2)', color: '#1e293b', borderRadius: '50%', padding: '6px' }}><Settings size={16} /></button>
+          </div>
+          {borclar.map(loan => {
+            const perc = ((loan.total - loan.remaining) / loan.total) * 100;
+            return (
+              <div key={loan.id} className="loan-card-v2 glass">
+                <div className="lc-header">
+                  <strong>{loan.name}</strong>
+                  <span className="lc-badge">Her ayın {loan.due_day}'i</span>
+                </div>
+                <div className="lc-bar-bg"><div className="lc-bar-fill" style={{ width: `${perc}%` }} /></div>
+                <div className="lc-footer">
+                  <div>
+                    <div className="lc-stat"><small>Kalan</small><strong>{fmt(loan.remaining, prv)}</strong></div>
+                    <div className="lc-stat"><small>Aylık Taksit</small><strong style={{ color: '#f59e0b' }}>{fmt(loan.monthly, prv)}</strong></div>
+                  </div>
+                  <button className="lc-pay-btn" onClick={() => { payLoanInstallment(loan.id); toast.success(`${loan.name} taksiti ödendi!`); }}>TAKSİT ÖDE</button>
+                </div>
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      <div style={{ display: 'flex', gap: '8px', marginTop: '20px' }}>
+        <button className="kredi-mgmt-btn" onClick={() => setShowKartModal(true)}><CreditCard size={14} /> Kart Yönet</button>
+        <button className="kredi-mgmt-btn" onClick={() => setShowBorcModal(true)}><TrendingDown size={14} /> Kredi Yönet</button>
+      </div>
+
+      <KartYonetimModal isOpen={showKartModal || !!editingKart} onClose={() => { setShowKartModal(false); setEditingKart(null); }} finans={finans} updateFinansData={updateFinansData} initialData={editingKart} />
+      <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
+      <ConfirmModal isOpen={!!deletingKartId} title="Kartı Sil" message="Bu kredi kartını silmek istediğine emin misin?" onConfirm={() => { useStore.getState().deleteFinansKart(deletingKartId); toast.success('Kart silindi!'); setDeletingKartId(null); }} onCancel={() => setDeletingKartId(null)} confirmText="Evet, Sil" cancelText="Vazgeç" icon="🗑️" />
     </div>
   );
 });

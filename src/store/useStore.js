@@ -30,10 +30,11 @@ const DEFAULT_STATE = {
       'gorkem-ziraat': { beklenen: 0, gercek: null, ay: null },
       'gorkem-ykb': { beklenen: 0, gercek: null, ay: null },
       'esra-garanti': { beklenen: 0, gercek: null, ay: null },
-      'esra-enpara': { beklenen: 0, gercek: null, ay: null },
+      'esra-enpara': { beklenen: 0, gercek: null, ay: null }
     },
     borclar: [],
     kartlar: [],
+    kartOdemeleri: [],
     rekurans: [],
     limits: { Mutfak: 15000, Sosyal: 5000, Saglik: 3000 }
   },
@@ -436,7 +437,7 @@ async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
       kayit_eden: harcama.kayit_eden || 'Sistem',
       kaynak: harcama.kaynak || 'Manuel',
       durum: 'onaylı',
-      notlar: harcama.notlar || null,
+      notlar: harcama.notlar || null
     };
 
     const { data, error } = await supabase
@@ -565,11 +566,48 @@ async function upsertKartMutabakat(kart_id, ay, beklenen, gercek, familyId = DEF
         kart_id,
         ay,
         beklenen_borc: beklenen,
-        gercek_borc: gercek,
-      }, { onConflict: 'family_id,kart_id,ay' });
+        gercek_borc: gercek
+    }, { onConflict: 'family_id,kart_id,ay' });
     if (error) throw error;
   } catch (err) {
     console.error('❌ upsertKartMutabakat error:', err);
+  }
+}
+
+async function pushKartOdeme(odeme, familyId = DEFAULT_FID) {
+  try {
+    const { error } = await supabase.from('finans_kart_odemeler').upsert({
+      id: odeme.id,
+      family_id: familyId,
+      kart_id: odeme.kart_id,
+      ay: odeme.ay,
+      tutar: Number(odeme.tutar),
+      turu: odeme.turu || 'full',
+      kaynak: odeme.kaynak || 'havale',
+      banka_id: odeme.banka_id || null,
+      tarih: odeme.tarih || new Date().toISOString().split('T')[0],
+      ekleyen: odeme.ekleyen || null,
+      not_: odeme.not_ || null
+    });
+    if (error) throw error;
+  } catch (err) {
+    console.error('❌ pushKartOdeme error:', err);
+  }
+}
+
+async function fetchKartOdemeler(familyId = DEFAULT_FID) {
+  try {
+    const { data, error } = await supabase
+      .from('finans_kart_odemeler')
+      .select('*')
+      .eq('family_id', familyId)
+      .order('tarih', { ascending: false })
+      .limit(60);
+    if (error) throw error;
+    return data || [];
+  } catch (err) {
+    console.error('❌ fetchKartOdemeler error:', err);
+    return [];
   }
 }
 
@@ -738,8 +776,8 @@ async function upsertArsiv(ay, ozet, familyId = DEFAULT_FID) {
       .upsert({
         family_id: familyId,
         ay,
-        ...ozet,
-      }, { onConflict: 'family_id,ay' });
+        ...ozet
+    }, { onConflict: 'family_id,ay' });
     if (error) throw error;
   } catch (err) {
     console.error('❌ upsertArsiv error:', err);
@@ -835,9 +873,16 @@ async function syncFinansKartlar(kartlar) {
       owner: k.owner,
       cutoff_day: Number(k.cutoff_day),
       color: k.color,
-      min_pct: Number(k.min_pct || 20)
+      min_pct: Number(k.min_pct || 20),
+      limit: Number(k.limit || 0),
+      balance: Number(k.balance || 0),
+      due_day_offset: Number(k.due_day_offset || 10)
     }));
-    if(payloads.length > 0) await supabase.from('finans_kartlar').upsert(payloads);
+    if(payloads.length > 0) {
+      const res = await supabase.from('finans_kartlar').upsert(payloads);
+      if(res.error) console.error('❌ Kartlar Sync Error:', res.error);
+      else console.log('✅ Kartlar Sync Success (with limit+balance)');
+    }
   } catch(e) { console.warn('Supabase Kartlar upsert hatası:', e); }
 }
 
@@ -852,7 +897,11 @@ async function syncFinansKrediler(borclar) {
       monthly: Number(b.monthly)
     }));
     // NOTE: Upsert only updates/inserts. Explicit delete functions handle removals.
-    if(payloads.length > 0) await supabase.from('finans_krediler').upsert(payloads);
+    if(payloads.length > 0) {
+      const res = await supabase.from('finans_krediler').upsert(payloads);
+      if(res.error) console.error('❌ Krediler Sync Error:', res.error);
+      else console.log('✅ Krediler Sync Success');
+    }
   } catch(e) { console.warn('Supabase Krediler upsert hatası:', e); }
 }
 
@@ -906,13 +955,14 @@ async function pushEvAbonelikToSupabase(item) {
 
 async function pushEvOnarimToSupabase(item) {
   try {
-    await supabase.from('ev_onarim').upsert({
+    const res = await supabase.from('ev_onarim').upsert({
       id: String(item.id), task: item.task, status: item.status || 'bekliyor',
       created_by: item.createdBy || null, created_at: item.createdAt || null,
       completed_by: item.completedBy || null, completed_at: item.completedAt || null,
       cleared_by: item.clearedBy || null, cleared_at: item.clearedAt || null,
       is_archived: !!item.isArchived
     });
+    if(res.error) console.error('❌ Onarım Sync Error:', res.error); else console.log('✅ Onarım Sync Success');
   } catch(e) { console.warn('Ev Onarım Hatası:', e); }
 }
 
@@ -1032,8 +1082,7 @@ async function pushPetAsiToSupabase(petId, vaccine) {
       asi_adi: vaccine.n || vaccine.name || vaccine.asi_adi, 
       son_tarih: vaccine.last || vaccine.lastDate || vaccine.son_tarih || null,
       sonraki_tarih: vaccine.nextDate || vaccine.sonraki_tarih || null,
-      durum: vaccine.done ? 'tamamlandi' : 'bekliyor', notlar: vaccine.notes || null,
-      family_id: DEFAULT_FID
+      durum: vaccine.done ? 'tamamlandi' : 'bekliyor', notlar: vaccine.notes || null
     });
   } catch(e) { console.warn('Pet Aşı Hatası:', e); }
 }
@@ -1043,8 +1092,7 @@ async function pushPetAgirlikToSupabase(petId, entry) {
     await supabase.from('pet_agirlik').upsert({
       id: String(entry.id || `${petId}-${entry.dt || entry.date || Date.now()}`), pet_id: petId,
       tarih: entry.dt || entry.date || entry.tarih || new Date().toISOString(),
-      kilo: Number(entry.w || entry.weight || entry.kilo || 0), notlar: entry.notes || null,
-      family_id: DEFAULT_FID
+      kilo: Number(entry.w || entry.weight || entry.kilo || 0), notlar: entry.notes || null
     });
   } catch(e) { console.warn('Pet Ağırlık Hatası:', e); }
 }
@@ -1053,7 +1101,6 @@ async function pushSaglikIlacToSupabase(i) {
   try {
     const payload = {
       id: String(i.id),
-      family_id: DEFAULT_FID,
       kisi: i.kisi,
       ad: i.ad,
       dozaj: i.dozaj || null,
@@ -1724,8 +1771,8 @@ function extractAppData(state, forPersist = false) {
 }
 
 const DEFAULT_SETTINGS = {
-  silentMode: false,
-};
+  silentMode: false
+    };
 
 const useStore = create(
   persist(
@@ -1938,12 +1985,13 @@ const useStore = create(
                  yakit, servis, belgeler, parts,
                  asilar, agirliklar, supplies, petLogs,
                  randevular, ilaclar, olcumler, moods, logs, sleep,
-                 depo, faturalar, ustaRehberi, bitkiler] = await Promise.all([
-            supabase.from('ev_duzenli_odemeler').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('ev_abonelikler').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('ev_onarim').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('ev_demirbaslar').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('ev_bakimlar').select('*').eq('family_id', DEFAULT_FID),
+                 depo, faturalar, garajPark, personality,
+                 savedLocations, evAyarlar, acilDurum] = await Promise.all([
+            supabase.from('ev_duzenli_odemeler').select('*'),
+            supabase.from('ev_abonelikler').select('*'),
+            supabase.from('ev_onarim').select('*'),
+            supabase.from('ev_demirbaslar').select('*'),
+            supabase.from('ev_bakimlar').select('*'),
             supabase.from('garaj_yakit').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('garaj_servis').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('garaj_belgeler').select('*').eq('family_id', DEFAULT_FID),
@@ -1958,10 +2006,13 @@ const useStore = create(
             supabase.from('saglik_moods').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.eq.ERAYLAR`).order('date', { ascending: false }).limit(100),
             supabase.from('saglik_logs').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.eq.ERAYLAR`).order('date', { ascending: false }).limit(200),
             supabase.from('saglik_sleep').select('*'),
-            supabase.from('ev_depo').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('ev_faturalar').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('ev_usta_rehberi').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('ev_bitkiler').select('*').eq('family_id', DEFAULT_FID)
+            supabase.from('ev_depo').select('*'),
+            supabase.from('ev_faturalar').select('*'),
+            supabase.from('garaj_park').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_tracking').select('*').eq('id', `personality-${DEFAULT_FID}`).eq('family_id', DEFAULT_FID),
+            supabase.from('ev_saved_locations').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_ayarlar').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('ev_acil_durum_cantasi').select('*').eq('family_id', DEFAULT_FID)
           ]);
 
           set(state => {
@@ -1973,10 +2024,64 @@ const useStore = create(
             if (bakimlar.data) ev.bakimlar = bakimlar.data;
             if (depo.data) ev.depo = depo.data;
             if (faturalar.data) ev.faturalar = faturalar.data;
-            if (ustaRehberi.data) ev.ustaRehberi = ustaRehberi.data;
-            if (bitkiler.data) ev.bitkiler = bitkiler.data;
+             if (personality.data && personality.data[0]) {
+              if (!ev.tracking) ev.tracking = {};
+              ev.tracking.personality = personality.data[0].veri;
+            }
 
-            const garaj = [...state.garaj];
+            if (savedLocations.data) {
+              if (!ev.tracking) ev.tracking = {};
+              ev.tracking.savedLocations = savedLocations.data;
+            }
+
+            if (evAyarlar.data) {
+              evAyarlar.data.forEach(item => {
+                if (item.id === `guvenlik-${DEFAULT_FID}`) ev.guvenlik = item.veri;
+                if (item.id === `tracking_settings-${DEFAULT_FID}`) {
+                  if (!ev.tracking) ev.tracking = {};
+                  ev.tracking = { ...ev.tracking, ...item.veri };
+                }
+                if (item.id === `tracking_routine-${DEFAULT_FID}`) {
+                  if (!ev.tracking) ev.tracking = {};
+                  ev.tracking.routine = item.veri;
+                }
+              });
+            }
+
+            if (acilDurum.data) {
+              const ek = { deprem: [], ilkyardim: [] };
+              acilDurum.data.forEach(item => {
+                const kitItem = {
+                  id: item.id,
+                  item: item.item,
+                  amount: item.amount,
+                  expDate: item.exp_date,
+                  buyDate: item.buy_date,
+                  addedBy: item.added_by,
+                  ...(item.details || {})
+                };
+                if (ek[item.kit_type]) ek[item.kit_type].push(kitItem);
+              });
+              ev.emergencyKits = ek;
+            }
+
+                        const garaj = [...state.garaj];
+            // Restore Parking Location
+            if (garajPark.data) {
+              garajPark.data.forEach(p => {
+                const v = garaj.find(gv => gv.id === p.vehicle_id);
+                if (v) {
+                  v.parkLocation = {
+                    lat: p.lat,
+                    lng: p.lng,
+                    note: p.note,
+                    floor: p.floor,
+                    spot: p.spot,
+                    active: !!p.active
+                  };
+                }
+              });
+            }
             // Match records to vehicles by vehicle_id or default to first vehicle
             if (yakit.data) {
               yakit.data.forEach(y => {
@@ -3175,7 +3280,8 @@ const useStore = create(
         try {
           const [
             dbKartlar, dbBorclar, dbOnayHavuzu, dbHedefler, dbGecmis, dbVizyon, dbMutabakat,
-            dbKasaBakiyeler, dbKasaAyarlar, dbFinansAyarlar, dbFinansRekurans, dbSaglikAyarlar, dbMutfakSohbet
+            dbKasaBakiyeler, dbKasaAyarlar, dbFinansAyarlar, dbFinansRekurans, dbSaglikAyarlar, dbMutfakSohbet,
+            dbTasinmazlar, dbBankalar, dbVarliklar, dbKumbaralar
           ] = await Promise.all([
             supabase.from('finans_kartlar').select('*'),
             supabase.from('finans_krediler').select('*'),
@@ -3189,7 +3295,11 @@ const useStore = create(
             supabase.from('finans_ayarlar').select('*'),
             supabase.from('finans_rekuranslar').select('*'),
             supabase.from('saglik_ayarlar').select('*'),
-            supabase.from('mutfak_sohbet').select('*').order('tarih', { ascending: false }).limit(50)
+            supabase.from('mutfak_sohbet').select('*').order('tarih', { ascending: false }).limit(50),
+            supabase.from('kasa_tasinmazlar').select('*'),
+            supabase.from('kasa_bankalar').select('*'),
+            supabase.from('kasa_varliklar').select('*'),
+            supabase.from('kasa_kumbaralar').select('*')
           ]);
 
           set(state => {
@@ -3228,7 +3338,7 @@ const useStore = create(
             if (dbKartlar.data && dbKartlar.data.length > 0) {
               f.kartlar = dbKartlar.data.map(k => {
                 const legacy = DEFAULT_STATE.finans.kartlar.find(dk => dk.id === k.id) || {};
-                return { id: k.id, name: k.name, owner: k.owner, cutoff_day: k.cutoff_day, color: k.color, min_pct: k.min_pct, limit: Number(k.limit || legacy.limit || 100000), balance: Number(k.balance || legacy.balance || 0), due_day_offset: Number(k.due_day_offset || legacy.due_day_offset || 10) };
+                return { id: k.id, name: k.name, owner: k.owner, cutoff_day: k.cutoff_day, color: k.color, min_pct: k.min_pct, limit: Number(k.limit ?? legacy.limit ?? 0), balance: Number(k.balance ?? legacy.balance ?? 0), due_day_offset: Number(k.due_day_offset ?? legacy.due_day_offset ?? 10) };
               });
             } else if (dbKartlar.data && dbKartlar.data.length === 0) {
               f.kartlar = DEFAULT_STATE.finans.kartlar;
@@ -3282,6 +3392,63 @@ const useStore = create(
 
             if (dbVizyon.data) {
               h.longTermVision = dbVizyon.data.map(x => ({ id: x.id, text: x.text, owner: x.owner }));
+            }
+
+            if (dbTasinmazlar.data) {
+              k.tasinmazlar = dbTasinmazlar.data.map(t => ({
+                id: t.id,
+                name: t.name,
+                city: t.city,
+                district: t.district,
+                type: t.type,
+                value: Number(t.value || 0),
+                income: Number(t.income || 0),
+                expense: Number(t.expense || 0),
+                ...(t.details || {})
+              }));
+            }
+
+            if (dbBankalar.data) {
+              k.bankaHesaplari = dbBankalar.data.map(b => ({
+                id: b.id,
+                name: b.name,
+                bank: b.bank,
+                iban: b.iban,
+                balance: Number(b.balance || 0),
+                kmh: Number(b.kmh || 0),
+                owner: b.owner,
+                icon: b.icon,
+                ...(b.details || {})
+              }));
+            }
+
+            if (dbVarliklar.data) {
+              k.varliklar = dbVarliklar.data.map(v => ({
+                id: v.id,
+                name: v.name,
+                amount: Number(v.amount || 0),
+                unit: v.unit,
+                price: Number(v.price || 0),
+                type: v.type,
+                location: v.location,
+                icon: v.icon,
+                ...(v.details || {})
+              }));
+            }
+
+            if (dbKumbaralar.data) {
+              k.kumbaralar = dbKumbaralar.data.map(g => ({
+                id: g.id,
+                name: g.name,
+                target: Number(g.target || 0),
+                current: Number(g.current || 0),
+                deadline: g.deadline,
+                icon: g.icon,
+                priority: g.priority,
+                category: g.category,
+                type: 'money',
+                ...(g.details || {})
+              }));
             }
 
             return { finans: f, hedefler: h, kasa: k, saglik: s, mutfak: m };
@@ -3711,8 +3878,8 @@ const useStore = create(
           yeniMutabakat[harcama.kart_id] = {
             ...current,
             beklenen: (current.beklenen || 0) + harcama.tutar,
-            ay: buAy,
-          };
+            ay: buAy
+    };
           // Supabase'deki mutabakat kaydını güncelle
           upsertKartMutabakat(
             harcama.kart_id,
@@ -3743,8 +3910,8 @@ const useStore = create(
           finans: {
             ...state.finans,
             buAyHarcamalar: yeniBuAy,
-            kartMutabakat: yeniMutabakat,
-          },
+            kartMutabakat: yeniMutabakat
+    },
           kasa: {
             ...state.kasa,
             bakiyeler: yeniBakiyeler,
@@ -3764,8 +3931,8 @@ const useStore = create(
         await get().addHarcama({
           ...item,
           ...updates,
-          kaynak: item.source || 'Onay Havuzu',
-        });
+          kaynak: item.source || 'Onay Havuzu'
+    });
 
         const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
         set({ finans: { ...get().finans, approvalPool: updatedPool } });
@@ -3810,8 +3977,8 @@ const useStore = create(
             const current = yeniMutabakat[item.kart_id];
             yeniMutabakat[item.kart_id] = {
               ...current,
-              beklenen: Math.max(0, (Number(current.beklenen) || 0) - Number(item.tutar)),
-            };
+              beklenen: Math.max(0, (Number(current.beklenen) || 0) - Number(item.tutar))
+    };
             upsertKartMutabakat(item.kart_id, buAy, yeniMutabakat[item.kart_id].beklenen, current.gercek, state.family_id);
           }
           
@@ -3933,8 +4100,8 @@ const useStore = create(
             gercek: Number(tutar),
             ay: hedefAy,
             paid: false // Yeni gerçek borç girildiğinde ödenmedi olarak başlar
-          },
-        };
+          }
+    };
         set({ finans: { ...state.finans, kartMutabakat: yeniMutabakat } });
 
         toast.success('Gerçek borç kaydedildi! 💳');
@@ -3950,10 +4117,10 @@ const useStore = create(
         let yeniBakiyeler = { ...state.kasa.bakiyeler };
         let yeniBankaHesaplari = [...(state.kasa.bankaHesaplari || [])];
 
-        const { type, id } = source; // source: { type: 'nakit' | 'havale', id: 'banka-id' }
+        const { type, id } = source;
 
         if (type === 'havale' && id) {
-          yeniBankaHesaplari = yeniBankaHesaplari.map(b => 
+          yeniBankaHesaplari = yeniBankaHesaplari.map(b =>
             b.id === id ? { ...b, balance: b.balance - amountNum } : b
           );
         } else {
@@ -3970,7 +4137,7 @@ const useStore = create(
           [kartId]: {
             ...currentMut,
             paid: true,
-            paymentType: paymentType, // 'full' | 'min'
+            paymentType,
             paidAmount: amountNum,
             sourceType: type,
             sourceId: id,
@@ -3978,21 +4145,43 @@ const useStore = create(
           }
         };
 
-        // 3. Supabase'deki mutabakat kaydını güncelle
-        // Not: finans_kart_mutabakat tablosunda paid/paymentType kolonları olmalı.
-        // Eğer yoksa upsertKartMutabakat hata verebilir, bu yüzden sadece yerelde tutuyoruz şimdilik 
-        // veya DB şemasını bildiğimizi varsayıyoruz. 
+        // 3. Ödeme geçmişine kayıt ekle
+        const odemeId = `odeme-${kartId}-${Date.now()}`;
+        const odemeKaydi = {
+          id: odemeId,
+          kart_id: kartId,
+          ay: buAy,
+          tutar: amountNum,
+          turu: paymentType, // 'full' | 'min' | 'kismi'
+          kaynak: type,
+          banka_id: (type === 'havale') ? id : null,
+          tarih: new Date().toISOString().split('T')[0],
+          ekleyen: state.currentUser?.name || null
+        };
+        await pushKartOdeme(odemeKaydi, state.family_id);
+
+        // 4. Mutabakat SQL
         await upsertKartMutabakat(kartId, buAy, currentMut.beklenen, currentMut.gercek, state.family_id);
+
+        const kartName = state.finans.kartlar.find(k => k.id === kartId)?.name || kartId;
 
         set({
           kasa: { ...state.kasa, bakiyeler: yeniBakiyeler, bankaHesaplari: yeniBankaHesaplari },
-          finans: { ...state.finans, kartMutabakat: yeniMutabakat }
+          finans: {
+            ...state.finans,
+            kartMutabakat: yeniMutabakat,
+            kartOdemeleri: [odemeKaydi, ...(state.finans.kartOdemeleri || [])]
+          }
         });
 
-        const kartName = state.finans.kartlar.find(k => k.id === kartId)?.name || kartId;
-        get().addLog('Kart Ödemesi', `${kartName} için ${amountNum}₺ ödeme yapıldı (${paymentType === 'full' ? 'Tam' : 'Asgari'}).`);
+        get().addLog('Kart Ödemesi', `${kartName} için ${amountNum}₺ ödeme yapıldı (${paymentType === 'full' ? 'Tam' : paymentType === 'min' ? 'Asgari' : 'Kısmi'}).`);
+        toast.success(`${kartName} ödemesi kaydedildi! 🎉`);
+      },
 
-        toast.success(`${kartName} ödemesi başarıyla kaydedildi! 🎉`);
+      getKartOdemeleri: async () => {
+        const state = get();
+        const data = await fetchKartOdemeler(state.family_id);
+        set({ finans: { ...state.finans, kartOdemeleri: data } });
       },
 
       // Bu ayın harcamalarını Supabase'den çeker
@@ -4566,6 +4755,17 @@ const useStore = create(
         set({ ev: { ...state.ev, emergencyKits: kits } });
         get().addLog('Güvenlik', `${newItem.item} ${kitType === 'deprem' ? 'Deprem' : 'İlk Yardım'} çantasına eklendi.`);
 
+        pushGenericToSupabase('ev_acil_durum_cantasi', {
+          id: newItem.id,
+          kit_type: kitType,
+          item: newItem.item,
+          amount: newItem.amount || '1',
+          exp_date: newItem.expDate,
+          buy_date: newItem.buyDate,
+          added_by: newItem.addedBy,
+          details: { icon: newItem.icon }
+        });
+
       },
 
       addEmergencyToShopping: (item) => {
@@ -4597,6 +4797,7 @@ const useStore = create(
 
         kits[kitType] = kits[kitType].filter(item => item.id !== id);
         set({ ev: { ...state.ev, emergencyKits: kits } });
+        removeGenericFromSupabase('ev_acil_durum_cantasi', id);
 
       },
 
@@ -5189,7 +5390,9 @@ const useStore = create(
         const state = get();
         const yeniBorclar = state.finans.borclar.map(b => b.id === id ? { ...b, remaining } : b);
         set({ finans: { ...state.finans, borclar: yeniBorclar } });
-
+        
+        // SYNC FIX: Persist changes to Supabase
+        await syncFinansKrediler(yeniBorclar);
       },
 
       updateCard: async (id, balance) => {
@@ -5197,6 +5400,8 @@ const useStore = create(
         const yeniKartlar = state.finans.kartlar.map(k => k.id === id ? { ...k, balance } : k);
         set({ finans: { ...state.finans, kartlar: yeniKartlar } });
 
+        // SYNC FIX: Persist changes to Supabase
+        await syncFinansKartlar(yeniKartlar);
       },
 
       // ── Mutfak Actions ───────────────────────────────────
@@ -5205,8 +5410,8 @@ const useStore = create(
         const mealKey = ogun === 'kahvalti' ? 'k' : 'a';
         const yeniMenu = {
           ...state.mutfak.menu,
-          [gun]: { ...(state.mutfak.menu[gun] || {}), [mealKey]: yemek },
-        };
+          [gun]: { ...(state.mutfak.menu[gun] || {}), [mealKey]: yemek }
+    };
         set({ mutfak: { ...state.mutfak, menu: yeniMenu } });
         
         // GÖLGE YAZIM
@@ -5219,8 +5424,8 @@ const useStore = create(
         const state = get();
         const yeniMenu = {
           ...state.mutfak.menu,
-          [gun]: { ...(state.mutfak.menu[gun] || {}), ...details },
-        };
+          [gun]: { ...(state.mutfak.menu[gun] || {}), ...details }
+    };
         set({ mutfak: { ...state.mutfak, menu: yeniMenu } });
         
         // GÖLGE YAZIM
@@ -6521,7 +6726,29 @@ const useStore = create(
           finans: { ...state.finans, rekurans: updatedRekurans }
         });
 
-        pushGenericToSupabase('kasa_tasinmazlar', newItem);
+        const dbPayload = {
+          id: newItem.id,
+          name: newItem.name,
+          city: newItem.city,
+          district: newItem.district,
+          type: newItem.type || 'Konut',
+          value: Number(newItem.value || 0),
+          income: Number(newItem.income || 0),
+          expense: Number(newItem.expense || 0),
+          details: {
+            tax: newItem.tax,
+            aidat: newItem.aidat,
+            icon: newItem.icon,
+            status: newItem.status,
+            taxPaid1: newItem.taxPaid1,
+            taxPaid2: newItem.taxPaid2,
+            daskExpiry: newItem.daskExpiry,
+            daskFile: newItem.daskFile,
+            lastUpdate: newItem.lastUpdate
+          }
+        };
+
+        pushGenericToSupabase('kasa_tasinmazlar', dbPayload);
         if (newItem.aidat > 0) pushEvDuzenliOdemeToSupabase(updatedDuzenli[updatedDuzenli.length - 1]);
         if (newItem.income > 0 && newItem.status === 'Kiracı Var') pushFinansRekuransToSupabase(updatedRekurans[updatedRekurans.length - 1]);
         toast.success('Yeni taşınmaz portföye eklendi ve finansal takibe alındı! 🏗️');
@@ -6581,7 +6808,28 @@ const useStore = create(
 
         const updatedTasinmaz = updatedTasinmazlar.find(t => t.id === id);
         if (updatedTasinmaz) {
-          pushGenericToSupabase('kasa_tasinmazlar', updatedTasinmaz);
+          const dbPayload = {
+            id: updatedTasinmaz.id,
+            name: updatedTasinmaz.name,
+            city: updatedTasinmaz.city,
+            district: updatedTasinmaz.district,
+            type: updatedTasinmaz.type || 'Konut',
+            value: Number(updatedTasinmaz.value || 0),
+            income: Number(updatedTasinmaz.income || 0),
+            expense: Number(updatedTasinmaz.expense || 0),
+            details: {
+              tax: updatedTasinmaz.tax,
+              aidat: updatedTasinmaz.aidat,
+              icon: updatedTasinmaz.icon,
+              status: updatedTasinmaz.status,
+              taxPaid1: updatedTasinmaz.taxPaid1,
+              taxPaid2: updatedTasinmaz.taxPaid2,
+              daskExpiry: updatedTasinmaz.daskExpiry,
+              daskFile: updatedTasinmaz.daskFile,
+              lastUpdate: updatedTasinmaz.lastUpdate
+            }
+          };
+          pushGenericToSupabase('kasa_tasinmazlar', dbPayload);
           
           const aidatItem = updatedDuzenli.find(d => d.id === `tasinmaz-aidat-${id}`);
           if (aidatItem) pushEvDuzenliOdemeToSupabase(aidatItem);
@@ -6995,16 +7243,20 @@ const useStore = create(
         const newHistoryItem = { testId, traits, type, date: today };
         const newHistory = [newHistoryItem, ...(personality.history || [])].slice(0, 50);
 
+        const personalityData = { results: newResults, history: newHistory, lastUpdated: today };
+        
         set({
           ev: {
             ...currentEv,
             tracking: {
               ...tracking,
-              personality: { results: newResults, history: newHistory, lastUpdated: today }
+              personality: personalityData
             }
           }
         });
 
+        // SYNC FIX: Persist personality results to Supabase
+        pushGenericToSupabase('ev_tracking', { id: 'personality', veri: personalityData });
       },
 
       updateTrackingRoutine: (updates) => {

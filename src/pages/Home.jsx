@@ -6,6 +6,7 @@ import AnimatedPage from '../components/AnimatedPage';
 import logo from '../assets/eraylar-logo.png';
 import Portal from '../components/Portal';
 import { motion, AnimatePresence } from 'framer-motion';
+import ConfirmModal from '../components/ConfirmModal';
 import { PET_QUOTES } from '../constants/petQuotes';
 import toast from 'react-hot-toast';
 import './Home.css';
@@ -41,10 +42,25 @@ const Home = () => {
   
   const [insights, setInsights] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: () => {} });
+  const [debugClicks, setDebugClicks] = useState(0);
+  const [debugMode, setDebugMode] = useState(localStorage.getItem('debug_mode') === 'true');
   const [showMoodCheck, setShowMoodCheck] = useState(false);
   const [selectedMood, setSelectedMood] = useState(null);
   const [activeCardIdx, setActiveCardIdx] = useState(0);
   const carouselRef = React.useRef(null);
+
+  const handleTitleClick = () => {
+    const newClicks = debugClicks + 1;
+    setDebugClicks(newClicks);
+    if (newClicks >= 5) {
+      const newMode = !debugMode;
+      setDebugMode(newMode);
+      localStorage.setItem('debug_mode', newMode ? 'true' : 'false');
+      setDebugClicks(0);
+      toast(newMode ? '🐞 Debug Modu Aktif!' : '🐞 Debug Modu Kapatıldı.');
+    }
+  };
 
   const getSmartInsights = () => {
     const store = useStore.getState();
@@ -404,9 +420,14 @@ const Home = () => {
               {currentUser?.emoji || '👨‍💻'}
             </div>
             <div className="phb-text">
-              <div className="phb-brand">
-                <img src={logo} alt="Logo" className="phb-logo-img" />
-                <h2>Eraylar Hanem</h2>
+              <div className="phb-brand" onClick={handleTitleClick}>
+                <div className="phb-brand-main">
+                  <img src={logo} alt="Logo" className="phb-logo-img" />
+                  <div className="phb-brand-text">
+                    <h2>Eraylar Hanem</h2>
+                    <p>Mükemmeliyet, detaylarda gizlidir. ✨</p>
+                  </div>
+                </div>
                 <div className="phb-header-pets">
                   <span className="pet-link" onClick={() => handlePetClick('waffle')}>🐶</span> 
                   <span className="pet-link" onClick={() => handlePetClick('mayis')}>🐈</span>

@@ -1691,17 +1691,24 @@ export default function Ev() {
           </div>
 
           <div className="tahlil-main-text glass">
-             {synthesizeCharacter(personalityData)}
+             {personalityData?.results ? synthesizeCharacter(personalityData) : (
+               <div style={{ textAlign: 'center', padding: '20px' }}>
+                 <p>Henüz karakter tahlili verisi bulunamadı. Yekta Tilmen'in sizi tanıması için testi tamamlamalısınız.</p>
+                 <button className="btn-primary-v2 mt-16" onClick={() => navigate('/yekta-test')}>Analizi Başlat 🚀</button>
+               </div>
+             )}
           </div>
 
-          <div className="tahlil-stats-grid mt-24">
-             {Object.keys(resultsObj).map(id => (
-               <div key={id} className="mini-result-pill">
-                  <span>{id === 'big5' ? 'Karakter' : (id === 'leader' ? 'Liderlik' : id.toUpperCase())}</span>
-                  <strong>{resultsObj[id]?.type || 'Belirsiz'}</strong>
-               </div>
-             ))}
-          </div>
+          {personalityData?.results && (
+            <div className="tahlil-stats-grid mt-24">
+               {Object.keys(resultsObj).map(id => (
+                 <div key={id} className="mini-result-pill">
+                    <span>{id === 'big5' ? 'Karakter' : (id === 'leader' ? 'Liderlik' : id.toUpperCase())}</span>
+                    <strong>{resultsObj[id]?.type || 'Belirsiz'}</strong>
+                 </div>
+               ))}
+            </div>
+          )}
 
           <button className="btn-primary-v2 mt-32" onClick={() => setShowTahlilSheet(false)}>Anlaşıldı, Yekta.</button>
         </div>

@@ -1198,3 +1198,245 @@ input[type="time"] {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* --- Premium Credit Card Management --- */
+.kredi-kart-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 0 16px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.kredi-kart-strip::-webkit-scrollbar { display: none; }
+
+.kredi-strip-btn {
+  flex: 0 0 auto;
+  width: 140px;
+  padding: 16px;
+  background: var(--card);
+  border: 2px solid transparent;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+  text-align: left;
+}
+.kredi-strip-btn.active {
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+.ksb-name { font-size: 13px; font-weight: 800; color: var(--txt); }
+.ksb-borc { font-size: 14px; font-weight: 800; }
+.ksb-owner { font-size: 10px; font-weight: 700; color: var(--txt-light); text-transform: uppercase; }
+
+.kredi-strip-btn.add-btn {
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border: 2px dashed var(--brd);
+}
+
+.premium-cc-card {
+  width: 100%;
+  aspect-ratio: 1.6 / 1;
+  border-radius: 24px;
+  padding: 24px;
+  position: relative;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+  overflow: hidden;
+}
+.premium-cc-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.premium-cc-bank-name { font-size: 18px; font-weight: 800; letter-spacing: 0.5px; }
+.premium-cc-chip { 
+  width: 45px; 
+  height: 35px; 
+  background: linear-gradient(135deg, #ffd700, #b8860b); 
+  border-radius: 8px; 
+  position: relative;
+}
+.premium-cc-number { font-size: 20px; font-weight: 600; letter-spacing: 2px; }
+.premium-cc-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+.premium-cc-holder { font-size: 13px; font-weight: 700; letter-spacing: 1px; }
+.premium-cc-brand { font-size: 14px; font-weight: 800; font-style: italic; }
+
+.premium-cc-limit-sec { margin: 20px 0; }
+.premium-cc-limit-labels { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.premium-cc-limit-labels strong { font-size: 16px; font-weight: 800; color: var(--txt); }
+.premium-cc-limit-labels small { font-size: 11px; font-weight: 700; color: var(--txt-light); }
+.premium-cc-limit-bar { height: 8px; background: var(--brd); border-radius: 10px; overflow: hidden; }
+.premium-cc-limit-fill { height: 100%; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+
+.kredi-compare-card {
+  padding: 20px;
+  border-radius: 24px;
+  margin-bottom: 16px;
+}
+.kcc-row { display: flex; align-items: center; gap: 20px; }
+.kcc-item { flex: 1; text-align: center; }
+.kcc-divider { width: 1px; height: 40px; background: var(--brd); }
+.kcc-label { font-size: 10px; font-weight: 800; color: var(--txt-light); margin-bottom: 4px; }
+.kcc-val { font-size: 18px; font-weight: 800; color: var(--txt); }
+.kcc-val.amber { color: #f59e0b; }
+.kcc-sub { font-size: 10px; font-weight: 600; color: var(--txt-light); }
+
+.kcc-fark {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.kcc-fark.ok { background: #f0fdf4; color: #166534; }
+.kcc-fark.warn { background: #fffbeb; color: #92400e; }
+.kcc-fark.good { background: #eff6ff; color: #1e40af; }
+
+.kcc-ekstre-input {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.kcc-ekstre-input input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--brd);
+  font-weight: 700;
+}
+.kcc-ekstre-input button {
+  padding: 0 20px;
+  border-radius: 14px;
+  border: none;
+  background: var(--txt);
+  color: white;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.kredi-dates-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.kdr-item { display: flex; flex-direction: column; }
+.kdr-item span { font-size: 11px; font-weight: 700; color: var(--txt-light); }
+.kdr-item strong { font-size: 14px; font-weight: 800; color: var(--txt); }
+
+.kredi-odeme-panel {
+  padding: 24px;
+  border-radius: 28px;
+  background: white;
+  border: 1px solid var(--brd);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+}
+.kop-title { font-size: 16px; font-weight: 800; margin-bottom: 16px; }
+.kop-type-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.kop-type-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 16px;
+  border: 2px solid var(--brd);
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.2s;
+}
+.kop-type-btn.active { border-color: #10b981; background: #f0fdf4; }
+.kop-type-btn span { font-size: 13px; font-weight: 800; }
+.kop-type-btn small { font-size: 11px; font-weight: 700; color: var(--txt-light); }
+
+.kop-custom-input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--brd);
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.kop-kaynak-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.kop-kaynak-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1.5px solid var(--brd);
+  background: white;
+  font-size: 13px;
+  font-weight: 800;
+}
+.kop-kaynak-btn.active { background: var(--txt); color: white; border-color: var(--txt); }
+
+.kop-banka-select {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1.5px solid var(--brd);
+  margin-bottom: 16px;
+  font-weight: 700;
+}
+
+.kop-submit-btn {
+  width: 100%;
+  padding: 18px;
+  border-radius: 20px;
+  border: none;
+  background: #10b981;
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+}
+
+.kredi-paid-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.kredi-odeme-gecmis { margin-top: 32px; }
+.kog-title { font-size: 14px; font-weight: 800; color: var(--txt-light); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.kog-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--brd);
+}
+.kog-left { display: flex; flex-direction: column; }
+.kog-ay { font-size: 14px; font-weight: 800; color: var(--txt); }
+.kog-turu { font-size: 11px; font-weight: 700; color: #10b981; }
+.kog-right { text-align: right; display: flex; flex-direction: column; }
+.kog-right strong { font-size: 15px; font-weight: 800; }
+.kog-right small { font-size: 11px; font-weight: 700; color: var(--txt-light); }
+
+.kredi-mgmt-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1.5px solid var(--brd);
+  background: white;
+  font-size: 11px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--txt);
+}

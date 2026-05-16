@@ -5,6 +5,7 @@ import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import Portal from '../components/Portal';
 import { notificationService } from '../lib/notificationService';
+import MassDebugTool from '../components/MassDebugTool';
 import toast from 'react-hot-toast';
 import './Ayarlar.css';
 
@@ -13,6 +14,7 @@ export default function Ayarlar() {
   const { logs, settings, toggleSilentMode, runPhase1Migration, runGroup1Migration, runGroup2Migration, runGroup3Migration } = useStore();
   const [darkMode, setDarkMode] = useState(false);
   const [notifPermission, setNotifPermission] = useState(Notification.permission);
+  const [debugMode] = useState(localStorage.getItem('debug_mode') === 'true');
   
   // Game State
   const [showGame, setShowGame] = useState(false);
@@ -192,6 +194,13 @@ export default function Ayarlar() {
           <ChevronRight size={18} />
         </button>
       </div>
+      
+      {debugMode && (
+        <div className="settings-group" style={{ border: '2px solid #ef4444', borderRadius: '25px', padding: '10px' }}>
+          <h4>🐞 Geliştirici Araçları</h4>
+          <MassDebugTool />
+        </div>
+      )}
       
       <div className="app-version-card glass">
         <div className="v-info">
