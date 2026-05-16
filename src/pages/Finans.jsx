@@ -365,101 +365,133 @@ const KrediTab = React.memo(({ finans, prv }) => {
       {kartlar.map(kart => {
         const mut = kartMutabakat[kart.id] || {};
         const fark = (mut.gercek != null) ? (mut.gercek - (mut.beklenen || 0)) : null;
-        const expanded = expandedKart === kart.id;
+        
+        // Hesaplamalar
+        const currentDebt = mut.gercek != null ? mut.gercek : (mut.beklenen || 0);
+        const limit = kart.limit || 0;
+        const availableLimit = Math.max(0, limit - currentDebt);
+        const limitPerc = limit > 0 ? Math.min(100, (currentDebt / limit) * 100) : 0;
+        const barColor = limitPerc > 90 ? '#ef4444' : limitPerc > 75 ? '#f59e0b' : '#10b981';
+
+        const today = new Date();
+        const cutoffDateStr = `${String(kart.cutoff_day).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+        
+        const dueDate = new Date(today.getFullYear(), today.getMonth(), kart.cutoff_day);
+        dueDate.setDate(dueDate.getDate() + (kart.due_day_offset || 10));
+        const dueDateStr = `${String(dueDate.getDate()).padStart(2, '0')}/${String(dueDate.getMonth() + 1).padStart(2, '0')}/${dueDate.getFullYear()}`;
 
         return (
-          <div key={kart.id} className="kart-mutabakat-card glass">
-            <div className="kmc-header" onClick={() => setExpandedKart(expanded ? null : kart.id)}>
-              <div className="kmc-dot" style={{ background: kart.color }} />
-              <div className="kmc-name">
-                <strong>{kart.name}</strong>
-                <small>{kart.owner === 'gorkem' ? '👨🏻‍💻 Görkem' : '👩 Esra'} · Kesim: {kart.cutoff_day}'i</small>
+          <div key={kart.id} className="premium-cc-container animate-scaleIn">
+            <div 
+              className="premium-cc-card" 
+              style={{ 
+                background: `linear-gradient(135deg, ${kart.color || '#3b82f6'} 0%, #1e293b 100%)` 
+              }}
+            >
+              <div className="premium-cc-top">
+                <div className="premium-cc-bank-name">{kart.name}</div>
+                <div className="kmc-actions-box" style={{ marginRight: 0 }}>
+                  <button className="icon-btn-mini" onClick={(e) => { e.stopPropagation(); setEditingKart(kart); }} style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>
+                    <Edit size={12} />
+                  </button>
+                  <button className="icon-btn-mini del" onClick={(e) => { e.stopPropagation(); setDeletingKartId(kart.id); }} style={{ background: 'rgba(239,68,68,0.2)', color: '#fca5a5' }}>
+                    <Trash2 size={12} />
+                  </button>
+                </div>
               </div>
-
-              <div className="kmc-actions-box">
-                <button className="kmc-action-btn" onClick={(e) => { e.stopPropagation(); setEditingKart(kart); }}>
-                  <Edit size={14} />
-                </button>
-                <button className="kmc-action-btn del" onClick={(e) => { e.stopPropagation(); setDeletingKartId(kart.id); }}>
-                  <Trash2 size={14} />
-                </button>
+              <div className="premium-cc-chip"></div>
+              <div className="premium-cc-number">
+                **** **** **** {kart.card_number || '4287'}
               </div>
-              <div className="kmc-beklenen">
-                <small>Beklenen</small>
-                <strong>{fmt(mut.beklenen || 0, prv)}</strong>
+              <div className="premium-cc-bottom">
+                <div className="premium-cc-holder">{kart.owner === 'gorkem' ? 'GÖRKEM ERAY' : kart.owner === 'esra' ? 'ESRA ERAY' : 'ERAY AİLESİ'}</div>
+                <div className="premium-cc-brand">{kart.brand === 'visa' ? 'VISA' : kart.brand === 'troy' ? 'TROY' : 'Mastercard'}</div>
               </div>
-              {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </div>
 
-            {expanded && (
-              <div className="kmc-body">
-                <div className="kmc-row">
-                  <span>Sistem Beklentisi:</span>
-                  <strong>{fmt(mut.beklenen || 0, prv)}</strong>
+            <div className="premium-cc-limit-sec">
+              <div className="premium-cc-limit-labels">
+                <div>
+                  <strong>{fmt(availableLimit, prv)}</strong>
+                  <small>Kullanılabilir Limit</small>
                 </div>
-                {mut.gercek != null && (
-                  <div className="kmc-row">
-                    <span>Banka Gerçek Borcu:</span>
-                    <strong style={{ color: '#10b981' }}>{fmt(mut.gercek, prv)}</strong>
-                  </div>
-                )}
-                {fark != null && (
-                  <div className={`kmc-fark ${fark > 0 ? 'pozitif' : 'negatif'}`}>
-                    {fark > 0
-                      ? `⚠️ Sistemin görmediği ${fmt(fark, prv)} var`
-                      : `✅ Beklentiden ${fmt(Math.abs(fark), prv)} az`}
-                  </div>
-                )}
-                <div className="kmc-input-row">
+                <div className="right">
+                  <strong>{fmt(limit, prv)}</strong>
+                  <small>Toplam Kart Limiti</small>
+                </div>
+              </div>
+              <div className="premium-cc-limit-bar">
+                <div className="premium-cc-limit-fill" style={{ width: `${limitPerc}%`, background: barColor }}></div>
+              </div>
+            </div>
+
+            <div className="premium-cc-details">
+              <div className="premium-cc-detail-item">
+                <strong style={{ color: mut.gercek != null ? '#10b981' : '#f59e0b' }}>
+                  {fmt(currentDebt, prv)}
+                </strong>
+                <small>Güncel Dönem Borcu {mut.gercek == null && '(Sistem)'}</small>
+              </div>
+              <div className="premium-cc-detail-item" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
+                <strong>{mut.paid ? '0₺' : fmt(currentDebt, prv)}</strong>
+                <small>Kalan Hesap Özeti Borcu</small>
+              </div>
+              <div className="premium-cc-detail-item">
+                <strong>{cutoffDateStr}</strong>
+                <small>Hesap Kesim Tarihi</small>
+              </div>
+              <div className="premium-cc-detail-item" style={{ alignItems: 'flex-end', textAlign: 'right' }}>
+                <strong style={{ color: '#ef4444' }}>{dueDateStr}</strong>
+                <small>Son Ödeme Tarihi</small>
+              </div>
+            </div>
+
+            <div style={{ padding: '0 20px 20px', background: 'var(--card)' }}>
+              {fark != null && (
+                <div className={`kmc-fark ${fark > 0 ? 'pozitif' : 'negatif'}`} style={{ margin: '0 0 16px 0' }}>
+                  {fark > 0
+                    ? `⚠️ Sistemin görmediği ${fmt(fark, prv)} var (Sistem: ${fmt(mut.beklenen || 0, prv)})`
+                    : `✅ Beklentiden ${fmt(Math.abs(fark), prv)} az`}
+                </div>
+              )}
+
+              {mut.gercek == null ? (
+                <div className="kmc-input-row" style={{ marginTop: 0 }}>
                   <input
                     type="number"
-                    placeholder="Ekstre Borcunu Gir (₺)"
+                    placeholder="Gerçek Ekstre Borcunu Gir (₺)"
                     value={inputMap[kart.id] || ''}
                     onChange={e => setInputMap(p => ({ ...p, [kart.id]: e.target.value }))}
-                    style={{ flex: 1, padding: '8px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                    style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1.5px solid var(--brd)' }}
                   />
-                  <button className="kmc-kaydet-btn" onClick={() => handleGercekGir(kart.id)} style={{ padding: '8px 16px', background: '#334155', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                  <button className="kmc-kaydet-btn" onClick={() => handleGercekGir(kart.id)}>
                     <Check size={16} /> Kaydet
                   </button>
                 </div>
-
-                {mut.gercek > 0 && !mut.paid && (
-                  <div className="kmc-payment-actions" style={{ marginTop: '16px', borderTop: '1px dashed #cbd5e1', paddingTop: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                      <div style={{ fontSize: '14px' }}>
-                        <div style={{ opacity: 0.7 }}>Asgari (%{kart.min_pct || 20})</div>
-                        <strong style={{ color: '#ef4444' }}>{fmt(mut.gercek * (kart.min_pct || 20) / 100, prv)}</strong>
-                      </div>
-                      <div style={{ textAlign: 'right', fontSize: '14px' }}>
-                        <div style={{ opacity: 0.7 }}>Dönem Borcu</div>
-                        <strong style={{ color: '#10b981' }}>{fmt(mut.gercek, prv)}</strong>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button 
-                        style={{ flex: 1, padding: '10px', borderRadius: '50px', background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', fontWeight: 'bold', cursor: 'pointer' }}
-                        onClick={() => setPayingCard({ id: kart.id, amount: mut.gercek * (kart.min_pct || 20) / 100, type: 'min', name: kart.name })}
-                      >
-                        ASGARİ ÖDE
-                      </button>
-                      <button 
-                        style={{ flex: 1, padding: '10px', borderRadius: '50px', background: 'var(--finans, #10b981)', border: 'none', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
-                        onClick={() => setPayingCard({ id: kart.id, amount: mut.gercek, type: 'full', name: kart.name })}
-                      >
-                        TAMAMINI ÖDE
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {mut.paid && (
-                  <div style={{ marginTop: '16px', padding: '10px', background: '#f0fdf4', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: '#166534' }}>
-                    <Check size={18} />
-                    <span>Bu ayın ödemesi yapıldı ({mut.paymentType === 'full' ? 'Tam' : 'Asgari'})</span>
-                  </div>
-                )}
-              </div>
-            )}
+              ) : mut.paid ? (
+                <div style={{ padding: '12px', background: '#f0fdf4', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '8px', color: '#166534', fontWeight: 'bold', justifyContent: 'center' }}>
+                  <Check size={18} />
+                  <span>Ödendi ({mut.paymentType === 'full' ? 'Tam' : 'Asgari'})</span>
+                </div>
+              ) : (
+                <div className="premium-cc-actions" style={{ padding: 0 }}>
+                  <button 
+                    className="premium-submit-btn"
+                    style={{ background: '#f8fafc', border: '1.5px solid var(--brd)', color: '#334155', boxShadow: 'none' }}
+                    onClick={() => setPayingCard({ id: kart.id, amount: mut.gercek * (kart.min_pct || 20) / 100, type: 'min', name: kart.name })}
+                  >
+                    ASGARİ ÖDE
+                  </button>
+                  <button 
+                    className="premium-submit-btn"
+                    style={{ background: 'var(--finans, #10b981)' }}
+                    onClick={() => setPayingCard({ id: kart.id, amount: mut.gercek, type: 'full', name: kart.name })}
+                  >
+                    TAMAMINI ÖDE
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         );
       })}
@@ -930,7 +962,7 @@ export default function Finans() {
 
 function KartYonetimModal({ isOpen, onClose, finans, updateFinansData, initialData }) {
   const kartlar = finans?.kartlar || [];
-  const defaults = { id: '', name: '', limit: '', cutoff_day: '', due_day_offset: 10, min_pct: 20, owner: 'ortak', color: '#6366f1' };
+  const defaults = { id: '', name: '', limit: '', cutoff_day: '', due_day_offset: 10, min_pct: 20, owner: 'ortak', color: '#6366f1', card_number: '', brand: 'mastercard' };
   const [yeniKart, setYeniKart] = useState(defaults);
 
   useEffect(() => {
@@ -947,7 +979,9 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData, initialDa
         limit: Number(yeniKart.limit), 
         cutoff_day: Number(yeniKart.cutoff_day), 
         due_day_offset: Number(yeniKart.due_day_offset),
-        min_pct: Number(yeniKart.min_pct)
+        min_pct: Number(yeniKart.min_pct),
+        card_number: yeniKart.card_number,
+        brand: yeniKart.brand
       } : k);
       updateFinansData('kartlar', newKartlar);
       toast.success('Kart güncellendi!');
@@ -960,6 +994,8 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData, initialDa
         cutoff_day: Number(yeniKart.cutoff_day), 
         due_day_offset: Number(yeniKart.due_day_offset),
         min_pct: Number(yeniKart.min_pct),
+        card_number: yeniKart.card_number,
+        brand: yeniKart.brand,
         balance: 0 
       }];
       updateFinansData('kartlar', newKartlar);
@@ -1018,6 +1054,21 @@ function KartYonetimModal({ isOpen, onClose, finans, updateFinansData, initialDa
                 <option value="ortak">Ortak</option>
                 <option value="gorkem">Görkem</option>
                 <option value="esra">Esra</option>
+              </select>
+            </div>
+
+            <div className="form-field-v2">
+              <label>💳 Son 4 Hane</label>
+              <input type="text" placeholder="Örn: 4287" maxLength="4" value={yeniKart.card_number} onChange={e => setYeniKart({...yeniKart, card_number: e.target.value})} />
+              <small>Opsiyonel</small>
+            </div>
+
+            <div className="form-field-v2">
+              <label>🏷️ Kart Tipi</label>
+              <select value={yeniKart.brand} onChange={e => setYeniKart({...yeniKart, brand: e.target.value})}>
+                <option value="mastercard">Mastercard</option>
+                <option value="visa">Visa</option>
+                <option value="troy">Troy</option>
               </select>
             </div>
 

@@ -397,6 +397,187 @@
   white-space: nowrap;
 }
 
+/* ── PREMIUM CREDIT CARD ────────────────── */
+.premium-cc-container {
+  margin-bottom: 24px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  background: var(--card);
+}
+
+.premium-cc-card {
+  position: relative;
+  padding: 24px;
+  color: white;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 20px 20px 0 0;
+  box-shadow: inset 0 0 20px rgba(255,255,255,0.2);
+  overflow: hidden;
+}
+
+.premium-cc-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+  transform: rotate(30deg);
+  pointer-events: none;
+}
+
+.premium-cc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  z-index: 2;
+}
+
+.premium-cc-bank-name {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.premium-cc-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  opacity: 0.9;
+}
+
+.premium-cc-chip {
+  width: 40px;
+  height: 30px;
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+  border-radius: 6px;
+  margin-top: 20px;
+  position: relative;
+  z-index: 2;
+  box-shadow: inset 0 0 4px rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.2);
+  opacity: 0.8;
+}
+.premium-cc-chip::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px; background: rgba(0,0,0,0.2);
+}
+
+.premium-cc-number {
+  font-size: 22px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  letter-spacing: 3px;
+  margin-top: auto;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  position: relative;
+  z-index: 2;
+}
+
+.premium-cc-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  position: relative;
+  z-index: 2;
+}
+
+.premium-cc-holder {
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.premium-cc-brand {
+  font-size: 24px;
+  font-weight: 900;
+  font-style: italic;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.premium-cc-limit-sec {
+  padding: 16px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--brd);
+}
+
+.premium-cc-limit-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.premium-cc-limit-labels div {
+  display: flex;
+  flex-direction: column;
+}
+.premium-cc-limit-labels strong {
+  font-size: 16px;
+  color: var(--txt);
+}
+.premium-cc-limit-labels small {
+  font-size: 11px;
+  color: var(--txt-light);
+}
+.premium-cc-limit-labels .right { text-align: right; }
+
+.premium-cc-limit-bar {
+  height: 8px;
+  background: var(--brd);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.premium-cc-limit-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease-in-out, background 0.5s ease;
+}
+
+.premium-cc-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 20px;
+  background: var(--card);
+}
+
+.premium-cc-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.premium-cc-detail-item strong {
+  font-size: 18px;
+  color: var(--txt);
+}
+.premium-cc-detail-item small {
+  font-size: 11px;
+  color: var(--txt-light);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.premium-cc-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 20px;
+  background: var(--card);
+}
+.premium-cc-actions button {
+  flex: 1;
+}
+
 .loan-card-v2 {
   padding: 18px;
   border-radius: 20px;

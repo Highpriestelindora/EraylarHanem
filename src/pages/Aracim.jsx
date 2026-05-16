@@ -186,15 +186,15 @@ export default function Aracim() {
 
             {/* Quick Actions */}
             <div className="arac-quick-actions mt-24">
-              <button className="aq-card glass" onClick={() => setShowAddFuel(true)}>
+              <button className="aq-card" onClick={() => setShowAddFuel(true)}>
                 <div className="aq-icon fuel"><Fuel size={24} /></div>
                 <span>Yakıt Al</span>
               </button>
-              <button className="aq-card glass" onClick={() => setShowWashModal(true)}>
+              <button className="aq-card" onClick={() => setShowWashModal(true)}>
                 <div className="aq-icon clean"><Droplets size={24} /></div>
                 <span>Yıkama</span>
               </button>
-              <button className="aq-card glass" onClick={() => setShowParkModal(true)}>
+              <button className="aq-card" onClick={() => setShowParkModal(true)}>
                 <div className="aq-icon park">
                   <MapPin size={24} className={parkLocation?.active ? 'animate-park-pulse' : ''} />
                 </div>
@@ -270,7 +270,7 @@ export default function Aracim() {
             </div>
             <div className="docs-list">
               {documents.map(doc => {
-                const diff = Math.round((new Date(doc.dueDate) - new Date()) / 864e5);
+                const diff = doc.dueDate ? Math.round((new Date(doc.dueDate) - new Date()) / 864e5) : 0;
                 return (
                   <div 
                     key={doc.id} 
@@ -283,7 +283,7 @@ export default function Aracim() {
                       <div className="dcp-info">
                         <strong>{doc.name}</strong>
                         {doc.brand && <small style={{ color: 'var(--aracim)', fontWeight: '800' }}>{doc.brand}</small>}
-                        <small style={{ display: 'block' }}>Bitiş: {new Date(doc.dueDate).toLocaleDateString('tr-TR')}</small>
+                        <small style={{ display: 'block' }}>Bitiş: {doc.dueDate ? new Date(doc.dueDate).toLocaleDateString('tr-TR') : 'Belirtilmedi'}</small>
                       </div>
                     </div>
                     <div className="dcp-right-actions">
@@ -502,7 +502,7 @@ function SupportFormModal({ contacts, onSave, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Phone size={24} color="#b91c1c" />
           <h3>Destek Hattı Düzenle</h3>
@@ -560,7 +560,7 @@ function KMUpdateModal({ currentKM, onClose, onSave }) {
   const [val, setVal] = useState(currentKM);
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Gauge size={24} color="#7c3aed" />
           <h3>KM Güncelle</h3>
@@ -594,7 +594,7 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
   const [paymentMethod, setPaymentMethod] = useState('');
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Fuel size={24} color="#f87171" />
           <h3>Yakıt Girişi</h3>
@@ -633,7 +633,7 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
 function GarageModal({ garaj, selectedId, onSelect, onAdd, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Warehouse size={24} color="var(--aracim)" />
           <h3>Eraylar Garaj</h3>
@@ -666,7 +666,7 @@ function VehicleFormModal({ vehicle, onSave, onDelete, onClose }) {
   const [form, setForm] = useState(vehicle || { type: 'car', brand: '', model: '', plaka: '', marketValue: 0 });
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Settings size={24} />
           <h3>{vehicle ? 'Aracı Düzenle' : 'Yeni Araç'}</h3>
@@ -717,7 +717,7 @@ function WashModal({ onSave, onClose }) {
   const [paymentMethod, setPaymentMethod] = useState('');
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Droplets size={24} color="#3b82f6" />
           <h3>Araç Yıkama</h3>
@@ -770,7 +770,7 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
 
     return (
       <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+        <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
           <div className="modal-header-v2">
             <MapPin size={24} color="#ef4444" />
             <h3>Park Bilgisi</h3>
@@ -812,7 +812,7 @@ function ParkModal({ parkLocation, onStart, onFinish, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <MapPin size={24} color="#10b981" />
           <h3>Konumu Kaydet</h3>
@@ -863,7 +863,7 @@ function ServiceFormModal({ onSave, onClose }) {
   const [paymentMethod, setPaymentMethod] = useState('');
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Wrench size={24} color="#7c3aed" />
           <h3>Servis Kaydı Ekle</h3>
@@ -902,7 +902,7 @@ function DocFormModal({ doc, onSave, onClose }) {
   const [paymentMethod, setPaymentMethod] = useState('');
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <FileText size={24} color="#3b82f6" />
           <h3>{doc ? 'Belgeyi Düzenle' : 'Yeni Belge'}</h3>
@@ -955,7 +955,7 @@ function PartMaintenanceModal({ part, onSave, onClose }) {
   const [form, setForm] = useState({ lastKM: part.lastKM, lastDate: part.lastDate || new Date().toISOString().split('T')[0] });
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" onClick={e => e.stopPropagation()}>
+      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Settings size={24} color="#10b981" />
           <h3>{part.label} Bakımı</h3>

@@ -938,33 +938,92 @@ async function pushEvBakimToSupabase(item) {
 
 async function pushGarajYakitToSupabase(log, vehicleId = 'v1') {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('garaj_yakit').upsert({
-      id: String(log.id), vehicle_id: vehicleId, tarih: log.tarih || log.dt || null,
-      km: Number(log.km || 0), litre: Number(log.litre || log.lt || 0),
-      tutar: Number(log.tutar || log.pr || 0), istasyon: log.istasyon || log.st || null,
-      tip: log.tip || log.tp || 'benzin', dolu: log.dolu !== false
+      id: String(log.id), vehicle_id: vehicleId, tarih: log.tarih || log.dt || log.date || null,
+      km: Number(log.km || 0), 
+      litre: Number(log.litre || log.lt || log.amount || 0),
+      tutar: Number(log.tutar || log.pr || (log.amount && log.price ? log.amount * log.price : 0)), 
+      istasyon: log.istasyon || log.st || log.station || null,
+      tip: log.tip || log.tp || 'benzin', dolu: log.dolu !== false,
+      family_id: familyId
     });
   } catch(e) { console.warn('Garaj Yakıt Hatası:', e); }
 }
 
 async function pushGarajServisToSupabase(svc, vehicleId = 'v1') {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('garaj_servis').upsert({
-      id: String(svc.id), vehicle_id: vehicleId, tarih: svc.tarih || svc.dt || null,
-      km: Number(svc.km || 0), islem: svc.islem || svc.n || null,
-      tutar: Number(svc.tutar || svc.pr || 0), yer: svc.yer || svc.loc || null,
-      notlar: svc.notlar || svc.nt || null
+      id: String(svc.id), vehicle_id: vehicleId, 
+      tarih: svc.tarih || svc.date || svc.dt || null,
+      km: Number(svc.km || 0), 
+      islem: svc.islem || svc.title || svc.n || null,
+      tutar: Number(svc.tutar || svc.cost || svc.pr || 0), 
+      yer: svc.yer || svc.shop || svc.loc || null,
+      notlar: svc.notlar || svc.nt || null,
+      family_id: familyId
     });
   } catch(e) { console.warn('Garaj Servis Hatası:', e); }
 }
 
 async function pushGarajBelgeToSupabase(doc, vehicleId = 'v1') {
   try {
+    const familyId = DEFAULT_FID;
     await supabase.from('garaj_belgeler').upsert({
       id: String(doc.id), vehicle_id: vehicleId, name: doc.name,
-      due_date: doc.dueDate || null, icon: doc.icon || '📄'
+      due_date: doc.dueDate || doc.due_date || null, icon: doc.icon || '📄',
+      family_id: familyId
     });
   } catch(e) { console.warn('Garaj Belge Hatası:', e); }
+}
+
+async function deleteGarajBelgeFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    await supabase.from('garaj_belgeler').delete().eq('id', String(id)).eq('family_id', familyId);
+  } catch(e) {}
+}
+
+async function pushGarajAracToSupabase(vehicle) {
+  try {
+    const familyId = DEFAULT_FID;
+    await supabase.from('garaj_araclar').upsert({
+      id: vehicle.id,
+      family_id: familyId,
+      type: vehicle.type,
+      brand: vehicle.brand,
+      model: vehicle.model,
+      plaka: vehicle.plaka,
+      km: Number(vehicle.km || 0),
+      market_value: Number(vehicle.marketValue || 0),
+      last_cleaned: vehicle.lastCleaned || null
+    });
+  } catch(e) { console.warn('Garaj Araç Hatası:', e); }
+}
+
+async function deleteGarajAracFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    await supabase.from('garaj_araclar').delete().eq('id', String(id)).eq('family_id', familyId);
+  } catch(e) {}
+}
+
+async function pushGarajParkToSupabase(park, vehicleId) {
+  try {
+    const familyId = DEFAULT_FID;
+    await supabase.from('garaj_park').upsert({
+      id: vehicleId,
+      vehicle_id: vehicleId,
+      lat: park.lat || null,
+      lng: park.lng || null,
+      note: park.note || '',
+      floor: park.floor || '',
+      spot: park.spot || '',
+      active: !!park.active,
+      family_id: familyId
+    });
+  } catch(e) { console.warn('Garaj Park Hatası:', e); }
 }
 
 async function pushPetAsiToSupabase(petId, vaccine) {
@@ -1135,9 +1194,6 @@ async function deleteGarajYakitFromSupabase(id) {
 }
 async function deleteGarajServisFromSupabase(id) {
   try { await supabase.from('garaj_servis').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
-}
-async function deleteGarajBelgeFromSupabase(id) {
-  try { await supabase.from('garaj_belgeler').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
 }
 async function deletePetAsiFromSupabase(id) {
   try { await supabase.from('pet_asilar').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
@@ -1925,19 +1981,46 @@ const useStore = create(
             if (yakit.data) {
               yakit.data.forEach(y => {
                 const v = garaj.find(gv => gv.id === y.vehicle_id) || garaj[0];
-                if (v && !v.fuelLogs.some(l => l.id === y.id)) v.fuelLogs.push(y);
+                if (v && !v.fuelLogs.some(l => String(l.id) === String(y.id))) {
+                  v.fuelLogs.push({
+                    id: y.id,
+                    km: y.km,
+                    amount: y.litre,
+                    price: y.litre > 0 ? (y.tutar / y.litre) : 0,
+                    totalPrice: y.tutar,
+                    station: y.istasyon,
+                    date: y.tarih
+                  });
+                }
               });
             }
             if (servis.data) {
               servis.data.forEach(s => {
                 const v = garaj.find(gv => gv.id === s.vehicle_id) || garaj[0];
-                if (v && !v.services.some(ls => ls.id === s.id)) v.services.push(s);
+                if (v && !v.services.some(ls => String(ls.id) === String(s.id))) {
+                  v.services.push({
+                    id: s.id,
+                    title: s.islem,
+                    km: s.km,
+                    cost: s.tutar,
+                    shop: s.yer,
+                    date: s.tarih,
+                    notes: s.notlar
+                  });
+                }
               });
             }
             if (belgeler.data) {
               belgeler.data.forEach(b => {
                 const v = garaj.find(gv => gv.id === b.vehicle_id) || garaj[0];
-                if (v && !v.documents.some(ld => ld.id === b.id)) v.documents.push(b);
+                if (v && !v.documents.some(ld => String(ld.id) === String(b.id))) {
+                  v.documents.push({
+                    id: b.id,
+                    name: b.name,
+                    dueDate: b.due_date,
+                    icon: b.icon
+                  });
+                }
               });
             }
             if (parts.data) {
@@ -7052,14 +7135,15 @@ const useStore = create(
         };
         set({ garaj: [...state.garaj, newVehicle], selectedVehicleId: newVehicle.id });
         get().addLog('Garaj', `Yeni araç eklendi: ${vehicle.model}`);
-
+        pushGarajAracToSupabase(newVehicle);
       },
 
       updateVehicle: (id, updates) => {
         const state = get();
         const updatedGaraj = state.garaj.map(v => String(v.id) === String(id) ? { ...v, ...updates } : v);
         set({ garaj: updatedGaraj });
-
+        const vehicle = updatedGaraj.find(v => String(v.id) === String(id));
+        if (vehicle) pushGarajAracToSupabase(vehicle);
       },
 
       deleteVehicle: (id) => {
@@ -7067,7 +7151,7 @@ const useStore = create(
         const updatedGaraj = state.garaj.filter(v => v.id !== id);
         const nextId = updatedGaraj.length > 0 ? updatedGaraj[0].id : null;
         set({ garaj: updatedGaraj, selectedVehicleId: nextId });
-
+        deleteGarajAracFromSupabase(id);
       },
 
       addWashRecord: (vehicleId, { price, date }, paymentInfo = null) => {
@@ -7101,7 +7185,7 @@ const useStore = create(
           v.id === vehicleId ? { ...v, parkLocation: { ...parkData, active: true } } : v
         );
         set({ garaj: updatedGaraj });
-
+        pushGarajParkToSupabase({ ...parkData, active: true }, vehicleId);
       },
 
       finishParking: (vehicleId, cost, paymentInfo = null) => {
@@ -7124,7 +7208,7 @@ const useStore = create(
         );
 
         set({ garaj: updatedGaraj });
-
+        pushGarajParkToSupabase({ lat: null, lng: null, note: '', floor: '', spot: '', active: false }, vehicleId);
       },
 
       deleteServiceRecord: (vehicleId, serviceId) => {
@@ -7168,6 +7252,7 @@ const useStore = create(
         }
 
 
+        pushGarajBelgeToSupabase(newDoc, vehicleId);
       },
 
       updateDocument: (vehicleId, docId, updates) => {
@@ -7180,7 +7265,9 @@ const useStore = create(
           return v;
         });
         set({ garaj: updatedGaraj });
-
+        const vehicle = updatedGaraj.find(v => v.id === vehicleId);
+        const doc = vehicle?.documents.find(d => d.id === docId);
+        if (doc) pushGarajBelgeToSupabase(doc, vehicleId);
       },
 
       updateSupportContacts: (vehicleId, contacts) => {

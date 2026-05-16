@@ -3,6 +3,8 @@
   padding-bottom: 120px;
   padding-top: 0px;
   background: var(--bg-dark);
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
 .aracim-premium-grad {
@@ -128,27 +130,27 @@
 .aq-card {
   padding: 16px 12px;
   border-radius: 24px;
-  border: 1px solid var(--brd);
+  border: 1px solid rgba(255,255,255,0.05);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  background: white;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
   -webkit-tap-highlight-color: transparent;
 }
 
 .aq-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.08);
-  border-color: rgba(0,0,0,0.1);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.25);
+  border-color: rgba(255,255,255,0.15);
 }
 
 .aq-card:active {
   transform: translateY(-1px) scale(0.96);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .aq-icon { 
@@ -161,9 +163,9 @@
   transition: all 0.3s ease;
 }
 
-.aq-icon.fuel { background: #fff1f2; color: #f43f5e; box-shadow: 0 4px 10px rgba(244, 63, 94, 0.1); }
-.aq-icon.clean { background: #f0f9ff; color: #0ea5e9; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.1); }
-.aq-icon.park { background: #f0fdf4; color: #10b981; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.1); }
+.aq-icon.fuel { background: rgba(244, 63, 94, 0.15); color: #fb7185; box-shadow: 0 4px 10px rgba(244, 63, 94, 0.2); }
+.aq-icon.clean { background: rgba(14, 165, 233, 0.15); color: #38bdf8; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2); }
+.aq-icon.park { background: rgba(16, 185, 129, 0.15); color: #34d399; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
 
 .aq-card:hover .aq-icon {
   transform: scale(1.1);
@@ -172,37 +174,40 @@
 .aq-card span { 
   font-size: 13px; 
   font-weight: 800; 
-  color: var(--txt);
+  color: #f8fafc;
   letter-spacing: -0.2px;
 }
 
 /* Emergency Support */
 .emergency-support {
-  margin-top: 48px;
-  padding: 16px;
+  margin-top: 32px;
+  padding: 16px 20px;
   border-radius: 20px;
-  border: 1px solid #fecaca;
-  background: #fef2f2;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: linear-gradient(135deg, #450a0a, #7f1d1d);
+  box-shadow: 0 8px 20px rgba(127, 29, 29, 0.3);
 }
 
-.es-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.es-header span { font-size: 11px; font-weight: 900; color: #b91c1c; letter-spacing: 1px; }
+.es-header { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.es-header span { font-size: 11px; font-weight: 900; color: #fca5a5; letter-spacing: 1px; }
 
-.es-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.es-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .es-btn {
-  padding: 10px;
-  border-radius: 12px;
-  border: none;
-  background: white;
-  color: #b91c1c;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.3);
+  color: #fecaca;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  box-shadow: 0 2px 8px rgba(185, 28, 28, 0.1);
+  gap: 8px;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.05);
+  transition: all 0.2s;
 }
+.es-btn:hover { background: rgba(0,0,0,0.5); transform: translateY(-2px); }
 
 /* Service Timeline */
 .s-timeline-item {
@@ -410,7 +415,32 @@
 /* Standard header handled by index.css */
 
 .header-top { margin-bottom: 8px !important; }
-.ai-insight-card { margin: 8px 16px !important; padding: 10px 14px !important; }
+
+.ai-insight-card {
+  margin: 16px 0 !important;
+  padding: 16px 20px !important;
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2) !important;
+}
+
+.ai-insight-card p {
+  margin: 0 !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #cbd5e1 !important;
+  line-height: 1.5 !important;
+}
+
+.sparkle-icon {
+  color: #fbbf24 !important;
+  flex-shrink: 0;
+}
 
 
 .fip-right-actions {
@@ -490,6 +520,100 @@
 .add-vehicle-btn-premium:active {
   transform: scale(0.97);
   background: #f1f5f9;
+}
+
+/* Premium Modal Styling for Vehicle Module */
+.modal-content.arac-modal-content {
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-content.arac-modal-content h3 {
+  color: #f8fafc !important;
+}
+
+.modal-content.arac-modal-content label {
+  color: #94a3b8 !important;
+  font-weight: 800 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.modal-content.arac-modal-content .premium-input,
+.modal-content.arac-modal-content .premium-select,
+.modal-content.arac-modal-content input,
+.modal-content.arac-modal-content select {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.modal-content.arac-modal-content .premium-input:focus {
+  border-color: #7c3aed !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.modal-content.arac-modal-content .section-divider {
+  color: #6366f1 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  font-weight: 900 !important;
+}
+
+.modal-content.arac-modal-content .garage-item {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+}
+
+.modal-content.arac-modal-content .garage-item.active {
+  background: rgba(99, 102, 241, 0.2) !important;
+  border-color: #6366f1 !important;
+}
+
+.modal-content.arac-modal-content .garage-item strong {
+  color: white !important;
+}
+
+.modal-content.arac-modal-content .submit-btn-premium {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Fix for PaymentSelector in dark modal */
+.modal-content.arac-modal-content .payment-options button {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.modal-content.arac-modal-content .payment-options button.active {
+  background: #7c3aed !important;
+  border-color: #7c3aed !important;
+}
+
+/* Quick Actions Text Visibility */
+.aq-card span {
+  color: #f8fafc !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.modal-content.arac-modal-content .pill-toggle {
+  background: rgba(0, 0, 0, 0.4) !important;
+  padding: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.modal-content.arac-modal-content .pill-btn {
+  color: #94a3b8 !important;
+  background: transparent !important;
+}
+
+.modal-content.arac-modal-content .pill-btn.active {
+  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
 }
 
 /* Pill Toggle */
