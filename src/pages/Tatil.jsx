@@ -2895,15 +2895,33 @@ function WeatherWidget({ city, country, startDate, endDate }) {
 }
 
 function BudgetSection({ trip, onShowExpense }) {
+  const { finans } = useStore();
+  
+  const tripExpenses = useMemo(() => {
+    if (!trip.city) return [];
+    
+    const pool = (finans.approvalPool || []).filter(item => 
+      item.category === 'tatil' && 
+      (item.title?.toLowerCase().includes(trip.city.toLowerCase()) || item.title?.toLowerCase().includes(trip.title?.toLowerCase()))
+    ).map(x => ({ ...x, pending: true }));
+
+    const confirmed = (finans.harcamalar || []).filter(item => 
+      item.category === 'tatil' && 
+      (item.title?.toLowerCase().includes(trip.city.toLowerCase()) || item.title?.toLowerCase().includes(trip.title?.toLowerCase()))
+    ).map(x => ({ ...x, pending: false }));
+
+    return [...pool, ...confirmed].sort((a, b) => b.id - a.id);
+  }, [finans, trip]);
+
   return (
     <div className="budget-view animate-fadeIn">
       <div className="budget-stats">
         <div className="bs-item">
-          <span>Tahmini</span>
+          <span>Tahmini Bütçe</span>
           <strong>{trip.budget?.est || 0}₺</strong>
         </div>
         <div className="bs-item">
-          <span>Harcanan</span>
+          <span>Harcanan Toplam</span>
           <strong style={{ color: 'var(--tatil)' }}>{trip.budget?.real || 0}₺</strong>
         </div>
       </div>
@@ -2912,6 +2930,39 @@ function BudgetSection({ trip, onShowExpense }) {
           <div className="b-fill" style={{ width: `${Math.min(100, ((trip.budget?.real || 0) / (trip.budget?.est || 1)) * 100)}%` }} />
         </div>
       </div>
+
+      {/* Expenses History List */}
+      <div className="trip-expenses-history mt-20">
+        <h4>Harcama Geçmişi</h4>
+        {tripExpenses.length === 0 ? (
+          <div className="trip-expenses-empty">
+            💸 Bu seyahat için henüz harcama girilmedi.
+          </div>
+        ) : (
+          <div className="trip-expenses-list">
+            {tripExpenses.map((exp, idx) => (
+              <div key={idx} className="trip-expense-item">
+                <div className="tei-left">
+                  <span className="tei-title">{exp.title || exp.baslik}</span>
+                  <div className="tei-sub">
+                    <span className={`tei-payer-badge ${exp.payer || 'ortak'}`}>
+                      {exp.payer === 'gorkem' ? 'Görkem' : exp.payer === 'esra' ? 'Esra' : 'Ortak'}
+                    </span>
+                    <span className="tei-date">{exp.dt}</span>
+                  </div>
+                </div>
+                <div className="tei-right">
+                  <span className="tei-amount">{exp.amount || exp.tutar} ₺</span>
+                  <span className={`tei-status-pill ${exp.pending ? 'pending' : 'confirmed'}`}>
+                    {exp.pending ? '⏳ Onay' : '✅ Ödendi'}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <button className="btn-action-premium tatil mt-20" onClick={onShowExpense}>
         <Plus size={18} /> Harcama Ekle
       </button>

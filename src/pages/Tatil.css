@@ -6588,3 +6588,137 @@
   margin-top: 4px;
 }
 
+/* Trip Budget Expenses History Styles */
+.trip-expenses-history {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(241, 245, 249, 0.8);
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
+
+.trip-expenses-history h4 {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.trip-expenses-empty {
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+  padding: 20px 0;
+  font-weight: 500;
+}
+
+.trip-expenses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.trip-expense-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(241, 245, 249, 0.9);
+  padding: 10px 12px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.trip-expense-item:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.tei-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.tei-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #334155;
+  text-align: left;
+}
+
+.tei-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tei-payer-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  text-transform: capitalize;
+}
+
+.tei-payer-badge.gorkem {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.tei-payer-badge.esra {
+  background: rgba(236, 72, 153, 0.1);
+  color: #db2777;
+  border: 1px solid rgba(236, 72, 153, 0.15);
+}
+
+.tei-payer-badge.ortak {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+
+.tei-date {
+  font-size: 9.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.tei-right {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.tei-amount {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.tei-status-pill {
+  font-size: 8.5px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.tei-status-pill.pending {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.tei-status-pill.confirmed {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
