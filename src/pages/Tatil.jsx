@@ -96,6 +96,9 @@ const extractTextFromImage = async (file) => {
 const cleanOcrNoise = (str) => {
   if (!str) return '';
   return str
+    .replace(/\bAustr\s*A\b/gi, 'Austria')
+    .replace(/\bAustr\s*!a\b/gi, 'Austria')
+    .replace(/\bAustr!a\b/gi, 'Austria')
     .replace(/\bW\s*!\s*en\b/gi, 'Wien')
     .replace(/\bW\s*!\s*in\b/gi, 'Wien')
     .replace(/\bW!en\b/gi, 'Wien')
@@ -1483,13 +1486,13 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
   const [isScanning, setIsScanning] = useState(false);
   
   // Local state for forms
-  const [depForm, setDepForm] = useState(trip.transportation?.departure || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' });
-  const [retForm, setRetForm] = useState(trip.transportation?.return || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' });
+  const [depForm, setDepForm] = useState(trip.transportation?.departure || { flightNo: '', airline: '', pnr: '', time: '', arrivalTime: '', fromAirport: 'SAW', toAirport: 'VIE', gate: '', terminal: '', delay: '', status: 'Planlandı' });
+  const [retForm, setRetForm] = useState(trip.transportation?.return || { flightNo: '', airline: '', pnr: '', time: '', arrivalTime: '', fromAirport: 'VIE', toAirport: 'SAW', gate: '', terminal: '', delay: '', status: 'Planlandı' });
   const [accForm, setAccForm] = useState(trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' });
 
   useEffect(() => {
-    setDepForm(trip.transportation?.departure || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' });
-    setRetForm(trip.transportation?.return || { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' });
+    setDepForm(trip.transportation?.departure || { flightNo: '', airline: '', pnr: '', time: '', arrivalTime: '', fromAirport: 'SAW', toAirport: 'VIE', gate: '', terminal: '', delay: '', status: 'Planlandı' });
+    setRetForm(trip.transportation?.return || { flightNo: '', airline: '', pnr: '', time: '', arrivalTime: '', fromAirport: 'VIE', toAirport: 'SAW', gate: '', terminal: '', delay: '', status: 'Planlandı' });
     setAccForm(trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' });
   }, [trip]);
 
@@ -1542,13 +1545,17 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
         // Gidiş Uçuşu
         const depNo = parsed.flights[0] || 'PC903';
         const depPnr = parsed.pnr || '1TG17K';
-        const depTime = parsed.times[0] || '14:20';
+        const depTime = parsed.times[0] || '15:35';
+        const depArrTime = parsed.times[1] || '16:55';
         
         const depFlightData = {
           ...depForm,
           flightNo: depNo,
           pnr: depPnr,
           time: depTime,
+          arrivalTime: depArrTime,
+          fromAirport: 'SAW',
+          toAirport: 'VIE',
           airline: parsed.airline || 'Pegasus',
           airport: 'VIE',
           gate: '',
@@ -1564,13 +1571,17 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
         if (hasReturn) {
           const retNo = parsed.flights[1] || 'PC902';
           const retPnr = parsed.pnr || '1TG17K';
-          const retTime = parsed.times[2] || parsed.times[1] || '13:40'; // times[2] is return departure (13:40) if times[1] is arrival of gidiş (16:55)
+          const retTime = parsed.times[2] || parsed.times[1] || '13:40';
+          const retArrTime = parsed.times[3] || '16:55';
           
           const retFlightData = {
             ...retForm,
             flightNo: retNo,
             pnr: retPnr,
             time: retTime,
+            arrivalTime: retArrTime,
+            fromAirport: 'VIE',
+            toAirport: 'SAW',
             airline: parsed.airline || 'Pegasus',
             airport: 'SAW',
             gate: '',
@@ -1696,26 +1707,49 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
             {editingSection === 'dep' ? (
               <div className="sc-inputs">
                 <input placeholder="Uçuş No" value={depForm.flightNo} onChange={e => setDepForm({...depForm, flightNo: e.target.value.toUpperCase()})} />
-                <input placeholder="Saat / Bilgi" value={depForm.time} onChange={e => setDepForm({...depForm, time: e.target.value})} />
+                <input placeholder="Kalkış Havaalanı (örn. SAW)" value={depForm.fromAirport} onChange={e => setDepForm({...depForm, fromAirport: e.target.value.toUpperCase()})} />
+                <input placeholder="Varış Havaalanı (örn. VIE)" value={depForm.toAirport} onChange={e => setDepForm({...depForm, toAirport: e.target.value.toUpperCase()})} />
+                <input placeholder="Kalkış Saati" value={depForm.time} onChange={e => setDepForm({...depForm, time: e.target.value})} />
+                <input placeholder="Varış Saati" value={depForm.arrivalTime} onChange={e => setDepForm({...depForm, arrivalTime: e.target.value})} />
                 <input placeholder="PNR" value={depForm.pnr} onChange={e => setDepForm({...depForm, pnr: e.target.value})} />
               </div>
             ) : (
               <div className="sc-display">
-                <strong>{depForm.flightNo || '---'}</strong>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                <div className="flight-header-row">
+                  <strong>{depForm.flightNo || '---'}</strong>
+                  {depForm.pnr && <span className="f-pnr-badge">PNR: {depForm.pnr}</span>}
+                </div>
+                
+                {/* Visual Route Timeline */}
+                <div className="flight-route-timeline">
+                  <div className="airport-node">
+                    <span className="ap-code">{depForm.fromAirport || 'SAW'}</span>
+                    <span className="ap-city">{depForm.fromAirport === 'SAW' ? 'Sabiha Gökçen' : 'İstanbul'}</span>
+                    <span className="ap-time">{depForm.time || '--:--'}</span>
+                  </div>
+                  
+                  <div className="timeline-connector">
+                    <div className="line-bar">
+                      <Plane size={12} className="moving-plane" />
+                    </div>
+                  </div>
+                  
+                  <div className="airport-node dest">
+                    <span className="ap-code">{depForm.toAirport || 'VIE'}</span>
+                    <span className="ap-city">{depForm.toAirport === 'VIE' ? 'Viyana' : 'Avusturya'}</span>
+                    <span className="ap-time">{depForm.arrivalTime || '--:--'}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%', marginTop: '6px' }}>
                   {depForm.flightNo && (
                     <button className="sc-live-badge-mini" onClick={() => openFlightRadar(depForm.flightNo)} style={{ width: '100%' }}>
                       🛰️ Canlı Radar Takibi
                     </button>
                   )}
                 </div>
-                <div className="flight-main-info">
-                  <span className="f-time">{depForm.time || 'Saat belirtilmedi'}</span>
-                  {depForm.pnr && <span className="f-pnr">PNR: {depForm.pnr}</span>}
-                </div>
                 {(depForm.gate || depForm.terminal || depForm.delay) && (
-                  <div className="flight-detailed-info">
-                    {depForm.airport && <div className="f-badge">📍 {depForm.airport}</div>}
+                  <div className="flight-detailed-info" style={{ marginTop: '8px' }}>
                     {depForm.terminal && <div className="f-badge">🏢 T{depForm.terminal}</div>}
                     {depForm.gate && <div className="f-badge active">🚪 Kapı {depForm.gate}</div>}
                     {depForm.delay && <div className={`f-badge ${depForm.delay.includes('Rötar') ? 'alert' : ''}`}>⏱️ {depForm.delay}</div>}
@@ -1741,26 +1775,49 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
             {editingSection === 'ret' ? (
               <div className="sc-inputs">
                 <input placeholder="Uçuş No" value={retForm.flightNo} onChange={e => setRetForm({...retForm, flightNo: e.target.value.toUpperCase()})} />
-                <input placeholder="Saat / Bilgi" value={retForm.time} onChange={e => setRetForm({...retForm, time: e.target.value})} />
+                <input placeholder="Kalkış Havaalanı (örn. VIE)" value={retForm.fromAirport} onChange={e => setRetForm({...retForm, fromAirport: e.target.value.toUpperCase()})} />
+                <input placeholder="Varış Havaalanı (örn. SAW)" value={retForm.toAirport} onChange={e => setRetForm({...retForm, toAirport: e.target.value.toUpperCase()})} />
+                <input placeholder="Kalkış Saati" value={retForm.time} onChange={e => setRetForm({...retForm, time: e.target.value})} />
+                <input placeholder="Varış Saati" value={retForm.arrivalTime} onChange={e => setRetForm({...retForm, arrivalTime: e.target.value})} />
                 <input placeholder="PNR" value={retForm.pnr} onChange={e => setRetForm({...retForm, pnr: e.target.value})} />
               </div>
             ) : (
               <div className="sc-display">
-                <strong>{retForm.flightNo || '---'}</strong>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
+                <div className="flight-header-row">
+                  <strong>{retForm.flightNo || '---'}</strong>
+                  {retForm.pnr && <span className="f-pnr-badge">PNR: {retForm.pnr}</span>}
+                </div>
+                
+                {/* Visual Route Timeline */}
+                <div className="flight-route-timeline">
+                  <div className="airport-node">
+                    <span className="ap-code">{retForm.fromAirport || 'VIE'}</span>
+                    <span className="ap-city">{retForm.fromAirport === 'VIE' ? 'Viyana' : 'Avusturya'}</span>
+                    <span className="ap-time">{retForm.time || '--:--'}</span>
+                  </div>
+                  
+                  <div className="timeline-connector">
+                    <div className="line-bar">
+                      <Plane size={12} className="moving-plane" style={{ transform: 'rotate(90deg)' }} />
+                    </div>
+                  </div>
+                  
+                  <div className="airport-node dest">
+                    <span className="ap-code">{retForm.toAirport || 'SAW'}</span>
+                    <span className="ap-city">{retForm.toAirport === 'SAW' ? 'Sabiha Gökçen' : 'İstanbul'}</span>
+                    <span className="ap-time">{retForm.arrivalTime || '--:--'}</span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%', marginTop: '6px' }}>
                   {retForm.flightNo && (
                     <button className="sc-live-badge-mini" onClick={() => openFlightRadar(retForm.flightNo)} style={{ width: '100%' }}>
                       🛰️ Canlı Radar Takibi
                     </button>
                   )}
                 </div>
-                <div className="flight-main-info">
-                  <span className="f-time">{retForm.time || 'Saat belirtilmedi'}</span>
-                  {retForm.pnr && <span className="f-pnr">PNR: {retForm.pnr}</span>}
-                </div>
                 {(retForm.gate || retForm.terminal || retForm.delay) && (
-                  <div className="flight-detailed-info">
-                    {retForm.airport && <div className="f-badge">📍 {retForm.airport}</div>}
+                  <div className="flight-detailed-info" style={{ marginTop: '8px' }}>
                     {retForm.terminal && <div className="f-badge">🏢 T{retForm.terminal}</div>}
                     {retForm.gate && <div className="f-badge active">🚪 Kapı {retForm.gate}</div>}
                     {retForm.delay && <div className={`f-badge ${retForm.delay.includes('Rötar') ? 'alert' : ''}`}>⏱️ {retForm.delay}</div>}
