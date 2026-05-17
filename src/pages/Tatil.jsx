@@ -402,6 +402,7 @@ export default function Tatil() {
           mode={wizardMode} 
           initialData={editingTrip} 
           onClose={() => { setShowWizard(false); }} 
+          requestConfirm={requestConfirm}
         />
       </ActionSheet>
 
@@ -685,8 +686,8 @@ function TripCard({ trip, onClick, onEdit }) {
 }
 
 
-function AddTripWizard({ mode, initialData, onClose }) {
-  const { addTrip, updateTrip, tatil } = useStore();
+function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
+  const { addTrip, updateTrip, deleteTrip, tatil } = useStore();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(initialData || {
     title: '',
@@ -845,9 +846,39 @@ function AddTripWizard({ mode, initialData, onClose }) {
       </div>
 
       <div className="wizard-footer-cute">
+        {mode === 'edit' && (
+          <button 
+            type="button"
+            className="w-delete-btn" 
+            style={{
+              background: '#fecaca',
+              color: '#dc2626',
+              border: 'none',
+              padding: '10px 16px',
+              borderRadius: '14px',
+              fontSize: '12px',
+              fontWeight: '700',
+              marginRight: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onClick={() => {
+              requestConfirm('Bu seyahat planını tamamen silmek istediğinizden emin misiniz?', () => {
+                deleteTrip(initialData.id);
+                toast.success('Seyahat planı silindi. 🗑️');
+                onClose();
+              });
+            }}
+          >
+            <Trash2 size={12} /> Seyahati Sil
+          </button>
+        )}
         {step > 1 && <button className="w-back-btn" onClick={() => setStep(step - 1)}>Geri</button>}
         <button className="w-next-btn" onClick={handleNext}>
-          {step === 4 ? 'Macerayı Başlat ✨' : 'Devam Et'}
+          {step === 4 ? (mode === 'edit' ? 'Değişiklikleri Kaydet 💾' : 'Macerayı Başlat ✨') : 'Devam Et'}
         </button>
       </div>
     </div>

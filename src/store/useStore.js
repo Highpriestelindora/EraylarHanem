@@ -70,7 +70,7 @@ const DEFAULT_STATE = {
     kumbaralar: [],
     bankaHesaplari: [],
     privacyMode: false,
-    rates: { EUR: 35.2, USD: 32.5 }
+    rates: { EUR: 35.2, USD: 32.5, GBP: 40.0, GA: 2500, ETHFI: 21.15 }
   },
   mutfak: {
     menu: {},
@@ -616,13 +616,13 @@ async function fetchKartOdemeler(familyId = DEFAULT_FID) {
 async function pushTaksitToSupabase(taksit, familyId = DEFAULT_FID) {
   try {
     const { error } = await supabase.from('finans_taksitler').upsert({
-      id: taksit.id,
+      id: taksit.id || generateUniqueId(),
       family_id: familyId,
       kart_id: taksit.kart_id,
       baslik: taksit.baslik,
       toplam_tutar: Number(taksit.toplam_tutar),
       taksit_sayisi: Number(taksit.taksit_sayisi),
-      kalan_taksit: Number(taksit.kalan_taksit),
+      kalan_taksit: Number(taksit.kalan_taksit !== undefined && taksit.kalan_taksit !== null ? taksit.kalan_taksit : taksit.taksit_sayisi),
       baslangic_tarihi: taksit.baslangic_tarihi || new Date().toISOString().split('T')[0],
       kategori: taksit.kategori || 'Genel'
     });
@@ -2474,6 +2474,7 @@ const useStore = create(
                 budget: { est: Number(x.budget_est || 0), real: Number(x.budget_real || 0) },
                 valiz: x.valiz || {}, evaluations: x.evaluations || {},
                 photos: x.photos || [], checklists: x.checklists || [],
+                visitedCities: x.visited_cities || [],
                 created_at: x.created_at
               }));
             }
@@ -3367,6 +3368,7 @@ const useStore = create(
 
         // FAZ 9: JSON verisi yüklendikten sonra yeni SQL tablolarını üzerine yaz/kontrol et
         await get().fetchPhase3Data(); // Faz 3: Supabase -> Single Source of Truth
+        await get().fetchTaksitler(); // Taksitler verisi
         await get().fetchGroup1Data(); // Faz 1.4: Grup 1 Mutfak, Sosyal, Alışveriş
         await get().fetchGroup2Data(); // Grup 2: Ev, Garaj, Pet, Sağlık
         await get().fetchGroup3Data(); // Grup 3: Tatil, Mühendislik, Modaring
@@ -3451,7 +3453,14 @@ const useStore = create(
             if (dbMutabakat.data && dbMutabakat.data.length > 0) {
               const newMut = { ...f.kartMutabakat };
               dbMutabakat.data.forEach(m => {
-                newMut[m.kart_id] = { beklenen: m.beklenen || 0, gercek: m.gercek, ay: m.ay, paid: m.paid, paymentType: m.payment_type };
+                newMut[m.kart_id] = { 
+                  beklenen: Number(m.beklenen_borc || 0), 
+                  gercek: m.gercek_borc != null ? Number(m.gercek_borc) : null, 
+                  guncel: m.guncel_borc != null ? Number(m.guncel_borc) : null, 
+                  ay: m.ay, 
+                  paid: !!m.paid, 
+                  paymentType: m.payment_type 
+                };
               });
               f.kartMutabakat = newMut;
             }
@@ -4095,8 +4104,8 @@ const useStore = create(
             yeniMutabakat[item.kart_id] = {
               ...current,
               beklenen: Math.max(0, (Number(current.beklenen) || 0) - Number(item.tutar))
-    };
-            upsertKartMutabakat(item.kart_id, buAy, yeniMutabakat[item.kart_id].beklenen, current.gercek, state.family_id);
+            };
+            upsertKartMutabakat(item.kart_id, buAy, yeniMutabakat[item.kart_id].beklenen, current.gercek, current.guncel, state.family_id);
           }
           
           let yeniBakiyeler = { ...state.kasa.bakiyeler };
@@ -4183,10 +4192,10 @@ const useStore = create(
 
           // Supabase mutabakatlarını güncelle (etkilenen kartlar için)
           if (oldItem.kart_id && oldItem.odenme_turu === 'kart') {
-             upsertKartMutabakat(oldItem.kart_id, buAy, yeniMutabakat[oldItem.kart_id].beklenen, yeniMutabakat[oldItem.kart_id].gercek, state.family_id);
+             upsertKartMutabakat(oldItem.kart_id, buAy, yeniMutabakat[oldItem.kart_id].beklenen, yeniMutabakat[oldItem.kart_id].gercek, yeniMutabakat[oldItem.kart_id].guncel, state.family_id);
           }
           if (newItem.kart_id && newItem.odenme_turu === 'kart' && newItem.kart_id !== oldItem?.kart_id) {
-             upsertKartMutabakat(newItem.kart_id, buAy, yeniMutabakat[newItem.kart_id].beklenen, yeniMutabakat[newItem.kart_id].gercek, state.family_id);
+             upsertKartMutabakat(newItem.kart_id, buAy, yeniMutabakat[newItem.kart_id].beklenen, yeniMutabakat[newItem.kart_id].gercek, yeniMutabakat[newItem.kart_id].guncel, state.family_id);
           }
 
           set({ 
@@ -4203,25 +4212,30 @@ const useStore = create(
       },
 
       // Banka ekstresinden gerçek borcu girer
-      gercekKartBorcuGir: async (kartId, tutar, ay) => {
+      gercekKartBorcuGir: async (kartId, ekstre, guncel, ay) => {
         const state = get();
         const hedefAy = ay || new Date().toISOString().slice(0, 7);
+        const ekstreNum = Number(ekstre) || 0;
+        const guncelNum = Number(guncel) || 0;
         const beklenen = state.finans.kartMutabakat[kartId]?.beklenen || 0;
 
-        await upsertKartMutabakat(kartId, hedefAy, beklenen, Number(tutar), state.family_id);
+        await upsertKartMutabakat(kartId, hedefAy, beklenen, ekstreNum, guncelNum, state.family_id);
 
         const yeniMutabakat = {
           ...state.finans.kartMutabakat,
           [kartId]: {
             ...state.finans.kartMutabakat[kartId],
-            gercek: Number(tutar),
+            gercek: ekstreNum,
+            guncel: guncelNum,
             ay: hedefAy,
-            paid: false // Yeni gerçek borç girildiğinde ödenmedi olarak başlar
+            paid: false,
+            paymentType: null,
+            paidAmount: 0
           }
-    };
+        };
         set({ finans: { ...state.finans, kartMutabakat: yeniMutabakat } });
 
-        toast.success('Gerçek borç kaydedildi! 💳');
+        toast.success('Hesap özeti ve güncel borç başarıyla kaydedildi! 💳');
       },
 
       // Kredi kartı borcunu öder
@@ -4247,15 +4261,26 @@ const useStore = create(
           }
         }
 
-        // 2. Kart Mutabakatını Güncelle
-        const currentMut = state.finans.kartMutabakat[kartId] || { beklenen: 0, gercek: 0, ay: buAy };
+        // 2. Kart Mutabakatını Güncelle (Dynamic decrement of unpaid statement and total outstanding debt)
+        const currentMut = state.finans.kartMutabakat[kartId] || { beklenen: 0, gercek: 0, guncel: 0, ay: buAy };
+        
+        // Calculate new remaining balances
+        const oldGercek = currentMut.gercek !== null ? Number(currentMut.gercek) : (state.finans.buAyHarcamalar?.filter(h => h.odenme_turu === 'kart' && h.kart_id === kartId).reduce((sum, h) => sum + Number(h.tutar), 0) || 0);
+        const oldGuncel = currentMut.guncel !== null ? Number(currentMut.guncel) : oldGercek;
+
+        const newGercek = Math.max(0, oldGercek - amountNum);
+        const newGuncel = Math.max(0, oldGuncel - amountNum);
+        const isFullyPaid = newGercek <= 0;
+
         const yeniMutabakat = {
           ...state.finans.kartMutabakat,
           [kartId]: {
             ...currentMut,
-            paid: true,
+            paid: isFullyPaid,
             paymentType,
-            paidAmount: amountNum,
+            paidAmount: (currentMut.paidAmount || 0) + amountNum,
+            gercek: newGercek,
+            guncel: newGuncel,
             sourceType: type,
             sourceId: id,
             ay: buAy
@@ -4278,7 +4303,7 @@ const useStore = create(
         await pushKartOdeme(odemeKaydi, state.family_id);
 
         // 4. Mutabakat SQL
-        await upsertKartMutabakat(kartId, buAy, currentMut.beklenen, currentMut.gercek, state.family_id);
+        await upsertKartMutabakat(kartId, buAy, currentMut.beklenen, newGercek, newGuncel, state.family_id);
 
         const kartName = state.finans.kartlar.find(k => k.id === kartId)?.name || kartId;
 
@@ -4299,6 +4324,26 @@ const useStore = create(
         const state = get();
         const data = await fetchKartOdemeler(state.family_id);
         set({ finans: { ...state.finans, kartOdemeleri: data } });
+      },
+
+      fetchTaksitler: async () => {
+        const state = get();
+        const data = await fetchTaksitler(state.family_id);
+        set({ finans: { ...state.finans, taksitler: data || [] } });
+      },
+
+      addTaksit: async (taksit) => {
+        const state = get();
+        await pushTaksitToSupabase(taksit, state.family_id);
+        await get().fetchTaksitler();
+        toast.success('Taksit başarıyla eklendi! 🗓️');
+      },
+
+      deleteTaksit: async (id) => {
+        const state = get();
+        await deleteTaksitFromSupabase(id);
+        await get().fetchTaksitler();
+        toast.success('Taksit planı silindi.');
       },
 
       // Bu ayın harcamalarını Supabase'den çeker
@@ -6443,7 +6488,8 @@ const useStore = create(
                   addedAny = true;
                 } else {
                   // Check if existing shopping qty is enough
-                  const shopMatch = inShopping.qt.match(/[\d.]+/);
+                  const shopQtStr = String(inShopping.qt || '');
+                  const shopMatch = shopQtStr.match(/[\d.]+/);
                   const shopVal = parseFloat(shopMatch?.[0]) || 0;
                   if (shopVal < val) {
                     inShopping.qt = `${val} ${unit}`;
@@ -8555,7 +8601,7 @@ const useStore = create(
           // 1. Currencies
           const res = await fetch('https://api.exchangerate-api.com/v4/latest/TRY');
           const data = await res.json();
-          const rates = { EUR: 35, USD: 32, GBP: 40, GA: 2500 }; // Fallbacks
+          const rates = { EUR: 35, USD: 32, GBP: 40, GA: 2500, ETHFI: 21.15 }; // Fallbacks
 
           if (data && data.rates) {
             rates.EUR = Number((1 / data.rates.EUR).toFixed(2));
@@ -8563,7 +8609,7 @@ const useStore = create(
             rates.GBP = Number((1 / data.rates.GBP).toFixed(2));
           }
 
-          // 2. Gold & Crypto (Gram Gold, BTC, ETH in TRY)
+          // 2. Gold & Crypto (Gram Gold, BTC, ETH, ETHFI in TRY)
           try {
             const goldRes = await fetch('https://api.coinbase.com/v2/prices/XAU-TRY/spot');
             const goldData = await goldRes.json();
@@ -8578,6 +8624,10 @@ const useStore = create(
             const ethRes = await fetch('https://api.coinbase.com/v2/prices/ETH-TRY/spot');
             const ethData = await ethRes.json();
             if (ethData?.data?.amount) rates.ETH = Number(ethData.data.amount);
+
+            const ethfiRes = await fetch('https://api.coinbase.com/v2/prices/ETHFI-TRY/spot');
+            const ethfiData = await ethfiRes.json();
+            if (ethfiData?.data?.amount) rates.ETHFI = Number(ethfiData.data.amount);
 
           } catch (e) {
             console.error('Commodity/Crypto fetch error:', e);

@@ -5175,6 +5175,7 @@
 }
 
 .city-add-row input {
+  flex: 1 !important;
   background: #f8fafc !important;
   border: 2px solid #f1f5f9 !important;
   border-radius: 18px !important;
@@ -5223,7 +5224,7 @@
   font-size: 12px;
   font-weight: 700;
   color: #1e293b;
-  width: 100px;
+  width: 140px;
 }
 
 .edit-save-btn {
@@ -6023,11 +6024,16 @@
 .rd-main-line {
   display: flex;
   flex-direction: column;
+  align-items: flex-start !important;
+  gap: 2px !important;
+  line-height: 1.2 !important;
 }
 
 .rd-main-line strong {
   font-size: 14px;
   color: var(--txt);
+  line-height: 1.3 !important;
+  display: block;
 }
 
 .rd-meta-inline {
@@ -6036,6 +6042,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  line-height: 1.2 !important;
 }
 
 .traveler-mini-label {

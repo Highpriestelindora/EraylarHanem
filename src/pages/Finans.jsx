@@ -3,7 +3,7 @@ import {
   TrendingDown, CreditCard, Clock, Check, X, AlertCircle,
   ChevronDown, ChevronUp, Calendar, ArrowLeft, Eye, EyeOff,
   Landmark, RotateCcw, Plus, History, Wallet, PieChart,
-  Settings, Trash2, Edit, RefreshCcw
+  Settings, Trash2, Edit, Edit3, RefreshCcw, Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -399,17 +399,26 @@ const KrediTab = React.memo(({ finans, prv }) => {
       .reduce((sum, o) => sum + Number(o.tutar), 0);
   }, [kartOdemeleri, selectedKartId, buAy]);
 
-  const aktifGuncelBorc = Math.max(0, (guncel != null ? guncel : calcBeklenen.guncel) - toplamOdemeThisMonth);
-  const aktifEkstreBorcu = Math.max(0, (gercek != null ? gercek : calcBeklenen.ekstre) - toplamOdemeThisMonth);
+  const aktifGuncelBorc = guncel !== null ? guncel : Math.max(0, calcBeklenen.guncel - toplamOdemeThisMonth);
+  const aktifEkstreBorcu = gercek !== null ? gercek : Math.max(0, calcBeklenen.ekstre - toplamOdemeThisMonth);
 
-  // Toplam Borç Yükü (Gelecek Taksitler Dahil)
-  const toplamBorcYuku = aktifGuncelBorc + calcBeklenen.gelecekTaksitler;
+  const sistemKartHarcamalari = useMemo(() => {
+    return buAyHarcamalar
+      .filter(h => h.odenme_turu === 'kart' && h.kart_id === selectedKart?.id)
+      .reduce((sum, h) => sum + Number(h.tutar), 0);
+  }, [buAyHarcamalar, selectedKartId]);
+
+  // Toplam Borç Yükü (Gelecek Taksitler ve Sistemdeki Ek Harcamalar Dahil)
+  const pendingHarcamalar = guncel !== null ? sistemKartHarcamalari : 0;
+  const toplamBorcYuku = aktifGuncelBorc + calcBeklenen.gelecekTaksitler + pendingHarcamalar;
   const limitPerc = limit > 0 ? Math.min(100, (toplamBorcYuku / limit) * 100) : 0;
   const barColor = limitPerc > 90 ? '#ef4444' : limitPerc > 70 ? '#f59e0b' : '#10b981';
 
   // Asgari Ödeme Hesaplama (BDDK: 50k altı %20, üstü %40)
-  const asgariOran = limit > 50000 ? 0.40 : 0.20;
-  const asgariTutar = (gercek || calcBeklenen.ekstre) * asgariOran;
+  const originalEkstre = gercek !== null ? (gercek + toplamOdemeThisMonth) : calcBeklenen.ekstre;
+  const asgariPct = selectedKart?.min_pct || (limit > 50000 ? 40 : 20);
+  const originalAsgari = originalEkstre * (asgariPct / 100);
+  const kalanAsgari = Math.max(0, originalAsgari - toplamOdemeThisMonth);
 
   const cutoffStr = `${String(cutoffDay).padStart(2, '0')}/${String(currentMonth + 1).padStart(2, '0')}/${currentYear}`;
   const dueDate = new Date(currentYear, currentMonth, cutoffDay + dueOffset);
@@ -420,6 +429,8 @@ const KrediTab = React.memo(({ finans, prv }) => {
   const [ekstreVal, setEkstreVal] = useState('');
   const [guncelVal, setGuncelVal] = useState('');
   const [showTaksitModal, setShowTaksitModal] = useState(false);
+  const [editingTaksit, setEditingTaksit] = useState(null);
+  const [showBorcGiris, setShowBorcGiris] = useState(false);
 
   const handleBorcKaydet = async () => {
     if (!ekstreVal || !guncelVal || isNaN(ekstreVal) || isNaN(guncelVal)) 
@@ -427,13 +438,14 @@ const KrediTab = React.memo(({ finans, prv }) => {
     await gercekKartBorcuGir(selectedKart.id, ekstreVal, guncelVal, buAy);
     setEkstreVal('');
     setGuncelVal('');
+    setShowBorcGiris(false);
     toast.success('Borç bilgileri güncellendi!');
   };
 
   const handleOdeme = async () => {
     if (!selectedKart) return;
-    let tutar = aktifEkstreBorcu || aktifGuncelBorc;
-    if (odemeTuru === 'min') tutar = asgariTutar;
+    let tutar = aktifEkstreBorcu > 0 ? aktifEkstreBorcu : aktifGuncelBorc;
+    if (odemeTuru === 'min') tutar = kalanAsgari;
     if (odemeTuru === 'kismi') tutar = Number(odemeOzelTutar);
     if (!tutar || tutar <= 0) return toast.error('Geçerli tutar girin');
     const src = odemeKaynak === 'nakit'
@@ -469,8 +481,8 @@ const KrediTab = React.memo(({ finans, prv }) => {
             .filter(o => o.kart_id === k.id && o.ay === buAy)
             .reduce((sum, o) => sum + Number(o.tutar), 0);
           
-          const rawBorc = m.guncel ?? m.gercek ?? m.beklenen ?? 0;
-          const kalanBorc = Math.max(0, rawBorc - odeme);
+          const hasManual = m.guncel !== undefined && m.guncel !== null;
+          const kalanBorc = hasManual ? m.guncel : Math.max(0, (m.gercek ?? m.beklenen ?? 0) - odeme);
           const isSelected = k.id === selectedKartId;
           
           return (
@@ -521,7 +533,7 @@ const KrediTab = React.memo(({ finans, prv }) => {
           {/* ── Limit Barı ── */}
           <div className="premium-cc-limit-sec">
             <div className="premium-cc-limit-labels">
-              <div><strong>{fmt(Math.max(0, limit - aktifGuncelBorc), prv)}</strong><small>Kullanılabilir Limit</small></div>
+              <div><strong>{fmt(Math.max(0, limit - toplamBorcYuku), prv)}</strong><small>Kullanılabilir Limit</small></div>
               <div className="right"><strong>{fmt(limit, prv)}</strong><small>Toplam Kart Limiti</small></div>
             </div>
             <div className="premium-cc-limit-bar">
@@ -555,17 +567,28 @@ const KrediTab = React.memo(({ finans, prv }) => {
              </div>
 
              {/* Borç Giriş Alanı */}
-             <div className="kbi-inputs">
-                <div className="kbi-input-group">
-                   <small>Hesap Özeti (Ekstre)</small>
-                   <input type="number" placeholder="0₺" value={ekstreVal} onChange={e => setEkstreVal(e.target.value)} />
-                </div>
-                <div className="kbi-input-group">
-                   <small>Güncel Borç</small>
-                   <input type="number" placeholder="0₺" value={guncelVal} onChange={e => setGuncelVal(e.target.value)} />
-                </div>
-                <button className="kbi-save-btn" onClick={handleBorcKaydet}>KAYDET</button>
+             <div className="borc-giris-toggle" style={{ marginTop: '16px', textAlign: 'center' }}>
+                <button 
+                  onClick={() => setShowBorcGiris(!showBorcGiris)} 
+                  style={{ background: 'rgba(124, 58, 237, 0.1)', color: '#7c3aed', border: '1px solid rgba(124, 58, 237, 0.2)', padding: '8px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Edit3 size={14} /> {showBorcGiris ? 'Borç Girişini Gizle' : 'Banka Borç Bilgilerini Gir'}
+                </button>
              </div>
+
+             {showBorcGiris && (
+               <div className="kbi-inputs" style={{ marginTop: '12px', animation: 'fadeIn 0.3s ease' }}>
+                  <div className="kbi-input-group">
+                     <small>Hesap Özeti (Ekstre)</small>
+                     <input type="number" placeholder="0₺" value={ekstreVal} onChange={e => setEkstreVal(e.target.value)} />
+                  </div>
+                  <div className="kbi-input-group">
+                     <small>Güncel Borç</small>
+                     <input type="number" placeholder="0₺" value={guncelVal} onChange={e => setGuncelVal(e.target.value)} />
+                  </div>
+                  <button className="kbi-save-btn" onClick={handleBorcKaydet}>KAYDET</button>
+               </div>
+             )}
           </div>
 
           {/* ── Ödeme Paneli ── */}
@@ -576,8 +599,8 @@ const KrediTab = React.memo(({ finans, prv }) => {
               {/* Ödeme Türü */}
               <div className="kop-type-row">
                 {[
-                  { id: 'full', label: 'Tam', val: fmt(aktifEkstreBorcu, prv) },
-                  { id: 'min', label: 'Asgari', val: fmt(aktifEkstreBorcu * (selectedKart.min_pct || 20) / 100, prv) },
+                  { id: 'full', label: 'Tam', val: fmt(aktifEkstreBorcu > 0 ? aktifEkstreBorcu : aktifGuncelBorc, prv) },
+                  { id: 'min', label: 'Asgari', val: fmt(kalanAsgari, prv) },
                   { id: 'kismi', label: 'Kısmi', val: '—' },
                 ].map(t => (
                   <button key={t.id} className={`kop-type-btn ${odemeTuru === t.id ? 'active' : ''}`} onClick={() => setOdemeTuru(t.id)}>
@@ -606,6 +629,75 @@ const KrediTab = React.memo(({ finans, prv }) => {
                 </select>
               )}
 
+              {/* Faiz Danışmanı (TCMB Uyumlu Akdi/Gecikme Faiz Hesaplayıcı) */}
+              <div className="interest-advisor-box animate-fadeIn" style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                padding: '16px',
+                borderRadius: '20px',
+                marginTop: '15px',
+                marginBottom: '15px',
+                fontSize: '13px',
+                lineHeight: '1.5'
+              }}>
+                {(() => {
+                  let tutar = aktifEkstreBorcu > 0 ? aktifEkstreBorcu : aktifGuncelBorc;
+                  if (odemeTuru === 'min') tutar = kalanAsgari;
+                  if (odemeTuru === 'kismi') tutar = Number(odemeOzelTutar) || 0;
+
+                  // 1. TAM ÖDEME (Ekstre Borcunun Tamamı veya fazlası)
+                  if (odemeTuru === 'full' || tutar >= aktifEkstreBorcu) {
+                    return (
+                      <div style={{ color: '#10b981', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '18px' }}>🎉</span>
+                        <div>
+                          <strong style={{ display: 'block', marginBottom: '2px', fontWeight: '800' }}>Sıfır Faiz Avantajı!</strong>
+                          <span>Ekstre borcunun tamamını kapatıyorsunuz. Hiçbir akdi faiz veya gecikme faizi uygulanmayacaktır. Kalan dönem borcunuz faizsiz ertelenir.</span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // 2. ASGARİ ÖDEME (Gecikmeye girmez ama akdi faiz uygulanır)
+                  if (odemeTuru === 'min' || (tutar >= kalanAsgari && tutar < aktifEkstreBorcu)) {
+                    const kalanEkstre = aktifEkstreBorcu - tutar;
+                    const tahminiFaiz = kalanEkstre * 0.0425; // TCMB Akdi Faiz Oranı (%4.25)
+                    return (
+                      <div style={{ color: '#f59e0b', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '18px' }}>⚠️</span>
+                        <div>
+                          <strong style={{ display: 'block', marginBottom: '2px', fontWeight: '800' }}>Akdi Faiz Uygulanacak!</strong>
+                          <span>Asgari ödemeyi yaptığınız için yasal takibe veya gecikmeye girmezsiniz. Kalan <strong>{fmt(kalanEkstre, prv)}</strong> ekstre borcunuza günlük <strong>%4.25</strong> akdi faiz işletilecektir.</span>
+                          <span style={{ display: 'block', marginTop: '6px', fontSize: '11px', opacity: 0.9, fontWeight: '700', background: 'rgba(245,158,11,0.1)', padding: '4px 8px', borderRadius: '8px', width: 'fit-content' }}>
+                            📉 Tahmini Aylık Faiz Yükü: ~{fmt(tahminiFaiz, prv)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // 3. ASGARİ ALTI / KISMİ ÖDEME (Gecikme faizi ve sicil riski)
+                  if (tutar < kalanAsgari) {
+                    const kalanAsgariBorc = kalanAsgari - tutar;
+                    const kalanAkdiBorc = Math.max(0, aktifEkstreBorcu - kalanAsgari);
+                    const gecikmeFaiz = kalanAsgariBorc * 0.0455; // TCMB Gecikme Faiz Oranı (%4.55)
+                    const akdiFaiz = kalanAkdiBorc * 0.0425; // TCMB Akdi Faiz Oranı (%4.25)
+                    return (
+                      <div style={{ color: '#ef4444', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                        <span style={{ fontSize: '18px' }}>🚨</span>
+                        <div>
+                          <strong style={{ display: 'block', marginBottom: '2px', fontWeight: '800' }}>Temerrüt & Gecikme Riski!</strong>
+                          <span>Asgari tutarın altında kalıyorsunuz! Kalan asgari borcunuz için <strong>%4.55 gecikme faizi</strong>, kalan diğer ekstre borcunuz için ise <strong>%4.25 akdi faiz</strong> uygulanacaktır. Ayrıca KKB kredi notunuz olumsuz etkilenebilir.</span>
+                          <span style={{ display: 'block', marginTop: '6px', fontSize: '11px', opacity: 0.9, fontWeight: '700', background: 'rgba(239,68,68,0.1)', padding: '4px 8px', borderRadius: '8px', width: 'fit-content' }}>
+                            📈 Tahmini Aylık Faiz Yükü: ~{fmt(gecikmeFaiz + akdiFaiz, prv)} (%4.55 Gecikme + %4.25 Akdi)
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+                })()}
+              </div>
+
               <button className="kop-submit-btn" onClick={handleOdeme}>
                 ✅ Ödemeyi Kaydet
               </button>
@@ -620,7 +712,13 @@ const KrediTab = React.memo(({ finans, prv }) => {
           {/* ── Taksit Planları ── */}
           {taksitler.filter(t => t.kart_id === selectedKart?.id).length > 0 && (
             <div className="kredi-taksit-list" style={{ marginTop: '24px' }}>
-              <div className="kog-title">🗓️ Aktif Taksitler</div>
+              <div className="kog-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '12px' }}>
+                <span>🗓️ Aktif Taksitler</span>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--txt-light)', fontWeight: '600' }}>Bu Ayki Taksit: <strong style={{ color: 'var(--txt)', fontSize: '13px' }}>{fmt(calcBeklenen.taksitYuku, prv)}</strong></div>
+                  <div style={{ fontSize: '11px', color: 'var(--txt-light)', fontWeight: '600' }}>Kalan Toplam: <strong style={{ color: 'var(--finans)', fontSize: '13px' }}>{fmt(calcBeklenen.taksitYuku + calcBeklenen.gelecekTaksitler, prv)}</strong></div>
+                </div>
+              </div>
               {taksitler.filter(t => t.kart_id === selectedKart?.id).map(t => (
                 <div key={t.id} className="taksit-row glass" style={{ padding: '12px', borderRadius: '16px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
@@ -633,10 +731,18 @@ const KrediTab = React.memo(({ finans, prv }) => {
                     <div style={{ fontSize: '13px', fontWeight: '800', color: 'var(--finans)' }}>
                       {fmt(t.toplam_tutar, prv)}
                     </div>
+                    <button className="icon-btn-mini" onClick={() => { setEditingTaksit(t); setShowTaksitModal(true); }} style={{ marginRight: '4px' }}><Edit size={12} /></button>
                     <button className="icon-btn-mini del" onClick={() => useStore.getState().deleteTaksit(t.id)}><Trash2 size={12} /></button>
                   </div>
                 </div>
               ))}
+              
+              <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(124, 58, 237, 0.05)', borderRadius: '12px', border: '1px solid rgba(124, 58, 237, 0.1)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <Info size={16} color="#7c3aed" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '11px', color: 'var(--txt-light)', lineHeight: '1.4' }}>
+                  <strong>Hesap Kesim Kuralı:</strong> Her hesap kesiminde taksitler güncel borcunuza yansır. Vadesi dolup <strong>0 Ay Kaldı</strong> yazan taksit planlarını yandaki <Trash2 size={10} style={{ display: 'inline', color: '#ef4444', verticalAlign: 'middle' }}/> butonuyla temizleyebilirsiniz.
+                </span>
+              </div>
             </div>
           )}
 
@@ -691,13 +797,13 @@ const KrediTab = React.memo(({ finans, prv }) => {
       )}
       <div style={{ display: 'flex', gap: '8px', marginTop: '20px' }}>
         <button className="kredi-mgmt-btn" onClick={() => setShowKartModal(true)}><CreditCard size={14} /> Kart Yönet</button>
-        <button className="kredi-mgmt-btn" onClick={() => setShowTaksitModal(true)}><Plus size={14} /> Taksit Ekle</button>
+        <button className="kredi-mgmt-btn" onClick={() => { setEditingTaksit(null); setShowTaksitModal(true); }}><Plus size={14} /> Taksit Ekle</button>
         <button className="kredi-mgmt-btn" onClick={() => setShowBorcModal(true)}><TrendingDown size={14} /> Kredi Yönet</button>
       </div>
 
       <KartYonetimModal isOpen={showKartModal || !!editingKart} onClose={() => { setShowKartModal(false); setEditingKart(null); }} finans={finans} updateFinansData={updateFinansData} initialData={editingKart} />
       <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
-      <TaksitYonetimModal isOpen={showTaksitModal} onClose={() => setShowTaksitModal(false)} selectedKartId={selectedKartId} />
+      <TaksitYonetimModal isOpen={showTaksitModal || !!editingTaksit} onClose={() => { setShowTaksitModal(false); setEditingTaksit(null); }} selectedKartId={selectedKartId} editingTaksit={editingTaksit} />
       <ConfirmModal isOpen={!!deletingKartId} title="Kartı Sil" message="Bu kredi kartını silmek istediğine emin misin?" onConfirm={() => { useStore.getState().deleteFinansKart(deletingKartId); toast.success('Kart silindi!'); setDeletingKartId(null); }} onCancel={() => setDeletingKartId(null)} confirmText="Evet, Sil" cancelText="Vazgeç" icon="🗑️" />
     </div>
   );
@@ -1288,23 +1394,27 @@ function BorcYonetimModal({ isOpen, onClose, finans, updateFinansData }) {
   );
 }
 
-function TaksitYonetimModal({ isOpen, onClose, selectedKartId }) {
+function TaksitYonetimModal({ isOpen, onClose, selectedKartId, editingTaksit }) {
   const { addTaksit } = useStore();
-  const [taksit, setTaksit] = useState({ baslik: '', toplam_tutar: '', taksit_sayisi: 12, kategori: 'Genel', kart_id: selectedKartId });
+  const [taksit, setTaksit] = useState({ baslik: '', toplam_tutar: '', taksit_sayisi: 12, kalan_taksit: 12, kategori: 'Genel', kart_id: selectedKartId });
 
   useEffect(() => {
-    if (selectedKartId) setTaksit(prev => ({ ...prev, kart_id: selectedKartId }));
-  }, [selectedKartId]);
+    if (editingTaksit) {
+      setTaksit(editingTaksit);
+    } else {
+      setTaksit({ baslik: '', toplam_tutar: '', taksit_sayisi: 12, kalan_taksit: 12, kategori: 'Genel', kart_id: selectedKartId });
+    }
+  }, [editingTaksit, selectedKartId, isOpen]);
 
   const handleSave = async () => {
     if (!taksit.baslik || !taksit.toplam_tutar) return toast.error('Eksik alanları doldurun!');
     await addTaksit(taksit);
-    toast.success('Taksit planı oluşturuldu! 🗓️');
+    toast.success(editingTaksit ? 'Taksit planı güncellendi! 🗓️' : 'Taksit planı oluşturuldu! 🗓️');
     onClose();
   };
 
   return (
-    <ActionSheet isOpen={isOpen} onClose={onClose} title="🗓️ Yeni Taksit Ekle">
+    <ActionSheet isOpen={isOpen} onClose={onClose} title={editingTaksit ? "🗓️ Taksit Planını Düzenle" : "🗓️ Yeni Taksit Ekle"}>
       <div className="modal-body" style={{ padding: '20px' }}>
         <div className="modal-form">
           <div className="form-group">
@@ -1321,7 +1431,27 @@ function TaksitYonetimModal({ isOpen, onClose, selectedKartId }) {
               <input type="number" value={taksit.taksit_sayisi} onChange={e => setTaksit({...taksit, taksit_sayisi: e.target.value})} placeholder="12" />
             </div>
           </div>
-          <button className="submit-btn" style={{ background: 'var(--finans)' }} onClick={handleSave}>PLANI OLUŞTUR</button>
+          
+          <div className="form-row" style={{ marginTop: '12px' }}>
+            <div className="form-group">
+              <label>Kalan Taksit Sayısı</label>
+              <input type="number" value={taksit.kalan_taksit} onChange={e => setTaksit({...taksit, kalan_taksit: e.target.value})} placeholder="12" />
+            </div>
+            <div className="form-group">
+              <label>Kategori</label>
+              <select value={taksit.kategori} onChange={e => setTaksit({...taksit, kategori: e.target.value})}>
+                <option value="Genel">Genel</option>
+                <option value="Sağlık">Sağlık</option>
+                <option value="Mutfak">Mutfak</option>
+                <option value="Sosyal">Sosyal</option>
+                <option value="Diğer">Diğer</option>
+              </select>
+            </div>
+          </div>
+
+          <button className="submit-btn" style={{ background: 'var(--finans)', marginTop: '20px' }} onClick={handleSave}>
+            {editingTaksit ? 'GÜNCELLE' : 'PLANI OLUŞTUR'}
+          </button>
         </div>
       </div>
     </ActionSheet>

@@ -43,7 +43,7 @@ export default function Kasa() {
   const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
   const [showSimulator, setShowSimulator] = useState(false);
   const privacy = kasa?.privacyMode || false;
-  const K = kasa || { bakiyeler: {}, varliklar: [], tasinmazlar: [], kumbaralar: [], rates: { EUR: 35, USD: 32, GBP: 40, GA: 2500 } };
+  const K = kasa || { bakiyeler: {}, varliklar: [], tasinmazlar: [], kumbaralar: [], rates: { EUR: 35, USD: 32, GBP: 40, GA: 2500, ETHFI: 21.15 } };
   
   const getAssetPrice = (v) => {
     if (v.type === 'tl') return 1;
@@ -631,6 +631,7 @@ function KasaModals({ type, data, onClose }) {
                    <option value="">Seçiniz</option>
                    <option value="BTC">Bitcoin (BTC)</option>
                    <option value="ETH">Ethereum (ETH)</option>
+                   <option value="ETHFI">Ether-Fi (ETHFI)</option>
                    <option value="Diğer">Diğer</option>
                 </select>
               ) : (
