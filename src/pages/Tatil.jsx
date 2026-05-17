@@ -2920,26 +2920,98 @@ function BudgetSection({ trip, onShowExpense }) {
 }
 
 function AddTripExpenseContent({ onAdd }) {
+  const { kasa } = useStore();
   const [form, setForm] = useState({ title: '', amount: '', payer: 'ortak', paymentMethod: '' });
+  const [currency, setCurrency] = useState('TRY');
+  
+  const eurRate = (kasa.rates && kasa.rates['EUR']) || 36.5;
+
+  const handleSubmit = () => {
+    if (!form.title.trim()) {
+      toast.error('Harcama kalemi giriniz! ❌');
+      return;
+    }
+    if (!form.amount || Number(form.amount) <= 0) {
+      toast.error('Geçerli bir tutar giriniz! ❌');
+      return;
+    }
+
+    const rawAmount = Number(form.amount);
+    let finalAmount = rawAmount;
+    let finalTitle = form.title.trim();
+
+    if (currency === 'EUR') {
+      finalAmount = Math.round(rawAmount * eurRate);
+      finalTitle = `${finalTitle} (€${rawAmount})`;
+    }
+
+    onAdd({
+      ...form,
+      title: finalTitle,
+      amount: finalAmount
+    });
+  };
+
   return (
     <div className="modal-form-premium">
       <div className="form-group">
         <label>Harcama Kalemi</label>
-        <input type="text" placeholder="Örn: Akşam Yemeği, Ulaşım..." value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="premium-input" />
+        <input 
+          type="text" 
+          placeholder="Örn: Akşam Yemeği, Ulaşım..." 
+          value={form.title} 
+          onChange={e => setForm({...form, title: e.target.value})} 
+          className="premium-input" 
+        />
       </div>
+
       <div className="form-group">
-        <label>Tutar (₺)</label>
-        <input type="number" placeholder="0₺" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="premium-input" />
+        <label>Para Birimi</label>
+        <div className="currency-selector-group">
+          <button 
+            type="button" 
+            className={currency === 'TRY' ? 'active' : ''} 
+            onClick={() => setCurrency('TRY')}
+          >
+            ₺ TL
+          </button>
+          <button 
+            type="button" 
+            className={currency === 'EUR' ? 'active' : ''} 
+            onClick={() => setCurrency('EUR')}
+          >
+            € EUR
+          </button>
+        </div>
       </div>
+
+      <div className="form-group">
+        <label>{currency === 'EUR' ? 'Tutar (€)' : 'Tutar (₺)'}</label>
+        <input 
+          type="number" 
+          placeholder={currency === 'EUR' ? '0€' : '0₺'} 
+          value={form.amount} 
+          onChange={e => setForm({...form, amount: e.target.value})} 
+          className="premium-input" 
+        />
+        {currency === 'EUR' && form.amount && (
+          <small className="currency-helper-text">
+            ≈ {(Number(form.amount) * eurRate).toLocaleString()} ₺ (Kur: {eurRate})
+          </small>
+        )}
+      </div>
+
       <div className="form-group">
         <label>Ödeme Yöntemi</label>
         <PaymentSelector value={form.paymentMethod} onChange={(val) => setForm({...form, paymentMethod: val})} />
       </div>
+
       <div className="user-select-grid">
         <button type="button" className={form.payer === 'gorkem' ? 'active' : ''} onClick={() => setForm({...form, payer: 'gorkem'})}>Görkem</button>
         <button type="button" className={form.payer === 'esra' ? 'active' : ''} onClick={() => setForm({...form, payer: 'esra'})}>Esra</button>
       </div>
-      <button onClick={() => onAdd(form)} className="submit-btn-premium tatil">Harcamayı Ekle</button>
+
+      <button onClick={handleSubmit} className="submit-btn-premium tatil">Harcamayı Ekle</button>
     </div>
   );
 }
