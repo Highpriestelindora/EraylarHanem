@@ -2907,13 +2907,21 @@ function BudgetSection({ trip, onShowExpense }) {
     if (!trip.city) return [];
     
     const pool = (finans.approvalPool || []).filter(item => 
-      item.category === 'tatil' && 
-      (item.title?.toLowerCase().includes(trip.city.toLowerCase()) || item.title?.toLowerCase().includes(trip.title?.toLowerCase()))
+      (item.category === 'tatil' || item.kategori === 'Tatil' || item.kategori === 'tatil') && 
+      (item.title?.toLowerCase().includes(trip.city.toLowerCase()) || item.baslik?.toLowerCase().includes(trip.city.toLowerCase()) || item.title?.toLowerCase().includes(trip.title?.toLowerCase()) || item.baslik?.toLowerCase().includes(trip.title?.toLowerCase()))
     ).map(x => ({ ...x, pending: true }));
 
-    const confirmed = (finans.harcamalar || []).filter(item => 
-      item.category === 'tatil' && 
-      (item.title?.toLowerCase().includes(trip.city.toLowerCase()) || item.title?.toLowerCase().includes(trip.title?.toLowerCase()))
+    const confirmedV1 = finans.harcamalar || [];
+    const confirmedV2 = finans.buAyHarcamalar || [];
+    
+    const combinedConfirmed = [...confirmedV1, ...confirmedV2].reduce((acc, curr) => {
+      if (!acc.find(item => item.id === curr.id)) acc.push(curr);
+      return acc;
+    }, []);
+
+    const confirmed = combinedConfirmed.filter(item => 
+      (item.category === 'tatil' || item.kategori === 'Tatil' || item.kategori === 'tatil') && 
+      (item.title?.toLowerCase().includes(trip.city.toLowerCase()) || item.baslik?.toLowerCase().includes(trip.city.toLowerCase()) || item.title?.toLowerCase().includes(trip.title?.toLowerCase()) || item.baslik?.toLowerCase().includes(trip.title?.toLowerCase()))
     ).map(x => ({ ...x, pending: false }));
 
     return [...pool, ...confirmed].sort((a, b) => b.id - a.id);
