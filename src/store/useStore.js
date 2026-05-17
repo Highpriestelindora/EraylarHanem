@@ -2109,7 +2109,7 @@ const useStore = create(
                  asilar, agirliklar, supplies, petLogs,
                  randevular, ilaclar, olcumler, moods, logs, sleep,
                  depo, faturalar, garajPark, personality,
-                 savedLocations, evAyarlar, acilDurum] = await Promise.all([
+                 savedLocations, evAyarlar, acilDurum, araclar] = await Promise.all([
             supabase.from('ev_duzenli_odemeler').select('*'),
             supabase.from('ev_abonelikler').select('*'),
             supabase.from('ev_onarim').select('*'),
@@ -2135,7 +2135,8 @@ const useStore = create(
             supabase.from('ev_tracking').select('*').eq('id', `personality-${DEFAULT_FID}`).eq('family_id', DEFAULT_FID),
             supabase.from('ev_saved_locations').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('ev_ayarlar').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('ev_acil_durum_cantasi').select('*').eq('family_id', DEFAULT_FID)
+            supabase.from('ev_acil_durum_cantasi').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('garaj_araclar').select('*').eq('family_id', DEFAULT_FID)
           ]);
 
           set(state => {
@@ -2251,6 +2252,45 @@ const useStore = create(
             }
 
                         const garaj = [...state.garaj];
+            // Restore Vehicle Metadata from Supabase
+            if (araclar.data && araclar.data.length > 0) {
+              araclar.data.forEach(item => {
+                const existingIdx = garaj.findIndex(gv => String(gv.id) === String(item.id));
+                if (existingIdx !== -1) {
+                  garaj[existingIdx] = {
+                    ...garaj[existingIdx],
+                    type: item.type || garaj[existingIdx].type,
+                    brand: item.brand || garaj[existingIdx].brand,
+                    model: item.model || garaj[existingIdx].model,
+                    plaka: item.plaka || garaj[existingIdx].plaka,
+                    km: item.km !== undefined && item.km !== null ? Number(item.km) : garaj[existingIdx].km,
+                    marketValue: item.market_value !== undefined && item.market_value !== null ? Number(item.market_value) : garaj[existingIdx].marketValue,
+                    lastCleaned: item.last_cleaned || garaj[existingIdx].lastCleaned
+                  };
+                } else {
+                  garaj.push({
+                    id: item.id,
+                    type: item.type || 'car',
+                    brand: item.brand || '',
+                    model: item.model || '',
+                    plaka: item.plaka || '',
+                    km: Number(item.km || 0),
+                    marketValue: Number(item.market_value || 0),
+                    lastCleaned: item.last_cleaned || null,
+                    parts: [],
+                    fuelLogs: [],
+                    services: [],
+                    documents: [],
+                    tireStatus: { type: 'Yazlık', changeDate: new Date().toISOString().split('T')[0], condition: 'İyi' },
+                    parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false },
+                    supportContacts: {
+                      yolYardim: { name: 'Toyota Asistanım', phone: '0212 708 00 55' },
+                      sigorta: { name: 'Neova Sigorta (Nisa Hanım)', phone: '0533 303 42 35' }
+                    }
+                  });
+                }
+              });
+            }
             // Restore Parking Location
             if (garajPark.data) {
               garajPark.data.forEach(p => {
