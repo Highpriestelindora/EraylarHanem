@@ -131,7 +131,7 @@ export default function Ev() {
     updateTasinmaz, addTasinmaz, deleteTasinmaz,
     addPeriodicBakim, updatePeriodicBakim, resetPeriodicBakim, deletePeriodicBakim,
     deleteDepoItem, clearDepo,
-    addOnarimItem, toggleOnarimItem, clearCompletedOnarimItems,
+    addOnarimItem, toggleOnarimItem, clearCompletedOnarimItems, updateOnarimItem, deleteOnarimItem,
     addAbonelik, updateAbonelik, deleteAbonelik,
     addDuzenliOdeme, updateDuzenliOdeme, deleteDuzenliOdeme,
     addFinanceExpense, updateLocationSettings, tatil, updateCachedAnalysis,
@@ -865,12 +865,13 @@ export default function Ev() {
                        <div 
                          key={item.id} 
                          className={`task-card-v2 ${item.status === 'Completed' ? 'done' : ''}`}
-                         onClick={() => {
+                         style={{ cursor: 'default' }}
+                       >
+                         <div className="tcv2-check" onClick={(e) => {
+                           e.stopPropagation();
                            const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
                            toggleOnarimItem(item.id, userKey);
-                         }}
-                       >
-                         <div className="tcv2-check">
+                         }} style={{ cursor: 'pointer' }}>
                            {item.status === 'Completed' ? <CheckCircle2 size={18} color="#22c55e" /> : <div className="circle-check-v2" />}
                          </div>
                          <div className="tcv2-info">
@@ -880,11 +881,35 @@ export default function Ev() {
                                {createdUser.emoji} {(createdUser.name || 'Bilinmiyor').split(' ')[0]} • {new Date(item.createdAt).toLocaleDateString('tr-TR')}
                              </small>
                              {item.status === 'Completed' && item.completedBy && (
-                               <small style={{ color: '#22c55e' }}>
-                                 • ✅ {(users[item.completedBy]?.name || 'Bilinmiyor').split(' ')[0]} tarafından tamamlandı
-                               </small>
+                                <small style={{ color: '#22c55e' }}>
+                                  • ✅ {(users[item.completedBy]?.name || 'Bilinmiyor').split(' ')[0]} tarafından tamamlandı
+                                </small>
                              )}
                            </div>
+                         </div>
+                         <div className="tcv2-actions" style={{ display: 'flex', gap: '6px', alignSelf: 'center', marginLeft: 'auto' }}>
+                            <button 
+                              className="icon-btn-mini" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingOnarim(item);
+                              }}
+                              style={{ border: 'none', background: '#f1f5f9', color: '#64748b', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                              title="Düzenle"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                            <button 
+                              className="icon-btn-mini del" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                requestConfirm('Bu görevi listeden tamamen silmek istediğinize emin misiniz?', () => deleteOnarimItem(item.id));
+                              }}
+                              style={{ border: 'none', background: '#fee2e2', color: '#ef4444', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                              title="Sil"
+                            >
+                              <Trash2 size={12} />
+                            </button>
                          </div>
                        </div>
                      );
@@ -1654,11 +1679,10 @@ export default function Ev() {
         )}
       </ActionSheet>
 
-      {/* ActionSheet for One-time Maintenance/Repair */}
       <ActionSheet
         isOpen={!!editingOnarim}
         onClose={() => setEditingOnarim(null)}
-        title="Yeni Bakım & Onarım Görevi"
+        title={editingOnarim?.id ? "Bakım & Onarım Görevi Düzenle" : "Yeni Bakım & Onarım Görevi"}
       >
         {editingOnarim && (
           <div className="edit-form-v2">
@@ -1668,16 +1692,20 @@ export default function Ev() {
                 className="form-group-v2 input"
                 style={{ padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--brd)', background: '#f8fafc', fontSize: '14px', fontWeight: '600', outline: 'none', minHeight: '80px', fontFamily: 'inherit' }}
                 placeholder="Örn: Mutfak musluğu contası değişecek"
-                value={editingOnarim.task}
+                value={editingOnarim.task || ''}
                 onChange={(e) => setEditingOnarim({...editingOnarim, task: e.target.value})}
               />
             </div>
             <button className="save-btn-v2" onClick={() => {
               if(!editingOnarim.task) return toast.error('Lütfen görev açıklaması girin');
               const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
-              addOnarimItem(editingOnarim.task, userKey);
+              if (editingOnarim.id) {
+                updateOnarimItem(editingOnarim.id, editingOnarim.task);
+              } else {
+                addOnarimItem(editingOnarim.task, userKey);
+              }
               setEditingOnarim(null);
-            }}>Listeye Ekle</button>
+            }}>{editingOnarim.id ? 'Kaydet' : 'Listeye Ekle'}</button>
           </div>
         )}
       </ActionSheet>

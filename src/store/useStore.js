@@ -7264,6 +7264,27 @@ const useStore = create(
         if (updatedItem) pushEvOnarimToSupabase(updatedItem);
       },
 
+      updateOnarimItem: (id, task) => {
+        const currentEv = get().ev || {};
+        const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
+
+        const newList = currentList.map(item => {
+          if (item.id === id) {
+            return {
+              ...item,
+              task
+            };
+          }
+          return item;
+        });
+
+        set({ ev: { ...currentEv, onarimListesi: newList } });
+
+        const updatedItem = newList.find(i => i.id === id);
+        if (updatedItem) pushEvOnarimToSupabase(updatedItem);
+        toast.success('Görev güncellendi! ✏️');
+      },
+
       clearCompletedOnarimItems: (userKey) => {
         const state = get();
         const currentEv = state.ev || {};
