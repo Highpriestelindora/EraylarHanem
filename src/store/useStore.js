@@ -8069,6 +8069,31 @@ const useStore = create(
         deleteGarajYakitFromSupabase(logId);
       },
 
+      updateFuelLog: (vehicleId, logId, updatedFields) => {
+        const state = get();
+        const vehicle = state.garaj.find(v => v.id === vehicleId);
+        if (!vehicle) return;
+
+        const updatedGaraj = state.garaj.map(v =>
+          v.id === vehicleId
+            ? {
+              ...v,
+              fuelLogs: v.fuelLogs.map(l =>
+                String(l.id) === String(logId) ? { ...l, ...updatedFields } : l
+              )
+            }
+            : v
+        );
+
+        set({ garaj: updatedGaraj });
+
+        const updatedLog = vehicle.fuelLogs.find(l => String(l.id) === String(logId));
+        if (updatedLog) {
+          const finalLog = { ...updatedLog, ...updatedFields };
+          pushGarajYakitToSupabase(finalLog, vehicleId);
+        }
+      },
+
       // ── Pet Actions ────────────────────────────────────
       addPetVaccine: (petId, vaccine) => {
         const state = get();

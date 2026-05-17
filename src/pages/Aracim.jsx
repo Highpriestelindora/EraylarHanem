@@ -30,7 +30,7 @@ export default function Aracim() {
     addVehicle, updateVehicle, deleteVehicle,
     addWashRecord, startParking, finishParking,
     deleteServiceRecord, deleteDocument, addDocument, updateDocument,
-    updatePartMaintenance, deleteFuelLog, updateSupportContacts
+    updatePartMaintenance, deleteFuelLog, updateSupportContacts, updateFuelLog
   } = useStore();
   
   const vehicle = useMemo(() => 
@@ -39,6 +39,7 @@ export default function Aracim() {
   );
 
   const [showAddFuel, setShowAddFuel] = useState(false);
+  const [editingFuelLog, setEditingFuelLog] = useState(null);
   const [showUpdateKM, setShowUpdateKM] = useState(false);
   const [showGarageModal, setShowGarageModal] = useState(false);
   const [showVehicleForm, setShowVehicleForm] = useState(false);
@@ -62,6 +63,25 @@ export default function Aracim() {
     km, parts, fuelLogs, services, documents, 
     lastCleaned, parkLocation, tireStatus 
   } = vehicle || { km: 0, parts: [], fuelLogs: [], services: [], documents: [] };
+
+  const logsWithConsumption = useMemo(() => {
+    const sorted = [...fuelLogs].sort((a, b) => (a.km || 0) - (b.km || 0));
+    return sorted.map((log, index) => {
+      let consumption = 0;
+      if (index > 0) {
+        const prevLog = sorted[index - 1];
+        const kmDiff = (log.km || 0) - (prevLog.km || 0);
+        const amount = Number(log.amount || log.litre || 0);
+        if (kmDiff > 0 && amount > 0) {
+          consumption = Number(((amount / kmDiff) * 100).toFixed(2));
+        }
+      }
+      return {
+        ...log,
+        consumption: consumption > 0 ? consumption : null
+      };
+    });
+  }, [fuelLogs]);
 
   // AI Insights - Dolmuşçu Manileri Edition
   const aiNote = useMemo(() => {
@@ -329,10 +349,10 @@ export default function Aracim() {
             <div className="fuel-chart-box glass">
               <Line 
                 data={{
-                  labels: fuelLogs.map(l => new Date(l.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })),
+                  labels: logsWithConsumption.filter(l => l.consumption !== null).map(l => l.date ? new Date(l.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : ''),
                   datasets: [{
-                    label: 'Tüketim',
-                    data: fuelLogs.map(l => l.consumption),
+                    label: 'Tüketim (L/100km)',
+                    data: logsWithConsumption.filter(l => l.consumption !== null).map(l => l.consumption),
                     borderColor: '#f87171',
                     tension: 0.4,
                     fill: false
@@ -369,11 +389,17 @@ export default function Aracim() {
                         {formatMoney(l.tutar || l.totalPrice || ((l.amount || 0) * (l.price || 0)))}
                       </div>
                     </div>
-                    <button className="delete-btn-mini" onClick={() => { 
-                      requestConfirm('Bu yakıt kaydını silmek istediğinize emin misiniz?', () => {
-                        deleteFuelLog(vehicle.id, l.id);
-                      });
-                    }}><Trash2 size={12} /></button>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button className="delete-btn-mini" style={{ background: 'rgba(255,255,255,0.08)', color: '#60a5fa' }} onClick={() => { 
+                        setEditingFuelLog(l);
+                        setShowAddFuel(true);
+                      }}><Edit3 size={12} /></button>
+                      <button className="delete-btn-mini" onClick={() => { 
+                        requestConfirm('Bu yakıt kaydını silmek istediğinize emin misiniz?', () => {
+                          deleteFuelLog(vehicle.id, l.id);
+                        });
+                      }}><Trash2 size={12} /></button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -393,9 +419,16 @@ export default function Aracim() {
 
       {showAddFuel && (
         <FuelLogModal 
-          onClose={() => setShowAddFuel(false)} 
-          onSave={addFuelLog} 
+          onClose={() => { setShowAddFuel(false); setEditingFuelLog(null); }} 
+          onSave={(logData, paymentMethod) => {
+            if (editingFuelLog) {
+              updateFuelLog(vehicle.id, editingFuelLog.id, logData);
+            } else {
+              addFuelLog(logData, paymentMethod);
+            }
+          }} 
           currentKM={km}
+          log={editingFuelLog}
         />
       )}
 
@@ -604,8 +637,15 @@ function KMUpdateModal({ currentKM, onClose, onSave }) {
   );
 }
 
-function FuelLogModal({ onClose, onSave, currentKM }) {
-  const [form, setForm] = useState({ 
+function FuelLogModal({ onClose, onSave, currentKM, log = null }) {
+  const [form, setForm] = useState(log ? {
+    km: log.km,
+    amount: log.amount || log.litre || '',
+    tutar: log.tutar || log.totalPrice || '',
+    price: log.price || '',
+    station: log.station || 'Shell',
+    date: log.date ? new Date(log.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+  } : { 
     km: currentKM, 
     amount: '', 
     tutar: '', 
@@ -659,7 +699,7 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
       <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header-v2">
           <Fuel size={24} color="#f87171" />
-          <h3>Yakıt Girişi</h3>
+          <h3>{log ? 'Yakıt Kaydını Düzenle' : 'Yakıt Girişi'}</h3>
         </div>
         <div className="modal-body-v2">
           <div className="form-grid-v2">
@@ -692,9 +732,11 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
               <option value="Diğer">⚪ Diğer</option>
             </select>
           </div>
-          <div className="mt-16">
-            <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
-          </div>
+          {!log && (
+            <div className="mt-16">
+              <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
+            </div>
+          )}
           <button className="submit-btn-premium red mt-20" onClick={() => { 
             const amt = Number(form.amount || 0);
             const tut = Number(form.tutar || 0);
@@ -719,7 +761,7 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
 
             onSave(finalForm, paymentMethod); 
             onClose(); 
-            toast.success('Yakıt kaydı ve masraf eklendi ⛽'); 
+            toast.success(log ? 'Yakıt kaydı güncellendi ✨' : 'Yakıt kaydı ve masraf eklendi ⛽'); 
           }}>Kaydet</button>
         </div>
       </div>
