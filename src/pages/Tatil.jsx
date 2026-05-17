@@ -2901,7 +2901,7 @@ function WeatherWidget({ city, country, startDate, endDate }) {
 }
 
 function BudgetSection({ trip, onShowExpense }) {
-  const { finans } = useStore();
+  const { finans, deleteHarcama, reddetHarcama } = useStore();
   
   const tripExpenses = useMemo(() => {
     if (!trip.city) return [];
@@ -2969,11 +2969,27 @@ function BudgetSection({ trip, onShowExpense }) {
                     <span className="tei-date">{exp.dt}</span>
                   </div>
                 </div>
-                <div className="tei-right">
-                  <span className="tei-amount">{exp.amount || exp.tutar} ₺</span>
-                  <span className={`tei-status-pill ${exp.pending ? 'pending' : 'confirmed'}`}>
-                    {exp.pending ? '⏳ Onay' : '✅ Ödendi'}
-                  </span>
+                <div className="tei-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <span className="tei-amount">{exp.amount || exp.tutar} ₺</span>
+                    <span className={`tei-status-pill ${exp.pending ? 'pending' : 'confirmed'}`}>
+                      {exp.pending ? '⏳ Onay' : '✅ Ödendi'}
+                    </span>
+                  </div>
+                  <button 
+                    className="icon-btn-mini del" 
+                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '6px', borderRadius: '50%', flexShrink: 0 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (exp.pending) {
+                        reddetHarcama(exp.id);
+                      } else {
+                        deleteHarcama(exp.id);
+                      }
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </div>
             ))}
