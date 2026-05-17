@@ -417,11 +417,7 @@ const generateUniqueId = () => {
 
 async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
   try {
-    // ÖNEMLİ: ID'yi her zaman biz belirleyelim ki local state ile DB tam eşleşsin.
-    // Eğer gelen harcamada uzun bir string ID (UUID gibi) yoksa, yeni bir tane üretelim.
-    const finalId = (harcama.id && typeof harcama.id === 'string' && harcama.id.length > 20) 
-      ? harcama.id 
-      : generateUniqueId();
+    // ID'yi auto-increment olarak DB belirleyecek
 
     // banka_id'yi notlar alanına göm ve payload'dan çıkar
     let finalNotlar = harcama.notlar || '';
@@ -432,7 +428,6 @@ async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
     }
 
     const payload = {
-      id: finalId,
       family_id: familyId,
       ay: harcama.ay,
       tarih: harcama.tarih,
