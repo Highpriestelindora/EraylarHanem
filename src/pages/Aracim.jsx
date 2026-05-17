@@ -212,9 +212,15 @@ export default function Aracim() {
                 <button 
                   className="icon-btn-small" 
                   onClick={() => setShowSupportModal(true)}
-                  style={{ padding: '4px', background: 'transparent', border: 'none' }}
+                  style={{ 
+                    padding: '12px', 
+                    margin: '-8px -8px -8px 0',
+                    background: 'transparent', 
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
                 >
-                  <Edit3 size={12} color="var(--txt-light)" />
+                  <Edit3 size={18} color="#fca5a5" />
                 </button>
               </div>
               <div className="es-buttons" style={{ gap: '8px' }}>
