@@ -270,6 +270,10 @@ export default function Ev() {
 
   const [showTahlilSheet, setShowTahlilSheet] = useState(false);
   const userKey = currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
+  const [activeAnalysisUser, setActiveAnalysisUser] = useState(userKey);
+  useEffect(() => {
+    setActiveAnalysisUser(userKey);
+  }, [userKey]);
   const personalityData = ev.tracking?.personality?.[userKey] || ev.tracking?.personality || { results: {}, history: [] };
   const resultsObj = personalityData.results || {};
   const storeState = useStore();
@@ -305,7 +309,7 @@ export default function Ev() {
 
   const today = new Date().toISOString().slice(0, 10);
   const { weeklyData, monthlyData } = useMemo(() => {
-    const userId = currentUser?.id || (currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem');
+    const userId = activeAnalysisUser;
     
     // Cache per user and per day
     const cacheKey = `cachedAnalysis_${userId}`;
@@ -316,16 +320,16 @@ export default function Ev() {
       weeklyData: getAggregatedData(ev, 7, tatil, userId),
       monthlyData: getAggregatedData(ev, 30, tatil, userId)
     };
-  }, [ev.tracking?.logs, ev.tracking?.userHabits, tatil, today, currentUser?.id]);
+  }, [ev.tracking?.logs, ev.tracking?.userHabits, tatil, today, activeAnalysisUser]);
 
   // Save the calculated analysis once a day per user
   useEffect(() => {
-    const userId = currentUser?.id || (currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem');
+    const userId = activeAnalysisUser;
     const cacheKey = `cachedAnalysis_${userId}`;
     if (ev.tracking?.lastAnalysisDate !== today || !ev.tracking?.[cacheKey]) {
       updateCachedAnalysis({ [cacheKey]: { weeklyData, monthlyData }, lastAnalysisDate: today });
     }
-  }, [weeklyData, monthlyData, today, currentUser?.id]);
+  }, [weeklyData, monthlyData, today, activeAnalysisUser]);
 
   const doughnutOptions = {
     plugins: { legend: { display: false } },
@@ -436,14 +440,14 @@ export default function Ev() {
                 <div className="section-header-v2">
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <h3>📊 Yaşam Dengesi Analizi</h3>
-                    <p className="am-sub">Gerçek verilerle {currentUser?.name} analizi</p>
+                    <p className="am-sub">Gerçek verilerle {users[activeAnalysisUser]?.name || activeAnalysisUser} analizi</p>
                   </div>
                   <div className="user-selector-mini">
                     {Object.entries(users || {}).map(([id, u]) => (
                       <button 
                         key={id}
-                        className={`us-btn ${(currentUser?.id === id || currentUser?.name?.toLowerCase().includes(id)) ? 'active' : ''}`}
-                        onClick={() => setCurrentUser({ ...u, id })}
+                        className={`us-btn ${activeAnalysisUser === id ? 'active' : ''}`}
+                        onClick={() => setActiveAnalysisUser(id)}
                       >
                         {u.emoji}
                       </button>
@@ -581,7 +585,7 @@ export default function Ev() {
 
                 <div className="ai-interpretation mt-32">
                   <Sparkles size={14} color="#10b981" />
-                  <p>{ev.timeAnalysis?.[currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem']?.interpretation || "Yaşam verileriniz analiz ediliyor... ✨"}</p>
+                  <p>{ev.timeAnalysis?.[activeAnalysisUser]?.interpretation || "Yaşam verileriniz analiz ediliyor... ✨"}</p>
                 </div>
             </div>
           </div>
