@@ -224,25 +224,97 @@ const parseExtractedText = (text, type, tripContext = {}) => {
   const results = {};
 
   if (type === 'hotel') {
-    // Hotel Name
-    const hotelKeywords = /(?:hotel|otel|konaklama|tesis|pansiyon|apart)\s+(?:adı|name)?\s*:\s*([^,.\n]+)/i;
-    const hotelMatch = cleanText.match(hotelKeywords);
-    if (hotelMatch) {
-      results.hotel = hotelMatch[1].trim();
-    } else {
-      const bookingMatch = cleanText.match(/(?:booking\.com|airbnb|rezervasyon onay[ıi]).{1,30}?\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b/);
-      if (bookingMatch) {
-        results.hotel = bookingMatch[1];
-      } else {
-        results.hotel = tripContext.city ? `${tripContext.city} Boutique Hotel` : 'Butik Otel';
+    // 1. HOTEL NAME EXTRACTION (Heuristic split before address keyword)
+    let hotelName = '';
+    const cleanTextUpper = cleanText.toUpperCase();
+    
+    // Find where Adres or Address begins
+    const addressIndex = cleanTextUpper.search(/\b(ADRES|ADDRESS)\b/);
+    if (addressIndex !== -1) {
+      let beforeAddress = cleanTextUpper.substring(0, addressIndex).trim();
+      
+      // Clean up common headers, booking/pin details, non-alpha symbols
+      beforeAddress = beforeAddress
+        .replace(/BOOKING\.COM/g, '')
+        .replace(/REZERVASYON ONAYI/g, '')
+        .replace(/ONAY NUMARASI\s*:\s*[\d.]+/g, '')
+        .replace(/PIN KODU\s*:\s*\d+/g, '')
+        .replace(/PIN\s*:\s*\d+/g, '')
+        .replace(/CONFIRMATION NUMBER\s*:\s*\d+/g, '')
+        .replace(/PIN CODE\s*:\s*\d+/g, '')
+        .replace(/ONAY\s+NUMARASI\s+\d+/g, '')
+        .replace(/PİN\s+KODU\s+\d+/g, '')
+        .replace(/:/g, '')
+        .trim();
+        
+      const words = beforeAddress.split(' ').filter(w => w.length > 0);
+      const hotelKeywords = ['HOTEL', 'OTEL', 'EUROPA', 'TREND', 'AUSTRIA', 'RESORT', 'SUITES', 'APARTMENTS', 'INN', 'BOUTIQUE', 'PALACE'];
+      
+      let hotelStartIndex = -1;
+      for (let i = words.length - 1; i >= 0; i--) {
+        if (hotelKeywords.includes(words[i])) {
+          hotelStartIndex = i;
+          // Go back up to 2 words to capture full brand name like "Austria Trend"
+          hotelStartIndex = Math.max(0, hotelStartIndex - 2);
+          break;
+        }
+      }
+      
+      if (hotelStartIndex !== -1) {
+        hotelName = words.slice(hotelStartIndex).join(' ');
+      } else if (words.length > 0) {
+        hotelName = words.slice(-5).join(' ');
       }
     }
+    
+    // If name is not found through address split, fallback to regex keywords
+    if (!hotelName) {
+      const hotelKeywordsRegex = /(?:hotel|otel|konaklama|tesis|pansiyon|apart)\s+(?:adı|name)?\s*:\s*([^,.\n]+)/i;
+      const hotelMatch = cleanText.match(hotelKeywordsRegex);
+      if (hotelMatch) {
+        hotelName = hotelMatch[1].trim();
+      } else {
+        const bookingMatch = cleanText.match(/(?:booking\.com|airbnb|rezervasyon onay[ıi]).{1,30}?\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})\b/);
+        if (bookingMatch) {
+          hotelName = bookingMatch[1];
+        }
+      }
+    }
+    
+    // Title Case helper
+    if (hotelName) {
+      results.hotel = hotelName
+        .toLowerCase()
+        .replace(/\b[a-zöçşığü]/g, (letter) => letter.toUpperCase());
+    } else {
+      results.hotel = tripContext.city ? `${tripContext.city} Boutique Hotel` : 'Butik Otel';
+    }
 
-    // Hotel Address
-    const addressKeywords = /(?:address|adres|konum|yer)\s*:\s*([^.\n]{10,100})/i;
-    const addressMatch = cleanText.match(addressKeywords);
+    // 2. HOTEL ADDRESS EXTRACTION (Everything following Adres: up to next stop word)
+    let address = '';
+    const addressMatch = cleanText.match(/(?:address|adres|konum|yer)\s*:\s*(.+)/i);
     if (addressMatch) {
-      results.address = addressMatch[1].trim();
+      const rawAddress = addressMatch[1].trim();
+      const stopWords = ['TELEFON', 'GPS', 'CHECK-IN', 'CHECK-OUT', 'ODA', 'GECE', 'FIYAT', 'PRICE', 'TELEPHONE', 'EMAIL', 'E-POSTA', 'MAPS', 'ONAY NUMARASI'];
+      let minStopIndex = rawAddress.length;
+      
+      for (const word of stopWords) {
+        const idx = rawAddress.toUpperCase().indexOf(word);
+        if (idx !== -1 && idx < minStopIndex) {
+          minStopIndex = idx;
+        }
+      }
+      
+      address = rawAddress.substring(0, minStopIndex).trim();
+      address = address.replace(/[,:\-\s]+$/, '').trim();
+    }
+    
+    if (address) {
+      // Clean up common OCR artifacts in address
+      results.address = address
+        .replace(/\bE\s*!\s*ngang\b/i, 'Eingang')
+        .replace(/\bE!ngang\b/i, 'Eingang')
+        .substring(0, 120);
     } else {
       const generalAddressMatch = cleanText.match(/\b([A-Za-z0-9\s,]{15,})\s*,\s*(?:Austria|Turkey|Viyana|Istanbul)\b/i);
       if (generalAddressMatch) {
