@@ -423,11 +423,17 @@ async function fetchWeatherForTrip(city, country, startDate, endDate) {
           const codes = matchingIndices.map(idx => data.daily.weathercode[idx]);
           const isSun = codes.every(c => c < 3) || codes[0] < 3;
           
+          const filteredDaily = {
+            time: matchingIndices.map(idx => data.daily.time[idx]),
+            weathercode: matchingIndices.map(idx => data.daily.weathercode[idx]),
+            temperature_2m_max: matchingIndices.map(idx => data.daily.temperature_2m_max[idx])
+          };
+          
           return {
             temp: avgTemp,
             isSun: isSun,
             label: `${matchingIndices.length} Günlük Ort.`,
-            daily: data.daily
+            daily: filteredDaily
           };
         }
       }
@@ -1250,13 +1256,13 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
 
   useEffect(() => {
     const load = async () => {
-      const data = await fetchWeatherForTrip(trip.city, trip.country, trip.startDate);
+      const data = await fetchWeatherForTrip(trip.city, trip.country, trip.startDate, trip.endDate);
       // We convert the data back to an array format if needed for other UI parts, 
       // but for now, we pass the object down.
       setWeatherForecast(data);
     };
     load();
-  }, [trip.city, trip.country, trip.startDate]);
+  }, [trip.city, trip.country, trip.startDate, trip.endDate]);
 
   const getWeatherIcon = (code) => {
     if (code <= 1) return <Sun size={14} className="text-yellow-500" />;
@@ -1313,20 +1319,14 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
 
         {weatherForecast?.daily?.time && (
           <div className="weather-forecast-scroll animate-slideRight">
-            {(() => {
-              const tripStart = new Date(trip.startDate);
-              const tripEnd = new Date(trip.endDate);
-              const durationDays = Math.max(1, Math.ceil((tripEnd - tripStart) / 864e5) + 1);
-              
-              return weatherForecast.daily.time.slice(0, durationDays).map((t, i) => (
-                <div key={t} className="wf-day glass">
-                  <small>{new Date(t).toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase()}</small>
-                  <span className="wf-mini-date">{new Date(t).getDate()}/{new Date(t).getMonth() + 1}</span>
-                  {getWeatherIcon(weatherForecast.daily.weathercode[i])}
-                  <strong>{Math.round(weatherForecast.daily.temperature_2m_max[i])}°</strong>
-                </div>
-              ));
-            })()}
+            {weatherForecast.daily.time.map((t, i) => (
+              <div key={t} className="wf-day glass">
+                <small>{new Date(t + "T00:00:00").toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase()}</small>
+                <span className="wf-mini-date">{new Date(t + "T00:00:00").getDate()}/{new Date(t + "T00:00:00").getMonth() + 1}</span>
+                {getWeatherIcon(weatherForecast.daily.weathercode[i])}
+                <strong>{Math.round(weatherForecast.daily.temperature_2m_max[i])}°</strong>
+              </div>
+            ))}
           </div>
         )}
 
@@ -1348,7 +1348,13 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
         {derivedStatus === 'planned' && (
           <div className="status-lifecycle-row">
             <div className="status-info-badge planned">
-              <Calendar size={16} /> {Math.ceil((new Date(trip.startDate) - new Date()) / 864e5)} gün kaldı
+              <Calendar size={16} /> {(() => {
+                const start = new Date(trip.startDate + "T00:00:00");
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const diff = Math.round((start - today) / 864e5);
+                return diff <= 0 ? "Bugün başlıyor! ✈️" : `${diff} gün kaldı`;
+              })()}
             </div>
             <button 
               className={`confirm-toggle-btn ${trip.isConfirmed ? 'confirmed' : ''}`}
