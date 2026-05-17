@@ -204,7 +204,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v4.2.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"ARISTOTLE"</span>
+            v4.3.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"SOCRATES"</span>
           </span>
         </div>
         <span style={{
@@ -214,7 +214,7 @@ const SplashScreen = ({ finishLoading }) => {
           letterSpacing: '0.8px',
           marginTop: '6px'
         }}>
-          GÖRSEL UNIFICATION TAMAMLANDI · GÖRKEM & ESRA © 2026
+          SECOND BRAIN KNOWLEDGE PIPELINE · GÖRKEM & ESRA © 2026
         </span>
       </div>
     </motion.div>

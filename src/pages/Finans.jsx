@@ -1058,12 +1058,10 @@ const OnayTab = React.memo(({ finans, prv }) => {
               
               <button
                 className="onay-btn"
-                style={{ background: 'rgba(107, 114, 128, 0.15)', color: '#4b5563', border: '1px dashed rgba(107, 114, 128, 0.3)' }}
+                style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.3)', fontWeight: 'bold' }}
                 title="Sadece kayıtlara geçsin, hiçbir bakiye veya karttan düşmesin."
                 onClick={() => {
-                  if (window.confirm('Bu harcama sadece geçmiş kayıtlara (Tatil/Moda vb.) eklenecek, aktif kasa veya kart bakiyelerinden düşülmeyecektir. Onaylıyor musunuz?')) {
-                    onaylaHarcama(item.id, { odenme_turu: 'kayitdisi', kart_id: null, banka_id: null });
-                  }
+                  onaylaHarcama(item.id, { odenme_turu: 'kayitdisi', kart_id: null, banka_id: null });
                 }}
               >
                 <EyeOff size={14} style={{ marginRight: '4px' }} /> Kayıt Dışı
