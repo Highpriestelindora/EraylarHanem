@@ -1074,7 +1074,9 @@ async function pushEvOnarimToSupabase(item) {
       created_by: item.createdBy || null, created_at: item.createdAt || null,
       completed_by: item.completedBy || null, completed_at: item.completedAt || null,
       cleared_by: item.clearedBy || null, cleared_at: item.clearedAt || null,
-      is_archived: !!item.isArchived
+      is_archived: !!item.isArchived,
+      assigned_to: item.assignedTo || null,
+      due_date: item.dueDate || null
     });
     if(res.error) console.error('❌ Onarım Sync Error:', res.error); else console.log('✅ Onarım Sync Success');
   } catch(e) { console.warn('Ev Onarım Hatası:', e); }
@@ -2135,7 +2137,22 @@ const useStore = create(
             const ev = { ...state.ev };
             if (odemeler.data) ev.duzenliOdemeler = odemeler.data;
             if (abonelikler.data) ev.abonelikler = abonelikler.data;
-            if (onarim.data) ev.onarimListesi = onarim.data;
+            if (onarim.data) {
+              ev.onarimListesi = onarim.data.map(item => ({
+                id: item.id,
+                task: item.task,
+                status: item.status,
+                createdBy: item.created_by,
+                createdAt: item.created_at,
+                completedBy: item.completed_by,
+                completedAt: item.completed_at,
+                clearedBy: item.cleared_by,
+                clearedAt: item.cleared_at,
+                isArchived: item.is_archived,
+                assignedTo: item.assigned_to,
+                dueDate: item.due_date
+              }));
+            }
             if (demirbaslar.data) ev.demirbaslar = demirbaslar.data;
             if (bakimlar.data) ev.bakimlar = bakimlar.data;
             if (depo.data) ev.depo = depo.data;
@@ -7217,11 +7234,14 @@ const useStore = create(
         toast.success('Taşınmaz kaydı ve ilgili finansal takipçiler silindi.');
       },
 
-      addOnarimItem: (task, userKey) => {
+      addOnarimItem: (itemData, userKey) => {
         const currentEv = get().ev || {};
+        const taskText = typeof itemData === 'string' ? itemData : itemData.task;
         const newItem = {
           id: Date.now().toString(),
-          task,
+          task: taskText,
+          assignedTo: typeof itemData === 'object' ? itemData.assignedTo : null,
+          dueDate: typeof itemData === 'object' ? itemData.dueDate : null,
           status: 'Pending',
           createdBy: userKey || 'gorkem',
           createdAt: new Date().toISOString(),
@@ -7238,7 +7258,7 @@ const useStore = create(
         set({ ev: { ...currentEv, onarimListesi: newList } });
 
         pushEvOnarimToSupabase(newItem);
-        toast.success(`"${task}" listeye eklendi! 📋`);
+        toast.success(`"${taskText}" listeye eklendi! 📋`);
       },
 
       toggleOnarimItem: (id, userKey) => {
@@ -7264,7 +7284,7 @@ const useStore = create(
         if (updatedItem) pushEvOnarimToSupabase(updatedItem);
       },
 
-      updateOnarimItem: (id, task) => {
+      updateOnarimItem: (id, itemData) => {
         const currentEv = get().ev || {};
         const currentList = Array.isArray(currentEv.onarimListesi) ? currentEv.onarimListesi : [];
 
@@ -7272,7 +7292,9 @@ const useStore = create(
           if (item.id === id) {
             return {
               ...item,
-              task
+              task: typeof itemData === 'string' ? itemData : itemData.task,
+              assignedTo: typeof itemData === 'object' ? itemData.assignedTo : item.assignedTo,
+              dueDate: typeof itemData === 'object' ? itemData.dueDate : item.dueDate
             };
           }
           return item;

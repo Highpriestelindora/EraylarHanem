@@ -194,9 +194,92 @@ const Home = () => {
       }
     });
 
-    // ── 10. EV: Aktif Onarım Görevleri ──
-    const activeRepairs = (store.ev?.onarimListesi || []).filter(r => r.status === 'Pending' && !r.isArchived).length;
-    if (activeRepairs > 0) {
+    // ── 10. EV: Yaklaşan Onarım Görevleri (Akıllı Asistan) ──
+    const onarimList = store.ev?.onarimListesi || [];
+    let hasSmartOnarim = false;
+    
+    onarimList.filter(item => item.status === 'Pending' && !item.isArchived && item.dueDate).forEach(item => {
+      const created = item.createdAt ? new Date(item.createdAt) : new Date();
+      const due = new Date(item.dueDate);
+      const now = new Date();
+      
+      const totalTimeMs = due - created;
+      const remainingTimeMs = due - now;
+      
+      if (totalTimeMs <= 0) return; // invalid dates
+      
+      const totalDays = totalTimeMs / (1000 * 60 * 60 * 24);
+      const remainingHours = remainingTimeMs / (1000 * 60 * 60);
+      const remainingDays = remainingHours / 24;
+      
+      let shouldAlert = false;
+      let urgencyText = '';
+      let priority = 50;
+      let type = 'info';
+      
+      if (remainingTimeMs <= 0) {
+        shouldAlert = true;
+        urgencyText = 'Süresi doldu! 🚨';
+        priority = 98;
+        type = 'critical';
+      } else {
+        // Warning Tiers based on duration (totalDays)
+        if (totalDays >= 15) {
+          // Long term (e.g. 1 month): warn if <= 7 days left (1 week)
+          if (remainingDays <= 7) {
+            shouldAlert = true;
+            urgencyText = `${Math.ceil(remainingDays)} gün kaldı`;
+            priority = remainingDays <= 2 ? 94 : 80;
+            type = remainingDays <= 2 ? 'critical' : 'warning';
+          }
+        } else if (totalDays >= 7) {
+          // Mid term (e.g. 1-2 weeks): warn if <= 3 days left
+          if (remainingDays <= 3) {
+            shouldAlert = true;
+            urgencyText = `${Math.ceil(remainingDays)} gün kaldı`;
+            priority = remainingDays <= 1 ? 93 : 78;
+            type = remainingDays <= 1 ? 'critical' : 'warning';
+          }
+        } else if (totalDays >= 1) {
+          // Short term (e.g. 1-6 days): warn if <= 24 hours left
+          if (remainingDays <= 1) {
+            shouldAlert = true;
+            const hoursLeft = Math.ceil(remainingHours);
+            urgencyText = hoursLeft <= 1 ? `${Math.ceil(remainingHours * 60)} dk kaldı` : `${hoursLeft} saat kaldı`;
+            priority = hoursLeft <= 5 ? 95 : 82;
+            type = hoursLeft <= 5 ? 'critical' : 'warning';
+          }
+        } else {
+          // Immediate (e.g. < 1 day total): warn if <= 5 hours left
+          if (remainingHours <= 5) {
+            shouldAlert = true;
+            const hoursLeft = Math.ceil(remainingHours);
+            urgencyText = hoursLeft <= 1 ? `${Math.ceil(remainingHours * 60)} dk kaldı` : `${hoursLeft} saat kaldı`;
+            priority = 96;
+            type = 'critical';
+          }
+        }
+      }
+      
+      if (shouldAlert) {
+        hasSmartOnarim = true;
+        const assignedName = item.assignedTo ? (store.users?.[item.assignedTo]?.name || item.assignedTo).split(' ')[0] : 'Herkes';
+        cards.push({
+          id: `ev-onarim-smart-${item.id}`,
+          icon: '🔨',
+          text: `${item.task.substring(0, 30)}${item.task.length > 30 ? '...' : ''}`,
+          subtext: `Sorumlu: ${assignedName} · ${urgencyText}`,
+          type,
+          color: 'var(--ev)',
+          module: '/ev',
+          priority
+        });
+      }
+    });
+
+    // Fallback: If no smart alert is active, but there are pending repairs
+    const activeRepairs = onarimList.filter(r => r.status === 'Pending' && !r.isArchived).length;
+    if (activeRepairs > 0 && !hasSmartOnarim) {
       cards.push({
         id: 'ev-onarim', icon: '🔨', text: `${activeRepairs} onarım bekliyor`,
         subtext: 'Ev bakım listesinde', type: 'info', color: 'var(--ev)', module: '/ev', priority: 50

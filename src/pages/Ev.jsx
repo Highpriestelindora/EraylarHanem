@@ -875,17 +875,31 @@ export default function Ev() {
                            {item.status === 'Completed' ? <CheckCircle2 size={18} color="#22c55e" /> : <div className="circle-check-v2" />}
                          </div>
                          <div className="tcv2-info">
-                           <span className="tcv2-task">{item.task}</span>
-                           <div className="tcv2-meta">
-                             <small>
-                               {createdUser.emoji} {(createdUser.name || 'Bilinmiyor').split(' ')[0]} • {new Date(item.createdAt).toLocaleDateString('tr-TR')}
-                             </small>
-                             {item.status === 'Completed' && item.completedBy && (
-                                <small style={{ color: '#22c55e' }}>
-                                  • ✅ {(users[item.completedBy]?.name || 'Bilinmiyor').split(' ')[0]} tarafından tamamlandı
-                                </small>
-                             )}
-                           </div>
+                            <span className="tcv2-task">{item.task}</span>
+                            <div className="tcv2-meta" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px' }}>
+                              <small style={{ color: 'var(--txt-light)', opacity: 0.8 }}>
+                                ✍️ {createdUser.emoji} {(createdUser.name || 'Bilinmiyor').split(' ')[0]} • {item.createdAt ? new Date(item.createdAt).toLocaleDateString('tr-TR') : 'Bilinmeyen Tarih'}
+                              </small>
+                              {(item.assignedTo || item.dueDate) && (
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
+                                  {item.assignedTo && (
+                                    <small style={{ color: '#6366f1', fontWeight: '800', background: '#e0e7ff', padding: '2px 8px', borderRadius: '6px' }}>
+                                      👤 {users[item.assignedTo]?.emoji || '👤'} {(users[item.assignedTo]?.name || item.assignedTo).split(' ')[0]}
+                                    </small>
+                                  )}
+                                  {item.dueDate && (
+                                    <small style={{ color: new Date(item.dueDate) < new Date() ? '#ef4444' : '#f59e0b', fontWeight: '800', background: new Date(item.dueDate) < new Date() ? '#fee2e2' : '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>
+                                      📅 {new Date(item.dueDate).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </small>
+                                  )}
+                                </div>
+                              )}
+                              {item.status === 'Completed' && item.completedBy && (
+                                 <small style={{ color: '#22c55e', fontWeight: '800', background: '#dcfce7', padding: '2px 8px', borderRadius: '6px', width: 'fit-content', marginTop: '2px' }}>
+                                   ✅ {(users[item.completedBy]?.name || 'Bilinmiyor').split(' ')[0]}
+                                 </small>
+                              )}
+                            </div>
                          </div>
                          <div className="tcv2-actions" style={{ display: 'flex', gap: '6px', alignSelf: 'center', marginLeft: 'auto' }}>
                             <button 
@@ -1696,13 +1710,48 @@ export default function Ev() {
                 onChange={(e) => setEditingOnarim({...editingOnarim, task: e.target.value})}
               />
             </div>
+
+            <div className="form-group-v2" style={{ marginTop: '15px' }}>
+              <label>Sorumlu Kişi (Kim Yapacak?)</label>
+              <select 
+                className="form-group-v2 input"
+                style={{ padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--brd)', background: '#f8fafc', fontSize: '14px', fontWeight: '600', outline: 'none', width: '100%', fontFamily: 'inherit' }}
+                value={editingOnarim.assignedTo || ''}
+                onChange={(e) => setEditingOnarim({...editingOnarim, assignedTo: e.target.value})}
+              >
+                <option value="">Seçilmedi (Ortak / Herkes)</option>
+                {Object.entries(users || {}).map(([key, u]) => (
+                  <option key={key} value={key}>{u.emoji} {u.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group-v2" style={{ marginTop: '15px', marginBottom: '20px' }}>
+              <label>Son Yapılma Tarihi (Ne Zamana Kadar?)</label>
+              <input 
+                type="datetime-local" 
+                className="form-group-v2 input"
+                style={{ padding: '12px 16px', borderRadius: '14px', border: '1px solid var(--brd)', background: '#f8fafc', fontSize: '14px', fontWeight: '600', outline: 'none', width: '100%', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                value={editingOnarim.dueDate ? editingOnarim.dueDate.slice(0, 16) : ''}
+                onChange={(e) => setEditingOnarim({...editingOnarim, dueDate: e.target.value ? new Date(e.target.value).toISOString() : ''})}
+              />
+            </div>
+
             <button className="save-btn-v2" onClick={() => {
               if(!editingOnarim.task) return toast.error('Lütfen görev açıklaması girin');
               const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
               if (editingOnarim.id) {
-                updateOnarimItem(editingOnarim.id, editingOnarim.task);
+                updateOnarimItem(editingOnarim.id, {
+                  task: editingOnarim.task,
+                  assignedTo: editingOnarim.assignedTo || null,
+                  dueDate: editingOnarim.dueDate || null
+                });
               } else {
-                addOnarimItem(editingOnarim.task, userKey);
+                addOnarimItem({
+                  task: editingOnarim.task,
+                  assignedTo: editingOnarim.assignedTo || null,
+                  dueDate: editingOnarim.dueDate || null
+                }, userKey);
               }
               setEditingOnarim(null);
             }}>{editingOnarim.id ? 'Kaydet' : 'Listeye Ekle'}</button>
