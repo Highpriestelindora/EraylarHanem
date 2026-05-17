@@ -3,6 +3,11 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-ro
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { notificationService } from './lib/notificationService';
+import { initPetToastInterceptor } from './lib/petToast';
+
+// Initialize the Waffle & Mayis Pet Toast Interceptor
+initPetToastInterceptor();
+
 import AppLayout from './components/AppLayout';
 import useStore from './store/useStore';
 import Home from './pages/Home';
