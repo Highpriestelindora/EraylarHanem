@@ -64,7 +64,7 @@ export const generateYektaAdvice = (state) => {
 
   // 1. DYNAMIC SYSTEM ALERTS (Priority 100)
   const medications = saglik?.ilaclar || [];
-  const lowMed = medications.find(i => i.kisi.toLowerCase().includes(userKey) && i.stok < i.minStok);
+  const lowMed = medications.find(i => i.kisi.toLowerCase().includes(userKey) && i.stok >= 0 && i.stok < i.minStok);
   if (lowMed) {
     advices.push({
       type: 'critical',
