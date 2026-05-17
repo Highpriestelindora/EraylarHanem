@@ -362,7 +362,7 @@ const getFallbackData = (type, tripContext = {}) => {
   }
 };
 
-async function fetchWeatherForTrip(city, country, startDate) {
+async function fetchWeatherForTrip(city, country, startDate, endDate) {
   if (!city) return null;
   try {
     const cleanCity = normalizeText(city);
@@ -381,6 +381,7 @@ async function fetchWeatherForTrip(city, country, startDate) {
       const { latitude, longitude } = geoData.results[0];
       const today = new Date();
       const start = new Date(startDate || today);
+      const end = endDate ? new Date(endDate) : new Date(start.getTime() + 3 * 864e5);
       const daysDiff = (start - today) / 864e5;
       const isHistorical = daysDiff > 14;
 
@@ -404,6 +405,33 @@ async function fetchWeatherForTrip(city, country, startDate) {
 
       const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=auto`);
       const data = await res.json();
+
+      if (data.daily?.time?.length) {
+        const startStr = start.toISOString().split('T')[0];
+        const endStr = end.toISOString().split('T')[0];
+        const matchingIndices = [];
+        
+        for (let i = 0; i < data.daily.time.length; i++) {
+          if (data.daily.time[i] >= startStr && data.daily.time[i] <= endStr) {
+            matchingIndices.push(i);
+          }
+        }
+        
+        if (matchingIndices.length > 0) {
+          const sumTemps = matchingIndices.reduce((sum, idx) => sum + (data.daily.temperature_2m_max[idx] || data.current_weather?.temperature || 15), 0);
+          const avgTemp = Math.round(sumTemps / matchingIndices.length);
+          const codes = matchingIndices.map(idx => data.daily.weathercode[idx]);
+          const isSun = codes.every(c => c < 3) || codes[0] < 3;
+          
+          return {
+            temp: avgTemp,
+            isSun: isSun,
+            label: `${matchingIndices.length} Günlük Ort.`,
+            daily: data.daily
+          };
+        }
+      }
+
       if (data.current_weather) {
         return { 
           temp: Math.round(data.current_weather.temperature),
@@ -1434,7 +1462,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
                 
                 <div className="assistant-row-cute mt-15">
                   <CurrencyConverter targetCurrency={trip.locationType === 'yurtdisi' ? 'EUR' : 'TRY'} />
-                  <WeatherWidget city={trip.city} country={trip.country} startDate={trip.startDate} />
+                  <WeatherWidget city={trip.city} country={trip.country} startDate={trip.startDate} endDate={trip.endDate} />
                 </div>
 
                 <div className="premium-notes-container mt-15 animate-fadeIn">
@@ -1847,9 +1875,42 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
                 <input placeholder="Booking Link" value={accForm.link} onChange={e => setAccForm({...accForm, link: e.target.value})} />
               </div>
             ) : (
-              <div className="sc-view">
-                <strong>{accForm.hotel || 'Otel Girilmedi'}</strong>
-                <small className="truncate">{accForm.address || 'Adres belirtilmedi'}</small>
+              <div className="sc-display" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <strong>{accForm.hotel || 'Otel Girilmedi'}</strong>
+                  <small className="truncate" style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', display: 'block' }}>
+                    {accForm.address || 'Adres belirtilmedi'}
+                  </small>
+                </div>
+
+                {/* Visual Hotel Booking Timeline */}
+                {trip.startDate && trip.endDate && (
+                  <div className="hotel-booking-timeline">
+                    <div className="booking-node">
+                      <span className="b-label">🔑 GİRİŞ</span>
+                      <span className="b-date">
+                        {new Date(trip.startDate).toLocaleString('tr-TR', { day: 'numeric', month: 'short' })}
+                      </span>
+                      <span className="b-time">15:00 Sonrası</span>
+                    </div>
+                    
+                    <div className="booking-duration">
+                      <div className="duration-line"></div>
+                      <span className="duration-badge">
+                        🌙 {Math.max(1, Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5))} Gece
+                      </span>
+                      <div className="duration-line"></div>
+                    </div>
+                    
+                    <div className="booking-node dest">
+                      <span className="b-label">🚪 ÇIKIŞ</span>
+                      <span className="b-date">
+                        {new Date(trip.endDate).toLocaleString('tr-TR', { day: 'numeric', month: 'short' })}
+                      </span>
+                      <span className="b-time">12:00 Öncesi</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2650,19 +2711,19 @@ function CurrencyConverter({ targetCurrency }) {
   );
 }
 
-function WeatherWidget({ city, country, startDate }) {
+function WeatherWidget({ city, country, startDate, endDate }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const res = await fetchWeatherForTrip(city, country, startDate);
+      const res = await fetchWeatherForTrip(city, country, startDate, endDate);
       setData(res);
       setLoading(false);
     };
     load();
-  }, [city, country, startDate]);
+  }, [city, country, startDate, endDate]);
 
   return (
     <div className="assistant-widget glass">

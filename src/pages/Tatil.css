@@ -6274,3 +6274,78 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Premium Hotel Booking Timeline Styles */
+.hotel-booking-timeline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, rgba(234, 88, 12, 0.05) 100%);
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin: 8px 0;
+  border: 1px dashed rgba(249, 115, 22, 0.2);
+  position: relative;
+}
+
+.booking-node {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 70px;
+}
+
+.booking-node.dest {
+  align-items: flex-end;
+}
+
+.b-label {
+  font-size: 8px;
+  font-weight: 800;
+  color: #c2410c;
+  letter-spacing: 0.5px;
+}
+
+.b-date {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 2px;
+}
+
+.b-time {
+  font-size: 9px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+.booking-duration {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 0 8px;
+}
+
+.duration-line {
+  flex: 1;
+  height: 1px;
+  border-top: 1px dashed #f97316;
+}
+
+.duration-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ea580c;
+  background: rgba(249, 115, 22, 0.1);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  margin: 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid rgba(249, 115, 22, 0.15);
+}
+
