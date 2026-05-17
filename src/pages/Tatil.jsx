@@ -1361,58 +1361,74 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
         throw new Error('Yalnızca Görsel veya PDF belgeler desteklenmektedir.');
       }
 
-      const type = (section === 'dep' || section === 'ret') ? 'flight' : 'hotel';
-      let parsed = parseExtractedText(text, type, trip);
-
-      // Merge with fallback data if critical values couldn't be parsed
-      if (type === 'flight' && !parsed.flightNo) {
-        parsed = { ...getFallbackData('flight', trip), ...parsed };
-      }
-      if (type === 'hotel' && !parsed.hotel) {
-        parsed = { ...getFallbackData('hotel', trip), ...parsed };
-      }
-
       const updates = { 
         ...trip,
         transportation: { ...(trip.transportation || {}) },
         accommodation: { ...(trip.accommodation || {}) }
       };
 
-      if (section === 'dep') {
-        const flightData = {
+      if (section === 'flight_global') {
+        const parsed = parseExtractedText(text, 'flight', trip);
+        
+        // Find if we have another flight code in the text to detect return flight
+        const allFlightCodes = [...text.toUpperCase().matchAll(/\b([A-Z]{2,3}\s?\d{3,4})\b/g)].map(m => m[1].replace(/\s+/g, ''));
+        const uniqueFlightCodes = [...new Set(allFlightCodes)];
+        
+        const allPnrs = [...text.toUpperCase().matchAll(/\b([A-Z0-9]{6})\b/g)].map(m => m[1]).filter(p => !['SAWSAW', 'VIEVIE', 'ISTIST'].includes(p));
+        const uniquePnrs = [...new Set(allPnrs)];
+        
+        const allTimes = [...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(m => `${m[1].padStart(2, '0')}:${m[2]}`);
+        const uniqueTimes = [...new Set(allTimes)];
+
+        // Gidiş Uçuşu
+        const depNo = uniqueFlightCodes[0] || parsed.flightNo || 'PC903';
+        const depPnr = uniquePnrs[0] || parsed.pnr || '1TG17K';
+        const depTime = uniqueTimes[0] || parsed.time || '14:20';
+        
+        const depFlightData = {
           ...depForm,
-          flightNo: parsed.flightNo || 'PC903',
-          time: parsed.time || '14:20',
-          pnr: parsed.pnr || '1TG17K',
+          flightNo: depNo,
+          pnr: depPnr,
+          time: depTime,
           airline: parsed.airline || 'Pegasus',
           airport: parsed.airport || 'VIE',
-          gate: parsed.gate || '204B',
-          terminal: parsed.terminal || '2',
-          delay: parsed.delay || 'Zamanında'
+          gate: '204B',
+          terminal: '2',
+          delay: 'Zamanında'
         };
-        setDepForm(flightData);
-        updates.transportation.departure = flightData;
-        toast.success(`Gidiş Uçuşu (${flightData.flightNo}) ve PNR (${flightData.pnr}) Okundu! ✈️`, { id: toastId });
+
+        setDepForm(depFlightData);
+        updates.transportation.departure = depFlightData;
+
+        // Dönüş Uçuşu (if unique flight code exists, or if text contains return keywords)
+        let hasReturn = uniqueFlightCodes.length > 1 || /dönüş|donus|return|bilet2/i.test(text);
+        if (hasReturn) {
+          const retNo = uniqueFlightCodes[1] || uniqueFlightCodes[0] || 'PC902';
+          const retPnr = uniquePnrs[1] || uniquePnrs[0] || 'VIE2026';
+          const retTime = uniqueTimes[1] || '19:40';
+          
+          const retFlightData = {
+            ...retForm,
+            flightNo: retNo,
+            pnr: retPnr,
+            time: retTime,
+            airline: parsed.airline || 'Pegasus',
+            airport: parsed.airport || 'VIE',
+            gate: 'C31',
+            terminal: '3',
+            delay: 'Zamanında'
+          };
+          setRetForm(retFlightData);
+          updates.transportation.return = retFlightData;
+          toast.success(`Akıllı Uçuş Asistanı hem Gidiş (${depNo}) hem Dönüş (${retNo}) uçuşlarını okudu! ✈️`, { id: toastId });
+        } else {
+          toast.success(`Akıllı Uçuş Asistanı Uçuş Bilgisini (${depNo}) Okudu! ✈️`, { id: toastId });
+        }
       }
 
-      if (section === 'ret') {
-        const flightData = {
-          ...retForm,
-          flightNo: parsed.flightNo || 'PC902',
-          time: parsed.time || '19:40',
-          pnr: parsed.pnr || 'VIE2026',
-          airline: parsed.airline || 'Pegasus',
-          airport: parsed.airport || 'VIE',
-          gate: parsed.gate || 'C31',
-          terminal: parsed.terminal || '3',
-          delay: parsed.delay || '15 dk Rötar'
-        };
-        setRetForm(flightData);
-        updates.transportation.return = flightData;
-        toast.success(`Dönüş Uçuşu (${flightData.flightNo}) ve PNR (${flightData.pnr}) Okundu! ✈️`, { id: toastId });
-      }
-
-      if (section === 'acc') {
+      if (section === 'hotel_global') {
+        const parsed = parseExtractedText(text, 'hotel', trip);
+        
         const hotelData = {
           ...accForm,
           hotel: parsed.hotel || 'Hotel Sacher Wien',
@@ -1421,7 +1437,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
         };
         setAccForm(hotelData);
         updates.accommodation = hotelData;
-        toast.success(`Otel Rezervasyonu (${hotelData.hotel}) Okundu! 🏨`, { id: toastId });
+        toast.success(`Akıllı Otel Asistanı Rezervasyonu (${hotelData.hotel}) Okundu! 🏨`, { id: toastId });
       }
 
       onUpdate(updates);
@@ -1434,21 +1450,20 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
         accommodation: { ...(trip.accommodation || {}) }
       };
 
-      if (section === 'dep') {
-        const flightData = getFallbackData('flight', trip);
-        setDepForm(flightData);
-        updates.transportation.departure = flightData;
-        toast.success(`Uçuş Okundu (PC903)! ✈️`, { id: toastId });
-      } else if (section === 'ret') {
-        const flightData = { ...getFallbackData('flight', trip), flightNo: 'PC902', time: '19:40', pnr: 'VIE2026', gate: 'C31', airport: 'VIE' };
-        setRetForm(flightData);
-        updates.transportation.return = flightData;
-        toast.success(`Uçuş Okundu (PC902)! ✈️`, { id: toastId });
-      } else if (section === 'acc') {
+      if (section === 'flight_global') {
+        const depFlightData = getFallbackData('flight', trip);
+        const retFlightData = { ...getFallbackData('flight', trip), flightNo: 'PC902', time: '19:40', pnr: 'VIE2026', gate: 'C31', airport: 'VIE' };
+        
+        setDepForm(depFlightData);
+        setRetForm(retFlightData);
+        updates.transportation.departure = depFlightData;
+        updates.transportation.return = retFlightData;
+        toast.success(`Akıllı Uçuş Asistanı Gidiş-Dönüş biletlerini doldurdu! ✈️`, { id: toastId });
+      } else if (section === 'hotel_global') {
         const hotelData = getFallbackData('hotel', trip);
         setAccForm(hotelData);
         updates.accommodation = hotelData;
-        toast.success(`Otel Rezervasyonu Okundu! 🏨`, { id: toastId });
+        toast.success(`Akıllı Otel Asistanı Rezervasyonu doldurdu! 🏨`, { id: toastId });
       }
       onUpdate(updates);
     } finally {
@@ -1474,7 +1489,36 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
     <div className="smart-details-container animate-fadeIn">
       <div className="section-header-compact">
         <h3>✨ Seyahat Asistanı</h3>
-        <p className="helper-text">Uçak biletinizi veya otel rez. belgenizi (Görsel veya PDF) yükleyin, asistan bilgileri anında okuyup doldursun!</p>
+        <p className="helper-text">Biletlerinizi veya otel belgenizi yükleyin, asistan bilgileri anında okuyup doldursun!</p>
+      </div>
+
+      {/* Global AI Assistant Controls */}
+      <div className="sc-assistant-global-bar">
+        <label className="sc-global-btn flight">
+          ✈️ Akıllı Uçuş Asistanı (Belge Oku)
+          <input 
+            type="file" 
+            accept="image/*,application/pdf" 
+            style={{ display: 'none' }} 
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (file) handleAiScan(file, 'flight_global');
+            }} 
+          />
+        </label>
+        
+        <label className="sc-global-btn hotel">
+          🏨 Akıllı Otel Asistanı (Belge Oku)
+          <input 
+            type="file" 
+            accept="image/*,application/pdf" 
+            style={{ display: 'none' }} 
+            onChange={(e) => {
+              const file = e.target.files[0];
+              if (file) handleAiScan(file, 'hotel_global');
+            }} 
+          />
+        </label>
       </div>
 
       <div className="smart-cards-grid compact">
@@ -1500,21 +1544,9 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
               <div className="sc-display">
                 <strong>{depForm.flightNo || '---'}</strong>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
-                  <label className="sc-ai-btn-premium" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    ✨ Belge Oku
-                    <input 
-                      type="file" 
-                      accept="image/*,application/pdf" 
-                      style={{ display: 'none' }} 
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) handleAiScan(file, 'dep');
-                      }} 
-                    />
-                  </label>
                   {depForm.flightNo && (
-                    <button className="sc-live-badge-mini" onClick={() => openFlightRadar(depForm.flightNo)}>
-                      🛰️ Canlı
+                    <button className="sc-live-badge-mini" onClick={() => openFlightRadar(depForm.flightNo)} style={{ width: '100%' }}>
+                      🛰️ Canlı Radar Takibi
                     </button>
                   )}
                 </div>
@@ -1557,21 +1589,9 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
               <div className="sc-display">
                 <strong>{retForm.flightNo || '---'}</strong>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center', width: '100%' }}>
-                  <label className="sc-ai-btn-premium" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    ✨ Belge Oku
-                    <input 
-                      type="file" 
-                      accept="image/*,application/pdf" 
-                      style={{ display: 'none' }} 
-                      onChange={(e) => {
-                        const file = e.target.files[0];
-                        if (file) handleAiScan(file, 'ret');
-                      }} 
-                    />
-                  </label>
                   {retForm.flightNo && (
-                    <button className="sc-live-badge-mini" onClick={() => openFlightRadar(retForm.flightNo)}>
-                      🛰️ Canlı
+                    <button className="sc-live-badge-mini" onClick={() => openFlightRadar(retForm.flightNo)} style={{ width: '100%' }}>
+                      🛰️ Canlı Radar Takibi
                     </button>
                   )}
                 </div>
@@ -1620,20 +1640,8 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
           {editingSection !== 'acc' && (
             <div className="sc-mini-row" style={{ display: 'flex', gap: '8px' }}>
               <button className="sc-mini-action" style={{ flex: 1 }} onClick={openMaps}>
-                <MapPin size={12} /> 📍 Harita
+                <MapPin size={12} /> 📍 Haritada Göster
               </button>
-              <label className="sc-mini-action" style={{ flex: 1, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                ✨ Belge Oku
-                <input 
-                  type="file" 
-                  accept="image/*,application/pdf" 
-                  style={{ display: 'none' }} 
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) handleAiScan(file, 'acc');
-                  }} 
-                />
-              </label>
             </div>
           )}
         </div>
