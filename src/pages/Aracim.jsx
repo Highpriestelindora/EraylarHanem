@@ -596,8 +596,55 @@ function KMUpdateModal({ currentKM, onClose, onSave }) {
 }
 
 function FuelLogModal({ onClose, onSave, currentKM }) {
-  const [form, setForm] = useState({ km: currentKM, amount: '', price: '42.5', station: 'Shell', date: new Date().toISOString().split('T')[0] });
+  const [form, setForm] = useState({ 
+    km: currentKM, 
+    amount: '', 
+    tutar: '', 
+    price: '', 
+    station: 'Shell', 
+    date: new Date().toISOString().split('T')[0] 
+  });
   const [paymentMethod, setPaymentMethod] = useState('');
+
+  const handleAmountChange = (val) => {
+    setForm(prev => {
+      const updates = { amount: val };
+      const amt = Number(val);
+      if (amt > 0 && prev.tutar > 0) {
+        updates.price = (Number(prev.tutar) / amt).toFixed(2);
+      } else if (amt > 0 && prev.price > 0) {
+        updates.tutar = (amt * Number(prev.price)).toFixed(2);
+      }
+      return { ...prev, ...updates };
+    });
+  };
+
+  const handleTutarChange = (val) => {
+    setForm(prev => {
+      const updates = { tutar: val };
+      const tut = Number(val);
+      if (tut > 0 && prev.amount > 0) {
+        updates.price = (tut / Number(prev.amount)).toFixed(2);
+      } else if (tut > 0 && prev.price > 0) {
+        updates.amount = (tut / Number(prev.price)).toFixed(2);
+      }
+      return { ...prev, ...updates };
+    });
+  };
+
+  const handlePriceChange = (val) => {
+    setForm(prev => {
+      const updates = { price: val };
+      const prc = Number(val);
+      if (prc > 0 && prev.amount > 0) {
+        updates.tutar = (Number(prev.amount) * prc).toFixed(2);
+      } else if (prc > 0 && prev.tutar > 0) {
+        updates.amount = (Number(prev.tutar) / prc).toFixed(2);
+      }
+      return { ...prev, ...updates };
+    });
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
@@ -612,11 +659,21 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
                <input type="number" value={form.km} onChange={e => setForm({...form, km: Number(e.target.value)})} className="premium-input" />
              </div>
              <div className="form-group-v2">
-               <label>Litre</label>
-               <input type="number" value={form.amount} onChange={e => setForm({...form, amount: Number(e.target.value)})} className="premium-input" />
+               <label>Litre (L)</label>
+               <input type="number" step="any" value={form.amount} onChange={e => handleAmountChange(e.target.value)} className="premium-input" placeholder="Örn: 50" />
              </div>
           </div>
-          <div className="form-group-v2 mt-20">
+          <div className="form-grid-v2 mt-12">
+             <div className="form-group-v2">
+               <label>Toplam Tutar (TL)</label>
+               <input type="number" step="any" value={form.tutar} onChange={e => handleTutarChange(e.target.value)} className="premium-input" placeholder="Örn: 2000" />
+             </div>
+             <div className="form-group-v2">
+               <label>Birim Fiyat (TL/L)</label>
+               <input type="number" step="any" value={form.price} onChange={e => handlePriceChange(e.target.value)} className="premium-input" placeholder="Örn: 42.50" />
+             </div>
+          </div>
+          <div className="form-group-v2 mt-16">
             <label>İstasyon</label>
             <select value={form.station} onChange={e => setForm({...form, station: e.target.value})} className="premium-select">
               <option value="Shell">🟠 Shell</option>
@@ -626,10 +683,35 @@ function FuelLogModal({ onClose, onSave, currentKM }) {
               <option value="Diğer">⚪ Diğer</option>
             </select>
           </div>
-          <div className="mt-20">
+          <div className="mt-16">
             <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
           </div>
-          <button className="submit-btn-premium red mt-20" onClick={() => { onSave(form, paymentMethod); onClose(); toast.success('Yakıt kaydı ve masraf eklendi ⛽'); }}>Kaydet</button>
+          <button className="submit-btn-premium red mt-20" onClick={() => { 
+            const amt = Number(form.amount || 0);
+            const tut = Number(form.tutar || 0);
+            let prc = Number(form.price || 0);
+            
+            if (tut > 0 && amt > 0) {
+              prc = tut / amt;
+            } else if (prc > 0 && amt > 0) {
+              // correct
+            } else if (tut > 0 && prc > 0) {
+              // correct
+            }
+
+            const finalForm = {
+              km: Number(form.km || 0),
+              amount: amt,
+              price: prc || 42.5,
+              station: form.station,
+              date: form.date,
+              tutar: tut || (amt * prc)
+            };
+
+            onSave(finalForm, paymentMethod); 
+            onClose(); 
+            toast.success('Yakıt kaydı ve masraf eklendi ⛽'); 
+          }}>Kaydet</button>
         </div>
       </div>
     </div>
