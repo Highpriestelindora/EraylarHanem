@@ -134,14 +134,84 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
   const buAyHarcamalar = finans?.buAyHarcamalar || [];
   const { deleteHarcama, updateHarcama } = useStore();
   const [filter, setFilter] = useState('hepsi');
+  const [methodFilter, setMethodFilter] = useState('hepsi');
   const [editingHarcama, setEditingHarcama] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   const kategoriler = ['hepsi', ...new Set(buAyHarcamalar.map(h => h.kategori).filter(Boolean))];
 
-  const filtrelenmis = filter === 'hepsi'
-    ? buAyHarcamalar
-    : buAyHarcamalar.filter(h => h.kategori === filter);
+  // 1. Calculate totals for all payment methods in buAyHarcamalar
+  const totals = useMemo(() => {
+    let cash = 0;
+    let transfer = 0;
+    let card = 0;
+    let grand = 0;
+
+    buAyHarcamalar.forEach(h => {
+      const tutar = Number(h.tutar || 0);
+      grand += tutar;
+      if (h.odenme_turu === 'kart') {
+        card += tutar;
+      } else if (h.banka_id) {
+        transfer += tutar;
+      } else {
+        cash += tutar;
+      }
+    });
+
+    return { cash, transfer, card, grand };
+  }, [buAyHarcamalar]);
+
+  // 2. Weekly breakdown calculations
+  const currentMonthName = useMemo(() => {
+    const d = new Date();
+    return AY_ADLARI[d.getMonth()] || 'Ay';
+  }, []);
+
+  const weeklyBreakdown = useMemo(() => {
+    const weeks = [
+      { name: '1. Hafta', range: '1 - 7', start: 1, end: 7, total: 0 },
+      { name: '2. Hafta', range: '8 - 14', start: 8, end: 14, total: 0 },
+      { name: '3. Hafta', range: '15 - 21', start: 15, end: 21, total: 0 },
+      { name: '4. Hafta', range: '22 - 28', start: 22, end: 28, total: 0 },
+      { name: '5. Hafta', range: '29 - 31', start: 29, end: 31, total: 0 }
+    ];
+
+    buAyHarcamalar.forEach(h => {
+      if (!h.tarih) return;
+      const day = new Date(h.tarih).getDate();
+      const tutar = Number(h.tutar || 0);
+
+      const week = weeks.find(w => day >= w.start && day <= w.end);
+      if (week) {
+        week.total += tutar;
+      }
+    });
+
+    return weeks;
+  }, [buAyHarcamalar]);
+
+  // 3. Filter expenses based on both Category and Payment Method
+  const filtrelenmis = useMemo(() => {
+    return buAyHarcamalar.filter(h => {
+      const matchesCategory = filter === 'hepsi' || h.kategori === filter;
+      
+      let matchesMethod = true;
+      if (methodFilter === 'nakit') {
+        matchesMethod = h.odenme_turu !== 'kart' && !h.banka_id;
+      } else if (methodFilter === 'havale') {
+        matchesMethod = !!h.banka_id;
+      } else if (methodFilter !== 'hepsi') {
+        matchesMethod = h.odenme_turu === 'kart' && h.kart_id === methodFilter;
+      }
+
+      return matchesCategory && matchesMethod;
+    });
+  }, [buAyHarcamalar, filter, methodFilter]);
+
+  const filteredTotal = useMemo(() => {
+    return filtrelenmis.reduce((sum, h) => sum + Number(h.tutar || 0), 0);
+  }, [filtrelenmis]);
 
   // Group by date
   const bugunStr = new Date().toISOString().split('T')[0];
@@ -164,17 +234,116 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
 
   return (
     <div className="f-tab-content animate-fadeIn">
-      <div className="ozet-section-title" style={{ marginTop: '0px' }}>
-        📋 Bu Ayın Harcamaları
-        <span className="h-count" style={{ float: 'right', fontSize: '12px', fontWeight: 'normal', color: '#64748b' }}>{filtrelenmis.length} kayıt</span>
+      {/* 1. TOP PREMIUM STATS GRID */}
+      <div className="premium-stats-grid mb-24">
+        <div className="p-stat-card cash glass">
+          <div className="p-stat-header">
+            <span className="p-stat-icon">💵</span>
+            <span className="p-stat-label">Toplam Nakit</span>
+          </div>
+          <div className="p-stat-amount">{fmt(totals.cash, prv)}</div>
+          <div className="p-stat-decor"></div>
+        </div>
+
+        <div className="p-stat-card transfer glass">
+          <div className="p-stat-header">
+            <span className="p-stat-icon">🏦</span>
+            <span className="p-stat-label">Toplam Havale</span>
+          </div>
+          <div className="p-stat-amount">{fmt(totals.transfer, prv)}</div>
+          <div className="p-stat-decor"></div>
+        </div>
+
+        <div className="p-stat-card card glass">
+          <div className="p-stat-header">
+            <span className="p-stat-icon">💳</span>
+            <span className="p-stat-label">Kredi Kartları</span>
+          </div>
+          <div className="p-stat-amount">{fmt(totals.card, prv)}</div>
+          <div className="p-stat-decor"></div>
+        </div>
       </div>
 
-      <div className="h-filter-scroll" style={{ paddingBottom: '12px' }}>
-        {kategoriler.map(k => (
-          <button key={k} className={`h-filter-btn ${filter === k ? 'active' : ''}`} onClick={() => setFilter(k)}>
-            {k === 'hepsi' ? 'Tümü' : k}
-          </button>
-        ))}
+      {/* 2. WEEKLY DETAILED BREAKDOWN GRID */}
+      <div className="weekly-analysis-widget glass mb-24">
+        <div className="w-widget-header">
+          <div className="w-header-left">
+            <span className="w-widget-icon">📊</span>
+            <h4>Haftalık Detaylı Dağılım</h4>
+          </div>
+          <span className="w-widget-sub">Haftalık Performans</span>
+        </div>
+        
+        <div className="weekly-grid mt-16">
+          {weeklyBreakdown.map(w => {
+            const perc = totals.grand > 0 ? Math.round((w.total / totals.grand) * 100) : 0;
+            return (
+              <div key={w.name} className="weekly-card glass">
+                <div className="w-card-top">
+                  <span className="w-card-name">{w.name}</span>
+                  <span className="w-card-range">{w.range} {currentMonthName}</span>
+                </div>
+                <div className="w-card-amount mt-8">{fmt(w.total, prv)}</div>
+                <div className="w-progress-bg mt-12">
+                  <div className="w-progress-bar" style={{ width: `${perc}%`, background: 'linear-gradient(90deg, var(--social), #3b82f6)' }}></div>
+                </div>
+                <div className="w-card-perc mt-6">Harcamanın %{perc}'si</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. ADVANCED COMBINED FILTER BOARD */}
+      <div className="filter-board glass mb-24">
+        <div className="fb-header">
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: '#1e293b' }}>⚙️ Harcama Filtre & Analiz Paneli</h4>
+            <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#64748b' }}>Kategori ve ödeme yöntemini dilediğiniz gibi kombinleyin</p>
+          </div>
+          <div className="fb-filtered-total glass">
+            <span className="fbt-label">Filtrelenmiş Toplam:</span>
+            <span className="fbt-value">{fmt(filteredTotal, prv)}</span>
+          </div>
+        </div>
+
+        {/* Category Filter */}
+        <div className="fb-row mt-16">
+          <span className="fb-row-label">📂 Kategori</span>
+          <div className="h-filter-scroll">
+            {kategoriler.map(k => (
+              <button key={k} className={`h-filter-btn ${filter === k ? 'active' : ''}`} onClick={() => setFilter(k)}>
+                {k === 'hepsi' ? 'Tümü' : k}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Payment Method Filter */}
+        <div className="fb-row mt-12">
+          <span className="fb-row-label">💳 Ödeme Yöntemi</span>
+          <div className="h-filter-scroll">
+            <button className={`h-filter-btn ${methodFilter === 'hepsi' ? 'active' : ''}`} onClick={() => setMethodFilter('hepsi')}>
+              Tüm Yöntemler 🔄
+            </button>
+            <button className={`h-filter-btn ${methodFilter === 'nakit' ? 'active' : ''}`} onClick={() => setMethodFilter('nakit')}>
+              Nakit 💵
+            </button>
+            <button className={`h-filter-btn ${methodFilter === 'havale' ? 'active' : ''}`} onClick={() => setMethodFilter('havale')}>
+              Havale 🏦
+            </button>
+            {finans?.kartlar?.map(k => (
+              <button key={k.id} className={`h-filter-btn ${methodFilter === k.id ? 'active' : ''}`} onClick={() => setMethodFilter(k.id)}>
+                {k.name} 💳
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="ozet-section-title" style={{ marginTop: '0px' }}>
+        📋 Harcama Listesi
+        <span className="h-count" style={{ float: 'right', fontSize: '12px', fontWeight: 'normal', color: '#64748b' }}>{filtrelenmis.length} kayıt</span>
       </div>
 
       {filtrelenmis.length === 0 ? (
@@ -196,7 +365,15 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
                     <strong style={{ fontSize: '15px', color: '#1e293b' }}>{h.baslik}</strong>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>
                       <span style={{ fontSize: '10px', background: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>{h.kategori || 'Diğer'}</span>
-                      <small style={{ color: '#64748b' }}>· {h.kayit_eden} · {h.kart_id ? h.kart_id.split('-').pop() : (h.banka_id ? 'Havale' : 'Nakit')}</small>
+                      <small style={{ color: '#64748b' }}>
+                        · {h.kayit_eden} · {(() => {
+                          if (h.odenme_turu === 'kart') {
+                            const card = finans?.kartlar?.find(k => k.id === h.kart_id);
+                            return card ? card.name : (h.kart_id ? h.kart_id.split('-').pop() : 'Kredi Kartı');
+                          }
+                          return h.banka_id ? 'Havale' : 'Nakit';
+                        })()}
+                      </small>
                     </div>
                   </div>
                   <div className="hr-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
