@@ -1047,10 +1047,28 @@ const OnayTab = React.memo(({ finans, prv }) => {
                 ))}
               </optgroup>
             </select>
-            <div className="onay-btns">
-              <button className="onay-btn reject" onClick={() => reddetHarcama(item.id)}>
+            <div className="onay-btns" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <button 
+                className="onay-btn reject" 
+                onClick={() => reddetHarcama(item.id)}
+                title="Reddet (Sil)"
+              >
                 <X size={16} />
               </button>
+              
+              <button
+                className="onay-btn"
+                style={{ background: 'rgba(107, 114, 128, 0.15)', color: '#4b5563', border: '1px dashed rgba(107, 114, 128, 0.3)' }}
+                title="Sadece kayıtlara geçsin, hiçbir bakiye veya karttan düşmesin."
+                onClick={() => {
+                  if (window.confirm('Bu harcama sadece geçmiş kayıtlara (Tatil/Moda vb.) eklenecek, aktif kasa veya kart bakiyelerinden düşülmeyecektir. Onaylıyor musunuz?')) {
+                    onaylaHarcama(item.id, { odenme_turu: 'kayitdisi', kart_id: null, banka_id: null });
+                  }
+                }}
+              >
+                <EyeOff size={14} style={{ marginRight: '4px' }} /> Kayıt Dışı
+              </button>
+
               <button
                 className="onay-btn approve"
                 disabled={!kartSecim[item.id]}
