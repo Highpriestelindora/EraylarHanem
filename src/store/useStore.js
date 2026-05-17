@@ -423,6 +423,14 @@ async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
       ? harcama.id 
       : generateUniqueId();
 
+    // banka_id'yi notlar alanına göm ve payload'dan çıkar
+    let finalNotlar = harcama.notlar || '';
+    // Varsa eski banka_id etiketini temizle
+    finalNotlar = finalNotlar.replace(/\n?\[banka_id:[^\]]+\]/g, '').trim();
+    if (harcama.banka_id) {
+      finalNotlar = finalNotlar ? `${finalNotlar}\n[banka_id: ${harcama.banka_id}]` : `[banka_id: ${harcama.banka_id}]`;
+    }
+
     const payload = {
       id: finalId,
       family_id: familyId,
@@ -436,7 +444,7 @@ async function pushHarcamaToSupabase(harcama, familyId = DEFAULT_FID) {
       kayit_eden: harcama.kayit_eden || 'Sistem',
       kaynak: harcama.kaynak || 'Manuel',
       durum: 'onaylı',
-      notlar: harcama.notlar || null
+      notlar: finalNotlar || null
     };
 
     const { data, error } = await supabase
@@ -487,23 +495,49 @@ async function deleteHarcamaFromSupabase(id, familyId = DEFAULT_FID, item = null
 }
 
 async function updateHarcamaInSupabase(id, updates) {
-  // Supabase'de henüz banka_id kolonu olmayabilir. 
-  // Hata almamak için şimdilik banka_id'yi sadece yerel state'de tutabiliriz 
-  // veya DB'ye gönderirken kontrollü gönderebiliriz.
-  const dbUpdates = { ...updates };
-  // banka_id'yi DB'ye göndermeyi deniyoruz, hata verirse onsuz devam edeceğiz.
-  const { error } = await supabase.from('finans_harcamalar').update(dbUpdates).eq('id', id);
-  
-  if (error) {
-    console.warn('⚠️ Supabase update error (possibly missing banka_id column):', error);
-    // Eğer hata kolondan kaynaklıysa, banka_id'yi çıkarıp tekrar dene
-    if (error.code === '42703' || error.message?.includes('column')) {
-       const { banka_id, ...safeUpdates } = dbUpdates;
-       const { error: retryError } = await supabase.from('finans_harcamalar').update(safeUpdates).eq('id', id);
-       if (retryError) throw retryError;
-    } else {
-       throw error;
+  // Sadece veritabanında var olan geçerli sütunları temizleyerek payload oluşturalım
+  const dbUpdates = {};
+  if (updates.ay !== undefined) dbUpdates.ay = updates.ay;
+  if (updates.tarih !== undefined) dbUpdates.tarih = updates.tarih;
+  if (updates.baslik !== undefined) dbUpdates.baslik = updates.baslik;
+  if (updates.tutar !== undefined) dbUpdates.tutar = Number(updates.tutar);
+  if (updates.kategori !== undefined) dbUpdates.kategori = updates.kategori;
+  if (updates.kart_id !== undefined) dbUpdates.kart_id = updates.kart_id || null;
+  if (updates.odenme_turu !== undefined) dbUpdates.odenme_turu = updates.odenme_turu;
+  if (updates.kayit_eden !== undefined) dbUpdates.kayit_eden = updates.kayit_eden;
+  if (updates.kaynak !== undefined) dbUpdates.kaynak = updates.kaynak;
+  if (updates.durum !== undefined) dbUpdates.durum = updates.durum;
+
+  // banka_id güncelleniyorsa veya notlar güncelleniyorsa, notlar alanını harmanla
+  // banka_id kolonunun veritabanında olmadığını bildiğimiz için, notlar alanına gömüyoruz
+  if (updates.banka_id !== undefined || updates.notlar !== undefined) {
+    let baseNotlar = updates.notlar !== undefined ? (updates.notlar || '') : '';
+    // Eğer updates içinde notlar verilmediyse, mevcudu korumak için local state'den notları çekelim
+    if (updates.notlar === undefined) {
+      const currentItem = get().finans.buAyHarcamalar.find(h => h.id === id);
+      baseNotlar = currentItem?.notlar || '';
     }
+    
+    let cleanNotlar = baseNotlar.replace(/\n?\[banka_id:[^\]]+\]/g, '').trim();
+    // updates.banka_id belirtilmişse onu kullan, belirtilmemişse mevcut banka_id'yi koru (odenme_turu 'havale' ise)
+    let targetBankaId = null;
+    if (updates.banka_id !== undefined) {
+      targetBankaId = updates.banka_id;
+    } else {
+      const currentItem = get().finans.buAyHarcamalar.find(h => h.id === id);
+      targetBankaId = currentItem?.banka_id || null;
+    }
+
+    if (targetBankaId) {
+      cleanNotlar = cleanNotlar ? `${cleanNotlar}\n[banka_id: ${targetBankaId}]` : `[banka_id: ${targetBankaId}]`;
+    }
+    dbUpdates.notlar = cleanNotlar || null;
+  }
+
+  const { error } = await supabase.from('finans_harcamalar').update(dbUpdates).eq('id', id);
+  if (error) {
+    console.error('❌ updateHarcamaInSupabase error:', error);
+    throw error;
   }
 }
 
@@ -517,7 +551,26 @@ async function fetchBuAyHarcamalar(familyId = DEFAULT_FID) {
       .eq('ay', buAy)
       .order('tarih', { ascending: false });
     if (error) throw error;
-    return data || [];
+    
+    // notlar alanındaki [banka_id: ...] etiketlerini ayrıştırıp objelere geri yükle
+    const parsedData = (data || []).map(item => {
+      let banka_id = null;
+      let cleanNotlar = item.notlar || '';
+      if (cleanNotlar) {
+        const match = cleanNotlar.match(/\[banka_id:\s*([^\]]+)\]/);
+        if (match) {
+          banka_id = match[1].trim();
+          cleanNotlar = cleanNotlar.replace(/\n?\[banka_id:[^\]]+\]/g, '').trim();
+        }
+      }
+      return {
+        ...item,
+        banka_id: banka_id,
+        notlar: cleanNotlar || null,
+        odenme_turu: banka_id ? 'havale' : item.odenme_turu
+      };
+    });
+    return parsedData;
   } catch (err) {
     console.error('❌ fetchBuAyHarcamalar error:', err);
     return [];
@@ -533,7 +586,26 @@ async function fetchGecmisAyFromSupabase(ay, familyId = DEFAULT_FID) {
       .eq('ay', ay)
       .order('tarih', { ascending: false });
     if (error) throw error;
-    return data || [];
+    
+    // notlar alanındaki [banka_id: ...] etiketlerini ayrıştırıp objelere geri yükle
+    const parsedData = (data || []).map(item => {
+      let banka_id = null;
+      let cleanNotlar = item.notlar || '';
+      if (cleanNotlar) {
+        const match = cleanNotlar.match(/\[banka_id:\s*([^\]]+)\]/);
+        if (match) {
+          banka_id = match[1].trim();
+          cleanNotlar = cleanNotlar.replace(/\n?\[banka_id:[^\]]+\]/g, '').trim();
+        }
+      }
+      return {
+        ...item,
+        banka_id: banka_id,
+        notlar: cleanNotlar || null,
+        odenme_turu: banka_id ? 'havale' : item.odenme_turu
+      };
+    });
+    return parsedData;
   } catch (err) {
     console.error('❌ fetchGecmisAy error:', err);
     return [];
@@ -4112,14 +4184,19 @@ const useStore = create(
         }
 
         const buAy = new Date().toISOString().slice(0, 7);
+        const rawBankaId = data.banka_id || null;
+        const finalBankaId = (rawBankaId && !String(rawBankaId).includes(DEFAULT_FID)) 
+          ? `${rawBankaId}-${DEFAULT_FID}` 
+          : rawBankaId;
+
         const harcama = {
           tarih: data.tarih || new Date().toISOString().split('T')[0],
           baslik: data.baslik || data.title || 'Harcama',
           tutar: Number(data.tutar || data.amount || 0),
           kategori: data.kategori || data.category || 'Diğer',
           kart_id: data.kart_id || data.kartId || null,
-          banka_id: data.banka_id || null, // Havale yapılacak banka
-          odenme_turu: data.odenme_turu || (data.kart_id ? 'kart' : (data.banka_id ? 'havale' : 'nakit')),
+          banka_id: finalBankaId, // Havale yapılacak banka
+          odenme_turu: data.odenme_turu || (data.kart_id ? 'kart' : (finalBankaId ? 'havale' : 'nakit')),
           kayit_eden: data.kayit_eden || state.currentUser?.name || 'Sistem',
           kaynak: data.kaynak || data.source || 'Manuel',
           notlar: data.notlar || null,
@@ -4286,10 +4363,16 @@ const useStore = create(
           const oldItem = state.finans.buAyHarcamalar.find(h => h.id === id);
           if (!oldItem) return;
 
-          await updateHarcamaInSupabase(id, updates);
+          // Normalize banka_id suffix
+          const cleanUpdates = { ...updates };
+          if (cleanUpdates.banka_id && !String(cleanUpdates.banka_id).includes(DEFAULT_FID)) {
+            cleanUpdates.banka_id = `${cleanUpdates.banka_id}-${DEFAULT_FID}`;
+          }
+
+          await updateHarcamaInSupabase(id, cleanUpdates);
           
           const updatedHarcamalar = (state.finans.buAyHarcamalar || []).map(h => 
-            h.id === id ? { ...h, ...updates } : h
+            h.id === id ? { ...h, ...cleanUpdates } : h
           );
           
           const buAy = new Date().toISOString().slice(0, 7);
@@ -4312,7 +4395,7 @@ const useStore = create(
           }
 
           // 2. YENİ DURUMU UYGULA (APPLY)
-          const newItem = { ...oldItem, ...updates };
+          const newItem = { ...oldItem, ...cleanUpdates };
           const newTutar = Number(newItem.tutar);
 
           if (newItem.odenme_turu === 'kart' && newItem.kart_id) {
@@ -5120,16 +5203,32 @@ const useStore = create(
       // ── Kasa Banka Actions ──────────────────────────────
       addBankaHesabi: (hesap) => {
         const state = get();
+        const rawId = Date.now().toString();
+        const finalId = `${rawId}-${DEFAULT_FID}`;
         const newHesap = { 
-          id: Date.now().toString(), 
+          id: finalId, 
           ...hesap,
           balance: Number(hesap.balance || 0),
-          kmh: Number(hesap.kmh || 0)
+          kmh: Number(hesap.kmh || 0),
+          openingDate: hesap.openingDate || new Date().toISOString().split('T')[0]
         };
         set({ kasa: { ...state.kasa, bankaHesaplari: [...(state.kasa.bankaHesaplari || []), newHesap] } });
         get().addLog('Banka', `Yeni banka hesabı eklendi: ${hesap.name}`);
 
-        pushGenericToSupabase('kasa_bankalar', newHesap);
+        const dbPayload = {
+          id: newHesap.id,
+          name: newHesap.name,
+          bank: newHesap.bank,
+          iban: newHesap.iban,
+          balance: Number(newHesap.balance),
+          kmh: Number(newHesap.kmh),
+          owner: newHesap.owner,
+          icon: newHesap.icon || '🏦',
+          details: {
+            openingDate: newHesap.openingDate
+          }
+        };
+        pushGenericToSupabase('kasa_bankalar', dbPayload);
       },
       updateBankaHesabi: (id, updates) => {
         const state = get();
@@ -5142,7 +5241,22 @@ const useStore = create(
         set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
 
         const updatedHesap = updated.find(h => h.id === id);
-        if (updatedHesap) pushGenericToSupabase('kasa_bankalar', updatedHesap);
+        if (updatedHesap) {
+          const dbPayload = {
+            id: updatedHesap.id,
+            name: updatedHesap.name,
+            bank: updatedHesap.bank,
+            iban: updatedHesap.iban,
+            balance: Number(updatedHesap.balance),
+            kmh: Number(updatedHesap.kmh),
+            owner: updatedHesap.owner,
+            icon: updatedHesap.icon || '🏦',
+            details: {
+              openingDate: updatedHesap.openingDate || new Date().toISOString().split('T')[0]
+            }
+          };
+          pushGenericToSupabase('kasa_bankalar', dbPayload);
+        }
       },
       deleteBankaHesabi: (id) => {
         const state = get();
@@ -5157,7 +5271,22 @@ const useStore = create(
         set({ kasa: { ...state.kasa, bankaHesaplari: updated } });
 
         const updatedHesap = updated.find(h => h.id === id);
-        if (updatedHesap) pushGenericToSupabase('kasa_bankalar', updatedHesap);
+        if (updatedHesap) {
+          const dbPayload = {
+            id: updatedHesap.id,
+            name: updatedHesap.name,
+            bank: updatedHesap.bank,
+            iban: updatedHesap.iban,
+            balance: Number(updatedHesap.balance),
+            kmh: Number(updatedHesap.kmh),
+            owner: updatedHesap.owner,
+            icon: updatedHesap.icon || '🏦',
+            details: {
+              openingDate: updatedHesap.openingDate || new Date().toISOString().split('T')[0]
+            }
+          };
+          pushGenericToSupabase('kasa_bankalar', dbPayload);
+        }
       },
 
       payDebt: async (debtId, amount, payer) => {
@@ -8413,8 +8542,9 @@ const useStore = create(
             longTermVision: (state.hedefler.longTermVision || []).filter(p => p.id !== id)
           }
         });
-        // Remove from SQL
-        supabase.from('hedefler_vizyon').delete().eq('id', `${id}-${DEFAULT_FID}`).then();
+        // Remove from SQL with safe ID check to prevent double appending family ID
+        const finalId = String(id).includes(DEFAULT_FID) ? String(id) : `${id}-${DEFAULT_FID}`;
+        supabase.from('hedefler_vizyon').delete().eq('id', finalId).then();
       },
 
       syncAllHedefler: async () => {
@@ -8564,7 +8694,9 @@ const useStore = create(
             completedHistory: (state.hedefler.completedHistory || []).filter(h => h.id !== id)
           }
         });
-        supabase.from('hedefler_gecmis').delete().eq('id', `${id}-${DEFAULT_FID}`).then();
+        // Safe ID check to prevent double appending family ID
+        const finalId = String(id).includes(DEFAULT_FID) ? String(id) : `${id}-${DEFAULT_FID}`;
+        supabase.from('hedefler_gecmis').delete().eq('id', finalId).then();
       },
 
       updateFailedGoal: (id, updates) => {
@@ -8585,7 +8717,9 @@ const useStore = create(
             failedHistory: (state.hedefler.failedHistory || []).filter(h => h.id !== id)
           }
         });
-        supabase.from('hedefler_gecmis').delete().eq('id', `${id}-${DEFAULT_FID}`).then();
+        // Safe ID check to prevent double appending family ID
+        const finalId = String(id).includes(DEFAULT_FID) ? String(id) : `${id}-${DEFAULT_FID}`;
+        supabase.from('hedefler_gecmis').delete().eq('id', finalId).then();
       },
 
       setOnlineStatus: (status) => {

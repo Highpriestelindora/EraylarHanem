@@ -265,7 +265,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
       </div>
 
       {/* 2. WEEKLY DETAILED BREAKDOWN GRID */}
-      <div className="weekly-analysis-widget glass mb-24">
+      <div className="weekly-analysis-widget glass mb-24 animate-fadeIn">
         <div className="w-widget-header">
           <div className="w-header-left">
             <span className="w-widget-icon">📊</span>
@@ -275,22 +275,60 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
         </div>
         
         <div className="weekly-grid mt-16">
-          {weeklyBreakdown.map(w => {
-            const perc = totals.grand > 0 ? Math.round((w.total / totals.grand) * 100) : 0;
-            return (
-              <div key={w.name} className="weekly-card glass">
-                <div className="w-card-top">
-                  <span className="w-card-name">{w.name}</span>
-                  <span className="w-card-range">{w.range} {currentMonthName}</span>
+          {(() => {
+            const maxWeeklySpent = Math.max(...weeklyBreakdown.map(w => w.total), 1);
+            return weeklyBreakdown.map(w => {
+              const perc = totals.grand > 0 ? Math.round((w.total / totals.grand) * 100) : 0;
+              const isHighest = w.total === maxWeeklySpent && w.total > 0;
+              const isQuiet = w.total === 0;
+              
+              let cardClass = "weekly-card";
+              let badgeText = "📉 Dengeli";
+              let progressColor = "linear-gradient(90deg, #10b981, #059669)"; // Green gradient
+              
+              if (isQuiet) {
+                cardClass += " quiet";
+                badgeText = "💤 Sakin";
+                progressColor = "#cbd5e1"; // Gray
+              } else if (isHighest) {
+                cardClass += " highest";
+                badgeText = "🔥 En Yoğun";
+                progressColor = "linear-gradient(90deg, #7c3aed, #ec4899)"; // Purple-pink gradient
+              } else if (perc > 25) {
+                cardClass += " high";
+                badgeText = "📈 Yüksek";
+                progressColor = "linear-gradient(90deg, #3b82f6, #6366f1)"; // Blue-indigo gradient
+              }
+              
+              const weekNum = w.name.split('.')[0]?.padStart(2, '0') || '00';
+              
+              return (
+                <div key={w.name} className={cardClass}>
+                  <div className="w-card-header">
+                    <span className="w-card-number-badge">{weekNum}</span>
+                    <span className="w-card-status-badge">{badgeText}</span>
+                  </div>
+                  
+                  <div className="w-card-main-content">
+                    <div className="w-card-title-group">
+                      <span className="w-card-name">{w.name}</span>
+                      <span className="w-card-range">{w.range} {currentMonthName}</span>
+                    </div>
+                    <div className="w-card-amount">{fmt(w.total, prv)}</div>
+                  </div>
+
+                  <div className="w-progress-section">
+                    <div className="w-progress-labels">
+                      <span className="w-progress-ratio">Harcamanın %{perc}'si</span>
+                    </div>
+                    <div className="w-progress-bg">
+                      <div className="w-progress-bar" style={{ width: `${perc}%`, background: progressColor }}></div>
+                    </div>
+                  </div>
                 </div>
-                <div className="w-card-amount mt-8">{fmt(w.total, prv)}</div>
-                <div className="w-progress-bg mt-12">
-                  <div className="w-progress-bar" style={{ width: `${perc}%`, background: 'linear-gradient(90deg, var(--social), #3b82f6)' }}></div>
-                </div>
-                <div className="w-card-perc mt-6">Harcamanın %{perc}'si</div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       </div>
 

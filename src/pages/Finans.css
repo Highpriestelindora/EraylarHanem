@@ -971,10 +971,13 @@
 }
 
 /* Weekly Analysis Widget */
+/* Weekly Analysis Widget */
 .weekly-analysis-widget {
-  padding: 20px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.25) 100%);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
 }
 
 .w-widget-header {
@@ -983,93 +986,241 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+  border-bottom: 1.5px dashed rgba(124, 58, 237, 0.1);
+  padding-bottom: 16px;
 }
 
 .w-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .w-widget-icon {
-  font-size: 20px;
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(124, 58, 237, 0.2));
 }
 
 .w-header-left h4 {
   margin: 0;
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 900;
   color: #1e293b;
+  letter-spacing: -0.3px;
 }
 
 .w-widget-sub {
   font-size: 11px;
-  font-weight: 600;
-  background: rgba(124, 58, 237, 0.08);
+  font-weight: 800;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
   color: #7c3aed;
-  padding: 4px 10px;
-  border-radius: 20px;
+  padding: 6px 14px;
+  border-radius: 50px;
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  letter-spacing: 0.3px;
 }
 
 .weekly-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 
 .weekly-card {
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  background: rgba(255, 255, 255, 0.4);
-  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.3) 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.015);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 180px;
 }
 
+/* Hover States & 3D Lift */
 .weekly-card:hover {
-  background: rgba(255, 255, 255, 0.8);
+  transform: translateY(-6px) scale(1.01);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.5) 100%);
+  border-color: rgba(124, 58, 237, 0.25);
+  box-shadow: 0 12px 20px -8px rgba(124, 58, 237, 0.15), 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
-.w-card-top {
+/* Highlight State for Highest Spending */
+.weekly-card.highest {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.07) 0%, rgba(236, 72, 153, 0.03) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.06);
+}
+
+.weekly-card.highest:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(236, 72, 153, 0.06) 100%);
+  border-color: rgba(124, 58, 237, 0.45);
+  box-shadow: 0 16px 24px -10px rgba(124, 58, 237, 0.25), 0 4px 12px rgba(124, 58, 237, 0.05);
+}
+
+/* Gray Out Quiet Weeks */
+.weekly-card.quiet {
+  opacity: 0.8;
+  border: 1.5px dashed rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.weekly-card.quiet:hover {
+  opacity: 1;
+  border-color: rgba(124, 58, 237, 0.25);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Header layout within cards */
+.w-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.w-card-number-badge {
+  font-size: 11px;
+  font-weight: 900;
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.1);
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Outfit', sans-serif;
+}
+
+.weekly-card.highest .w-card-number-badge {
+  background: #7c3aed;
+  color: white;
+}
+
+.w-card-status-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.03);
+}
+
+.weekly-card.highest .w-card-status-badge {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 6px rgba(124, 58, 237, 0.2);
+}
+
+.weekly-card.high .w-card-status-badge {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.weekly-card.quiet .w-card-status-badge {
+  background: rgba(148, 163, 184, 0.1);
+  color: #64748b;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+/* Card Content Area */
+.w-card-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.w-card-title-group {
   display: flex;
   flex-direction: column;
 }
 
 .w-card-name {
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 900;
   color: #1e293b;
 }
 
 .w-card-range {
   font-size: 10px;
   color: #64748b;
+  font-weight: 600;
   margin-top: 1px;
 }
 
 .w-card-amount {
-  font-size: 14px;
-  font-weight: 800;
-  color: #7c3aed;
+  font-size: 18px;
+  font-weight: 900;
+  color: #1e293b;
+  letter-spacing: -0.5px;
+  font-family: 'Outfit', sans-serif;
+  margin-top: 2px;
+}
+
+.weekly-card.highest .w-card-amount {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Progress bar section */
+.w-progress-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  border-top: 1px dashed rgba(0,0,0,0.06);
+  padding-top: 12px;
+}
+
+.w-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.w-progress-ratio {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
 }
 
 .w-progress-bg {
   width: 100%;
-  height: 6px;
-  background: #f1f5f9;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 10px;
   overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .w-progress-bar {
   height: 100%;
   border-radius: 10px;
-  transition: width 0.4s ease;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
-.w-card-perc {
-  font-size: 9px;
-  font-weight: 600;
-  color: #94a3b8;
+.weekly-card.highest .w-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: shine 2s infinite;
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 /* Filter Board */

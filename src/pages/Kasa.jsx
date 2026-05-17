@@ -508,7 +508,7 @@ function KasaModals({ type, data, onClose }) {
 
   const [form, setForm] = useState(() => {
     if (data) return { ...data };
-    if (type === 'addBanka') return { owner: 'gorkem', balance: '', kmh: '' };
+    if (type === 'addBanka') return { owner: 'gorkem', balance: '', kmh: '', openingDate: new Date().toISOString().split('T')[0] };
     return {};
   });
 
@@ -770,13 +770,23 @@ function KasaModals({ type, data, onClose }) {
             <input type="number" value={form.kmh} onChange={e => setForm({...form, kmh: e.target.value})} placeholder="0₺" />
           </div>
         </div>
-        <div className="form-group">
-          <label>Hesap Sahibi</label>
-          <select value={form.owner} onChange={e => setForm({...form, owner: e.target.value})}>
-            <option value="gorkem">Görkem</option>
-            <option value="esra">Esra</option>
-            <option value="ortak">Ortak</option>
-          </select>
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Hesap Sahibi</label>
+            <select value={form.owner} onChange={e => setForm({...form, owner: e.target.value})}>
+              <option value="gorkem">Görkem</option>
+              <option value="esra">Esra</option>
+              <option value="ortak">Ortak</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>İlk Kayıt Tarihi (Açılış)</label>
+            <input 
+              type="date" 
+              value={form.openingDate || new Date().toISOString().split('T')[0]} 
+              onChange={e => setForm({...form, openingDate: e.target.value})} 
+            />
+          </div>
         </div>
         <button className="submit-btn" onClick={handleSave}>{type === 'addBanka' ? 'HESAP EKLE' : 'GÜNCELLE'}</button>
         {type === 'editBanka' && <button className="del-btn-link" onClick={() => { useStore.getState().deleteBankaHesabi(data.id); onClose(); }}>Hesabı Sil</button>}

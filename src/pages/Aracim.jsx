@@ -349,7 +349,7 @@ export default function Aracim() {
             <div className="fuel-chart-box glass">
               <Line 
                 data={{
-                  labels: logsWithConsumption.filter(l => l.consumption !== null).map(l => l.date ? new Date(l.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : ''),
+                  labels: logsWithConsumption.filter(l => l.consumption !== null).map(l => `${(l.km || 0).toLocaleString('tr-TR')} KM`),
                   datasets: [{
                     label: 'Tüketim (L/100km)',
                     data: logsWithConsumption.filter(l => l.consumption !== null).map(l => l.consumption),
@@ -369,12 +369,7 @@ export default function Aracim() {
                <div className="section-header-v2">
                 <h3>⛽ Yakıt Geçmişi</h3>
               </div>
-              {[...fuelLogs].sort((a, b) => {
-                const dateA = a.date || '';
-                const dateB = b.date || '';
-                if (dateA !== dateB) return dateB.localeCompare(dateA);
-                return (b.km || 0) - (a.km || 0);
-              }).map(l => (
+              {[...fuelLogs].sort((a, b) => (b.km || 0) - (a.km || 0)).map(l => (
                 <div key={l.id} className="fuel-item-premium glass">
                   <div className="fip-left">
                     <div className="fip-station">{l.station || 'Diğer'}</div>
