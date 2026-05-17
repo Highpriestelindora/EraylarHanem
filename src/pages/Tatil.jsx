@@ -2919,6 +2919,10 @@ function BudgetSection({ trip, onShowExpense }) {
     return [...pool, ...confirmed].sort((a, b) => b.id - a.id);
   }, [finans, trip]);
 
+  const totalSpent = useMemo(() => {
+    return tripExpenses.reduce((sum, exp) => sum + Number(exp.amount || exp.tutar || 0), 0);
+  }, [tripExpenses]);
+
   return (
     <div className="budget-view animate-fadeIn">
       <div className="budget-stats">
@@ -2928,12 +2932,12 @@ function BudgetSection({ trip, onShowExpense }) {
         </div>
         <div className="bs-item">
           <span>Harcanan Toplam</span>
-          <strong style={{ color: 'var(--tatil)' }}>{trip.budget?.real || 0}₺</strong>
+          <strong style={{ color: 'var(--tatil)' }}>{totalSpent}₺</strong>
         </div>
       </div>
       <div className="budget-bar-container">
         <div className="b-bar">
-          <div className="b-fill" style={{ width: `${Math.min(100, ((trip.budget?.real || 0) / (trip.budget?.est || 1)) * 100)}%` }} />
+          <div className="b-fill" style={{ width: `${Math.min(100, (totalSpent / (trip.budget?.est || 1)) * 100)}%` }} />
         </div>
       </div>
 
