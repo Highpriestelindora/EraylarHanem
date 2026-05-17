@@ -2,7 +2,7 @@
   min-height: 100vh;
   padding-bottom: 120px;
   padding-top: 0px;
-  background: var(--bg-dark);
+  background: #f8fafc;
   overflow-x: hidden;
   max-width: 100vw;
 }
@@ -522,20 +522,20 @@
   background: #f1f5f9;
 }
 
-/* Premium Modal Styling for Vehicle Module */
+/* Premium Modal Styling for Vehicle Module (Light Theme Reverted) */
 .modal-content.arac-modal-content {
-  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
-  color: #f8fafc !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+  background: white !important;
+  color: var(--txt) !important;
+  border: 1px solid var(--brd) !important;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15) !important;
 }
 
 .modal-content.arac-modal-content h3 {
-  color: #f8fafc !important;
+  color: var(--txt) !important;
 }
 
 .modal-content.arac-modal-content label {
-  color: #94a3b8 !important;
+  color: var(--txt-light) !important;
   font-weight: 800 !important;
   font-size: 11px !important;
   text-transform: uppercase !important;
@@ -546,51 +546,52 @@
 .modal-content.arac-modal-content .premium-select,
 .modal-content.arac-modal-content input,
 .modal-content.arac-modal-content select {
-  background: rgba(0, 0, 0, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  background: #f8fafc !important;
+  border: 1px solid var(--brd) !important;
+  color: var(--txt) !important;
 }
 
 .modal-content.arac-modal-content .premium-input:focus {
-  border-color: #7c3aed !important;
-  background: rgba(0, 0, 0, 0.3) !important;
+  border-color: var(--aracim) !important;
+  background: white !important;
 }
 
 .modal-content.arac-modal-content .section-divider {
-  color: #6366f1 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--aracim) !important;
+  border-bottom: 1px solid var(--brd) !important;
   font-weight: 900 !important;
 }
 
 .modal-content.arac-modal-content .garage-item {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  color: white !important;
+  background: white !important;
+  border-color: var(--brd) !important;
+  color: var(--txt) !important;
 }
 
 .modal-content.arac-modal-content .garage-item.active {
-  background: rgba(99, 102, 241, 0.2) !important;
-  border-color: #6366f1 !important;
+  background: #f0fdf4 !important;
+  border-color: #10b981 !important;
 }
 
 .modal-content.arac-modal-content .garage-item strong {
-  color: white !important;
+  color: var(--txt) !important;
 }
 
 .modal-content.arac-modal-content .submit-btn-premium {
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Fix for PaymentSelector in dark modal */
+/* Fix for PaymentSelector in light modal */
 .modal-content.arac-modal-content .payment-options button {
-  background: rgba(255, 255, 255, 0.05) !important;
-  color: white !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: white !important;
+  color: var(--txt) !important;
+  border: 1px solid var(--brd) !important;
 }
 
 .modal-content.arac-modal-content .payment-options button.active {
-  background: #7c3aed !important;
-  border-color: #7c3aed !important;
+  background: var(--aracim) !important;
+  color: white !important;
+  border-color: var(--aracim) !important;
 }
 
 /* Quick Actions Text Visibility */
@@ -600,20 +601,21 @@
 }
 
 .modal-content.arac-modal-content .pill-toggle {
-  background: rgba(0, 0, 0, 0.4) !important;
+  background: #f1f5f9 !important;
   padding: 4px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--brd) !important;
 }
 
 .modal-content.arac-modal-content .pill-btn {
-  color: #94a3b8 !important;
+  color: var(--txt-light) !important;
   background: transparent !important;
+  white-space: normal !important;
 }
 
 .modal-content.arac-modal-content .pill-btn.active {
-  background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
-  color: white !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+  background: white !important;
+  color: var(--aracim) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
 }
 
 /* Pill Toggle */
@@ -628,16 +630,21 @@
 
 .pill-btn {
   flex: 1;
-  padding: 10px 16px;
+  padding: 8px 6px;
   border-radius: 40px;
   border: none;
   background: transparent;
   color: var(--txt-light);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.3s ease;
-  white-space: nowrap;
+  white-space: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
 }
 
 .pill-btn.active {
