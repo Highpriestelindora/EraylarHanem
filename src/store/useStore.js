@@ -1051,7 +1051,8 @@ async function pushEvDuzenliOdemeToSupabase(item) {
       date: Number(item.date || 1), linked_card_id: item.linkedCardId || null,
       auto_pay: !!item.autoPay, icon: item.icon || '💳',
       provider: item.provider || null, customer_no: item.customerNo || null,
-      contract_end_date: item.contractEndDate || null
+      contract_end_date: item.contractEndDate || null,
+      family_id: DEFAULT_FID
     });
   } catch(e) { console.warn('Ev Ödeme Hatası:', e); }
 }
@@ -1062,7 +1063,8 @@ async function pushEvAbonelikToSupabase(item) {
       id: String(item.id), name: item.name, amount: Number(item.amount || 0),
       date: Number(item.date || 1), linked_card_id: item.linkedCardId || null,
       auto_pay: !!item.autoPay, icon: item.icon || '📺',
-      start_date: item.startDate || null
+      start_date: item.startDate || null,
+      family_id: DEFAULT_FID
     });
   } catch(e) { console.warn('Ev Abonelik Hatası:', e); }
 }
@@ -1076,7 +1078,8 @@ async function pushEvOnarimToSupabase(item) {
       cleared_by: item.clearedBy || null, cleared_at: item.clearedAt || null,
       is_archived: !!item.isArchived,
       assigned_to: item.assignedTo || null,
-      due_date: item.dueDate || null
+      due_date: item.dueDate || null,
+      family_id: DEFAULT_FID
     });
     if(res.error) console.error('❌ Onarım Sync Error:', res.error); else console.log('✅ Onarım Sync Success');
   } catch(e) { console.warn('Ev Onarım Hatası:', e); }
@@ -1086,7 +1089,8 @@ async function pushEvDemirbasToSupabase(item) {
   try {
     await supabase.from('ev_demirbaslar').upsert({
       id: String(item.id), name: item.name, brand: item.brand || null,
-      warranty_date: item.warrantyDate || null, photo: item.photo || null
+      warranty_date: item.warrantyDate || null, photo: item.photo || null,
+      family_id: DEFAULT_FID
     });
   } catch(e) { console.warn('Ev Demirbaş Hatası:', e); }
 }
@@ -1096,7 +1100,8 @@ async function pushEvBakimToSupabase(item) {
     await supabase.from('ev_bakimlar').upsert({
       id: String(item.id), name: item.name, last_date: item.lastDate || null,
       interval_days: Number(item.intervalDays || 180), icon: item.icon || '🔧',
-      brand: item.brand || null, model: item.model || null, part_no: item.partNo || null
+      brand: item.brand || null, model: item.model || null, part_no: item.partNo || null,
+      family_id: DEFAULT_FID
     });
   } catch(e) { console.warn('Ev Bakım Hatası:', e); }
 }
@@ -1338,19 +1343,19 @@ async function deleteSaglikSleepFromSupabase(id) {
 
 // --- Deletion Helpers for Group 2 ---
 async function deleteEvDuzenliOdemeFromSupabase(id) {
-  try { await supabase.from('ev_duzenli_odemeler').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
+  try { await supabase.from('ev_duzenli_odemeler').delete().eq('id', String(id)); } catch(e){}
 }
 async function deleteEvAbonelikFromSupabase(id) {
-  try { await supabase.from('ev_abonelikler').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
+  try { await supabase.from('ev_abonelikler').delete().eq('id', String(id)); } catch(e){}
 }
 async function deleteEvOnarimFromSupabase(id) {
-  try { await supabase.from('ev_onarim').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
+  try { await supabase.from('ev_onarim').delete().eq('id', String(id)); } catch(e){}
 }
 async function deleteEvDemirbasFromSupabase(id) {
-  try { await supabase.from('ev_demirbaslar').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
+  try { await supabase.from('ev_demirbaslar').delete().eq('id', String(id)); } catch(e){}
 }
 async function deleteEvBakimFromSupabase(id) {
-  try { await supabase.from('ev_bakimlar').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
+  try { await supabase.from('ev_bakimlar').delete().eq('id', String(id)); } catch(e){}
 }
 async function deleteGarajYakitFromSupabase(id) {
   try { await supabase.from('garaj_yakit').delete().eq('id', String(id)).eq('family_id', DEFAULT_FID); } catch(e){}
@@ -2135,8 +2140,34 @@ const useStore = create(
 
           set(state => {
             const ev = { ...state.ev };
-            if (odemeler.data) ev.duzenliOdemeler = odemeler.data;
-            if (abonelikler.data) ev.abonelikler = abonelikler.data;
+             if (odemeler.data) {
+              ev.duzenliOdemeler = odemeler.data.map(item => ({
+                id: item.id,
+                name: item.name,
+                amount: Number(item.amount || 0),
+                date: Number(item.date || 1),
+                linkedCardId: item.linked_card_id,
+                autoPay: !!item.auto_pay,
+                icon: item.icon || '💳',
+                provider: item.provider,
+                customerNo: item.customer_no,
+                contractEndDate: item.contract_end_date,
+                familyId: item.family_id
+              }));
+            }
+            if (abonelikler.data) {
+              ev.abonelikler = abonelikler.data.map(item => ({
+                id: item.id,
+                name: item.name,
+                amount: Number(item.amount || 0),
+                date: Number(item.date || 1),
+                linkedCardId: item.linked_card_id,
+                autoPay: !!item.auto_pay,
+                icon: item.icon || '📺',
+                startDate: item.start_date,
+                familyId: item.family_id
+              }));
+            }
             if (onarim.data) {
               ev.onarimListesi = onarim.data.map(item => ({
                 id: item.id,
@@ -2153,8 +2184,29 @@ const useStore = create(
                 dueDate: item.due_date
               }));
             }
-            if (demirbaslar.data) ev.demirbaslar = demirbaslar.data;
-            if (bakimlar.data) ev.bakimlar = bakimlar.data;
+            if (demirbaslar.data) {
+              ev.demirbaslar = demirbaslar.data.map(item => ({
+                id: item.id,
+                name: item.name,
+                brand: item.brand,
+                warrantyDate: item.warranty_date,
+                photo: item.photo,
+                familyId: item.family_id
+              }));
+            }
+            if (bakimlar.data) {
+              ev.bakimlar = bakimlar.data.map(item => ({
+                id: item.id,
+                name: item.name,
+                lastDate: item.last_date,
+                intervalDays: Number(item.interval_days || 180),
+                icon: item.icon || '🔧',
+                brand: item.brand,
+                model: item.model,
+                partNo: item.part_no,
+                familyId: item.family_id
+              }));
+            }
             if (depo.data) ev.depo = depo.data;
             if (faturalar.data) ev.faturalar = faturalar.data;
              if (personality.data && personality.data[0]) {
