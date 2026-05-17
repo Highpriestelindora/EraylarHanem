@@ -50,6 +50,22 @@ const OzetTab = React.memo(({ finans, prv }) => {
   const toplamKredi = borclar.reduce((s, b) => s + (b.monthly || 0), 0);
   const ayTahmini = toplamBeklenen + toplamKredi;
 
+  // Nakit, Kart ve Havale Harcamaları Kırılımı
+  const toplamNakitHarcama = buAyHarcamalar.reduce((s, h) => {
+    const isNakit = h.odenme_turu === 'nakit' || (!h.kart_id && !h.banka_id && h.odenme_turu !== 'havale');
+    return isNakit ? s + Number(h.tutar || 0) : s;
+  }, 0);
+
+  const toplamKrediKartiHarcama = buAyHarcamalar.reduce((s, h) => {
+    const isKart = h.odenme_turu === 'kart' || !!h.kart_id;
+    return isKart ? s + Number(h.tutar || 0) : s;
+  }, 0);
+
+  const toplamHavaleHarcama = buAyHarcamalar.reduce((s, h) => {
+    const isHavale = h.odenme_turu === 'havale' || !!h.banka_id;
+    return isHavale ? s + Number(h.tutar || 0) : s;
+  }, 0);
+
   const buAy = new Date();
   const ayAdi = `${AY_ADLARI[buAy.getMonth()]} ${buAy.getFullYear()}`;
 
@@ -61,7 +77,22 @@ const OzetTab = React.memo(({ finans, prv }) => {
         <div className="ozet-card glass primary">
           <small>BU AY HARCAMA</small>
           <h2>{fmt(toplamHarcama, prv)}</h2>
-          <span className="ozet-sub">Supabase'den canlı</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '12px', borderTop: '1px dashed rgba(124, 58, 237, 0.2)', paddingTop: '10px', fontSize: '11px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--txt-light)', fontWeight: '600' }}>💵 Elden Nakit:</span>
+              <strong style={{ color: '#10b981', fontSize: '12px' }}>{fmt(toplamNakitHarcama, prv)}</strong>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--txt-light)', fontWeight: '600' }}>💳 Kredi Kartı:</span>
+              <strong style={{ color: '#3b82f6', fontSize: '12px' }}>{fmt(toplamKrediKartiHarcama, prv)}</strong>
+            </div>
+            {toplamHavaleHarcama > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--txt-light)', fontWeight: '600' }}>🏦 Banka Havale:</span>
+                <strong style={{ color: '#6366f1', fontSize: '12px' }}>{fmt(toplamHavaleHarcama, prv)}</strong>
+              </div>
+            )}
+          </div>
         </div>
         <div className="ozet-card glass">
           <small>KART BEKLENEN</small>
