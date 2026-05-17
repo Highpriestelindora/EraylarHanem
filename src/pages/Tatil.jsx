@@ -79,9 +79,7 @@ const extractTextFromImage = async (file) => {
     await loadScript('https://unpkg.com/tesseract.js@5.0.5/dist/tesseract.min.js');
     const Tesseract = window.Tesseract;
     
-    const worker = await Tesseract.createWorker({
-      logger: m => console.log('OCR progress:', m)
-    });
+    const worker = await Tesseract.createWorker();
     
     await worker.loadLanguage('tur+eng');
     await worker.initialize('tur+eng');
