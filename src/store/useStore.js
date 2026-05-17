@@ -1177,7 +1177,7 @@ async function deleteGarajAracFromSupabase(id) {
 async function pushGarajParkToSupabase(park, vehicleId) {
   try {
     const familyId = DEFAULT_FID;
-    await supabase.from('garaj_park').upsert({
+    const { error } = await supabase.from('garaj_park').upsert({
       id: vehicleId,
       vehicle_id: vehicleId,
       lat: park.lat || null,
@@ -1188,6 +1188,7 @@ async function pushGarajParkToSupabase(park, vehicleId) {
       active: !!park.active,
       family_id: familyId
     });
+    if (error) console.error('Garaj Park Upsert Hatası:', error);
   } catch(e) { console.warn('Garaj Park Hatası:', e); }
 }
 
@@ -2186,15 +2187,18 @@ const useStore = create(
             // Restore Parking Location
             if (garajPark.data) {
               garajPark.data.forEach(p => {
-                const v = garaj.find(gv => gv.id === p.vehicle_id);
-                if (v) {
-                  v.parkLocation = {
-                    lat: p.lat,
-                    lng: p.lng,
-                    note: p.note,
-                    floor: p.floor,
-                    spot: p.spot,
-                    active: !!p.active
+                const vIndex = garaj.findIndex(gv => gv.id === p.vehicle_id);
+                if (vIndex !== -1) {
+                  garaj[vIndex] = {
+                    ...garaj[vIndex],
+                    parkLocation: {
+                      lat: p.lat,
+                      lng: p.lng,
+                      note: p.note || '',
+                      floor: p.floor || '',
+                      spot: p.spot || '',
+                      active: p.active === true || p.active === 'true' || p.active === 1
+                    }
                   };
                 }
               });
