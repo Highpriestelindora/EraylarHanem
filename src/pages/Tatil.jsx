@@ -1503,6 +1503,9 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
 
 function TravelChecklist({ notes, onChange }) {
   const [newText, setNewText] = useState('');
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editText, setEditText] = useState('');
+
   const todos = useMemo(() => {
     if (!notes) return [];
     try {
@@ -1538,6 +1541,18 @@ function TravelChecklist({ notes, onChange }) {
   const handleDelete = (index) => {
     const newList = todos.filter((_, idx) => idx !== index);
     saveTodos(newList);
+    if (editingIndex === index) {
+      setEditingIndex(null);
+    }
+  };
+
+  const handleSaveEdit = (index) => {
+    if (!editText.trim()) return;
+    const newList = todos.map((todo, idx) => 
+      idx === index ? { ...todo, text: editText.trim() } : todo
+    );
+    saveTodos(newList);
+    setEditingIndex(null);
   };
 
   return (
@@ -1581,12 +1596,44 @@ function TravelChecklist({ notes, onChange }) {
                   <Square size={16} className="chk-inactive" />
                 )}
               </button>
-              <span className="todo-text" onClick={() => handleToggle(index)}>
-                {todo.text}
-              </span>
-              <button className="todo-delete-btn" onClick={() => handleDelete(index)}>
-                <Trash size={14} />
-              </button>
+
+              {editingIndex === index ? (
+                <div className="todo-edit-wrapper">
+                  <input 
+                    type="text" 
+                    className="todo-edit-input"
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        handleSaveEdit(index);
+                      }
+                      if (e.key === 'Escape') {
+                        setEditingIndex(null);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <button className="todo-edit-save-btn" onClick={() => handleSaveEdit(index)}>
+                    <Check size={14} />
+                  </button>
+                  <button className="todo-edit-cancel-btn" onClick={() => setEditingIndex(null)}>
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <span className="todo-text" onClick={() => handleToggle(index)}>
+                    {todo.text}
+                  </span>
+                  <button className="todo-row-action-btn" onClick={() => { setEditingIndex(index); setEditText(todo.text); }} title="Düzenle">
+                    <Edit3 size={12} />
+                  </button>
+                  <button className="todo-delete-btn" onClick={() => handleDelete(index)} title="Sil">
+                    <Trash size={14} />
+                  </button>
+                </>
+              )}
             </div>
           ))
         )}

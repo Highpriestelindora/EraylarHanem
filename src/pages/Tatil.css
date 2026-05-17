@@ -6483,3 +6483,71 @@
   font-weight: 500;
 }
 
+/* Premium Inline Todo Editor Styles */
+.todo-edit-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.todo-edit-input {
+  flex: 1;
+  background: #ffffff !important;
+  border: 1px solid #3b82f6 !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #1e293b !important;
+  outline: none !important;
+}
+
+.todo-edit-save-btn,
+.todo-edit-cancel-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.todo-edit-save-btn {
+  color: #10b981;
+}
+
+.todo-edit-save-btn:hover {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.todo-edit-cancel-btn {
+  color: #94a3b8;
+}
+
+.todo-edit-cancel-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.todo-row-action-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.todo-row-action-btn:hover {
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+}
+
