@@ -149,9 +149,7 @@ const DEFAULT_STATE = {
         ]
       }
     ],
-    habits: [
-      { id: 'h1', name: 'Kitap Okuma', streak: 5, lastDone: '' },
-    ],
+
     hallOfFame: [],
     moodboard: { quote: "Büyük işler, küçük başlangıçlarla olur." },
     longTermVision: [

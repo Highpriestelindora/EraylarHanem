@@ -251,15 +251,6 @@ const Home = () => {
       });
     }
 
-    // ── 14. HEDEFLER: Alışkanlık Streak'leri ──
-    const habits = store.hedefler?.habits || [];
-    const bestHabit = habits.reduce((max, h) => (h.streak > (max?.streak || 0) ? h : max), null);
-    if (bestHabit && bestHabit.streak >= 3) {
-      cards.push({
-        id: 'hedef-streak', icon: '🔥', text: `${bestHabit.name}: ${bestHabit.streak} gün seri!`,
-        subtext: 'Harika gidiyorsun, bırakma!', type: 'achievement', color: 'var(--hedefler)', module: '/hedefler', priority: 52
-      });
-    }
 
     // ── 15. TATİL: Yaklaşan Gezi ──
     const upcomingTrip = (store.tatil?.trips || []).find(t => {
