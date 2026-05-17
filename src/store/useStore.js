@@ -1555,7 +1555,15 @@ async function pushTatilTripToSupabase(trip) {
       location_type: trip.locationType || 'yurtdisi', status: trip.status || 'planned',
       notes: trip.notes || null, schengen: !!trip.schengen, is_confirmed: !!trip.isConfirmed,
       budget_est: Number(trip.budget?.est || 0), budget_real: Number(trip.budget?.real || 0),
-      valiz: trip.valiz || {}, evaluations: trip.evaluations || {},
+      valiz: trip.valiz || {}, 
+      evaluations: {
+        ...(trip.evaluations || {}),
+        transportation: trip.transportation || {
+          departure: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' },
+          return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
+        },
+        accommodation: trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' }
+      },
       photos: trip.photos || [], checklists: trip.checklists || [],
       visited_cities: trip.visitedCities || [],
       created_at: trip.created_at || new Date().toISOString()
@@ -2667,18 +2675,27 @@ const useStore = create(
 
             // ── Tatil ──
             if (trips.data && trips.data.length > 0) {
-              tatil.trips = trips.data.map(x => ({
-                id: x.id, title: x.title, city: x.city, country: x.country,
-                startDate: x.start_date, endDate: x.end_date,
-                tripType: x.trip_type, travelers: x.travelers,
-                transportType: x.transport_type, locationType: x.location_type,
-                status: x.status, notes: x.notes, schengen: x.schengen, isConfirmed: !!x.is_confirmed,
-                budget: { est: Number(x.budget_est || 0), real: Number(x.budget_real || 0) },
-                valiz: x.valiz || {}, evaluations: x.evaluations || {},
-                photos: x.photos || [], checklists: x.checklists || [],
-                visitedCities: x.visited_cities || [],
-                created_at: x.created_at
-              }));
+              tatil.trips = trips.data.map(x => {
+                const evals = x.evaluations || {};
+                return {
+                  id: x.id, title: x.title, city: x.city, country: x.country,
+                  startDate: x.start_date, endDate: x.end_date,
+                  tripType: x.trip_type, travelers: x.travelers,
+                  transportType: x.transport_type, locationType: x.location_type,
+                  status: x.status, notes: x.notes, schengen: x.schengen, isConfirmed: !!x.is_confirmed,
+                  budget: { est: Number(x.budget_est || 0), real: Number(x.budget_real || 0) },
+                  valiz: x.valiz || {}, 
+                  evaluations: evals,
+                  transportation: evals.transportation || {
+                    departure: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' },
+                    return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
+                  },
+                  accommodation: evals.accommodation || { hotel: '', address: '', bookingId: '', link: '' },
+                  photos: x.photos || [], checklists: x.checklists || [],
+                  visitedCities: x.visited_cities || [],
+                  created_at: x.created_at
+                };
+              });
             }
             if (wishlist.data) {
               tatil.wishlist = wishlist.data.map(x => ({
