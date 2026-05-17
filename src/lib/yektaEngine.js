@@ -58,7 +58,7 @@ export const generateYektaAdvice = (state) => {
   const isEsra = currentUser?.name?.toLowerCase().includes('esra');
   const userKey = isEsra ? 'esra' : 'gorkem';
   const name = currentUser?.name?.split(' ')[0] || 'Dostum';
-  const personality = ev?.tracking?.personality || {};
+  const personality = ev?.tracking?.personality?.[userKey] || {};
 
   const advices = [];
 

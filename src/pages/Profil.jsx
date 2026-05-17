@@ -196,8 +196,8 @@ export default function Profil() {
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
         locations={{
-          home: ev.tracking?.home,
-          work: ev.tracking?.work
+          home: ev.tracking?.[userKey]?.home || ev.tracking?.home,
+          work: ev.tracking?.[userKey]?.work || ev.tracking?.work
         }}
       />
 
@@ -295,7 +295,7 @@ export default function Profil() {
               <label><Fingerprint size={14} /> Konum Etiketi</label>
               <input 
                 type="text" 
-                defaultValue={ev.tracking?.[editingLocation]?.label || ''} 
+                defaultValue={ev.tracking?.[userKey]?.[editingLocation]?.label || ev.tracking?.[editingLocation]?.label || ''} 
                 id="loc-label"
                 placeholder="Örn: Kuzey Evim"
               />
@@ -304,7 +304,7 @@ export default function Profil() {
             <div className="form-group">
               <label><MapPin size={14} /> Adres</label>
               <textarea 
-                defaultValue={ev.tracking?.[editingLocation]?.address || ''} 
+                defaultValue={ev.tracking?.[userKey]?.[editingLocation]?.address || ev.tracking?.[editingLocation]?.address || ''} 
                 id="loc-address"
                 placeholder="Açık adres giriniz..."
                 style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--brd)', minHeight: '80px', background: '#f8fafc', font: 'inherit' }}
@@ -316,7 +316,7 @@ export default function Profil() {
                 <label>Enlem (Lat)</label>
                 <input 
                   type="text" 
-                  defaultValue={ev.tracking?.[editingLocation]?.lat || ''} 
+                  defaultValue={ev.tracking?.[userKey]?.[editingLocation]?.lat || ev.tracking?.[editingLocation]?.lat || ''} 
                   id="loc-lat"
                 />
               </div>
@@ -324,7 +324,7 @@ export default function Profil() {
                 <label>Boylam (Lng)</label>
                 <input 
                   type="text" 
-                  defaultValue={ev.tracking?.[editingLocation]?.lng || ''} 
+                  defaultValue={ev.tracking?.[userKey]?.[editingLocation]?.lng || ev.tracking?.[editingLocation]?.lng || ''} 
                   id="loc-lng"
                 />
               </div>
@@ -334,7 +334,7 @@ export default function Profil() {
               <label><Activity size={14} /> Algılama Menzili (Metre)</label>
               <input 
                 type="number" 
-                defaultValue={ev.tracking?.[editingLocation]?.radius || (editingLocation === 'home' ? 150 : 250)} 
+                defaultValue={ev.tracking?.[userKey]?.[editingLocation]?.radius || ev.tracking?.[editingLocation]?.radius || (editingLocation === 'home' ? 150 : 250)} 
                 id="loc-radius"
                 placeholder="Örn: 150"
               />

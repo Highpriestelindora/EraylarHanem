@@ -416,7 +416,7 @@
 
 .header-top { margin-bottom: 8px !important; }
 
-.ai-insight-card {
+.aracim-container .ai-insight-card {
   margin: 16px 0 !important;
   padding: 16px 20px !important;
   border-radius: 20px !important;
@@ -429,7 +429,7 @@
   box-shadow: 0 8px 20px rgba(0,0,0,0.2) !important;
 }
 
-.ai-insight-card p {
+.aracim-container .ai-insight-card p {
   margin: 0 !important;
   font-size: 13px !important;
   font-weight: 700 !important;

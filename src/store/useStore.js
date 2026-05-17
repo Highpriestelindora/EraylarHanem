@@ -613,6 +613,25 @@ async function fetchKartOdemeler(familyId = DEFAULT_FID) {
   }
 }
 
+async function deleteKartOdemeFromSupabase(id) {
+  try {
+    const familyId = DEFAULT_FID;
+    const { error } = await supabase.from('finans_kart_odemeler').delete().eq('id', id).eq('family_id', familyId);
+    if (error) throw error;
+  } catch (err) {
+    console.error('❌ deleteKartOdeme error:', err);
+  }
+}
+
+async function updateKartOdemeInSupabase(id, updates) {
+  try {
+    const { error } = await supabase.from('finans_kart_odemeler').update(updates).eq('id', id);
+    if (error) throw error;
+  } catch (err) {
+    console.error('❌ updateKartOdeme error:', err);
+  }
+}
+
 async function pushTaksitToSupabase(taksit, familyId = DEFAULT_FID) {
   try {
     const { error } = await supabase.from('finans_taksitler').upsert({
@@ -2742,6 +2761,17 @@ const useStore = create(
         deleteSaglikIlacFromSupabase(id);
       },
 
+      archiveMedicine: (id) => {
+        const state = get();
+        const ilac = (state.saglik.ilaclar || []).find(m => String(m.id) === String(id));
+        if(ilac) {
+          const updated = { ...ilac, stok: -1 };
+          const list = state.saglik.ilaclar.map(m => String(m.id) === String(id) ? updated : m);
+          set({ saglik: { ...state.saglik, ilaclar: list } });
+          pushSaglikIlacToSupabase(updated);
+        }
+      },
+
       deleteAppointment: (id) => {
         const state = get();
         const updated = (state.saglik.randevular || []).filter(r => String(r.id) !== String(id));
@@ -4321,15 +4351,148 @@ const useStore = create(
       },
 
       getKartOdemeleri: async () => {
+        const familyId = get().family_id;
+        const data = await fetchKartOdemeler(familyId);
+        set(s => ({ finans: { ...s.finans, kartOdemeleri: data } }));
+      },
+
+      deleteKartOdemesi: async (id) => {
         const state = get();
-        const data = await fetchKartOdemeler(state.family_id);
-        set({ finans: { ...state.finans, kartOdemeleri: data } });
+        const odeme = state.finans.kartOdemeleri?.find(o => o.id === id);
+        if (!odeme) return;
+
+        const amountNum = Number(odeme.tutar);
+        const kartId = odeme.kart_id;
+        const type = odeme.kaynak;
+        const banka_id = odeme.banka_id;
+
+        let yeniBakiyeler = { ...state.kasa.bakiyeler };
+        let yeniBankaHesaplari = [...(state.kasa.bankaHesaplari || [])];
+
+        if (type === 'havale' && banka_id) {
+          yeniBankaHesaplari = yeniBankaHesaplari.map(b =>
+            b.id === banka_id ? { ...b, balance: b.balance + amountNum } : b
+          );
+        } else {
+          const payerKey = (state.currentUser?.name || 'ortak').toLowerCase();
+          if (yeniBakiyeler[payerKey] !== undefined) {
+            yeniBakiyeler[payerKey] += amountNum;
+          }
+        }
+
+        const currentMut = state.finans.kartMutabakat[kartId];
+        let yeniMutabakat = state.finans.kartMutabakat;
+        if (currentMut && currentMut.ay === odeme.ay) {
+           const oldGercek = Number(currentMut.gercek || 0);
+           const oldGuncel = Number(currentMut.guncel || 0);
+           const newGercek = oldGercek + amountNum;
+           const newGuncel = oldGuncel + amountNum;
+           yeniMutabakat = {
+             ...state.finans.kartMutabakat,
+             [kartId]: {
+               ...currentMut,
+               paid: false,
+               paidAmount: Math.max(0, (currentMut.paidAmount || 0) - amountNum),
+               gercek: newGercek,
+               guncel: newGuncel
+             }
+           };
+           await upsertKartMutabakat(kartId, odeme.ay, currentMut.beklenen, newGercek, newGuncel, state.family_id);
+        }
+
+        await deleteKartOdemeFromSupabase(id);
+
+        set(s => ({
+          kasa: { ...s.kasa, bakiyeler: yeniBakiyeler, bankaHesaplari: yeniBankaHesaplari },
+          finans: {
+            ...s.finans,
+            kartMutabakat: yeniMutabakat,
+            kartOdemeleri: s.finans.kartOdemeleri.filter(o => o.id !== id)
+          }
+        }));
+
+        get().addLog('Kart Ödemesi İptali', `${amountNum}₺ ödeme silindi ve iade edildi.`);
+        toast.success('Ödeme kaydı silindi ve bakiye iade edildi.');
+      },
+
+      updateKartOdemesi: async (id, updates) => {
+        const state = get();
+        const odeme = state.finans.kartOdemeleri?.find(o => o.id === id);
+        if (!odeme) return;
+
+        const oldAmount = Number(odeme.tutar);
+        const newAmount = updates.tutar !== undefined ? Number(updates.tutar) : oldAmount;
+        
+        const oldType = odeme.kaynak;
+        const newType = updates.kaynak || oldType;
+        
+        const oldBankaId = odeme.banka_id;
+        const newBankaId = updates.banka_id !== undefined ? updates.banka_id : oldBankaId;
+
+        const kartId = odeme.kart_id;
+        
+        let yeniBakiyeler = { ...state.kasa.bakiyeler };
+        let yeniBankaHesaplari = [...(state.kasa.bankaHesaplari || [])];
+        const payerKey = (state.currentUser?.name || 'ortak').toLowerCase();
+
+        // 1. İade Et (Eski kaynağa parayı geri yükle)
+        if (oldType === 'havale' && oldBankaId) {
+          yeniBankaHesaplari = yeniBankaHesaplari.map(b => b.id === oldBankaId ? { ...b, balance: b.balance + oldAmount } : b);
+        } else {
+          if (yeniBakiyeler[payerKey] !== undefined) yeniBakiyeler[payerKey] += oldAmount;
+        }
+
+        // 2. Yeni Tutarı Düş (Yeni kaynaktan)
+        if (newType === 'havale' && newBankaId) {
+          yeniBankaHesaplari = yeniBankaHesaplari.map(b => b.id === newBankaId ? { ...b, balance: b.balance - newAmount } : b);
+        } else {
+          if (yeniBakiyeler[payerKey] !== undefined) yeniBakiyeler[payerKey] -= newAmount;
+        }
+
+        // 3. Mutabakatı Güncelle
+        const amountDiff = newAmount - oldAmount;
+        const currentMut = state.finans.kartMutabakat[kartId];
+        let yeniMutabakat = state.finans.kartMutabakat;
+        
+        if (currentMut && currentMut.ay === odeme.ay) {
+           const oldGercek = Number(currentMut.gercek || 0);
+           const oldGuncel = Number(currentMut.guncel || 0);
+           const newGercek = Math.max(0, oldGercek - amountDiff);
+           const newGuncel = Math.max(0, oldGuncel - amountDiff);
+           
+           yeniMutabakat = {
+             ...state.finans.kartMutabakat,
+             [kartId]: {
+               ...currentMut,
+               paidAmount: Math.max(0, (currentMut.paidAmount || 0) + amountDiff),
+               gercek: newGercek,
+               guncel: newGuncel,
+               paid: newGercek <= 0
+             }
+           };
+           await upsertKartMutabakat(kartId, odeme.ay, currentMut.beklenen, newGercek, newGuncel, state.family_id);
+        }
+
+        const updatedOdeme = { ...odeme, ...updates };
+
+        await updateKartOdemeInSupabase(id, updates);
+
+        set(s => ({
+          kasa: { ...s.kasa, bakiyeler: yeniBakiyeler, bankaHesaplari: yeniBankaHesaplari },
+          finans: {
+            ...s.finans,
+            kartMutabakat: yeniMutabakat,
+            kartOdemeleri: s.finans.kartOdemeleri.map(o => o.id === id ? updatedOdeme : o)
+          }
+        }));
+
+        toast.success('Ödeme kaydı güncellendi.');
       },
 
       fetchTaksitler: async () => {
-        const state = get();
-        const data = await fetchTaksitler(state.family_id);
-        set({ finans: { ...state.finans, taksitler: data || [] } });
+        const familyId = get().family_id;
+        const data = await fetchTaksitler(familyId);
+        set(s => ({ finans: { ...s.finans, taksitler: data || [] } }));
       },
 
       addTaksit: async (taksit) => {
@@ -7246,19 +7409,26 @@ const useStore = create(
       // ── Yaşam & Tracking Actions ────────────────────────
       updateLocationSettings: (type, updates) => {
         const state = get();
+        const userKey = state.currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
         const currentEv = state.ev || {};
-        const currentTracking = currentEv.tracking || {};
+        const globalTracking = currentEv.tracking || {};
+        const userTracking = globalTracking[userKey] || {};
         
         // Default radius values if not exist
         const defaultRadius = type === 'home' ? 150 : 250;
 
-        const newTracking = {
-          ...currentTracking,
+        const newUserTracking = {
+          ...userTracking,
           [type]: { 
             radius: defaultRadius, 
-            ...(currentTracking[type] || {}), 
+            ...(userTracking[type] || {}), 
             ...updates 
           }
+        };
+
+        const newTracking = {
+          ...globalTracking,
+          [userKey]: newUserTracking
         };
 
         set({
@@ -7409,9 +7579,12 @@ const useStore = create(
       },
 
       savePersonalityResults: (testId, traits) => {
-        const currentEv = get().ev || {};
+        const state = get();
+        const userKey = state.currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
+        const currentEv = state.ev || {};
         const tracking = currentEv.tracking || {};
-        const personality = tracking.personality || { results: {}, history: [] };
+        const globalPersonality = tracking.personality || {};
+        const userPersonality = globalPersonality[userKey] || { results: {}, history: [] };
         const today = new Date().toISOString();
 
         // Context-aware type determination
@@ -7429,27 +7602,30 @@ const useStore = create(
         }
 
         const newResults = {
-          ...personality.results,
+          ...userPersonality.results,
           [testId]: { traits, type, date: today }
         };
 
         const newHistoryItem = { testId, traits, type, date: today };
-        const newHistory = [newHistoryItem, ...(personality.history || [])].slice(0, 50);
+        const newHistory = [newHistoryItem, ...(userPersonality.history || [])].slice(0, 50);
 
-        const personalityData = { results: newResults, history: newHistory, lastUpdated: today };
+        const newGlobalPersonality = {
+          ...globalPersonality,
+          [userKey]: { results: newResults, history: newHistory, lastUpdated: today }
+        };
         
         set({
           ev: {
             ...currentEv,
             tracking: {
               ...tracking,
-              personality: personalityData
+              personality: newGlobalPersonality
             }
           }
         });
 
         // SYNC FIX: Persist personality results to Supabase
-        pushGenericToSupabase('ev_tracking', { id: 'personality', veri: personalityData });
+        pushGenericToSupabase('ev_tracking', { id: 'personality', veri: newGlobalPersonality });
       },
 
       updateTrackingRoutine: (updates) => {

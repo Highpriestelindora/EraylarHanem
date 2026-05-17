@@ -136,7 +136,7 @@ const Home = () => {
     }
 
     // ── 5. SAĞLIK: İlaç Stoğu ──
-    const lowMeds = (store.saglik?.ilaclar || []).filter(i => i.stok <= i.minStok);
+    const lowMeds = (store.saglik?.ilaclar || []).filter(i => i.stok !== -1 && i.stok <= i.minStok);
     if (lowMeds.length > 0) {
       cards.push({
         id: 'saglik-med', icon: '💊', text: `${lowMeds[0].ad} stoğu azalıyor`,

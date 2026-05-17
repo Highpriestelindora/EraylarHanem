@@ -216,8 +216,10 @@ export default function Ev() {
     const timer = setTimeout(() => {
       watchId = navigator.geolocation.watchPosition((pos) => {
         const { latitude, longitude } = pos.coords;
+        const currentUser = useStore.getState().currentUser;
+        const uKey = currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
         const currentEv = useStore.getState().ev;
-        const { home, work } = currentEv.tracking || {};
+        const { home, work } = currentEv.tracking?.[uKey] || currentEv.tracking || {};
         
         let currentZone = 'other';
         if (home && calculateDistance(latitude, longitude, home.lat, home.lng) * 1000 < (home.radius || 150)) {
@@ -267,7 +269,8 @@ export default function Ev() {
   }, [ev]);
 
   const [showTahlilSheet, setShowTahlilSheet] = useState(false);
-  const personalityData = ev.tracking?.personality || { results: {}, history: [] };
+  const userKey = currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
+  const personalityData = ev.tracking?.personality?.[userKey] || ev.tracking?.personality || { results: {}, history: [] };
   const resultsObj = personalityData.results || {};
   const storeState = useStore();
   const yektaQuote = useMemo(() => YEKTA_QUOTES[Math.floor(Math.random() * YEKTA_QUOTES.length)], []);
@@ -376,7 +379,7 @@ export default function Ev() {
         <LocationModal 
           isOpen={showLocationSettings}
           onClose={() => setShowLocationSettings(false)}
-          locations={ev.tracking}
+          locations={ev.tracking?.[userKey] || ev.tracking || {}}
         />
       )}
 
@@ -502,7 +505,7 @@ export default function Ev() {
                 <div className="tracking-setup mt-32 pt-24 mb-24 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <button 
-                      className={`btn-pill-v2 ${ev.tracking?.home?.lat ? 'fixed' : ''}`} 
+                      className={`btn-pill-v2 ${ev.tracking?.[userKey]?.home?.lat ? 'fixed' : ''}`} 
                       style={{ width: '100%', justifyContent: 'center' }}
                       onClick={() => {
                         const update = () => {
@@ -521,7 +524,7 @@ export default function Ev() {
                           });
                         };
 
-                        if (ev.tracking?.home?.lat) {
+                        if (ev.tracking?.[userKey]?.home?.lat) {
                           requestConfirm("Mevcut konumunu 'Evim' olarak güncellemek istiyor musun?", update);
                         } else {
                           update();
@@ -529,12 +532,12 @@ export default function Ev() {
                       }}
                     >
                       <Home size={14} />
-                      <span>{ev.tracking?.home?.lat ? 'Evi Güncelle' : 'Evi Set Et'}</span>
-                      {ev.tracking?.home?.lat && <div className="dot-active"></div>}
+                      <span>{ev.tracking?.[userKey]?.home?.lat ? 'Evi Güncelle' : 'Evi Set Et'}</span>
+                      {ev.tracking?.[userKey]?.home?.lat && <div className="dot-active"></div>}
                     </button>
 
                     <button 
-                      className={`btn-pill-v2 ${ev.tracking?.work?.lat ? 'fixed' : ''}`} 
+                      className={`btn-pill-v2 ${ev.tracking?.[userKey]?.work?.lat ? 'fixed' : ''}`} 
                       style={{ width: '100%', justifyContent: 'center' }}
                       onClick={() => {
                         const update = () => {
@@ -553,7 +556,7 @@ export default function Ev() {
                           });
                         };
 
-                        if (ev.tracking?.work?.lat) {
+                        if (ev.tracking?.[userKey]?.work?.lat) {
                           requestConfirm("Mevcut konumunu 'İşyerim' olarak güncellemek istiyor musun?", update);
                         } else {
                           update();
@@ -561,8 +564,8 @@ export default function Ev() {
                       }}
                     >
                       <Building size={14} />
-                      <span>{ev.tracking?.work?.lat ? 'İşi Güncelle' : 'İşi Set Et'}</span>
-                      {ev.tracking?.work?.lat && <div className="dot-active"></div>}
+                      <span>{ev.tracking?.[userKey]?.work?.lat ? 'İşi Güncelle' : 'İşi Set Et'}</span>
+                      {ev.tracking?.[userKey]?.work?.lat && <div className="dot-active"></div>}
                     </button>
                   </div>
 

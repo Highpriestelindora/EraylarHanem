@@ -9,8 +9,9 @@ import './PersonalityHub.css';
 
 export default function PersonalityHub() {
   const navigate = useNavigate();
-  const { ev } = useStore();
-  const personality = ev?.tracking?.personality || { results: {} };
+  const { ev, currentUser } = useStore();
+  const userKey = currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem';
+  const personality = ev?.tracking?.personality?.[userKey] || ev?.tracking?.personality || { results: {} };
 
   return (
     <AnimatedPage className="p-hub-page">

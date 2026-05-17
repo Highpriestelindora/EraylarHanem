@@ -100,38 +100,11 @@ const OzetTab = React.memo(({ finans, prv }) => {
 });
 
 const HarcamalarTab = React.memo(({ finans, prv }) => {
-  const [filter, setFilter] = useState('hepsi');
-  const ev = useStore(state => state.ev);
   const buAyHarcamalar = finans?.buAyHarcamalar || [];
-  
-  const rekuranslar = [
-    ...(ev?.abonelikler || []).map(a => ({ ...a, id: `abn-${a.id}`, title: a.name, gun: a.date, type: 'abn' })),
-    ...(ev?.duzenliOdemeler || []).map(d => ({ ...d, id: `duz-${d.id}`, title: d.name, gun: d.date, type: 'duz' }))
-  ];
-
-  const bugun = new Date();
-  const buAy = bugun.getMonth();
-  const buYil = bugun.getFullYear();
-
-  const { addHarcama, deleteHarcama, updateHarcama } = useStore();
+  const { deleteHarcama, updateHarcama } = useStore();
+  const [filter, setFilter] = useState('hepsi');
   const [editingHarcama, setEditingHarcama] = useState(null);
-  const [payingExpense, setPayingExpense] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const kartlar = useStore(state => state.finans?.kartlar || []);
-
-  const bulunanRekuranslar = rekuranslar.map(r => {
-    const gun = r.gun || parseInt((r.date || '').split('-')[2]) || 0;
-    const dueDate = new Date(buYil, buAy, gun);
-    const gecti = dueDate < bugun;
-    const buHafta = (dueDate - bugun) / 86400000 <= 7 && !gecti;
-    
-    // Gerçekten ödendi mi? (Harcamalarda var mı?)
-    const isPaid = buAyHarcamalar.some(h => 
-      h.baslik.toLowerCase().includes(r.title.toLowerCase())
-    );
-
-    return { ...r, gun, dueDate, gecti, buHafta, isPaid };
-  }).sort((a, b) => a.gun - b.gun);
 
   const kategoriler = ['hepsi', ...new Set(buAyHarcamalar.map(h => h.kategori).filter(Boolean))];
 
@@ -139,59 +112,33 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
     ? buAyHarcamalar
     : buAyHarcamalar.filter(h => h.kategori === filter);
 
+  // Group by date
+  const bugunStr = new Date().toISOString().split('T')[0];
+  const dunStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+  
+  const grouped = filtrelenmis.reduce((acc, h) => {
+    let group = 'Daha Eski';
+    if (h.tarih === bugunStr) group = 'Bugün';
+    else if (h.tarih === dunStr) group = 'Dün';
+    else if (new Date(h.tarih) > new Date(Date.now() - 7 * 86400000)) group = 'Bu Hafta';
+    else if (h.tarih) {
+      const d = new Date(h.tarih);
+      group = `${d.getDate()} ${AY_ADLARI[d.getMonth()]}`;
+    }
+    
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(h);
+    return acc;
+  }, {});
+
   return (
     <div className="f-tab-content animate-fadeIn">
-      {bulunanRekuranslar.length > 0 && (
-        <>
-          <div className="ozet-section-title">⏰ Bu Ay Gelmesi Beklenenler</div>
-          {bulunanRekuranslar.map(r => (
-            <div key={r.id} className={`rekurans-row glass ${r.isPaid ? 'paid' : r.gecti ? 'overdue' : r.buHafta ? 'bu-hafta' : ''}`}>
-              <div className="rr-left">
-                <span className="rr-icon">{r.icon || '📅'}</span>
-                <div>
-                  <strong>{r.title}</strong>
-                  <small>
-                    Her ayın {r.gun}'inde {r.isPaid ? '· ✅ Ödendi' : r.gecti ? '· ⌛ Günü Geçti' : r.buHafta ? '· Bu hafta!' : ''}
-                  </small>
-                </div>
-              </div>
-              <div className="rr-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span className="rr-amount">{fmt(r.amount, prv)}</span>
-                {!r.isPaid && (
-                  <button 
-                    className="rr-pay-btn" 
-                    onClick={() => {
-                      if (r.linkedCardId) {
-                        addHarcama({
-                          baslik: r.title,
-                          tutar: r.amount,
-                          kategori: r.type === 'abn' ? 'Abonelik' : 'Düzenli Ödeme',
-                          kart_id: r.linkedCardId,
-                          odenme_turu: 'kart',
-                          kaynak: 'Sistem',
-                          tarih: new Date().toISOString().split('T')[0]
-                        });
-                        toast.success(`${r.title} kart ile ödendi! 💳`);
-                      } else {
-                        setPayingExpense(r);
-                      }
-                    }}
-                  >
-                    ÖDE
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-        </>
-      )}
-
-      <div className="ozet-section-title" style={{ marginTop: '24px' }}>
+      <div className="ozet-section-title" style={{ marginTop: '0px' }}>
         📋 Bu Ayın Harcamaları
-        <span className="h-count">{filtrelenmis.length} kayıt</span>
+        <span className="h-count" style={{ float: 'right', fontSize: '12px', fontWeight: 'normal', color: '#64748b' }}>{filtrelenmis.length} kayıt</span>
       </div>
 
-      <div className="h-filter-scroll">
+      <div className="h-filter-scroll" style={{ paddingBottom: '12px' }}>
         {kategoriler.map(k => (
           <button key={k} className={`h-filter-btn ${filter === k ? 'active' : ''}`} onClick={() => setFilter(k)}>
             {k === 'hepsi' ? 'Tümü' : k}
@@ -200,25 +147,36 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
       </div>
 
       {filtrelenmis.length === 0 ? (
-        <div className="f-empty glass">
+        <div className="f-empty glass" style={{ marginTop: '20px' }}>
           <Calendar size={40} opacity={0.2} />
-          <p>Bu ay henüz harcama kaydı yok.</p>
-          <small>Sistem harcamaları otomatik eşleşir.</small>
+          <p>Harcama kaydı bulunamadı.</p>
         </div>
       ) : (
-        filtrelenmis.map(h => (
-          <div key={h.id} className="harcama-row glass">
-            <div className="hr-icon">{KAYNAK_ICONS[h.kaynak] || '💸'}</div>
-            <div className="hr-info">
-              <strong>{h.baslik}</strong>
-              <small>{h.tarih} · {h.kayit_eden} · {h.kart_id ? h.kart_id.split('-').pop() : (h.banka_id ? 'Havale' : 'Nakit')}</small>
+        Object.entries(grouped).map(([gName, items]) => (
+          <div key={gName} className="harcama-group" style={{ marginBottom: '24px' }}>
+            <div className="hg-title" style={{ fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '8px', paddingLeft: '4px' }}>
+              {gName}
             </div>
-            <div className="hr-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-              <span className="hr-amount">{fmt(h.tutar, prv)}</span>
-              <div className="hr-actions-mini" style={{ display: 'flex', gap: '8px' }}>
-                <button className="icon-btn-mini" onClick={() => setEditingHarcama(h)}><Edit size={12} /></button>
-                <button className="icon-btn-mini del" onClick={() => setDeletingId(h.id)}><Trash2 size={12} /></button>
-              </div>
+            <div className="hg-items" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {items.map(h => (
+                <div key={h.id} className="harcama-row glass" style={{ padding: '12px 16px', borderLeft: `4px solid ${h.odenme_turu === 'kart' ? '#3b82f6' : '#10b981'}` }}>
+                  <div className="hr-icon" style={{ background: 'transparent', width: 'auto', height: 'auto', fontSize: '20px' }}>{KAYNAK_ICONS[h.kaynak] || '💸'}</div>
+                  <div className="hr-info" style={{ flex: 1 }}>
+                    <strong style={{ fontSize: '15px', color: '#1e293b' }}>{h.baslik}</strong>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '2px' }}>
+                      <span style={{ fontSize: '10px', background: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>{h.kategori || 'Diğer'}</span>
+                      <small style={{ color: '#64748b' }}>· {h.kayit_eden} · {h.kart_id ? h.kart_id.split('-').pop() : (h.banka_id ? 'Havale' : 'Nakit')}</small>
+                    </div>
+                  </div>
+                  <div className="hr-right" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <span className="hr-amount" style={{ fontSize: '15px', fontWeight: 'bold' }}>{fmt(h.tutar, prv)}</span>
+                    <div className="hr-actions-mini" style={{ display: 'flex', gap: '8px' }}>
+                      <button className="icon-btn-mini" onClick={() => setEditingHarcama(h)}><Edit size={12} /></button>
+                      <button className="icon-btn-mini del" onClick={() => setDeletingId(h.id)}><Trash2 size={12} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         ))
@@ -232,63 +190,6 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
         />
       )}
 
-      {/* Payment Method Selection for Recurring */}
-      <ActionSheet 
-        isOpen={!!payingExpense} 
-        onClose={() => setPayingExpense(null)} 
-        title="Ödeme Yöntemi Seçin"
-      >
-        {payingExpense && (
-          <div className="payment-select-modal" style={{ padding: '20px' }}>
-            <p style={{ marginBottom: '15px', color: '#1e293b', fontSize: '14px' }}>
-              <strong>{payingExpense.title}</strong> için ödeme yöntemi belirleyin.
-            </p>
-            <div className="payment-options" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-               <button className="premium-submit-btn" style={{ background: '#10b981' }} onClick={() => {
-                 addHarcama({
-                    baslik: payingExpense.title,
-                    tutar: payingExpense.amount,
-                    kategori: payingExpense.type === 'abn' ? 'Abonelik' : 'Düzenli Ödeme',
-                    odenme_turu: 'nakit',
-                    kaynak: 'Sistem',
-                    tarih: new Date().toISOString().split('T')[0]
-                 });
-                 setPayingExpense(null);
-                 toast.success('Nakit ödeme olarak kaydedildi! 💵');
-               }}>
-                 💵 Nakit (Kasa)
-               </button>
-
-               <div style={{ textAlign: 'center', fontSize: '12px', color: '#64748b' }}>veya</div>
-
-               <select className="hub-input" style={{ width: '100%', padding: '12px' }} onChange={(e) => {
-                 const [type, id] = e.target.value.split('|');
-                 if (!id) return;
-                 addHarcama({
-                    baslik: payingExpense.title,
-                    tutar: payingExpense.amount,
-                    kategori: payingExpense.type === 'abn' ? 'Abonelik' : 'Düzenli Ödeme',
-                    odenme_turu: type,
-                    kart_id: type === 'kart' ? id : null,
-                    banka_id: type === 'havale' ? id : null,
-                    kaynak: 'Sistem',
-                    tarih: new Date().toISOString().split('T')[0]
-                 });
-                 setPayingExpense(null);
-                 toast.success(`${type === 'kart' ? 'Kart' : 'Havale'} ile ödeme kaydedildi! 🏦`);
-               }}>
-                 <option value="">Kart veya Banka Seçin...</option>
-                 <optgroup label="💳 Kredi Kartları">
-                    {kartlar.map(k => <option key={k.id} value={`kart|${k.id}`}>{k.name}</option>)}
-                 </optgroup>
-                 <optgroup label="🏦 Banka Havalesi">
-                    {(useStore.getState().kasa?.bankaHesaplari || []).map(b => <option key={b.id} value={`havale|${b.id}`}>{b.name}</option>)}
-                 </optgroup>
-               </select>
-            </div>
-          </div>
-        )}
-      </ActionSheet>
       <ConfirmModal 
         isOpen={!!deletingId}
         title="Harcamayı Sil"
@@ -321,6 +222,8 @@ const KrediTab = React.memo(({ finans, prv }) => {
   const [eksreInput, setEkstreInput] = useState('');
   const [editingKart, setEditingKart] = useState(null);
   const [deletingKartId, setDeletingKartId] = useState(null);
+  const [deletingOdemeId, setDeletingOdemeId] = useState(null);
+  const [editingOdeme, setEditingOdeme] = useState(null);
   const [showKartModal, setShowKartModal] = useState(false);
   const [showBorcModal, setShowBorcModal] = useState(false);
   const [payingCard, setPayingCard] = useState(null);
@@ -756,9 +659,19 @@ const KrediTab = React.memo(({ finans, prv }) => {
                     <span className="kog-ay">{o.ay}</span>
                     <span className="kog-turu">{o.turu === 'full' ? 'Tam' : o.turu === 'min' ? 'Asgari' : 'Kısmi'}</span>
                   </div>
-                  <div className="kog-right">
-                    <strong>{fmt(o.tutar, prv)}</strong>
-                    <small>{o.kaynak === 'nakit' ? '💵 Nakit' : '🏦 Havale'}</small>
+                  <div className="kog-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ textAlign: 'right', lineHeight: '1.2' }}>
+                      <strong>{fmt(o.tutar, prv)}</strong><br/>
+                      <small>{o.kaynak === 'nakit' ? '💵 Nakit' : '🏦 Havale'}</small>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <button className="icon-btn-mini" onClick={() => setEditingOdeme(o)}>
+                        <Edit size={12} />
+                      </button>
+                      <button className="icon-btn-mini del" onClick={() => setDeletingOdemeId(o.id)}>
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -805,6 +718,16 @@ const KrediTab = React.memo(({ finans, prv }) => {
       <BorcYonetimModal isOpen={showBorcModal} onClose={() => setShowBorcModal(false)} finans={finans} updateFinansData={updateFinansData} />
       <TaksitYonetimModal isOpen={showTaksitModal || !!editingTaksit} onClose={() => { setShowTaksitModal(false); setEditingTaksit(null); }} selectedKartId={selectedKartId} editingTaksit={editingTaksit} />
       <ConfirmModal isOpen={!!deletingKartId} title="Kartı Sil" message="Bu kredi kartını silmek istediğine emin misin?" onConfirm={() => { useStore.getState().deleteFinansKart(deletingKartId); toast.success('Kart silindi!'); setDeletingKartId(null); }} onCancel={() => setDeletingKartId(null)} confirmText="Evet, Sil" cancelText="Vazgeç" icon="🗑️" />
+      <ConfirmModal isOpen={!!deletingOdemeId} title="Ödemeyi Sil" message="Bu kart ödemesini silmek istediğine emin misin? Ödenen tutar ilgili kasaya iade edilecek ve kart borcu tekrar açılacaktır." onConfirm={() => { useStore.getState().deleteKartOdemesi(deletingOdemeId); setDeletingOdemeId(null); }} onCancel={() => setDeletingOdemeId(null)} confirmText="Evet, Sil" cancelText="Vazgeç" icon="🗑️" />
+      
+      {editingOdeme && (
+        <EditKartOdemeModal 
+          odeme={editingOdeme} 
+          onClose={() => setEditingOdeme(null)} 
+          kasa={kasa}
+          onSave={useStore.getState().updateKartOdemesi}
+        />
+      )}
     </div>
   );
 });
@@ -1457,3 +1380,84 @@ function TaksitYonetimModal({ isOpen, onClose, selectedKartId, editingTaksit }) 
     </ActionSheet>
   );
 }
+
+const EditKartOdemeModal = ({ odeme, onClose, onSave, kasa }) => {
+  const [tutar, setTutar] = useState(odeme?.tutar || '');
+  const [kaynak, setKaynak] = useState(odeme?.kaynak || 'havale');
+  const [bankaId, setBankaId] = useState(odeme?.banka_id || '');
+  const [tarih, setTarih] = useState(odeme?.tarih || new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    if (odeme) {
+      setTutar(odeme.tutar);
+      setKaynak(odeme.kaynak);
+      setBankaId(odeme.banka_id || '');
+      setTarih(odeme.tarih);
+    }
+  }, [odeme]);
+
+  const handleSave = async () => {
+    if (!tutar || Number(tutar) <= 0) return toast.error('Geçerli bir tutar girin');
+    if (kaynak === 'havale' && !bankaId) return toast.error('Banka hesabı seçmelisiniz');
+    
+    await onSave(odeme.id, {
+      tutar: Number(tutar),
+      kaynak,
+      banka_id: kaynak === 'havale' ? bankaId : null,
+      tarih
+    });
+    onClose();
+  };
+
+  return (
+    <ActionSheet isOpen={!!odeme} onClose={onClose} title="✏️ Ödemeyi Düzenle">
+      <div className="modal-body" style={{ padding: '20px' }}>
+        <div className="modal-form">
+          <div className="form-group">
+            <label>Tutar (₺)</label>
+            <input type="number" value={tutar} onChange={e => setTutar(e.target.value)} placeholder="0" />
+          </div>
+
+          <div className="form-group">
+            <label>Tarih</label>
+            <input type="date" value={tarih} onChange={e => setTarih(e.target.value)} />
+          </div>
+
+          <div className="form-group">
+            <label>Ödeme Kaynağı</label>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <button 
+                type="button"
+                className={`kop-kaynak-btn ${kaynak === 'nakit' ? 'active' : ''}`} 
+                style={{ flex: 1 }} 
+                onClick={() => setKaynak('nakit')}
+              >
+                💵 Nakit
+              </button>
+              <button 
+                type="button"
+                className={`kop-kaynak-btn ${kaynak === 'havale' ? 'active' : ''}`} 
+                style={{ flex: 1 }} 
+                onClick={() => setKaynak('havale')}
+              >
+                🏦 Havale
+              </button>
+            </div>
+            {kaynak === 'havale' && (
+              <select value={bankaId} onChange={e => setBankaId(e.target.value)}>
+                <option value="">Banka seçin...</option>
+                {(kasa?.bankaHesaplari || []).map(b => (
+                  <option key={b.id} value={b.id}>{b.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        </div>
+
+        <button className="submit-btn" style={{ background: '#3b82f6', marginTop: '20px' }} onClick={handleSave}>
+          Kaydet
+        </button>
+      </div>
+    </ActionSheet>
+  );
+};

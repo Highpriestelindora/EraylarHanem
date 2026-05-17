@@ -4,18 +4,20 @@ import { Pill, Trash2, Plus, Bell, History as HistoryIcon, Clock, Package, Alert
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 import ActionSheet from '../../components/ActionSheet';
+import ConfirmModal from '../../components/ConfirmModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ShoppingCart, Activity, CheckCircle } from 'lucide-react';
 
 const MedicineTab = () => {
   const { 
     saglik, setModuleData, takeMedicine, 
-    addMedicine, updateMedicine, deleteMedicine,
+    addMedicine, updateMedicine, archiveMedicine,
     fetchGroup2Data 
   } = useStore();
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
   const [form, setForm] = useState({ 
     kisi: 'Görkem', ad: '', dozaj: '', siklik: 'Günde 1', 
     stok: 30, minStok: 5,
@@ -26,7 +28,7 @@ const MedicineTab = () => {
     fetchGroup2Data();
   }, []);
 
-  const medicines = saglik.ilaclar || [];
+  const medicines = (saglik.ilaclar || []).filter(m => m.stok !== -1);
   const logs = saglik.logs || [];
 
   const getLocalDate = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -195,8 +197,15 @@ const MedicineTab = () => {
   };
 
   const handleDelete = (id) => {
-    deleteMedicine(id);
-    toast.success('İlaç silindi.');
+    setDeletingId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deletingId) {
+      archiveMedicine(deletingId);
+      toast.success('İlaç kullanımdan kaldırıldı. Eski kayıtları korundu.');
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -449,6 +458,16 @@ const MedicineTab = () => {
         </div>
       </ActionSheet>
 
+      <ConfirmModal 
+        isOpen={!!deletingId}
+        title="İlacı Arşivle"
+        message="Bu ilacı aktif takipten kaldırmak istediğine emin misin? İlaç listeden silinir ancak geçmiş kullanım kayıtları (loglar) korunur."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingId(null)}
+        confirmText="Evet, Kaldır"
+        cancelText="Vazgeç"
+        icon="🗑️"
+      />
     </div>
   );
 };
