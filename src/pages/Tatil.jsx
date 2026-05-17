@@ -6,7 +6,7 @@ import Portal from '../components/Portal';
 import { 
   Plane, Map, ShieldCheck, Star, 
   Plus, Trash2, Calendar, MapPin, 
-  Hotel, Wallet, CheckSquare, Cloud, Sun, CloudRain, CloudSnow, CloudLightning,
+  Hotel, Wallet, CheckSquare, Square, Trash, Cloud, Sun, CloudRain, CloudSnow, CloudLightning,
   ArrowRight, AlertCircle, Info, Timer, X, ArrowLeft,
   PlusCircle, ChevronRight, ExternalLink, Moon,
   ChevronUp, ChevronDown,
@@ -1465,18 +1465,10 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
                   <WeatherWidget city={trip.city} country={trip.country} startDate={trip.startDate} endDate={trip.endDate} />
                 </div>
 
-                <div className="premium-notes-container mt-15 animate-fadeIn">
-                  <div className="notes-header">
-                    <Edit3 size={18} />
-                    <h3>Genel Notlar</h3>
-                  </div>
-                  <textarea 
-                    className="notes-textarea-premium" 
-                    value={trip.notes || ''} 
-                    placeholder="Gidilecek yerler, yemek listesi vb..."
-                    onChange={e => handleUpdateTrip({ notes: e.target.value })} 
-                  />
-                </div>
+                <TravelChecklist 
+                  notes={trip.notes} 
+                  onChange={(val) => handleUpdateTrip({ notes: val })} 
+                />
               </>
             )}
           </div>
@@ -1505,6 +1497,100 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
           toast.success('Harcama kaydedildi! 💸'); 
         }} />
       </ActionSheet>
+    </div>
+  );
+}
+
+function TravelChecklist({ notes, onChange }) {
+  const [newText, setNewText] = useState('');
+  const todos = useMemo(() => {
+    if (!notes) return [];
+    try {
+      if (notes.trim().startsWith('[')) {
+        return JSON.parse(notes);
+      }
+    } catch (e) {}
+    return notes
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => ({ text: line, done: false }));
+  }, [notes]);
+
+  const saveTodos = (newList) => {
+    onChange(JSON.stringify(newList));
+  };
+
+  const handleAdd = () => {
+    if (!newText.trim()) return;
+    const newList = [...todos, { text: newText.trim(), done: false }];
+    saveTodos(newList);
+    setNewText('');
+  };
+
+  const handleToggle = (index) => {
+    const newList = todos.map((todo, idx) => 
+      idx === index ? { ...todo, done: !todo.done } : todo
+    );
+    saveTodos(newList);
+  };
+
+  const handleDelete = (index) => {
+    const newList = todos.filter((_, idx) => idx !== index);
+    saveTodos(newList);
+  };
+
+  return (
+    <div className="premium-notes-container mt-15 animate-fadeIn">
+      <div className="notes-header">
+        <CheckSquare size={18} style={{ color: '#0ea5e9' }} />
+        <h3>Yapılacaklar & Gezi Listesi</h3>
+      </div>
+      
+      {/* Input Row */}
+      <div className="todo-input-row">
+        <input 
+          type="text" 
+          value={newText} 
+          onChange={e => setNewText(e.target.value)} 
+          placeholder="Yeni yapılacak veya görülecek bir yer ekle..."
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              handleAdd();
+            }
+          }}
+        />
+        <button onClick={handleAdd} className="todo-add-btn">
+          <Plus size={16} />
+        </button>
+      </div>
+
+      {/* Todo List */}
+      <div className="todo-items-list">
+        {todos.length === 0 ? (
+          <div className="todo-empty-state">
+            📝 Henüz yapılacak bir yer eklemediniz.
+          </div>
+        ) : (
+          todos.map((todo, index) => (
+            <div key={index} className={`todo-item-row ${todo.done ? 'completed' : ''}`}>
+              <button className="todo-checkbox" onClick={() => handleToggle(index)}>
+                {todo.done ? (
+                  <CheckSquare size={16} className="chk-active" />
+                ) : (
+                  <Square size={16} className="chk-inactive" />
+                )}
+              </button>
+              <span className="todo-text" onClick={() => handleToggle(index)}>
+                {todo.text}
+              </span>
+              <button className="todo-delete-btn" onClick={() => handleDelete(index)}>
+                <Trash size={14} />
+              </button>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

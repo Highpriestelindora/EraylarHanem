@@ -6349,3 +6349,137 @@
   border: 1px solid rgba(249, 115, 22, 0.15);
 }
 
+/* Premium Travel Checklist Styles */
+.todo-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  margin-top: 10px;
+}
+
+.todo-input-row input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  outline: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.todo-input-row input:focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.todo-add-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.todo-add-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.todo-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.todo-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(241, 245, 249, 0.8);
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.todo-item-row:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateX(2px);
+}
+
+.todo-item-row.completed {
+  opacity: 0.5;
+}
+
+.todo-item-row.completed .todo-text {
+  text-decoration: line-through;
+  color: #64748b;
+}
+
+.todo-checkbox {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.todo-checkbox .chk-active {
+  color: #10b981;
+}
+
+.todo-checkbox:hover {
+  color: #3b82f6;
+}
+
+.todo-text {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+}
+
+.todo-delete-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.todo-delete-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.todo-empty-state {
+  text-align: center;
+  font-size: 11px;
+  color: #94a3b8;
+  padding: 20px 0;
+  font-weight: 500;
+}
+
