@@ -7802,10 +7802,12 @@ const useStore = create(
 
       addFuelLog: (log, paymentInfo = null) => {
         const state = get();
-        const vehicle = state.garaj.find(v => v.id === state.selectedVehicleId);
+        const targetId = state.selectedVehicleId || (state.garaj[0]?.id) || 'v1';
+        const vehicle = state.garaj.find(v => v.id === targetId) || state.garaj[0];
         if (!vehicle) return;
 
-        const lastLog = vehicle.fuelLogs[0];
+        const fuelLogsList = vehicle.fuelLogs || [];
+        const lastLog = fuelLogsList[0];
         let consumption = 0;
         if (lastLog) {
           const kmDiff = log.km - lastLog.km;
@@ -7821,11 +7823,11 @@ const useStore = create(
         };
 
         const updatedGaraj = state.garaj.map(v =>
-          v.id === state.selectedVehicleId
+          v.id === vehicle.id
             ? {
               ...v,
               km: Math.max(v.km, Number(log.km)),
-              fuelLogs: [newLog, ...v.fuelLogs].slice(0, 50)
+              fuelLogs: [newLog, ...(v.fuelLogs || [])].slice(0, 50)
             }
             : v
         );
@@ -7841,22 +7843,22 @@ const useStore = create(
           ...(paymentInfo ? { defaultPay: paymentInfo } : {})
         });
 
-
-        pushGarajYakitToSupabase(newLog, state.selectedVehicleId);
+        pushGarajYakitToSupabase(newLog, vehicle.id);
       },
 
       addServiceRecord: (record, paymentInfo = null) => {
         const state = get();
-        const vehicle = state.garaj.find(v => v.id === state.selectedVehicleId);
+        const targetId = state.selectedVehicleId || (state.garaj[0]?.id) || 'v1';
+        const vehicle = state.garaj.find(v => v.id === targetId) || state.garaj[0];
         if (!vehicle) return;
 
         const newRecord = { id: Date.now(), ...record };
         const updatedGaraj = state.garaj.map(v =>
-          v.id === state.selectedVehicleId
+          v.id === vehicle.id
             ? {
               ...v,
               km: Math.max(v.km, Number(record.km)),
-              services: [newRecord, ...v.services]
+              services: [newRecord, ...(v.services || [])]
             }
             : v
         );
@@ -7872,8 +7874,7 @@ const useStore = create(
           ...(paymentInfo ? { defaultPay: paymentInfo } : {})
         });
 
-
-        pushGarajServisToSupabase(newRecord, state.selectedVehicleId);
+        pushGarajServisToSupabase(newRecord, vehicle.id);
       },
 
       addVehicle: (vehicle) => {

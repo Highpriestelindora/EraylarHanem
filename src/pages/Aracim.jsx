@@ -705,7 +705,7 @@ function FuelLogModal({ onClose, onSave, currentKM, log = null }) {
           <div className="form-grid-v2">
              <div className="form-group-v2">
                <label>KM</label>
-               <input type="number" value={form.km} onChange={e => setForm({...form, km: Number(e.target.value)})} className="premium-input" />
+               <input type="number" value={form.km} onChange={e => setForm({...form, km: e.target.value})} className="premium-input" />
              </div>
              <div className="form-group-v2">
                <label>Litre (L)</label>
