@@ -93,10 +93,27 @@ const extractTextFromImage = async (file) => {
   }
 };
 
+const cleanOcrNoise = (str) => {
+  if (!str) return '';
+  return str
+    .replace(/\bW\s*!\s*en\b/gi, 'Wien')
+    .replace(/\bW\s*!\s*in\b/gi, 'Wien')
+    .replace(/\bW!en\b/gi, 'Wien')
+    .replace(/\bW!in\b/gi, 'Wien')
+    .replace(/\bV\s*!\s*yana\b/gi, 'Viyana')
+    .replace(/\bV!yana\b/gi, 'Viyana')
+    .replace(/\bE\s*!\s*ngang\b/gi, 'Eingang')
+    .replace(/\bE!ngang\b/gi, 'Eingang')
+    .replace(/\s*!\s*/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
 const parseFlightsSmart = (text, tripContext = {}) => {
-  // Normalize spacing and capitalize for search
-  const cleanText = text.toUpperCase().replace(/\s+/g, ' ');
-  const cleanTextRaw = text.replace(/\s+/g, ' ');
+  // Clean raw OCR text from any noise first
+  const cleanedText = cleanOcrNoise(text);
+  const cleanText = cleanedText.toUpperCase().replace(/\s+/g, ' ');
+  const cleanTextRaw = cleanedText.replace(/\s+/g, ' ');
 
   // 1. Blacklists to avoid false positive date and word matches
   const MONTHS_BLACKLIST = [
@@ -220,7 +237,9 @@ const parseExtractedText = (text, type, tripContext = {}) => {
     };
   }
 
-  const cleanText = text.replace(/\s+/g, ' ');
+  // Clean raw OCR text from Viyana & Wien noise first!
+  const cleanedTextRaw = cleanOcrNoise(text);
+  const cleanText = cleanedTextRaw.replace(/\s+/g, ' ');
   const results = {};
 
   if (type === 'hotel') {
@@ -247,23 +266,11 @@ const parseExtractedText = (text, type, tripContext = {}) => {
         .replace(/:/g, '')
         .trim();
         
-      const words = beforeAddress.split(' ').filter(w => w.length > 0);
-      const hotelKeywords = ['HOTEL', 'OTEL', 'EUROPA', 'TREND', 'AUSTRIA', 'RESORT', 'SUITES', 'APARTMENTS', 'INN', 'BOUTIQUE', 'PALACE'];
+      // Clean up any leading numbers or punctuation from the beginning
+      beforeAddress = beforeAddress.replace(/^[^A-Z]+/, '').trim();
       
-      let hotelStartIndex = -1;
-      for (let i = words.length - 1; i >= 0; i--) {
-        if (hotelKeywords.includes(words[i])) {
-          hotelStartIndex = i;
-          // Go back up to 2 words to capture full brand name like "Austria Trend"
-          hotelStartIndex = Math.max(0, hotelStartIndex - 2);
-          break;
-        }
-      }
-      
-      if (hotelStartIndex !== -1) {
-        hotelName = words.slice(hotelStartIndex).join(' ');
-      } else if (words.length > 0) {
-        hotelName = words.slice(-5).join(' ');
+      if (beforeAddress.length > 5) {
+        hotelName = beforeAddress;
       }
     }
     
@@ -285,7 +292,8 @@ const parseExtractedText = (text, type, tripContext = {}) => {
     if (hotelName) {
       results.hotel = hotelName
         .toLowerCase()
-        .replace(/\b[a-zöçşığü]/g, (letter) => letter.toUpperCase());
+        .replace(/\b[a-zöçşığü]/g, (letter) => letter.toUpperCase())
+        .trim();
     } else {
       results.hotel = tripContext.city ? `${tripContext.city} Boutique Hotel` : 'Butik Otel';
     }
@@ -338,9 +346,9 @@ const getFallbackData = (type, tripContext = {}) => {
       pnr: isViyana ? '1TG17K' : 'TKX902',
       airline: isViyana ? 'Pegasus' : 'Turkish Airlines',
       airport: isViyana ? 'VIE' : 'IST',
-      terminal: '2',
-      gate: '204B',
-      delay: 'Zamanında'
+      terminal: '',
+      gate: '',
+      delay: ''
     };
   } else {
     return {
@@ -1543,9 +1551,9 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
           time: depTime,
           airline: parsed.airline || 'Pegasus',
           airport: 'VIE',
-          gate: '204B',
-          terminal: 'Ana',
-          delay: 'Zamanında'
+          gate: '',
+          terminal: '',
+          delay: ''
         };
 
         setDepForm(depFlightData);
@@ -1565,9 +1573,9 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
             time: retTime,
             airline: parsed.airline || 'Pegasus',
             airport: 'SAW',
-            gate: 'C31',
-            terminal: '1A',
-            delay: 'Zamanında'
+            gate: '',
+            terminal: '',
+            delay: ''
           };
           setRetForm(retFlightData);
           updates.transportation.return = retFlightData;
@@ -1603,7 +1611,7 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
 
       if (section === 'flight_global') {
         const depFlightData = getFallbackData('flight', trip);
-        const retFlightData = { ...getFallbackData('flight', trip), flightNo: 'PC902', time: '19:40', pnr: 'VIE2026', gate: 'C31', airport: 'VIE' };
+        const retFlightData = { ...getFallbackData('flight', trip), flightNo: 'PC902', time: '19:40', pnr: 'VIE2026', gate: '', terminal: '', delay: '', airport: 'VIE' };
         
         setDepForm(depFlightData);
         setRetForm(retFlightData);
