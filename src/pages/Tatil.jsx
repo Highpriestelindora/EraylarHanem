@@ -1519,9 +1519,28 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
   const [accForm, setAccForm] = useState(trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' });
 
   useEffect(() => {
-    setDepForm(trip.transportation?.departure || { flightNo: '', airline: '', pnr: '', time: '', arrivalTime: '', fromAirport: 'SAW', toAirport: 'VIE', gate: '', terminal: '', delay: '', status: 'Planlandı' });
-    setRetForm(trip.transportation?.return || { flightNo: '', airline: '', pnr: '', time: '', arrivalTime: '', fromAirport: 'VIE', toAirport: 'SAW', gate: '', terminal: '', delay: '', status: 'Planlandı' });
-    setAccForm(trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' });
+    const rawDep = trip.transportation?.departure || { flightNo: '', airline: '', pnr: '', time: '', arrivalTime: '', fromAirport: 'SAW', toAirport: 'VIE', gate: '', terminal: '', delay: '', status: 'Planlandı' };
+    const rawRet = trip.transportation?.return || { flightNo: '', airline: '', pnr: '', time: '', arrivalTime: '', fromAirport: 'VIE', toAirport: 'SAW', gate: '', terminal: '', delay: '', status: 'Planlandı' };
+    const rawAcc = trip.accommodation || { hotel: '', address: '', bookingId: '', link: '' };
+
+    const cleanedHotel = cleanOcrNoise(rawAcc.hotel || '');
+    const cleanedAddress = cleanOcrNoise(rawAcc.address || '');
+
+    setDepForm(rawDep);
+    setRetForm(rawRet);
+
+    if (cleanedHotel !== rawAcc.hotel || cleanedAddress !== rawAcc.address) {
+      const fixedAcc = { ...rawAcc, hotel: cleanedHotel, address: cleanedAddress };
+      setAccForm(fixedAcc);
+      setTimeout(() => {
+        onUpdate({
+          ...trip,
+          accommodation: fixedAcc
+        });
+      }, 100);
+    } else {
+      setAccForm(rawAcc);
+    }
   }, [trip]);
 
   const handleSave = (section) => {
