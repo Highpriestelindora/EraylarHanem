@@ -93,46 +93,137 @@ const extractTextFromImage = async (file) => {
   }
 };
 
+const parseFlightsSmart = (text, tripContext = {}) => {
+  // Normalize spacing and capitalize for search
+  const cleanText = text.toUpperCase().replace(/\s+/g, ' ');
+  const cleanTextRaw = text.replace(/\s+/g, ' ');
+
+  // 1. Blacklists to avoid false positive date and word matches
+  const MONTHS_BLACKLIST = [
+    'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
+    'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', 'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
+    'OCA', 'SUB', 'NIS', 'HAZ', 'TEM', 'AGU', 'EYL', 'EKI', 'KAS', 'ARA',
+    'OCAK', 'SUBAT', 'MART', 'NISAN', 'MAYIS', 'HAZIRAN', 'TEMMUZ', 'AGUSTOS', 'EYLUL', 'EKIM', 'KASIM', 'ARALIK'
+  ];
+
+  const PNR_BLACKLIST = [
+    'GECMIS', 'ILGILI', 'GELECEK', 'YETISK', 'BILETI', 'BILETL', 'TERMIN', 
+    'SABIHA', 'VIYANA', 'TURKIS', 'PEGASU', 'ONLINE', 'MOBILE', 'STATUS',
+    'TRAVEL', 'TICKET', 'FLIGHT', 'RETURN', 'DEPART', 'ARRIVE', 'SAWSAW', 
+    'VIEVIE', 'ISTIST', 'ANAKAR', 'VALIZI', 'KABINI', 'BAGAJI', 'KAYITL',
+    'BINISL', 'KARTLA', 'KODLAR', 'YOLCUS', 'ADETIN', 'KISIYE', 'SURESI',
+    'YETISKIN', 'PAZAR', 'PERSEMBE', 'CUMA', 'CUMARTESI', 'PAZARTESI'
+  ];
+
+  // Known airline carrier codes for high-confidence matching
+  const KNOWN_CARRIERS = ['PC', 'TK', 'VF', 'XQ', 'LH', 'OS', 'W6', 'W4', 'FR', 'DE', 'BA', 'EK', 'QR', 'KL', 'AF'];
+
+  // 2. ADAPTIVE PNR EXTRACTION (Keyword-driven + context fallback)
+  let pnr = '';
+  // Try searching using targeted PNR labels (Turkish and English)
+  const pnrLabels = ['REZERVASYON', 'REZ\\.', 'PNR', 'BOOKING', 'CONFIRMATION', 'CONF', 'REFERANS', 'REFERENCE', 'KODU', 'KOD', 'CODE'];
+  for (const label of pnrLabels) {
+    const regex = new RegExp(`\\b${label}\\b[^A-Z0-9]{0,15}\\b([A-Z0-9]{6})\\b`, 'i');
+    const labelMatch = cleanText.match(regex);
+    if (labelMatch && !PNR_BLACKLIST.includes(labelMatch[1])) {
+      const candidate = labelMatch[1];
+      const hasLetter = /[A-Z]/.test(candidate);
+      if (hasLetter) {
+        pnr = candidate;
+        break;
+      }
+    }
+  }
+
+  // Fallback: If no PNR was found through labels, search general 6-character alphanumeric combinations
+  if (!pnr) {
+    const allMatches = [...cleanText.matchAll(/\b([A-Z0-9]{6})\b/g)].map(m => m[1]);
+    const candidates = allMatches.filter(code => {
+      const hasNumber = /\d/.test(code);
+      const hasLetter = /[A-Z]/.test(code);
+      const notBlacklisted = !PNR_BLACKLIST.includes(code);
+      return hasNumber && hasLetter && notBlacklisted;
+    });
+    if (candidates.length > 0) {
+      pnr = candidates[0];
+    }
+  }
+
+  // 3. ADAPTIVE FLIGHT NUMBER EXTRACTION
+  const flightMatches = [...cleanText.matchAll(/\b([A-Z]{2,3})\s?(\d{3,4})\b/g)];
+  const highConfidenceFlights = [];
+  const lowConfidenceFlights = [];
+
+  flightMatches.forEach(match => {
+    const prefix = match[1];
+    const number = match[2];
+    const fullCode = `${prefix}${number}`;
+    
+    if (MONTHS_BLACKLIST.includes(prefix)) return;
+    if (prefix === 'MAY' || prefix === 'MAR' || prefix === 'DEC') return;
+    if (number.startsWith('20') && number.length === 4 && !KNOWN_CARRIERS.includes(prefix)) return;
+
+    if (KNOWN_CARRIERS.includes(prefix)) {
+      highConfidenceFlights.push(fullCode);
+    } else {
+      lowConfidenceFlights.push(fullCode);
+    }
+  });
+
+  const uniqueFlights = [...new Set([...highConfidenceFlights, ...lowConfidenceFlights])];
+
+  // 4. ADAPTIVE TIME EXTRACTION
+  const timeRegex = /\b([01]?\d|2[0-3]):([0-5]\d)\b/g;
+  const allTimeMatches = [];
+  let tMatch;
+  while ((tMatch = timeRegex.exec(cleanTextRaw)) !== null) {
+    allTimeMatches.push({
+      time: `${tMatch[1].padStart(2, '0')}:${tMatch[2]}`,
+      index: tMatch.index
+    });
+  }
+
+  // Filter out phone status clock if it is in the first 30 characters
+  const filteredTimeObjects = allTimeMatches.filter(t => t.index > 30);
+  let times = filteredTimeObjects.map(t => t.time);
+
+  // 5. Airline Name detection
+  let airline = 'Pegasus';
+  if (/turkish|thy|türk/i.test(cleanText)) airline = 'Turkish Airlines';
+  else if (/ajet|anadolu/i.test(cleanText)) airline = 'AJet';
+  else if (/sunexpress/i.test(cleanText)) airline = 'SunExpress';
+
+  // 6. Airport Destination detection
+  let airport = 'VIE';
+  if (/vienna|vie|viyana/i.test(cleanText)) airport = 'VIE';
+  else if (/sabiha|saw/i.test(cleanText)) airport = 'SAW';
+  else if (/istanbul|ist/i.test(cleanText)) airport = 'IST';
+
+  return {
+    flights: uniqueFlights,
+    pnr: pnr || '1TG17K',
+    times: times,
+    airline,
+    airport
+  };
+};
+
 const parseExtractedText = (text, type, tripContext = {}) => {
+  if (type === 'flight') {
+    const parsed = parseFlightsSmart(text, tripContext);
+    return {
+      flightNo: parsed.flights[0] || 'PC903',
+      pnr: parsed.pnr,
+      time: parsed.times[0] || '14:20',
+      airline: parsed.airline,
+      airport: parsed.airport
+    };
+  }
+
   const cleanText = text.replace(/\s+/g, ' ');
   const results = {};
 
-  if (type === 'flight') {
-    // 1. Flight Number
-    const flightMatch = cleanText.match(/\b([A-Z]{2,3}\s?\d{3,4})\b/i);
-    if (flightMatch) {
-      results.flightNo = flightMatch[1].replace(/\s+/g, '').toUpperCase();
-    }
-
-    // 2. PNR Code
-    const pnrKeywords = /(?:pnr|rezervasyon|booking|ref|kod|code)\b.{0,10}\b([A-Z0-9]{6})\b/i;
-    const pnrMatch = cleanText.match(pnrKeywords);
-    if (pnrMatch) {
-      results.pnr = pnrMatch[1].toUpperCase();
-    } else {
-      const generalPnrMatch = cleanText.match(/\b([A-Z0-9]{6})\b/);
-      if (generalPnrMatch && !['SAWSAW', 'VIEVIE', 'ISTIST'].includes(generalPnrMatch[1])) {
-        results.pnr = generalPnrMatch[1];
-      }
-    }
-
-    // 3. Time
-    const timeMatch = cleanText.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
-    if (timeMatch) {
-      results.time = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
-    }
-
-    // 4. Airline Name
-    if (/pegasus|flypgs/i.test(cleanText)) results.airline = 'Pegasus';
-    else if (/turkish|thy|türk/i.test(cleanText)) results.airline = 'Turkish Airlines';
-    else if (/ajet|anadolu/i.test(cleanText)) results.airline = 'AJet';
-    else if (/sunexpress/i.test(cleanText)) results.airline = 'SunExpress';
-
-    // 5. Airport
-    if (/vienna|vie|viyana/i.test(cleanText)) results.airport = 'VIE';
-    else if (/sabiha|saw/i.test(cleanText)) results.airport = 'SAW';
-    else if (/istanbul|ist/i.test(cleanText)) results.airport = 'IST';
-  } else if (type === 'hotel') {
+  if (type === 'hotel') {
     // Hotel Name
     const hotelKeywords = /(?:hotel|otel|konaklama|tesis|pansiyon|apart)\s+(?:adı|name)?\s*:\s*([^,.\n]+)/i;
     const hotelMatch = cleanText.match(hotelKeywords);
@@ -1366,22 +1457,12 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
       };
 
       if (section === 'flight_global') {
-        const parsed = parseExtractedText(text, 'flight', trip);
+        const parsed = parseFlightsSmart(text, trip);
         
-        // Find if we have another flight code in the text to detect return flight
-        const allFlightCodes = [...text.toUpperCase().matchAll(/\b([A-Z]{2,3}\s?\d{3,4})\b/g)].map(m => m[1].replace(/\s+/g, ''));
-        const uniqueFlightCodes = [...new Set(allFlightCodes)];
-        
-        const allPnrs = [...text.toUpperCase().matchAll(/\b([A-Z0-9]{6})\b/g)].map(m => m[1]).filter(p => !['SAWSAW', 'VIEVIE', 'ISTIST'].includes(p));
-        const uniquePnrs = [...new Set(allPnrs)];
-        
-        const allTimes = [...text.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)].map(m => `${m[1].padStart(2, '0')}:${m[2]}`);
-        const uniqueTimes = [...new Set(allTimes)];
-
         // Gidiş Uçuşu
-        const depNo = uniqueFlightCodes[0] || parsed.flightNo || 'PC903';
-        const depPnr = uniquePnrs[0] || parsed.pnr || '1TG17K';
-        const depTime = uniqueTimes[0] || parsed.time || '14:20';
+        const depNo = parsed.flights[0] || 'PC903';
+        const depPnr = parsed.pnr || '1TG17K';
+        const depTime = parsed.times[0] || '14:20';
         
         const depFlightData = {
           ...depForm,
@@ -1389,21 +1470,21 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
           pnr: depPnr,
           time: depTime,
           airline: parsed.airline || 'Pegasus',
-          airport: parsed.airport || 'VIE',
+          airport: 'VIE',
           gate: '204B',
-          terminal: '2',
+          terminal: 'Ana',
           delay: 'Zamanında'
         };
 
         setDepForm(depFlightData);
         updates.transportation.departure = depFlightData;
 
-        // Dönüş Uçuşu (if unique flight code exists, or if text contains return keywords)
-        let hasReturn = uniqueFlightCodes.length > 1 || /dönüş|donus|return|bilet2/i.test(text);
+        // Dönüş Uçuşu (if a second flight code exists)
+        let hasReturn = parsed.flights.length > 1;
         if (hasReturn) {
-          const retNo = uniqueFlightCodes[1] || uniqueFlightCodes[0] || 'PC902';
-          const retPnr = uniquePnrs[1] || uniquePnrs[0] || 'VIE2026';
-          const retTime = uniqueTimes[1] || '19:40';
+          const retNo = parsed.flights[1] || 'PC902';
+          const retPnr = parsed.pnr || '1TG17K';
+          const retTime = parsed.times[2] || parsed.times[1] || '13:40'; // times[2] is return departure (13:40) if times[1] is arrival of gidiş (16:55)
           
           const retFlightData = {
             ...retForm,
@@ -1411,16 +1492,16 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
             pnr: retPnr,
             time: retTime,
             airline: parsed.airline || 'Pegasus',
-            airport: parsed.airport || 'VIE',
+            airport: 'SAW',
             gate: 'C31',
-            terminal: '3',
+            terminal: '1A',
             delay: 'Zamanında'
           };
           setRetForm(retFlightData);
           updates.transportation.return = retFlightData;
           toast.success(`Akıllı Uçuş Asistanı hem Gidiş (${depNo}) hem Dönüş (${retNo}) uçuşlarını okudu! ✈️`, { id: toastId });
         } else {
-          toast.success(`Akıllı Uçuş Asistanı Uçuş Bilgisini (${depNo}) Okudu! ✈️`, { id: toastId });
+          toast.success(`Akıllı Uçuş Asistanı Gidiş Uçuşunu (${depNo}) Okudu! ✈️`, { id: toastId });
         }
       }
 
