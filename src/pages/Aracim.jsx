@@ -349,16 +349,25 @@ export default function Aracim() {
                <div className="section-header-v2">
                 <h3>⛽ Yakıt Geçmişi</h3>
               </div>
-              {fuelLogs.map(l => (
+              {[...fuelLogs].sort((a, b) => {
+                const dateA = a.date || '';
+                const dateB = b.date || '';
+                if (dateA !== dateB) return dateB.localeCompare(dateA);
+                return (b.km || 0) - (a.km || 0);
+              }).map(l => (
                 <div key={l.id} className="fuel-item-premium glass">
                   <div className="fip-left">
-                    <div className="fip-station">{l.station}</div>
-                    <small>{l.date} · {l.km.toLocaleString()} KM</small>
+                    <div className="fip-station">{l.station || 'Diğer'}</div>
+                    <small>{l.date ? new Date(l.date).toLocaleDateString('tr-TR') : ''} · {l.km?.toLocaleString()} KM</small>
                   </div>
                   <div className="fip-right-actions">
                     <div className="fip-stats">
-                      <div className="fip-cons">{l.consumption} L</div>
-                      <div className="fip-cost">{formatMoney(l.amount * l.price)}</div>
+                      <div className="fip-cons" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px', textAlign: 'right' }}>
+                        {l.amount || l.litre || 0} L {l.price ? `(₺${Number(l.price).toFixed(2)}/L)` : ''}
+                      </div>
+                      <div className="fip-cost" style={{ fontSize: '14px', fontWeight: '800', color: '#f87171' }}>
+                        {formatMoney(l.tutar || l.totalPrice || ((l.amount || 0) * (l.price || 0)))}
+                      </div>
                     </div>
                     <button className="delete-btn-mini" onClick={() => { 
                       requestConfirm('Bu yakıt kaydını silmek istediğinize emin misiniz?', () => {
