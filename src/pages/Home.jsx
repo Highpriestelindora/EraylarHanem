@@ -440,27 +440,23 @@ const Home = () => {
 
   // Memoized Modules - Stabilizes the grid
   const modules = useMemo(() => {
-    // 11th Personalized Module
-    let personalizedModule = null;
-    if (currentUser?.name === 'Esra') {
-      personalizedModule = { 
-        id: 'modaring', 
-        name: 'Eraylar Modaring', 
-        sub: 'Esra\'nın Dünyası', 
-        icon: '✨', 
-        color: 'linear-gradient(180deg, #FB7185 0%, #E11D48 100%)', 
-        path: '/modaring' 
-      };
-    } else if (currentUser?.name === 'Görkem') {
-      personalizedModule = { 
-        id: 'muhendislik', 
-        name: 'Eraylar Teknik', 
-        sub: 'Görkem\'in Atölyesi', 
-        icon: '⚙️', 
-        color: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)', 
-        path: '/muhendislik' 
-      };
-    }
+    const modaringModule = { 
+      id: 'modaring', 
+      name: 'Eraylar Modaring', 
+      sub: 'Esra\'nın Dünyası', 
+      icon: '✨', 
+      color: 'linear-gradient(180deg, #FB7185 0%, #E11D48 100%)', 
+      path: '/modaring' 
+    };
+
+    const muhendislikModule = { 
+      id: 'muhendislik', 
+      name: 'Eraylar Teknik', 
+      sub: 'Görkem\'in Atölyesi', 
+      icon: '⚙️', 
+      color: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)', 
+      path: '/muhendislik' 
+    };
 
     const baseModules = [
       { id: 'mutfak', name: 'Eraylar Mutfak', sub: 'Yemek & Alışveriş', icon: '🍲', color: 'linear-gradient(180deg, #EF4444 0%, #DC2626 100%)', path: '/mutfak' },
@@ -475,7 +471,13 @@ const Home = () => {
       { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(180deg, #064e3b 0%, #059669 100%)', path: '/finans' },
     ];
 
-    if (personalizedModule) baseModules.push(personalizedModule);
+    if (currentUser?.name === 'Esra') {
+      baseModules.push(modaringModule);
+    } else if (currentUser?.name === 'Görkem') {
+      baseModules.push(muhendislikModule);
+    } else if (currentUser?.name === 'Misafir') {
+      baseModules.push(modaringModule, muhendislikModule);
+    }
     
     // 12. Modül: Hedefler (Her zaman sağda kalsın diye en sona ekliyoruz)
     baseModules.push({ id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏆', color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)', path: '/hedefler' });

@@ -17,6 +17,12 @@ export default function UserSelection() {
       emoji: '👩‍🍳', 
       color: '#FB7185',
       desc: 'Mutfak & Düzen'
+    },
+    { 
+      name: 'Misafir', 
+      emoji: '🕵️', 
+      color: '#10B981',
+      desc: 'Tüm Modüller'
     }
   ];
 
@@ -58,10 +64,10 @@ export default function UserSelection() {
 
       <div style={{ 
         display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', 
         gap: '24px', 
         width: '100%', 
-        maxWidth: '500px' 
+        maxWidth: '600px' 
       }}>
         {users.map((u, idx) => (
           <motion.button
