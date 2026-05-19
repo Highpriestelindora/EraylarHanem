@@ -2185,9 +2185,43 @@ function HotelMap({ name, address, city, country }) {
 
 function ValizSection({ trip, weatherForecast, onAutoFill }) {
   const { updateTripValiz, setModuleData, tatil, syncValizToDepo, currentUser } = useStore();
-  const activePackingUser = currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
+  
+  // Default to traveler type if solo, otherwise default to logged-in user
+  const defaultPackingUser = useMemo(() => {
+    if (trip.travelers === 'esra') return 'esra';
+    if (trip.travelers === 'gorkem') return 'gorkem';
+    return currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
+  }, [trip.travelers, currentUser]);
+
+  const [activePackingUser, setActivePackingUser] = useState(defaultPackingUser);
   const [newItem, setNewItem] = useState('');
   const [showAssistant, setShowAssistant] = useState(false);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [editingText, setEditingText] = useState('');
+
+  const saveEditedItem = (itemId) => {
+    if (!editingText.trim()) return;
+    const owner = activePackingUser;
+    const ownerList = trip.valiz?.[owner] || [];
+    
+    const updatedValiz = {
+      ...trip.valiz,
+      [owner]: ownerList.map(item => 
+        item.id === itemId ? { ...item, text: editingText.trim() } : item
+      )
+    };
+    
+    const updatedTrips = tatil.trips.map(t => t.id === trip.id ? { ...t, valiz: updatedValiz } : t);
+    setModuleData('tatil', { ...tatil, trips: updatedTrips });
+    
+    setEditingItemId(null);
+    setEditingText('');
+    toast.success('Ürün güncellendi! 📝');
+  };
+
+  useEffect(() => {
+    setActivePackingUser(defaultPackingUser);
+  }, [defaultPackingUser]);
   
   const weatherAdvice = useMemo(() => {
     if (!weatherForecast) return null;
@@ -2230,6 +2264,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
       if (item.minDays > tripDuration) return false;
       if (item.type === 'yurtdisi' && trip.locationType !== 'yurtdisi') return false;
       if (item.type === 'is' && trip.tripType !== 'is') return false;
+      if (item.type === 'yurtici' && trip.locationType === 'yurtdisi') return false;
       
       // 2. Owner Filtering
       if (item.owner && item.owner !== activePackingUser) return false;
@@ -2243,8 +2278,15 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
       }
 
       // 4. Duplicate Check
-      const inGorkem = (trip.valiz?.gorkem || []).some(v => v.text === item.text);
-      const inEsra = (trip.valiz?.esra || []).some(v => v.text === item.text);
+      const isDuplicate = (list, itemText) => {
+        return list.some(v => {
+          const cleanV = v.text.replace(/\s*\(\d+\s*adet\)/g, '').trim();
+          return cleanV.toLowerCase() === itemText.toLowerCase();
+        });
+      };
+      
+      const inGorkem = isDuplicate(trip.valiz?.gorkem || [], item.text);
+      const inEsra = isDuplicate(trip.valiz?.esra || [], item.text);
       return !inGorkem && !inEsra;
     });
 
@@ -2278,7 +2320,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
 
   useEffect(() => {
     if (showAssistant) refreshSuggestions();
-  }, [showAssistant, tripDuration, trip.type, trip.tripType]);
+  }, [showAssistant, tripDuration, trip.type, trip.tripType, activePackingUser]);
 
   const addItem = (text) => {
     if (!text.trim()) return;
@@ -2357,6 +2399,24 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
         </div>
       )}
 
+      {/* User Suitcase Tabs (only shown if both are traveling) */}
+      {trip.travelers === 'ikimiz' && (
+        <div className="valiz-user-tabs glass mb-15">
+          <button 
+            className={`v-utab gorkem ${activePackingUser === 'gorkem' ? 'active' : ''}`}
+            onClick={() => setActivePackingUser('gorkem')}
+          >
+            👨‍💻 Görkem
+          </button>
+          <button 
+            className={`v-utab esra ${activePackingUser === 'esra' ? 'active' : ''}`}
+            onClick={() => setActivePackingUser('esra')}
+          >
+            👩 Esra
+          </button>
+        </div>
+      )}
+
       <div className="valiz-column-premium glass">
         <div className={`vc-header ${activePackingUser}`}>
           <div className="vc-input-group">
@@ -2374,13 +2434,50 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
         <div className="vc-list">
           {(trip.valiz?.[activePackingUser] || []).map(item => (
             <div key={item.id} className={`vc-item glass ${item.done ? 'done' : ''}`}>
-              <div className="vci-main" onClick={() => updateTripValiz(trip.id, activePackingUser, item.id)}>
+              <div className="vci-main" onClick={() => editingItemId !== item.id && updateTripValiz(trip.id, activePackingUser, item.id)}>
                 <div className="vc-check">{item.done && <Check size={12} />}</div>
-                <span>{item.text}</span>
+                {editingItemId === item.id ? (
+                  <input
+                    type="text"
+                    className="vci-edit-input"
+                    value={editingText}
+                    onChange={e => setEditingText(e.target.value)}
+                    onBlur={() => saveEditedItem(item.id)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveEditedItem(item.id);
+                      if (e.key === 'Escape') setEditingItemId(null);
+                    }}
+                    autoFocus
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.15)',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      borderRadius: '6px',
+                      color: 'inherit',
+                      padding: '4px 8px',
+                      fontSize: 'inherit',
+                      width: '100%',
+                      outline: 'none'
+                    }}
+                  />
+                ) : (
+                  <span>{item.text}</span>
+                )}
               </div>
-              <button className="vci-delete-btn" onClick={() => removeItem(item.id)}>
-                <Trash2 size={14} />
-              </button>
+              {editingItemId !== item.id && (
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <button className="vci-edit-btn" onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingItemId(item.id);
+                    setEditingText(item.text);
+                  }}>
+                    <Edit3 size={14} />
+                  </button>
+                  <button className="vci-delete-btn" onClick={() => removeItem(item.id)}>
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
           {(trip.valiz?.[activePackingUser] || []).length === 0 && (

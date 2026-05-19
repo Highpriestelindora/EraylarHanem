@@ -130,7 +130,7 @@ export default function Ev() {
     updateHomeSecurity, 
     updateTasinmaz, addTasinmaz, deleteTasinmaz,
     addPeriodicBakim, updatePeriodicBakim, resetPeriodicBakim, deletePeriodicBakim,
-    deleteDepoItem, clearDepo,
+    deleteDepoItem, updateDepoItem, clearDepo,
     addOnarimItem, toggleOnarimItem, clearCompletedOnarimItems, updateOnarimItem, deleteOnarimItem,
     addAbonelik, updateAbonelik, deleteAbonelik,
     addDuzenliOdeme, updateDuzenliOdeme, deleteDuzenliOdeme,
@@ -385,6 +385,7 @@ export default function Ev() {
           <DepoView 
             depo={ev.depo} 
             deleteDepoItem={deleteDepoItem} 
+            updateDepoItem={updateDepoItem}
             clearDepo={clearDepo} 
             requestConfirm={requestConfirm}
           />
@@ -1803,6 +1804,245 @@ function EmergencyKitModal({ type, items, onClose, requestConfirm }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConfirm }) {
+  const [expandedItem, setExpandedItem] = useState(null);
+  const [depoFilter, setDepoFilter] = useState('Hepsi');
+  const [editingItem, setEditingItem] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState('Genel');
+  const [editQty, setEditQty] = useState(1);
+
+  const categories = ['Hepsi', 'Gardırop', 'Teknoloji', 'Genel'];
+
+  const filteredDepo = (depo || []).filter(item => 
+    depoFilter === 'Hepsi' ? true : item.mainCat === depoFilter
+  );
+
+  const handleSave = () => {
+    if (!editName.trim()) return toast.error('Ürün ismi boş olamaz');
+    updateDepoItem(editingItem.id, {
+      name: editName.trim(),
+      mainCat: editCategory,
+      totalQty: Number(editQty)
+    });
+    setEditingItem(null);
+  };
+
+  return (
+    <div className="depo-view animate-fadeIn">
+      <div className="section-header-v2">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <Package size={22} color="var(--ev)" />
+          <h3 style={{ margin: 0 }}>Akıllı Ev Deposu</h3>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <small className="stat-badge">{filteredDepo.length} Ürün Grubu</small>
+          {depo?.length > 0 && (
+            <button className="icon-btn-mini" onClick={() => { 
+              requestConfirm('Tüm depoyu sıfırlamak istediğinize emin misiniz?', () => clearDepo());
+            }} title="Depoyu Sıfırla">
+              <RotateCcw size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="depo-filters mt-12 mb-12">
+        {categories.map(cat => (
+          <button 
+            key={cat} 
+            className={`filter-chip ${depoFilter === cat ? 'active' : ''}`}
+            onClick={() => setDepoFilter(cat)}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      <div className="depo-list-v3">
+        {filteredDepo.length === 0 ? (
+          <div className="empty-state-v2 glass" style={{ padding: '40px', textAlign: 'center' }}>
+            <Package size={40} opacity={0.2} style={{ marginBottom: '12px' }} />
+            <p style={{ opacity: 0.5, fontSize: '13px' }}>Bu kategoride ürün bulunamadı. ✨</p>
+          </div>
+        ) : (
+          filteredDepo.map(item => (
+            <div key={item.id} className={`depo-master-card ${expandedItem === item.id ? 'expanded' : ''}`} onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}>
+              <div className="dmc-main">
+                <div className="dmc-icon-box">
+                  {item.mainCat === 'Gardırop' ? '👕' : (item.mainCat === 'Teknoloji' ? '💻' : '📦')}
+                </div>
+                <div className="dmc-info">
+                  <div className="dmc-top-row">
+                    <strong className="dmc-name">{item.name || item.nm || 'İsimsiz Ürün'}</strong>
+                    <span className="dmc-qty-pill">{(item.totalQty || item.qt || '1').toString().split(' ')[0]} Adet</span>
+                  </div>
+                  <div className="dmc-meta-row">
+                    <span><Calendar size={10} /> İlk: {new Date(item.firstDate || item.dt).toLocaleDateString('tr-TR')}</span>
+                    <span><Clock size={10} /> Son: {new Date(item.lastDate || item.dt).toLocaleDateString('tr-TR')}</span>
+                  </div>
+                </div>
+                <div className="dmc-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button className="dmc-edit-btn" onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setEditingItem(item);
+                    setEditName(item.name || item.nm || '');
+                    setEditCategory(item.mainCat || 'Genel');
+                    setEditQty(item.totalQty || item.qt || 1);
+                  }} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}>
+                    <Edit2 size={14} />
+                  </button>
+                  <button className="dmc-del-btn" onClick={(e) => { 
+                    e.stopPropagation(); 
+                    requestConfirm('Tüm ürün kaydı silinsin mi?', () => deleteDepoItem(item.id));
+                  }}>
+                    <Trash2 size={14} />
+                  </button>
+                  <ChevronRight size={16} className={`dmc-chevron ${expandedItem === item.id ? 'rotated' : ''}`} style={{ transition: 'transform 0.2s' }} />
+                </div>
+              </div>
+
+              {expandedItem === item.id && (
+                <div className="dmc-details animate-fadeIn">
+                  <div className="details-header">📜 İşlem Geçmişi</div>
+                  <div className="history-timeline">
+                    {(item.history || []).map(log => (
+                      <div key={log.id} className="history-item">
+                        <div className="hi-dot" />
+                        <div className="hi-content">
+                          <div className="hi-top">
+                            <small>{new Date(log.date).toLocaleDateString('tr-TR')} {new Date(log.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
+                            <span className={`hi-source-badge ${log.source}`}>{log.source === 'valiz' ? '🎒 Valiz' : '🛒 Alışveriş'}</span>
+                          </div>
+                          <p>{log.note} - <strong>{log.qty} Adet</strong> {log.pr > 0 && `(${formatMoney(log.pr)})`}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      <ActionSheet 
+        isOpen={!!editingItem} 
+        onClose={() => setEditingItem(null)} 
+        title="Depo Ürününü Düzenle"
+      >
+        <div className="premium-form-container">
+          <div className="form-group-premium">
+            <label>Ürün İsmi</label>
+            <input 
+              type="text" 
+              value={editName} 
+              onChange={e => setEditName(e.target.value)} 
+              placeholder="Ürün adı..." 
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '10px',
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(255,255,255,0.7)',
+                fontSize: '14px',
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          <div className="form-group-premium">
+            <label>Kategori</label>
+            <div className="category-selector-chips" style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+              {['Gardırop', 'Teknoloji', 'Genel'].map(cat => (
+                <button
+                  type="button"
+                  key={cat}
+                  className={`filter-chip ${editCategory === cat ? 'active' : ''}`}
+                  onClick={() => setEditCategory(cat)}
+                  style={{ 
+                    flex: 1, 
+                    padding: '10px', 
+                    borderRadius: '8px', 
+                    cursor: 'pointer',
+                    border: '1px solid rgba(0,0,0,0.05)',
+                    fontSize: '13px',
+                    fontWeight: editCategory === cat ? 'bold' : 'normal'
+                  }}
+                >
+                  {cat === 'Gardırop' ? '👕 Gardırop' : (cat === 'Teknoloji' ? '💻 Teknoloji' : '📦 Genel')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group-premium">
+            <label>Miktar (Adet)</label>
+            <div className="qty-stepper" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
+              <button 
+                type="button" 
+                onClick={() => setEditQty(q => Math.max(1, q - 1))}
+                style={{ 
+                  width: '36px', 
+                  height: '36px', 
+                  borderRadius: '50%', 
+                  border: 'none', 
+                  background: 'rgba(0,0,0,0.05)', 
+                  fontSize: '18px', 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                -
+              </button>
+              <span style={{ fontSize: '16px', fontWeight: 'bold', minWidth: '32px', textAlign: 'center' }}>{editQty}</span>
+              <button 
+                type="button" 
+                onClick={() => setEditQty(q => q + 1)}
+                style={{ 
+                  width: '36px', 
+                  height: '36px', 
+                  borderRadius: '50%', 
+                  border: 'none', 
+                  background: 'rgba(0,0,0,0.05)', 
+                  fontSize: '18px', 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+            <button 
+              type="button" 
+              className="submit-btn-premium secondary" 
+              onClick={() => setEditingItem(null)}
+              style={{ flex: 1, background: 'rgba(0,0,0,0.05)', color: '#64748b', padding: '12px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '600' }}
+            >
+              İptal
+            </button>
+            <button 
+              type="button" 
+              className="submit-btn-premium" 
+              onClick={handleSave}
+              style={{ flex: 1, background: 'var(--ev)', color: 'white', padding: '12px', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: '600' }}
+            >
+              Kaydet
+            </button>
+          </div>
+        </div>
+      </ActionSheet>
     </div>
   );
 }

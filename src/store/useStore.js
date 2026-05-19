@@ -407,7 +407,17 @@ async function removeGenericFromSupabase(tableName, id) {
       .delete()
       .eq('id', finalId)
       .eq('family_id', familyId);
-    if (error) throw error;
+    if (error) {
+      if (error.message && error.message.includes("family_id")) {
+        console.warn(`[Self-Healing] Table ${tableName} is missing family_id column on delete. Retrying without it.`);
+        const { error: retryError } = await supabase.from(tableName)
+          .delete()
+          .eq('id', finalId);
+        if (retryError) throw retryError;
+      } else {
+        throw error;
+      }
+    }
   } catch (e) {
     console.warn(`Supabase ${tableName} delete hatası:`, e);
   }
@@ -2274,7 +2284,25 @@ const useStore = create(
                 familyId: item.family_id
               }));
             }
-            if (depo.data) ev.depo = depo.data;
+            if (depo.data) {
+              ev.depo = depo.data.map(item => ({
+                id: item.id,
+                name: item.name,
+                mainCat: item.category || 'Genel',
+                subCat: 'Diğer',
+                totalQty: Number(item.quantity || 1),
+                firstDate: item.date || new Date().toISOString().split('T')[0],
+                lastDate: item.date || new Date().toISOString().split('T')[0],
+                history: [{
+                  id: Date.now(),
+                  date: item.date || new Date().toISOString().split('T')[0],
+                  qty: Number(item.quantity || 1),
+                  pr: Number(item.price || 0),
+                  source: 'SQL',
+                  note: 'Veritabanından Yüklendi'
+                }]
+              }));
+            }
             if (faturalar.data) ev.faturalar = faturalar.data;
              if (personality.data && personality.data[0]) {
               if (!ev.tracking) ev.tracking = {};
@@ -2868,6 +2896,44 @@ const useStore = create(
         if (moduleName === 'ev' && isObject) {
           if (data.bakimlar) data.bakimlar.forEach(b => pushEvBakimToSupabase(b));
           if (data.demirbaslar) data.demirbaslar.forEach(d => pushEvDemirbasToSupabase(d));
+        }
+        if (moduleName === 'tatil' && isObject) {
+          if (data.trips) {
+            const oldTrips = state.tatil?.trips || [];
+            data.trips.forEach(newTrip => {
+              const oldTrip = oldTrips.find(t => t.id === newTrip.id);
+              if (!oldTrip || JSON.stringify(oldTrip) !== JSON.stringify(newTrip)) {
+                pushTatilTripToSupabase(newTrip);
+              }
+            });
+          }
+          if (data.wishlist) {
+            const oldWish = state.tatil?.wishlist || [];
+            data.wishlist.forEach(newW => {
+              const oldW = oldWish.find(w => w.id === newW.id);
+              if (!oldW || JSON.stringify(oldW) !== JSON.stringify(newW)) {
+                pushTatilWishlistToSupabase(newW);
+              }
+            });
+          }
+          if (data.passport) {
+            for (const kisi in data.passport) {
+              const oldPass = state.tatil?.passport?.[kisi];
+              const newPass = data.passport[kisi];
+              if (!oldPass || JSON.stringify(oldPass) !== JSON.stringify(newPass)) {
+                pushTatilPasaportToSupabase(kisi, newPass);
+              }
+            }
+          }
+          if (data.visas) {
+            const oldVisas = state.tatil?.visas || [];
+            data.visas.forEach(newV => {
+              const oldV = oldVisas.find(v => v.id === newV.id);
+              if (!oldV || JSON.stringify(oldV) !== JSON.stringify(newV)) {
+                pushTatilVizeToSupabase(newV);
+              }
+            });
+          }
         }
       },
 
@@ -8808,10 +8874,18 @@ const useStore = create(
         
         // Find the newly added or updated item and push to SQL
         const syncedItem = updatedDepo.find(i => 
-          (i.name || i.nm)?.toLowerCase() === name.toLowerCase()
+          (i.name || i.nm || '').toLowerCase() === name.toLowerCase()
         );
         if (syncedItem) {
-          pushGenericToSupabase('ev_depo', syncedItem);
+          const dbPayload = {
+            id: syncedItem.id,
+            name: syncedItem.name || syncedItem.nm,
+            quantity: Number(syncedItem.totalQty || syncedItem.qty || 1),
+            price: Number(syncedItem.price || syncedItem.history?.[0]?.pr || 0),
+            date: syncedItem.lastDate || syncedItem.firstDate || syncedItem.dt || new Date().toISOString().split('T')[0],
+            category: syncedItem.mainCat || syncedItem.category || 'Genel'
+          };
+          pushGenericToSupabase('ev_depo', dbPayload);
         }
       },
 
@@ -8822,6 +8896,37 @@ const useStore = create(
 
         removeGenericFromSupabase('ev_depo', id);
         toast.success('Ürün depodan silindi.');
+      },
+
+      updateDepoItem: (id, updates) => {
+        const state = get();
+        const currentDepo = Array.isArray(state.ev.depo) ? state.ev.depo : [];
+        const updatedDepo = currentDepo.map(item => {
+          if (String(item.id) === String(id)) {
+            const merged = { ...item, ...updates };
+            if (updates.name) merged.name = updates.name;
+            if (updates.mainCat) merged.mainCat = updates.mainCat;
+            if (updates.totalQty !== undefined) merged.totalQty = Number(updates.totalQty);
+            return merged;
+          }
+          return item;
+        });
+
+        set({ ev: { ...state.ev, depo: updatedDepo } });
+
+        const syncedItem = updatedDepo.find(i => String(i.id) === String(id));
+        if (syncedItem) {
+          const dbPayload = {
+            id: syncedItem.id,
+            name: syncedItem.name || syncedItem.nm,
+            quantity: Number(syncedItem.totalQty || syncedItem.qty || 1),
+            price: Number(syncedItem.price || syncedItem.history?.[0]?.pr || 0),
+            date: syncedItem.lastDate || syncedItem.firstDate || syncedItem.dt || new Date().toISOString().split('T')[0],
+            category: syncedItem.mainCat || syncedItem.category || 'Genel'
+          };
+          pushGenericToSupabase('ev_depo', dbPayload);
+        }
+        toast.success('Ürün güncellendi. 📦');
       },
 
       clearDepo: () => {
