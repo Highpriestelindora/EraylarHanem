@@ -143,6 +143,26 @@ const isGoalVisible = (g, currentUser) => {
   return false;
 };
 
+const getGoalVisualMeta = (title, daysLeft) => {
+  const t = title.toLowerCase();
+  let icon = '🎯';
+  if (t.includes('alman') || t.includes('deutsch') || t.includes('ingilizce') || t.includes('dil') || t.includes('kurs')) {
+    icon = '📚';
+  } else if (t.includes('ev') || t.includes('villa') || t.includes('arsa') || t.includes('konut') || t.includes('daire') || t.includes('tiny') || t.includes('sile') || t.includes('şile')) {
+    icon = '🏡';
+  }
+
+  // Choose premium gradients based on urgency
+  let color = 'linear-gradient(135deg, #FBBF24 0%, #D97706 100%)'; // Amber/Orange warning
+  if (daysLeft <= 3) {
+    color = 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)'; // Rose/Red urgent
+  } else if (daysLeft > 7) {
+    color = 'linear-gradient(135deg, #10B981 0%, #059669 100%)'; // Emerald calm
+  }
+
+  return { icon, color };
+};
+
 const Home = () => {
   // Selective Selectors for Performance
   const currentUser = useStore(state => state.currentUser);
@@ -527,20 +547,90 @@ const Home = () => {
       const perc = (g.current / g.target) * 100;
       if (perc >= 100) return;
 
-      const countdown = getRemainingMonths(g);
-      if (countdown && (countdown.class === 'urgent' || countdown.class === 'warning')) {
-        const ownerName = g.owner === 'ortak' ? 'Ortak' : (g.owner === 'esra' ? 'Esra' : 'Görkem');
-        const startMonth = getStartMonth(g);
-        const startText = startMonth ? `${startMonth}'da başladı` : '';
+      if (!g.targetDate) return;
+      const target = new Date(g.targetDate);
+      if (isNaN(target.getTime())) return;
+
+      // Resolve start date
+      let start = null;
+      if (g.yearlyPlan?.startDate) {
+        start = new Date(g.yearlyPlan.startDate);
+      } else if (g.duration) {
+        const dur = parseInt(g.duration, 10);
+        if (!isNaN(dur) && dur > 0) {
+          start = new Date(target.getTime());
+          start.setMonth(start.getMonth() - dur);
+        }
+      }
+
+      if (!start || isNaN(start.getTime())) return;
+
+      const duration = parseInt(g.duration, 10) || 12;
+      const isLongTerm = duration > 12;
+
+      // s1 is length of stage 1 in months
+      const s1 = Math.ceil(duration / 3);
+
+      // milestoneEndDate = start + s1 months
+      const milestoneEndDate = new Date(start.getTime());
+      milestoneEndDate.setMonth(milestoneEndDate.getMonth() + s1);
+
+      // Compare milestoneEndDate to today
+      const todayClean = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const milestoneClean = new Date(milestoneEndDate.getFullYear(), milestoneEndDate.getMonth(), milestoneEndDate.getDate());
+
+      const diffTime = milestoneClean.getTime() - todayClean.getTime();
+      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      // Let's check matching conditions
+      let shouldShow = false;
+      let text = '';
+      let subtext = '';
+      let priority = 90;
+      let type = 'warning';
+
+      const ownerName = g.owner === 'ortak' ? 'Ortak' : (g.owner === 'esra' ? 'Esra' : 'Görkem');
+      const daysText = daysLeft === 0 ? 'bugün son gün!' : `${daysLeft} gün kaldı.`;
+
+      if (!isLongTerm) {
+        // Short-term goal rules: last 1 week daily
+        if (daysLeft >= 0 && daysLeft <= 7) {
+          shouldShow = true;
+          text = `${g.title} hedefin için 1. aşamanın bitmesine ${daysText}`;
+          subtext = `Ne durumdasın? 🎯 · Sorumlu: ${ownerName}`;
+          priority = daysLeft <= 3 ? 94 : 91;
+          type = daysLeft <= 3 ? 'critical' : 'warning';
+        }
+      } else {
+        // Long-term goal rules: 1 month before (28-30 days left) OR last week daily (0-7 days left)
+        if (daysLeft >= 28 && daysLeft <= 30) {
+          shouldShow = true;
+          text = `${g.title} hedefin için 1. yıl aşamasının bitmesine ${daysLeft} gün kaldı.`;
+          subtext = `Yaptın mı? 🏡 · Sorumlu: ${ownerName}`;
+          priority = 90;
+          type = 'warning';
+        } else if (daysLeft >= 0 && daysLeft <= 7) {
+          shouldShow = true;
+          text = `${g.title} hedefin için 1. yıl aşamasının bitmesine ${daysText}`;
+          subtext = `Yaptın mı? 🏡 · Sorumlu: ${ownerName}`;
+          priority = daysLeft <= 3 ? 95 : 92;
+          type = daysLeft <= 3 ? 'critical' : 'warning';
+        }
+      }
+
+      if (shouldShow) {
+        // Resolve custom visual metadata (icon & color gradient)
+        const visual = getGoalVisualMeta(g.title, daysLeft);
+
         cards.push({
           id: `hedef-smart-${g.id}`,
-          icon: '🎯',
-          text: `${g.title.substring(0, 30)}${g.title.length > 30 ? '...' : ''}`,
-          subtext: `${ownerName} Hedefi · ${startText} · ${countdown.text}`,
-          type: countdown.class === 'urgent' ? 'critical' : 'warning',
-          color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)',
+          icon: visual.icon,
+          text: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+          subtext: subtext,
+          type: type,
+          color: visual.color,
           module: '/hedefler',
-          priority: countdown.class === 'urgent' ? 91 : 69
+          priority: priority
         });
       }
     });
@@ -737,64 +827,7 @@ const Home = () => {
           )}
         </div>
 
-        {/* Beautiful Active Goals Slider Section */}
-        <div className="home-active-goals-section">
-          <div className="hags-header-row" onClick={() => navigate('/hedefler')}>
-            <span>🎯 GÜNCEL HEDEFLERİMİZ</span>
-            <span className="hags-view-all">Tümünü Gör <ChevronRight size={14} /></span>
-          </div>
-          
-          {activeVisionAndMoneyGoals.length === 0 ? (
-            <div className="hags-empty-card glass" onClick={() => navigate('/hedefler')}>
-              <span>✨ Henüz aktif bir hedef yok. Yeni bir hedef belirleyerek hanenin geleceğini şekillendir!</span>
-            </div>
-          ) : (
-            <div className="hags-carousel">
-              {activeVisionAndMoneyGoals.slice(0, 4).map((g) => {
-                const perc = (g.current / g.target) * 100;
-                const isMoney = g.type === 'money';
-                const owner = (g.owner || 'ortak').toLowerCase();
-                const ownerEmoji = owner.includes('gorkem') ? '👨‍💻' : owner.includes('esra') ? '👩‍🍳' : '👥';
-                const startMonth = getStartMonth(g);
-                const countdown = getRemainingMonths(g);
-                
-                return (
-                  <div key={g.id} className={`hags-goal-card glass owner-${owner}`} onClick={() => navigate('/hedefler')}>
-                    <div className="hags-card-top">
-                      <div className="hags-title-area">
-                        <strong className="hags-title">{g.title}</strong>
-                        <span className="hags-owner-badge">{ownerEmoji} {g.owner?.toUpperCase()}</span>
-                      </div>
-                      {countdown && (
-                        <span className={`hags-countdown-badge ${countdown.class}`}>
-                          {countdown.text}
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="hags-progress-container">
-                      <div className="hags-progress-labels">
-                        <span className="hags-start-date">
-                          {startMonth ? `Başlangıç: ${startMonth}` : 'Tarih Belirtilmedi'}
-                        </span>
-                        <span className="hags-perc">%{Math.round(perc)}</span>
-                      </div>
-                      <div className="hags-progress-track">
-                        <div className="hags-progress-fill" style={{ width: `${Math.min(perc, 100)}%` }} />
-                      </div>
-                      {isMoney && (
-                        <div className="hags-money-details">
-                          <span>{new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.current)}</span>
-                          <span> / {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.target)}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+
 
         {/* 2-Column Module Grid */}
         <div className="premium-module-grid">
