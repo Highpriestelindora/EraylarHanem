@@ -8726,24 +8726,36 @@ const useStore = create(
         let goal = null;
         if (type === 'money') {
           goal = (state.kasa.kumbaralar || []).find(g => g.id === id);
-          if (goal) {
-            get().deleteGoal(id);
-          }
         } else {
           goal = (state.hedefler.goals || []).find(g => g.id === id);
-          if (goal) {
-            get().deleteVisionGoal(id);
-          }
         }
 
         if (goal) {
           const completedGoal = { ...goal, status: 'completed', reflection, completedAt: new Date().toISOString() };
-          set({
-            hedefler: {
-              ...state.hedefler,
-              completedHistory: [completedGoal, ...(state.hedefler.completedHistory || [])]
-            }
-          });
+          
+          if (type === 'money') {
+            set(current => ({
+              kasa: {
+                ...current.kasa,
+                kumbaralar: (current.kasa.kumbaralar || []).filter(g => g.id !== id)
+              },
+              hedefler: {
+                ...current.hedefler,
+                completedHistory: [completedGoal, ...(current.hedefler.completedHistory || [])]
+              }
+            }));
+            deleteHedefFromSupabase(id);
+          } else {
+            set(current => ({
+              hedefler: {
+                ...current.hedefler,
+                goals: (current.hedefler.goals || []).filter(g => g.id !== id),
+                completedHistory: [completedGoal, ...(current.hedefler.completedHistory || [])]
+              }
+            }));
+            deleteHedefFromSupabase(id);
+          }
+          
           pushHedefGecmisToSupabase(completedGoal, 'completed');
         }
       },
@@ -8753,24 +8765,36 @@ const useStore = create(
         let goal = null;
         if (type === 'money') {
           goal = (state.kasa.kumbaralar || []).find(g => g.id === id);
-          if (goal) {
-            get().deleteGoal(id);
-          }
         } else {
           goal = (state.hedefler.goals || []).find(g => g.id === id);
-          if (goal) {
-            get().deleteVisionGoal(id);
-          }
         }
 
         if (goal) {
           const failedGoal = { ...goal, status: 'failed', reflection, failedAt: new Date().toISOString() };
-          set({
-            hedefler: {
-              ...state.hedefler,
-              failedHistory: [failedGoal, ...(state.hedefler.failedHistory || [])]
-            }
-          });
+          
+          if (type === 'money') {
+            set(current => ({
+              kasa: {
+                ...current.kasa,
+                kumbaralar: (current.kasa.kumbaralar || []).filter(g => g.id !== id)
+              },
+              hedefler: {
+                ...current.hedefler,
+                failedHistory: [failedGoal, ...(current.hedefler.failedHistory || [])]
+              }
+            }));
+            deleteHedefFromSupabase(id);
+          } else {
+            set(current => ({
+              hedefler: {
+                ...current.hedefler,
+                goals: (current.hedefler.goals || []).filter(g => g.id !== id),
+                failedHistory: [failedGoal, ...(current.hedefler.failedHistory || [])]
+              }
+            }));
+            deleteHedefFromSupabase(id);
+          }
+          
           pushHedefGecmisToSupabase(failedGoal, 'failed');
         }
       },
