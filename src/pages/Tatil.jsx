@@ -2184,7 +2184,7 @@ function HotelMap({ name, address, city, country }) {
 }
 
 function ValizSection({ trip, weatherForecast, onAutoFill }) {
-  const { updateTripValiz, setModuleData, tatil, syncValizToDepo, currentUser } = useStore();
+  const { updateTripValiz, setModuleData, tatil, syncValizToDepo, updateDepoItem, currentUser, ev } = useStore();
   
   // Default to traveler type if solo, otherwise default to logged-in user
   const defaultPackingUser = useMemo(() => {
@@ -2199,10 +2199,19 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingText, setEditingText] = useState('');
 
+  // Parse quantity from text e.g. "Çorap (5 adet)" → 5
+  const parseQty = (text) => {
+    const m = text.match(/\((\d+)\s*adet\)/i);
+    return m ? parseInt(m[1]) : null;
+  };
+
   const saveEditedItem = (itemId) => {
     if (!editingText.trim()) return;
     const owner = activePackingUser;
     const ownerList = trip.valiz?.[owner] || [];
+    
+    // Find old item to detect name change for depo sync
+    const oldItem = ownerList.find(it => it.id === itemId);
     
     const updatedValiz = {
       ...trip.valiz,
@@ -2213,6 +2222,20 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
     
     const updatedTrips = tatil.trips.map(t => t.id === trip.id ? { ...t, valiz: updatedValiz } : t);
     setModuleData('tatil', { ...tatil, trips: updatedTrips });
+    
+    // Sync name change to Depo
+    if (oldItem) {
+      const qtyInNameRegex = /\((\d+)\s*adet\)/i;
+      const oldCleanName = (oldItem.text || '').replace(qtyInNameRegex, '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}]/u, '').trim();
+      const newCleanName = editingText.replace(qtyInNameRegex, '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}]/u, '').trim();
+      if (oldCleanName && oldCleanName.toLowerCase() !== newCleanName.toLowerCase()) {
+        const depoItem = (ev?.depo || []).find(d => (d.name || '').toLowerCase() === oldCleanName.toLowerCase());
+        if (depoItem) {
+          updateDepoItem(depoItem.id, { name: newCleanName });
+          toast.success('Depoda da güncellendi! 📦');
+        }
+      }
+    }
     
     setEditingItemId(null);
     setEditingText('');
@@ -2258,18 +2281,46 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
   const [currentSuggestions, setCurrentSuggestions] = useState([]);
 
   const refreshSuggestions = () => {
-    // VALIZ 5.0 LOGIC
+    const userDepo = ev?.depo || [];
+
+    // --- 1. Depodan kişisel öneriler (Gardırop & owner-match) ---
+    const clothingInDepo = userDepo.filter(d => {
+      if (d.mainCat !== 'Gardırop') return false;
+      if (d.owner && d.owner !== 'ortak' && d.owner !== activePackingUser) return false;
+      return true;
+    });
+
+    const alreadyInList = (text) => {
+      const cleanText = text.replace(/\s*\(\d+\s*adet\)/g, '').toLowerCase().trim();
+      const gorkem = trip.valiz?.gorkem || [];
+      const esra = trip.valiz?.esra || [];
+      return [...gorkem, ...esra].some(v => 
+        v.text.replace(/\s*\(\d+\s*adet\)/g, '').toLowerCase().trim() === cleanText
+      );
+    };
+
+    const depoSuggestions = clothingInDepo
+      .filter(d => d.name && !alreadyInList(d.name))
+      .map(d => ({
+        id: `depo-${d.id}`,
+        text: d.name,
+        category: 'Giyim',
+        icon: d.emoji || '👕',
+        minDays: 0,
+        priority: 75,
+        source: 'depo',
+        // Suggest a fraction of what they own
+        qty: d.totalQty > 1 ? Math.max(1, Math.min(Math.ceil(tripDuration * 0.7), d.totalQty)) : 1
+      }));
+
+    // --- 2. Standart PACKING_POOL (temel + kişisel olmayan) ---
     const pool = PACKING_POOL.filter(item => {
-      // 1. Basic Duration/Type Checks
       if (item.minDays > tripDuration) return false;
       if (item.type === 'yurtdisi' && trip.locationType !== 'yurtdisi') return false;
       if (item.type === 'is' && trip.tripType !== 'is') return false;
       if (item.type === 'yurtici' && trip.locationType === 'yurtdisi') return false;
-      
-      // 2. Owner Filtering
       if (item.owner && item.owner !== activePackingUser) return false;
 
-      // 3. Weather Filtering
       if (weatherAdvice) {
         const { avgTemp, hasRain } = weatherAdvice;
         if (item.temp === 'hot' && avgTemp < 20) return false;
@@ -2277,38 +2328,37 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
         if (item.weather === 'rainy' && !hasRain) return false;
       }
 
-      // 4. Duplicate Check
-      const isDuplicate = (list, itemText) => {
-        return list.some(v => {
-          const cleanV = v.text.replace(/\s*\(\d+\s*adet\)/g, '').trim();
-          return cleanV.toLowerCase() === itemText.toLowerCase();
-        });
-      };
-      
-      const inGorkem = isDuplicate(trip.valiz?.gorkem || [], item.text);
-      const inEsra = isDuplicate(trip.valiz?.esra || [], item.text);
-      return !inGorkem && !inEsra;
+      // Skip if this item's text is already in the depo suggestions (avoid double)
+      const inDepoSugg = depoSuggestions.some(d => d.text.toLowerCase() === item.text.toLowerCase());
+      if (inDepoSugg) return false;
+
+      return !alreadyInList(item.text);
     });
 
-    // CATEGORY BALANCED SELECTION
-    const getSelection = () => {
-      const essentials = pool.filter(i => i.category === 'Temel' || i.priority >= 90).sort(() => 0.5 - Math.random());
-      const clothes = pool.filter(i => i.category === 'Giyim').sort(() => 0.5 - Math.random());
-      const others = pool.filter(i => i.category !== 'Temel' && i.category !== 'Giyim').sort(() => 0.5 - Math.random());
+    // --- 3. Balanced selection ---
+    const essentials = pool.filter(i => i.category === 'Temel' || i.priority >= 90).sort(() => 0.5 - Math.random());
+    const poolClothes = pool.filter(i => i.category === 'Giyim').sort(() => 0.5 - Math.random());
+    const others = pool.filter(i => i.category !== 'Temel' && i.category !== 'Giyim').sort(() => 0.5 - Math.random());
 
-      return [
-        ...essentials.slice(0, 2),
-        ...clothes.slice(0, 2),
-        ...others.slice(0, 2)
-      ];
-    };
-    
-    let selected = getSelection();
-    
-    // Add dynamic quantities
+    // Mix: always guarantee 1-2 generic clothes + up to 2 depo clothes
+    const shuffledDepo = depoSuggestions.sort(() => 0.5 - Math.random());
+    const clothingSuggestions = [
+      ...poolClothes.slice(0, 2),     // always 2 generic
+      ...shuffledDepo.slice(0, 2)     // up to 2 from depo (personal)
+    ].slice(0, 3);
+
+    const selected = [
+      ...essentials.slice(0, 2),      // 2 essentials (documents, charger etc)
+      ...clothingSuggestions,          // 2-3 clothing (mix of generic+personal)
+      ...others.slice(0, 1)            // 1 misc (hygiene, electronics etc)
+    ].slice(0, 6);
+
+    // --- 4. Add dynamic quantities for PACKING_POOL items ---
     const finalSelection = selected.map(item => {
       let text = item.text;
-      if (item.perDay) {
+      if (item.source === 'depo' && item.qty > 1) {
+        text = `${item.text} (${item.qty} adet)`;
+      } else if (item.perDay) {
         const qty = Math.ceil(tripDuration * item.perDay);
         text = `${item.text} (${qty} adet)`;
       }
@@ -2320,27 +2370,33 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
 
   useEffect(() => {
     if (showAssistant) refreshSuggestions();
-  }, [showAssistant, tripDuration, trip.type, trip.tripType, activePackingUser]);
+  }, [showAssistant, tripDuration, trip.type, trip.tripType, activePackingUser, ev?.depo]);
 
+  // addItem: manual input → DOES sync to depo
   const addItem = (text) => {
     if (!text.trim()) return;
     const owner = activePackingUser;
     const ownerList = trip.valiz?.[owner] || [];
     const newItemObj = { id: Date.now(), text: text.trim(), done: false };
-    
-    const updatedValiz = {
-      ...trip.valiz,
-      [owner]: [...ownerList, newItemObj]
-    };
-    
+    const updatedValiz = { ...trip.valiz, [owner]: [...ownerList, newItemObj] };
     const updatedTrips = tatil.trips.map(t => t.id === trip.id ? { ...t, valiz: updatedValiz } : t);
     setModuleData('tatil', { ...tatil, trips: updatedTrips });
-    
-    // Sync to Depo as requested
+    // Only manual adds go to depo
     syncValizToDepo(text.trim(), 'Seyahat');
-    
     setNewItem('');
-    toast.success(`${text} eklendi! ✨`);
+    toast.success(`${text.replace(/\s*\(\d+\s*adet\)/g, '')} eklendi! ✨`);
+  };
+
+  // addSuggestion: from assistant → does NOT sync to depo
+  const addSuggestion = (text) => {
+    if (!text.trim()) return;
+    const owner = activePackingUser;
+    const ownerList = trip.valiz?.[owner] || [];
+    const newItemObj = { id: Date.now(), text: text.trim(), done: false };
+    const updatedValiz = { ...trip.valiz, [owner]: [...ownerList, newItemObj] };
+    const updatedTrips = tatil.trips.map(t => t.id === trip.id ? { ...t, valiz: updatedValiz } : t);
+    setModuleData('tatil', { ...tatil, trips: updatedTrips });
+    toast.success(`${text.replace(/\s*\(\d+\s*adet\)/g, '')} listeye eklendi! 📋`);
   };
 
   const removeItem = (itemId) => {
@@ -2369,7 +2425,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
           </div>
           <div className="oracle-alerts">
             {weatherAdvice.alerts.map((alert, i) => (
-              <div key={i} className={`oracle-alert ${alert.priority}`} onClick={() => addItem(alert.text.split('!')[0].split(',')[0].trim())}>
+              <div key={i} className={`oracle-alert ${alert.priority}`} onClick={() => addSuggestion(alert.text.split('!')[0].split(',')[0].trim())}>
                 <span className="a-icon">{alert.icon}</span>
                 <span className="a-text">{alert.text}</span>
                 <Plus size={12} opacity={0.5} />
@@ -2538,7 +2594,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
                   key={s.id} 
                   className="va-suggestion-btn-cute glass" 
                   onClick={() => {
-                    addItem(s.text);
+                    addSuggestion(s.text);
                     setCurrentSuggestions(prev => prev.filter(item => item.id !== s.id));
                   }}
                 >

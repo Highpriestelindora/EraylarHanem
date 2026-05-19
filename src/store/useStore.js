@@ -9013,21 +9013,54 @@ const useStore = create(
         toast.success('Depo sıfırlandı. ✨ (SQL tablosu elle temizlenmeli)');
       },
 
-      syncValizToDepo: (name, source, qty = 1) => {
+      syncValizToDepo: (rawName, source, forceQty) => {
+        // 1. Strip quantity embedded in name e.g. "Çorap (5 adet)" → name="Çorap", qty=5
+        const qtyInNameRegex = /\((\d+)\s*adet\)/i;
+        const qtyMatch = rawName.match(qtyInNameRegex);
+        const qty = forceQty || (qtyMatch ? parseInt(qtyMatch[1]) : 1);
+        let nameWithoutQty = rawName.replace(qtyInNameRegex, '').trim();
+
+        // 2. Extract leading/embedded emoji
         const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F9FF}]/u;
-        const match = name.match(emojiRegex);
-        const emoji = match ? match[0] : '';
-        let cleanName = name;
+        const emojiMatch = nameWithoutQty.match(emojiRegex);
+        const emoji = emojiMatch ? emojiMatch[0] : '';
         if (emoji) {
-          cleanName = name.replace(emoji, '').trim();
+          nameWithoutQty = nameWithoutQty.replace(emoji, '').trim();
         }
-        get().addDepoItem({
-          name: cleanName,
-          source: source || 'valiz',
-          qty: qty,
-          emoji: emoji,
-          note: 'Valizden aktarıldı'
-        });
+        const cleanName = nameWithoutQty;
+
+        if (!cleanName) return;
+
+        // 3. Smart category detection
+        const clothingKeywords = ['tişört', 'pantolon', 'gömlek', 'hırka', 'mont', 'çorap', 'iç çamaşır', 'pijama', 'kazak', 'etek', 'elbise', 'ayakkabı', 'sandalet', 'yürüyüş', 'spor kıyaf', 'şort', 'tayt', 'atlet', 'fanila', 'bere', 'şapka', 'atkı', 'eldiven'];
+        const techKeywords = ['şarj', 'laptop', 'powerbank', 'kulaklık', 'telefon', 'tablet', 'adaptör', 'kamera', 'gopro', 'mouse', 'hdmi', 'usb'];
+        
+        const lowerName = cleanName.toLowerCase();
+        let mainCat = 'Genel';
+        if (clothingKeywords.some(k => lowerName.includes(k))) mainCat = 'Gardırop';
+        else if (techKeywords.some(k => lowerName.includes(k))) mainCat = 'Teknoloji';
+
+        // 4. Check if item already in depo (don't add again, just increment)
+        const state = get();
+        const existing = (state.ev.depo || []).find(d => 
+          (d.name || '').toLowerCase() === cleanName.toLowerCase()
+        );
+
+        if (existing) {
+          // Already in depo: silently increment quantity
+          get().updateDepoItem(existing.id, {
+            totalQty: (existing.totalQty || 0) + qty
+          });
+        } else {
+          get().addDepoItem({
+            name: cleanName,
+            mainCat,
+            source: source || 'valiz',
+            qty,
+            emoji,
+            note: 'Valizden aktarıldı'
+          });
+        }
       },
       // ── System Actions ────────────────────────────────
       calculateGlobalScore: () => {
