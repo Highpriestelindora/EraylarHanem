@@ -495,6 +495,9 @@ const getCountryFlag = (title = '', city = '', country = '') => {
   else if (text.includes('finlandiya') || text.includes('finland') || text.includes('helsinki')) code = 'fi';
   else if (text.includes('isvicre') || text.includes('switzerland') || text.includes('zurih') || text.includes('geneve')) code = 'ch';
   else if (text.includes('cin') || text.includes('china') || text.includes('shanghai') || text.includes('pekin')) code = 'cn';
+  else if (text.includes('azerbaycan') || text.includes('azerbaijan') || text.includes('baku') || text.includes('bakü')) code = 'az';
+  else if (text.includes('kazakistan') || text.includes('kazakhstan') || text.includes('almati') || text.includes('astana')) code = 'kz';
+  else if (text.includes('iran') || text.includes('tahran') || text.includes('tehran')) code = 'ir';
   else if (text.includes('portekiz') || text.includes('portugal') || text.includes('lizbon')) code = 'pt';
   else if (text.includes('belçika') || text.includes('belgium') || text.includes('bruksel')) code = 'be';
 
@@ -3597,13 +3600,13 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
 
       if (t.travelers === 'gorkem' || t.travelers === 'ikimiz') {
         if (country) gorkemCountries.add(country);
-        if (city) gorkemPlaces.add(`${country}:${city}`);
-        extraCities.forEach(c => gorkemPlaces.add(`${country}:${c}`));
+        if (city) gorkemPlaces.add(city);
+        extraCities.forEach(c => gorkemPlaces.add(c));
       }
       if (t.travelers === 'esra' || t.travelers === 'ikimiz') {
         if (country) esraCountries.add(country);
-        if (city) esraPlaces.add(`${country}:${city}`);
-        extraCities.forEach(c => esraPlaces.add(`${country}:${c}`));
+        if (city) esraPlaces.add(city);
+        extraCities.forEach(c => esraPlaces.add(c));
       }
       if (t.travelers === 'ikimiz') {
         ortakDays += duration;
@@ -3611,17 +3614,12 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
     });
 
     const ortakCountries = new Set([...gorkemCountries].filter(c => esraCountries.has(c)));
-    const gorkemOnlyCountries = new Set([...gorkemCountries].filter(c => !esraCountries.has(c)));
-    const esraOnlyCountries = new Set([...esraCountries].filter(c => !gorkemCountries.has(c)));
-
     const ortakCities = new Set([...gorkemPlaces].filter(p => esraPlaces.has(p)));
-    const gorkemOnlyCities = new Set([...gorkemPlaces].filter(p => !esraPlaces.has(p)));
-    const esraOnlyCities = new Set([...esraPlaces].filter(p => !gorkemPlaces.has(p)));
 
     return {
       ortak: { countries: ortakCountries.size, cities: ortakCities.size, days: ortakDays },
-      gorkem: { countries: gorkemOnlyCountries.size, cities: gorkemOnlyCities.size },
-      esra: { countries: esraOnlyCountries.size, cities: esraOnlyCities.size }
+      gorkem: { countries: gorkemCountries.size, cities: gorkemPlaces.size },
+      esra: { countries: esraCountries.size, cities: esraPlaces.size }
     };
   }, [allTripsForMap]);
 

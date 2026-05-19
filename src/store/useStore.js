@@ -384,7 +384,16 @@ async function pushGenericToSupabase(tableName, payload) {
     }
 
     const { error } = await supabase.from(tableName).upsert(finalPayload);
-    if (error) throw error;
+    if (error) {
+      if (error.message && error.message.includes("family_id")) {
+        console.warn(`[Self-Healing] Table ${tableName} is missing family_id column. Retrying without it.`);
+        const retryPayload = { ...payload };
+        const { error: retryError } = await supabase.from(tableName).upsert(retryPayload);
+        if (retryError) throw retryError;
+      } else {
+        throw error;
+      }
+    }
   } catch (e) {
     console.warn(`Supabase ${tableName} upsert hatası:`, e);
   }
@@ -1266,12 +1275,14 @@ async function pushGarajParkToSupabase(park, vehicleId) {
 
 async function pushPetAsiToSupabase(petId, vaccine) {
   try {
+    const payloadNotes = JSON.stringify({ notes: vaccine.notes || '', ev: vaccine.ev || 60 });
     await supabase.from('pet_asilar').upsert({
       id: `${petId}-${vaccine.id || vaccine.n || vaccine.name}`, pet_id: petId,
       asi_adi: vaccine.n || vaccine.name || vaccine.asi_adi, 
       son_tarih: vaccine.last || vaccine.lastDate || vaccine.son_tarih || null,
       sonraki_tarih: vaccine.nextDate || vaccine.sonraki_tarih || null,
-      durum: vaccine.done ? 'tamamlandi' : 'bekliyor', notlar: vaccine.notes || null
+      durum: vaccine.done ? 'tamamlandi' : 'bekliyor', notlar: payloadNotes,
+      family_id: DEFAULT_FID
     });
   } catch(e) { console.warn('Pet Aşı Hatası:', e); }
 }
@@ -1604,113 +1615,93 @@ async function pushTatilVizeToSupabase(visa) {
 // --- Mühendislik ---
 async function pushMuhendislikProblemToSupabase(p) {
   try {
-    const familyId = DEFAULT_FID;
     const { id, title, description, category, priority, status, solution, date, ...rest } = p;
     await supabase.from('muhendislik_problems').upsert({
-      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      id: String(id),
       title, description: description || null,
       category: category || null, priority: priority || 'Orta',
       status: status || 'Açık', solution: solution || null,
-      date: date || new Date().toISOString(), extra: rest,
-      family_id: familyId
+      date: date || new Date().toISOString(), extra: rest
     });
   } catch(e) { console.warn('Mühendislik Problem Hatası:', e); }
 }
 
 async function deleteMuhendislikProblemFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('muhendislik_problems').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('muhendislik_problems').delete().eq('id', String(id));
   } catch(e) { console.warn('Problem Silme Hatası:', e); }
 }
 
 async function pushMuhendislikDecisionToSupabase(d) {
   try {
-    const familyId = DEFAULT_FID;
     const { id, title, description, category, result, pros, cons, date, ...rest } = d;
     await supabase.from('muhendislik_decisions').upsert({
-      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      id: String(id),
       title, description: description || null,
       category: category || null, result: result || null,
       pros: pros || null, cons: cons || null,
-      date: date || new Date().toISOString(), extra: rest,
-      family_id: familyId
+      date: date || new Date().toISOString(), extra: rest
     });
   } catch(e) { console.warn('Mühendislik Karar Hatası:', e); }
 }
 
 async function deleteMuhendislikDecisionFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('muhendislik_decisions').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('muhendislik_decisions').delete().eq('id', String(id));
   } catch(e) { console.warn('Karar Silme Hatası:', e); }
 }
 
 async function pushCrmCustomerToSupabase(c) {
   try {
-    const familyId = DEFAULT_FID;
     const { id, name, company, phone, email, notes, status, date, ...rest } = c;
     await supabase.from('muhendislik_crm_customers').upsert({
-      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      id: String(id),
       name, company: company || null, phone: phone || null,
       email: email || null, notes: notes || null, status: status || 'aktif',
-      date: date || new Date().toISOString(), extra: rest,
-      family_id: familyId
+      date: date || new Date().toISOString(), extra: rest
     });
   } catch(e) { console.warn('CRM Müşteri Hatası:', e); }
 }
 
 async function deleteCrmCustomerFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('muhendislik_crm_customers').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('muhendislik_crm_customers').delete().eq('id', String(id));
   } catch(e) { console.warn('CRM Müşteri Silme Hatası:', e); }
 }
 
 async function pushCrmDealToSupabase(d) {
   try {
-    const familyId = DEFAULT_FID;
     const { id, customerId, title, amount, status, notes, date, ...rest } = d;
     await supabase.from('muhendislik_crm_deals').upsert({
-      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      id: String(id),
       customer_id: customerId || null, title: title || null,
       amount: Number(amount || 0), status: status || 'pipeline',
-      notes: notes || null, date: date || new Date().toISOString(), extra: rest,
-      family_id: familyId
+      notes: notes || null, date: date || new Date().toISOString(), extra: rest
     });
   } catch(e) { console.warn('CRM Deal Hatası:', e); }
 }
 
 async function deleteCrmDealFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('muhendislik_crm_deals').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('muhendislik_crm_deals').delete().eq('id', String(id));
   } catch(e) { console.warn('CRM Deal Silme Hatası:', e); }
 }
 
 async function pushZihniProceToSupabase(p) {
   try {
-    const familyId = DEFAULT_FID;
     const { id, title, description, category, completed, date, ...rest } = p;
     await supabase.from('muhendislik_proceler').upsert({
-      id: String(id).includes(familyId) ? String(id) : `${id}-${familyId}`,
+      id: String(id),
       title, description: description || null,
       category: category || null, completed: !!completed,
-      date: date || new Date().toISOString(), extra: rest,
-      family_id: familyId
+      date: date || new Date().toISOString(), extra: rest
     });
   } catch(e) { console.warn('Zihni Proce Hatası:', e); }
 }
 
 async function deleteZihniProceFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('muhendislik_proceler').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('muhendislik_proceler').delete().eq('id', String(id));
   } catch(e) { console.warn('Zihni Proce Silme Hatası:', e); }
 }
 
@@ -2448,15 +2439,28 @@ const useStore = create(
                 const pId = a.pet_id || a.pet_name;
                 if (!pId) return;
                 if (!pet.vaccines[pId]) pet.vaccines[pId] = [];
-                if (!pet.vaccines[pId].some(v => v.id === a.id)) {
-                  pet.vaccines[pId].push({
-                    id: a.id,
-                    n: a.asi_adi,
-                    last: a.son_tarih,
-                    ev: 60, 
-                    done: a.durum === 'tamamlandi',
-                    notes: a.notlar
-                  });
+                
+                let parsedNotlar = {};
+                try {
+                  parsedNotlar = a.notlar ? JSON.parse(a.notlar) : {};
+                } catch(e) {
+                  parsedNotlar = { notes: a.notlar };
+                }
+                
+                const mappedVaccine = {
+                  id: a.id,
+                  n: a.asi_adi,
+                  last: a.son_tarih,
+                  ev: parsedNotlar.ev || 60, 
+                  done: a.durum === 'tamamlandi',
+                  notes: parsedNotlar.notes || ''
+                };
+
+                const existingIdx = pet.vaccines[pId].findIndex(v => v.id === a.id || v.n === a.asi_adi);
+                if (existingIdx !== -1) {
+                  pet.vaccines[pId][existingIdx] = { ...pet.vaccines[pId][existingIdx], ...mappedVaccine };
+                } else {
+                  pet.vaccines[pId].push(mappedVaccine);
                 }
               });
             }
@@ -7252,11 +7256,10 @@ const useStore = create(
           title: `Fatura: ${fatura.name}`,
           amount: Number(fatura.amount),
           category: 'fatura',
-          source: 'Ev Hub',
-          payer: 'ortak',
+          source: 'Fatura Girişi',
+          payer: fatura.user || 'ortak',
           defaultPay: paymentInfo
         });
-
 
         pushGenericToSupabase('ev_faturalar', newFatura);
         toast.success('Fatura kaydedildi ve Finans\'a aktarıldı! 🧾');

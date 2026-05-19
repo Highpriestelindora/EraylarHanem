@@ -46,13 +46,13 @@ const OzetTab = React.memo(({ finans, prv }) => {
     return s + (mut.beklenen || 0);
   }, 0);
 
-  const toplamHarcama = buAyHarcamalar.reduce((s, h) => s + Number(h.tutar || 0), 0);
+  const toplamHarcama = buAyHarcamalar.reduce((s, h) => h.odenme_turu === 'kayitdisi' ? s : s + Number(h.tutar || 0), 0);
   const toplamKredi = borclar.reduce((s, b) => s + (b.monthly || 0), 0);
   const ayTahmini = toplamBeklenen + toplamKredi;
 
   // Nakit, Kart ve Havale Harcamaları Kırılımı
   const toplamNakitHarcama = buAyHarcamalar.reduce((s, h) => {
-    const isNakit = h.odenme_turu === 'nakit' || (!h.kart_id && !h.banka_id && h.odenme_turu !== 'havale');
+    const isNakit = h.odenme_turu === 'nakit' || (!h.kart_id && !h.banka_id && h.odenme_turu !== 'havale' && h.odenme_turu !== 'kayitdisi');
     return isNakit ? s + Number(h.tutar || 0) : s;
   }, 0);
 
@@ -149,6 +149,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
 
     buAyHarcamalar.forEach(h => {
       const tutar = Number(h.tutar || 0);
+      if (h.odenme_turu === 'kayitdisi') return;
       grand += tutar;
       if (h.odenme_turu === 'kart') {
         card += tutar;
@@ -178,7 +179,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
     ];
 
     buAyHarcamalar.forEach(h => {
-      if (!h.tarih) return;
+      if (!h.tarih || h.odenme_turu === 'kayitdisi') return;
       const day = new Date(h.tarih).getDate();
       const tutar = Number(h.tutar || 0);
 
@@ -198,7 +199,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
       
       let matchesMethod = true;
       if (methodFilter === 'nakit') {
-        matchesMethod = h.odenme_turu !== 'kart' && !h.banka_id;
+        matchesMethod = h.odenme_turu !== 'kart' && !h.banka_id && h.odenme_turu !== 'kayitdisi';
       } else if (methodFilter === 'havale') {
         matchesMethod = !!h.banka_id;
       } else if (methodFilter !== 'hepsi') {
@@ -210,7 +211,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
   }, [buAyHarcamalar, filter, methodFilter]);
 
   const filteredTotal = useMemo(() => {
-    return filtrelenmis.reduce((sum, h) => sum + Number(h.tutar || 0), 0);
+    return filtrelenmis.reduce((sum, h) => h.odenme_turu === 'kayitdisi' ? sum : sum + Number(h.tutar || 0), 0);
   }, [filtrelenmis]);
 
   // Group by date
@@ -397,7 +398,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
             </div>
             <div className="hg-items" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {items.map(h => (
-                <div key={h.id} className="harcama-row glass" style={{ padding: '12px 16px', borderLeft: `4px solid ${h.odenme_turu === 'kart' ? '#3b82f6' : '#10b981'}` }}>
+                <div key={h.id} className="harcama-row glass" style={{ padding: '12px 16px', borderLeft: `4px solid ${h.odenme_turu === 'kart' ? '#3b82f6' : (h.odenme_turu === 'kayitdisi' ? '#f59e0b' : '#10b981')}` }}>
                   <div className="hr-icon" style={{ background: 'transparent', width: 'auto', height: 'auto', fontSize: '20px' }}>{KAYNAK_ICONS[h.kaynak] || '💸'}</div>
                   <div className="hr-info" style={{ flex: 1 }}>
                     <strong style={{ fontSize: '15px', color: '#1e293b' }}>{h.baslik}</strong>
@@ -405,6 +406,7 @@ const HarcamalarTab = React.memo(({ finans, prv }) => {
                       <span style={{ fontSize: '10px', background: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: '600' }}>{h.kategori || 'Diğer'}</span>
                       <small style={{ color: '#64748b' }}>
                         · {h.kayit_eden} · {(() => {
+                          if (h.odenme_turu === 'kayitdisi') return 'Kayıt Dışı';
                           if (h.odenme_turu === 'kart') {
                             const card = finans?.kartlar?.find(k => k.id === h.kart_id);
                             return card ? card.name : (h.kart_id ? h.kart_id.split('-').pop() : 'Kredi Kartı');
@@ -1194,6 +1196,7 @@ function GecenAyForm({ oncekiAy, onClose }) {
         <option value="nakit">Nakit</option>
         <option value="kart">Kredi Kartı</option>
         <option value="havale">Banka Havalesi</option>
+        <option value="kayitdisi">Kayıt Dışı</option>
       </select>
       {form.odenme_turu === 'kart' && (
         <select value={form.kart_id} onChange={e => setForm(p => ({ ...p, kart_id: e.target.value }))}>
@@ -1265,6 +1268,7 @@ function EditHarcamaModal({ harcama, onClose, onSave }) {
                 <option value="nakit">Nakit</option>
                 <option value="kart">Kredi Kartı</option>
                 <option value="havale">Banka Havalesi</option>
+                <option value="kayitdisi">Kayıt Dışı</option>
               </select>
             </div>
             {form.odenme_turu === 'kart' && (

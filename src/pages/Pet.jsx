@@ -291,31 +291,6 @@ export default function Pet() {
           </div>
         </section>
 
-        {/* Kilo Geçmişi */}
-        <section className="pet-section mt-24">
-          <div className="ps-header">
-            <h3>⚖️ Kilo Geçmişi</h3>
-          </div>
-          <div className="history-timeline-premium">
-            {(history || []).filter(h => h.pet === activePet && h.type === 'weight').map((h) => (
-              <div key={h.id} className="history-card-v2 glass">
-                <div className="hc-icon">⚖️</div>
-                <div className="hc-info">
-                  <p>{h.action}</p>
-                  <span className="hc-time">{h.dt}</span>
-                </div>
-                <div className="hc-actions">
-                  <button className="hc-edit" onClick={() => { setEditingLog(h); setShowAddLog(true); }}><Edit2 size={14} /></button>
-                  <button className="hc-del" onClick={() => deletePetLog(h.id)}><Trash2 size={14} /></button>
-                </div>
-              </div>
-            ))}
-            {!(history || []).some(h => h.pet === activePet && h.type === 'weight') && (
-              <div className="gallery-empty" style={{ padding: '20px', fontSize: '11px' }}>Kayıtlı kilo verisi yok.</div>
-            )}
-          </div>
-        </section>
-
         {/* Günlük & Geçmiş (Notlar) */}
         <section className="pet-section mt-24">
           <div className="ps-header">
@@ -337,6 +312,31 @@ export default function Pet() {
             ))}
             {!(history || []).some(h => h.pet === activePet && h.type !== 'weight' && h.type !== 'vaccine_done') && (
               <div className="gallery-empty" style={{ padding: '20px', fontSize: '11px' }}>Henüz bir not alınmamış.</div>
+            )}
+          </div>
+        </section>
+
+        {/* Kilo Geçmişi */}
+        <section className="pet-section mt-24">
+          <div className="ps-header">
+            <h3>⚖️ Kilo Geçmişi</h3>
+          </div>
+          <div className="history-timeline-premium">
+            {(history || []).filter(h => h.pet === activePet && h.type === 'weight').map((h) => (
+              <div key={h.id} className="history-card-v2 glass">
+                <div className="hc-icon">⚖️</div>
+                <div className="hc-info">
+                  <p>{h.action}</p>
+                  <span className="hc-time">{h.dt}</span>
+                </div>
+                <div className="hc-actions">
+                  <button className="hc-edit" onClick={() => { setEditingLog(h); setShowAddLog(true); }}><Edit2 size={14} /></button>
+                  <button className="hc-del" onClick={() => deletePetLog(h.id)}><Trash2 size={14} /></button>
+                </div>
+              </div>
+            ))}
+            {!(history || []).some(h => h.pet === activePet && h.type === 'weight') && (
+              <div className="gallery-empty" style={{ padding: '20px', fontSize: '11px' }}>Kayıtlı kilo verisi yok.</div>
             )}
           </div>
         </section>

@@ -168,14 +168,8 @@ export default function Ev() {
   const [editingPeriodic, setEditingPeriodic] = useState(null);
   const [editingPeriodicDetails, setEditingPeriodicDetails] = useState(null);
   const [editingOnarim, setEditingOnarim] = useState(null);
-  const [editingTasinmaz, setEditingTasinmaz] = useState(null);
-  const [activeTaxTasinmaz, setActiveTaxTasinmaz] = useState(null);
-  const [activeDaskTasinmaz, setActiveDaskTasinmaz] = useState(null);
-  const [activeAidatTasinmaz, setActiveAidatTasinmaz] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('Nakit');
   const [faturaInput, setFaturaInput] = useState(null); 
-  const [expandedTasinmazIds, setExpandedTasinmazIds] = useState([]);
-  const [isAIUpdating, setIsAIUpdating] = useState(false);
   const [showWifiPass, setShowWifiPass] = useState(false);
   const [showGuestWifiPass, setShowGuestWifiPass] = useState(false);
   const [showWifiMain, setShowWifiMain] = useState(true);
@@ -287,7 +281,7 @@ export default function Ev() {
     { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
     { id: 'bakim', label: 'Bakım', emoji: '🔧' },
     { id: 'abonelik', label: 'Abone', emoji: '💳' },
-    { id: 'tasinmaz', label: 'Taşınmaz', emoji: '🏗️' },
+    { id: 'fatura', label: 'Fatura', emoji: '🧾' },
     { id: 'guvenlik', label: 'Güvenlik', emoji: '🛡️' }
   ];
 
@@ -591,199 +585,6 @@ export default function Ev() {
           </div>
         )}
 
-        {activeTab === 'tasinmaz' && (
-          <div className="tasinmaz-view animate-fadeIn">
-            <div className="portfolio-total glass mb-24">
-              <div className="pt-info">
-                <span style={{ fontSize: '9px', fontWeight: '800' }}>TOPLAM GAYRİMENKUL DEĞERİ</span>
-                <strong>{formatMoney((kasa?.tasinmazlar || []).reduce((a, b) => a + (Number(b.value) || 0), 0))}</strong>
-              </div>
-              <button 
-                className={`ai-update-btn ${isAIUpdating ? 'loading' : ''}`}
-                disabled={isAIUpdating}
-                onClick={() => {
-                  setIsAIUpdating(true);
-                  toast.loading("Yekta Asistan bölge rayiçlerini ve endeksleri tarıyor...", { id: 'ai-val' });
-                  
-                  setTimeout(() => {
-                    const { updateTasinmaz } = useStore.getState();
-                    const now = new Date();
-                    const tasinmazlar = kasa?.tasinmazlar || [];
-                    
-                    let updatedCount = 0;
-                    tasinmazlar.forEach(t => {
-                      const lastUpdate = t.lastAIUpdate ? new Date(t.lastAIUpdate) : null;
-                      const diffDays = lastUpdate ? Math.floor((now - lastUpdate) / (1000 * 60 * 60 * 24)) : 0;
-                      
-                      // Eğer bugün zaten güncellendiyse fiyat artışı yapma (sadece tarama simülasyonu)
-                      if (diffDays <= 0 && lastUpdate) {
-                        return; 
-                      }
-
-                      // Akıllı Artış Oranları (Yıllık bazda günlük hesaplama)
-                      // Antalya: %40 yıllık, Diğerleri: %25 yıllık varsayıyoruz
-                      const annualRate = t.city?.toLowerCase() === 'antalya' ? 0.40 : 0.25;
-                      const dailyRate = annualRate / 365;
-                      
-                      // Eğer ilk güncelleme ise veya 0 gün geçmişse küçük bir 'ilk tarama' primi ver (%0.1)
-                      const effectiveDays = diffDays > 0 ? diffDays : 0.1;
-                      const growthFactor = 1 + (dailyRate * effectiveDays);
-                      const noise = 0.998 + Math.random() * 0.004; // Gerçekçi piyasa gürültüsü
-                      
-                      const newValue = Math.round(t.value * growthFactor * noise);
-                      
-                      updateTasinmaz(t.id, { 
-                        ...t, 
-                        value: newValue,
-                        lastAIUpdate: now.toISOString()
-                      });
-                      updatedCount++;
-                    });
-
-                    setIsAIUpdating(false);
-                    if (updatedCount > 0) {
-                      toast.success(`Rayiç bedelleri güncellendi! ${updatedCount} taşınmazın değeri piyasa verilerine göre revize edildi. 🏠📈`, { id: 'ai-val' });
-                    } else {
-                      toast.success("Tüm verileriniz güncel. Bölgesel endekslerde bugün için yeni bir değişim saptanmadı. ✨", { id: 'ai-val' });
-                    }
-                  }, 2500);
-                }}
-              >
-                <Sparkles size={16} /> 
-                <span>{isAIUpdating ? 'Analiz Ediliyor...' : 'Akıllı Güncelle'}</span>
-              </button>
-            </div>
-
-            <div className="section-header-v2">
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <h3>🏗️ Gayrimenkul Portföyü</h3>
-                <small style={{ opacity: 0.5 }}>{kasa?.tasinmazlar?.length || 0} Adet Taşınmaz</small>
-              </div>
-              <button className="add-btn-mini" onClick={() => setEditingTasinmaz({ isNew: true })}><Plus size={14} /></button>
-            </div>
-
-            <div className="tasinmaz-grid">
-              {(kasa?.tasinmazlar || []).map(t => {
-                const isExpanded = expandedTasinmazIds.includes(t.id);
-                const netIncome = (Number(t.income) || 0) - (Number(t.expense) || 0);
-                
-                return (
-                  <div key={t.id} className={`tasinmaz-card-premium glass ${isExpanded ? 'expanded' : 'collapsed'}`}>
-                    <div className="tc-header" onClick={() => {
-                      setExpandedTasinmazIds(prev => 
-                        isExpanded ? prev.filter(id => id !== t.id) : [...prev, t.id]
-                      );
-                    }}>
-                      <div className="tc-icon-box">{t.icon || '🏠'}</div>
-                      <div className="tc-main-info">
-                        <strong>{t.name}</strong>
-                        <div className="tc-technical">
-                          <small><MapPin size={10} /> {t.city} / {t.district}</small>
-                          {!isExpanded && <small className="compact-val">{formatMoney(t.value)}</small>}
-                        </div>
-                      </div>
-                      <div className="tc-header-right">
-                         <div className="tc-status-pill" style={{ background: t.status === 'Mülk Sahibi' ? '#dcfce7' : '#fef3c7', color: t.status === 'Mülk Sahibi' ? '#15803d' : '#b45309' }}>
-                           {t.status}
-                         </div>
-                         <div className={`tc-chevron ${isExpanded ? 'rotated' : ''}`}>
-                            <ChevronDown size={18} />
-                         </div>
-                      </div>
-                    </div>
-
-                    {isExpanded && (
-                      <div className="tc-expanded-content animate-fadeIn">
-                        <div className="tc-tax-reminder mt-12 mb-12">
-                           <div className="tax-grid-v2">
-                             {/* Emlak Vergisi */}
-                             <div className={`tax-pill-v2 ${t.taxPaid1 && t.taxPaid2 ? 'done' : (t.taxPaid1 || t.taxPaid2 ? 'warn' : 'pending')}`} 
-                                  onClick={(e) => { e.stopPropagation(); setActiveTaxTasinmaz(t); }}>
-                               <div className="tp-icon">
-                                 <ShieldCheck size={14} />
-                               </div>
-                               <div className="tp-info">
-                                 <small>EMLAK VERGİSİ</small>
-                                 <div className="tax-status-row">
-                                    <span className={t.taxPaid1 ? 'txt-green' : 'txt-red'}>Ocak</span>
-                                    <span style={{ opacity: 0.3 }}>/</span>
-                                    <span className={t.taxPaid2 ? 'txt-green' : 'txt-red'}>Haziran</span>
-                                </div>
-                               </div>
-                             </div>
-                             {/* DASK */}
-                             <div className={`tax-pill-v2 ${new Date(t.daskExpiry) > new Date() ? 'done' : 'warn'}`}
-                                  onClick={(e) => { e.stopPropagation(); setActiveDaskTasinmaz(t); }}>
-                               <div className="tp-icon">
-                                 <Activity size={14} />
-                               </div>
-                               <div className="tp-info">
-                                 <small>DASK POLİÇE</small>
-                                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                   <span>{t.daskExpiry ? new Date(t.daskExpiry).toLocaleDateString('tr-TR') : 'KAYIT YOK'}</span>
-                                   {t.daskFile && <FileText size={10} color="#3b82f6" />}
-                                 </div>
-                               </div>
-                             </div>
-                             {/* Aidat */}
-                             <div className={`tax-pill-v2 ${t.aidatPaid ? 'done' : 'pending'}`}
-                                  onClick={(e) => { e.stopPropagation(); setActiveAidatTasinmaz(t); }}>
-                               <div className="tp-icon">
-                                 <CreditCard size={14} />
-                               </div>
-                               <div className="tp-info">
-                                 <small>AYLIK AİDAT</small>
-                                 <span>{formatMoney(t.aidat || 0)}</span>
-                               </div>
-                             </div>
-                           </div>
-                        </div>
-
-                        <div className="tc-details-list">
-                          <div className="tc-detail-row">
-                             <div className="tc-label">💰 Piyasa Değeri</div>
-                             <div className="tc-value">{formatMoney(t.value)}</div>
-                          </div>
-                          <div className="tc-detail-row">
-                             <div className="tc-label">📈 Net Getiri / Ay</div>
-                             <div className="tc-value" style={{ color: netIncome > 0 ? '#10b981' : (netIncome < 0 ? '#ef4444' : 'inherit') }}>
-                                {netIncome > 0 ? '+' : ''}{formatMoney(netIncome)}
-                             </div>
-                          </div>
-                          <div className="tc-detail-row">
-                             <div className="tc-label">📏 Toplam Alan</div>
-                             <div className="tc-value">{t.area} m²</div>
-                          </div>
-                          <div className="tc-detail-row">
-                             <div className="tc-label">👤 Getiri Durumu</div>
-                             <div className="tc-value" style={{ color: t.status === 'Kiracı Var' ? '#10b981' : '#f59e0b' }}>
-                               {t.status === 'Kiracı Var' ? `Kirada (${formatMoney(t.income)})` : 'Mülk Sahibi'}
-                             </div>
-                          </div>
-                          <div className="tc-detail-row">
-                             <div className="tc-label">🏛️ Yıllık Vergi</div>
-                             <div className="tc-value">{formatMoney(t.tax)}</div>
-                          </div>
-                          <div className="tc-detail-row">
-                             <div className="tc-label">📄 Ada / Parsel</div>
-                             <div className="tc-value">{t.adaParsel || '-'}</div>
-                          </div>
-                        </div>
-
-                        <div className="tc-actions-v2">
-                          <button className="pill-btn-v2 tc-pill" onClick={(e) => { e.stopPropagation(); setEditingTasinmaz(t); }}>
-                            <Settings size={14} /> Yönet & Düzenle
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {activeTab === 'bakim' && (
           <div className="bakim-view animate-fadeIn">
             {/* Periodic Maintenance Hub */}
@@ -945,6 +746,60 @@ export default function Ev() {
         {activeTab === 'abonelik' && (
           <div className="abonelik-view animate-fadeIn">
             {/* V5 FULL SCREEN PREMIUM RECEIPT */}
+            <div className="section-header-v2 mt-40">
+              <h3>📜 Abonelikler</h3>
+              <button className="btn-pill-v2 primary mini narrow" onClick={() => setEditingAbo({ name: '', amount: 0, date: 1, linkedCardId: '', autoPay: true, icon: '🎬', _type: 'abonelik' })}>
+                <Plus size={14} /> Abonelik
+              </button>
+            </div>
+
+            {/* 3. SPLIT LISTS */}
+            <div className="abo-split-container mt-24">
+               <div className="abo-section">
+                  <h4 className="section-mini-title">ABONELİKLER</h4>
+                  <div className="vize-style-grid">
+                    {abonelikler.map(item => (
+                      <div key={item.id} className="vize-card glass abo">
+                        <div className="vize-flag">{item.icon}</div>
+                        <div className="vize-info">
+                          <strong>{item.name}</strong>
+                          <span>{formatMoney(item.amount)} • Her ayın {item.date}. günü</span>
+                        </div>
+                        <div className="vize-badge paid">Aktif</div>
+                        <div className="vize-actions">
+                          <button className="vize-edit" onClick={() => setEditingAbo({...item, _type: 'abonelik'})}><Edit2 size={16} /></button>
+                          <button className="vize-delete" onClick={() => requestConfirm(`${item.name} aboneliğini silmek istediğinize emin misiniz?`, () => deleteAbonelik(item.id))}><Trash2 size={16} /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+
+               <div className="abo-section mt-24">
+                  <h4 className="section-mini-title">DÜZENLİ ÖDEMELER</h4>
+                  <div className="vize-style-grid">
+                    {(ev.duzenliOdemeler || []).map(item => (
+                      <div key={item.id} className="vize-card glass duzenli">
+                        <div className="vize-flag">{item.icon}</div>
+                        <div className="vize-info">
+                          <strong>{item.name}</strong>
+                          <span>{formatMoney(item.amount)} • Her ayın {item.date}. günü</span>
+                        </div>
+                        <div className="vize-badge warn">Planlı</div>
+                        <div className="vize-actions">
+                          <button className="vize-edit" onClick={() => setEditingAbo({...item, _type: 'duzenli'})}><Edit2 size={16} /></button>
+                          <button className="vize-delete" onClick={() => requestConfirm(`${item.name} kaydını silmek istediğinize emin misiniz?`, () => deleteDuzenliOdeme(item.id))}><Trash2 size={16} /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+               </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'fatura' && (
+          <div className="fatura-view animate-fadeIn">
             <div className="premium-receipt-v5 animate-slideUp">
                <div className="receipt-paper">
                   {/* Top Zig-Zag edge could be CSS pseudo-element */}
@@ -999,15 +854,18 @@ export default function Ev() {
                   <div className="r-btn-container">
                     <button className="r-complete-btn-rounded" onClick={() => {
                         if(!faturaInput) return toast.error("Lütfen tutar girin.");
-                        saveQuickExpense({
+                        addFatura({
+                          name: faturaForm?.name || 'Fatura',
                           amount: Number(faturaInput),
-                          category: faturaForm?.name || 'Hızlı Harcama',
-                          user: currentUser?.name || 'Görkem'
+                          provider: 'Fatura Girişi',
+                          dueDate: new Date().toISOString().split('T')[0],
+                          icon: '📜',
+                          status: 'Bekliyor',
+                          user: currentUser?.name || 'ortak'
                         }, paymentMethod);
                         setFaturaInput('');
-                        setPaymentMethod('');
-                        setFaturaForm({...faturaForm, name: ''});
-                       toast.success("Harcama onaylandı! ✅");
+                        setPaymentMethod('Nakit');
+                        setFaturaForm({ name: '', amount: '', provider: '', dueDate: '', icon: '📜' });
                      }}>
                        GİRİŞİ TAMAMLA
                     </button>
@@ -1016,54 +874,27 @@ export default function Ev() {
             </div>
 
             {/* 2. UNIFIED LIST HEADER */}
-            <div className="section-header-v2 mt-40">
-              <h3>📜 Abonelikler</h3>
-              <button className="btn-pill-v2 primary mini narrow" onClick={() => setEditingAbo({ name: '', amount: 0, date: 1, linkedCardId: '', autoPay: true, icon: '🎬', _type: 'abonelik' })}>
-                <Plus size={14} /> Abonelik
-              </button>
+            <div className="section-header-v2 mt-24">
+              <h3>📜 Fatura Geçmişi</h3>
             </div>
-
-            {/* 3. SPLIT LISTS */}
-            <div className="abo-split-container mt-24">
-               <div className="abo-section">
-                  <h4 className="section-mini-title">ABONELİKLER</h4>
-                  <div className="vize-style-grid">
-                    {abonelikler.map(item => (
-                      <div key={item.id} className="vize-card glass abo">
-                        <div className="vize-flag">{item.icon}</div>
-                        <div className="vize-info">
-                          <strong>{item.name}</strong>
-                          <span>{formatMoney(item.amount)} • Her ayın {item.date}. günü</span>
-                        </div>
-                        <div className="vize-badge paid">Aktif</div>
-                        <div className="vize-actions">
-                          <button className="vize-edit" onClick={() => setEditingAbo({...item, _type: 'abonelik'})}><Edit2 size={16} /></button>
-                          <button className="vize-delete" onClick={() => requestConfirm(`${item.name} aboneliğini silmek istediğinize emin misiniz?`, () => deleteAbonelik(item.id))}><Trash2 size={16} /></button>
-                        </div>
-                      </div>
-                    ))}
+            <div className="history-timeline-premium mt-12">
+              {faturalar.length === 0 ? (
+                 <div className="gallery-empty" style={{ padding: '20px', fontSize: '11px' }}>Kayıtlı fatura yok.</div>
+              ) : faturalar.map(f => (
+                <div key={f.id} className="history-card-v2 glass" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div className="hc-icon" style={{ fontSize: '20px' }}>{f.icon || '📜'}</div>
+                    <div className="hc-info">
+                      <p style={{ margin: 0 }}><strong>{f.name}</strong> <span style={{ opacity: 0.6, fontSize: '11px' }}>{f.provider}</span></p>
+                      <span className="hc-time" style={{ fontSize: '10px', opacity: 0.5 }}>{f.dueDate ? new Date(f.dueDate).toLocaleDateString('tr-TR') : ''}</span>
+                    </div>
                   </div>
-               </div>
-
-               <div className="abo-section mt-24">
-                  <h4 className="section-mini-title">DÜZENLİ ÖDEMELER</h4>
-                  <div className="vize-style-grid">
-                    {(ev.duzenliOdemeler || []).map(item => (
-                      <div key={item.id} className="vize-card glass duzenli">
-                        <div className="vize-flag">{item.icon}</div>
-                        <div className="vize-info">
-                          <strong>{item.name}</strong>
-                          <span>{formatMoney(item.amount)} • Her ayın {item.date}. günü</span>
-                        </div>
-                        <div className="vize-badge warn">Planlı</div>
-                        <div className="vize-actions">
-                          <button className="vize-edit" onClick={() => setEditingAbo({...item, _type: 'duzenli'})}><Edit2 size={16} /></button>
-                          <button className="vize-delete" onClick={() => requestConfirm(`${item.name} kaydını silmek istediğinize emin misiniz?`, () => deleteDuzenliOdeme(item.id))}><Trash2 size={16} /></button>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="hc-actions" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <strong style={{ color: f.status === 'Ödendi' ? '#10b981' : '#f59e0b' }}>{new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(f.amount || 0)}</strong>
+                    <span style={{ fontSize: '10px', background: f.status === 'Ödendi' ? '#dcfce7' : '#fef3c7', padding: '2px 6px', borderRadius: '4px', color: f.status === 'Ödendi' ? '#15803d' : '#b45309' }}>{f.status || 'Bekliyor'}</span>
                   </div>
-               </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -1385,17 +1216,40 @@ export default function Ev() {
       <ActionSheet
         isOpen={!!editingAbo}
         onClose={() => setEditingAbo(null)}
-        title={editingAbo?.id ? 'Abonelik Düzenle' : 'Yeni Abonelik'}
+        title={editingAbo?.id ? (editingAbo._type === 'duzenli' ? 'Düzenli Ödeme Düzenle' : 'Abonelik Düzenle') : (editingAbo?._type === 'duzenli' ? 'Yeni Düzenli Ödeme' : 'Yeni Abonelik')}
       >
         {editingAbo && (
           <div className="edit-form-v2">
             <div className="form-group-v2">
-              <label>Abonelik Adı</label>
+              <label>Kayıt Türü</label>
+              <select
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '14px',
+                  border: '1px solid var(--brd)',
+                  background: '#f8fafc',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  outline: 'none',
+                  width: '100%',
+                  fontFamily: 'inherit',
+                  color: 'var(--txt)',
+                  marginBottom: '12px'
+                }}
+                value={editingAbo._type || 'abonelik'}
+                onChange={(e) => setEditingAbo({...editingAbo, _type: e.target.value, icon: e.target.value === 'duzenli' ? '💸' : '🎬'})}
+              >
+                <option value="abonelik">🎬 Abonelik (Netflix, Spotify vb.)</option>
+                <option value="duzenli">💸 Düzenli Ödeme (Kira, Aidat vb.)</option>
+              </select>
+            </div>
+            <div className="form-group-v2">
+              <label>{editingAbo._type === 'duzenli' ? 'Ödeme Adı' : 'Abonelik Adı'}</label>
               <input 
                 type="text" 
                 value={editingAbo.name} 
                 onChange={(e) => setEditingAbo({...editingAbo, name: e.target.value})}
-                placeholder="Örn: Netflix"
+                placeholder={editingAbo._type === 'duzenli' ? 'Örn: Ev Kirası' : 'Örn: Netflix'}
               />
             </div>
             <div className="form-row-v2">
@@ -1643,59 +1497,6 @@ export default function Ev() {
         )}
       </ActionSheet>
 
-      <ActionSheet
-        isOpen={!!activeTaxTasinmaz}
-        onClose={() => setActiveTaxTasinmaz(null)}
-        title="🏛️ Emlak Vergisi Yönetimi"
-      >
-        {activeTaxTasinmaz && (
-          <TaxManagementContent 
-            data={activeTaxTasinmaz} 
-            onClose={() => setActiveTaxTasinmaz(null)} 
-          />
-        )}
-      </ActionSheet>
-
-      <ActionSheet
-        isOpen={!!activeDaskTasinmaz}
-        onClose={() => setActiveDaskTasinmaz(null)}
-        title="🛡️ DASK Poliçe Yönetimi"
-      >
-        {activeDaskTasinmaz && (
-          <DaskManagementContent 
-            data={activeDaskTasinmaz} 
-            onClose={() => setActiveDaskTasinmaz(null)} 
-          />
-        )}
-      </ActionSheet>
-
-      <ActionSheet
-        isOpen={!!activeAidatTasinmaz}
-        onClose={() => setActiveAidatTasinmaz(null)}
-        title="💳 Aidat Ödeme Yönetimi"
-      >
-        {activeAidatTasinmaz && (
-          <AidatManagementContent 
-            data={activeAidatTasinmaz} 
-            onClose={() => setActiveAidatTasinmaz(null)} 
-          />
-        )}
-      </ActionSheet>
-
-      <ActionSheet
-        isOpen={!!editingTasinmaz}
-        onClose={() => setEditingTasinmaz(null)}
-        title={editingTasinmaz?.isNew ? 'Yeni Taşınmaz Ekle' : 'Taşınmaz Yönetimi'}
-        fullHeight
-      >
-        {editingTasinmaz && (
-          <ManageTasinmazContent 
-            data={editingTasinmaz} 
-            onClose={() => setEditingTasinmaz(null)} 
-            requestConfirm={requestConfirm}
-          />
-        )}
-      </ActionSheet>
 
       <ActionSheet
         isOpen={!!editingOnarim}
@@ -2007,338 +1808,3 @@ function EmergencyKitModal({ type, items, onClose, requestConfirm }) {
 }
 
 
-function ManageTasinmazContent({ data, onClose, requestConfirm }) {
-  const { addTasinmaz, updateTasinmaz, deleteTasinmaz } = useStore();
-  const [form, setForm] = useState(data.isNew ? {
-    name: '', city: '', district: '', neighborhood: '',
-    type: '', adaParsel: '', unit: '', floor: '', area: '', share: '',
-    nitelik: '', propertyNo: '', icon: '🏢', status: 'Mülk Sahibi',
-    income: 0, expense: 0, tax: 0, taxPaid1: false, taxPaid2: false, value: 0,
-    daskExpiry: '', aidat: 0, aidatPaid: false, daskFile: null
-  } : data);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (data.isNew) {
-      addTasinmaz(form);
-    } else {
-      updateTasinmaz(data.id, form);
-      toast.success('Değişiklikler kaydedildi! ✨');
-    }
-    onClose();
-  };
-
-  return (
-    <form className="modal-form-premium" onSubmit={handleSubmit}>
-      <div className="form-section-premium">
-        <h4><Info size={16} /> Genel Bilgiler</h4>
-        <div className="form-group">
-          <label>Taşınmaz Adı</label>
-          <input type="text" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Örn: Antalya Kepez Daire" required />
-        </div>
-        <div className="form-row">
-          <div className="form-group"><label>Şehir</label><input type="text" value={form.city} onChange={e => setForm({...form, city: e.target.value})} placeholder="İl" /></div>
-          <div className="form-group"><label>İlçe</label><input type="text" value={form.district} onChange={e => setForm({...form, district: e.target.value})} placeholder="İlçe" /></div>
-        </div>
-        <div className="form-group">
-          <label>Nitelik / Tip</label>
-          <input type="text" value={form.nitelik} onChange={e => setForm({...form, nitelik: e.target.value})} placeholder="Örn: Mesken, Arsa..." />
-        </div>
-      </div>
-
-      <div className="form-section-premium mt-24">
-        <h4><FileText size={16} /> Tapu & Teknik Detaylar</h4>
-        <div className="form-row">
-          <div className="form-group"><label>Ada/Parsel</label><input type="text" value={form.adaParsel} onChange={e => setForm({...form, adaParsel: e.target.value})} /></div>
-          <div className="form-group"><label>Alan (m²)</label><input type="text" value={form.area} onChange={e => setForm({...form, area: e.target.value})} /></div>
-        </div>
-        <div className="form-row">
-          <div className="form-group"><label>Kat</label><input type="text" value={form.floor} onChange={e => setForm({...form, floor: e.target.value})} /></div>
-          <div className="form-group"><label>Bağımsız Bölüm</label><input type="text" value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} /></div>
-        </div>
-        <div className="form-row">
-          <div className="form-group"><label>Arsa Payı</label><input type="text" value={form.share} onChange={e => setForm({...form, share: e.target.value})} /></div>
-          <div className="form-group"><label>Taşınmaz No</label><input type="text" value={form.propertyNo} onChange={e => setForm({...form, propertyNo: e.target.value})} /></div>
-        </div>
-      </div>
-
-      <div className="form-section-premium mt-24">
-        <h4><DollarSign size={16} /> Finansal Durum</h4>
-        <div className="form-group">
-          <label>Tahmini Piyasa Değeri (₺)</label>
-          <input type="number" value={form.value} onChange={e => setForm({...form, value: e.target.value})} />
-        </div>
-        <div className="form-row">
-          <div className="form-group"><label>Aylık Kira (Getiri)</label><input type="number" value={form.income} onChange={e => setForm({...form, income: e.target.value})} /></div>
-          <div className="form-group"><label>Aylık Gider (Götürü)</label><input type="number" value={form.expense} onChange={e => setForm({...form, expense: e.target.value})} /></div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label>Emlak Vergisi (Yıllık)</label>
-            <input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} />
-          </div>
-          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '10px' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input type="checkbox" checked={form.taxPaid1} onChange={e => setForm({...form, taxPaid1: e.target.checked})} id="taxPaid1" />
-                <label htmlFor="taxPaid1" style={{ margin: 0 }}>Ocak Taksidi</label>
-             </div>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input type="checkbox" checked={form.taxPaid2} onChange={e => setForm({...form, taxPaid2: e.target.checked})} id="taxPaid2" />
-                <label htmlFor="taxPaid2" style={{ margin: 0 }}>Haziran Taksidi</label>
-             </div>
-          </div>
-        </div>
-        <div className="form-row mt-12">
-          <div className="form-group">
-            <label>DASK Bitiş Tarihi</label>
-            <input type="date" value={form.daskExpiry} onChange={e => setForm({...form, daskExpiry: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label>Aylık Aidat (₺)</label>
-            <input type="number" value={form.aidat} onChange={e => setForm({...form, aidat: e.target.value})} />
-          </div>
-        </div>
-        <div className="form-group mt-12" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-           <input type="checkbox" checked={form.aidatPaid} onChange={e => setForm({...form, aidatPaid: e.target.checked})} id="aidatPaid" style={{ width: '20px', height: '20px' }} />
-           <label htmlFor="aidatPaid" style={{ margin: 0 }}>Bu Ayki Aidat Ödendi</label>
-        </div>
-      </div>
-
-      <div className="form-section-premium mt-24">
-        <label>Durum</label>
-        <div className="user-select-grid">
-           <button type="button" className={form.status === 'Mülk Sahibi' ? 'active' : ''} onClick={() => setForm({...form, status: 'Mülk Sahibi'})}>Mülk Sahibi</button>
-           <button type="button" className={form.status === 'Kiracı Var' ? 'active' : ''} onClick={() => setForm({...form, status: 'Kiracı Var'})}>Kiracı Var</button>
-        </div>
-      </div>
-
-      <div className="modal-actions-premium mt-32">
-        {!data.isNew && (
-          <button type="button" className="delete-btn-premium" onClick={() => { 
-            requestConfirm('Bu taşınmazı silmek istediğinizden emin misiniz?', () => {
-              deleteTasinmaz(data.id); 
-              onClose(); 
-            });
-          }}>
-            <Trash2 size={18} /> Sil
-          </button>
-        )}
-        <button type="submit" className="submit-btn-premium" style={{ background: 'var(--ev)' }}>
-          {data.isNew ? 'Taşınmazı Ekle' : 'Değişiklikleri Kaydet'}
-        </button>
-      </div>
-    </form>
-  );
-}
-
-function DepoView({ depo, deleteDepoItem, clearDepo, requestConfirm }) {
-  const [expandedItem, setExpandedItem] = useState(null);
-  const [depoFilter, setDepoFilter] = useState('Hepsi');
-  const categories = ['Hepsi', 'Gardırop', 'Teknoloji', 'Genel'];
-
-  const filteredDepo = (depo || []).filter(item => 
-    depoFilter === 'Hepsi' ? true : item.mainCat === depoFilter
-  );
-
-  return (
-    <div className="depo-view animate-fadeIn">
-      <div className="section-header-v2">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Package size={22} color="var(--ev)" />
-          <h3 style={{ margin: 0 }}>Akıllı Ev Deposu</h3>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <small className="stat-badge">{filteredDepo.length} Ürün Grubu</small>
-          {depo?.length > 0 && (
-            <button className="icon-btn-mini" onClick={() => { 
-              requestConfirm('Tüm depoyu sıfırlamak istediğinize emin misiniz?', () => clearDepo());
-            }} title="Depoyu Sıfırla">
-              <RotateCcw size={12} />
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="depo-filters mt-12 mb-12">
-        {categories.map(cat => (
-          <button 
-            key={cat} 
-            className={`filter-chip ${depoFilter === cat ? 'active' : ''}`}
-            onClick={() => setDepoFilter(cat)}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      <div className="depo-list-v3">
-        {filteredDepo.length === 0 ? (
-          <div className="empty-state-v2 glass" style={{ padding: '40px', textAlign: 'center' }}>
-            <Package size={40} opacity={0.2} style={{ marginBottom: '12px' }} />
-            <p style={{ opacity: 0.5, fontSize: '13px' }}>Bu kategoride ürün bulunamadı. ✨</p>
-          </div>
-        ) : (
-          filteredDepo.map(item => (
-            <div key={item.id} className={`depo-master-card ${expandedItem === item.id ? 'expanded' : ''}`} onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}>
-              <div className="dmc-main">
-                <div className="dmc-icon-box">
-                  {item.mainCat === 'Gardırop' ? '👕' : (item.mainCat === 'Teknoloji' ? '💻' : '📦')}
-                </div>
-                <div className="dmc-info">
-                  <div className="dmc-top-row">
-                    <strong className="dmc-name">{item.name || item.nm || 'İsimsiz Ürün'}</strong>
-                    <span className="dmc-qty-pill">{(item.totalQty || item.qt || '1').toString().split(' ')[0]} Adet</span>
-                  </div>
-                  <div className="dmc-meta-row">
-                    <span><Calendar size={10} /> İlk: {new Date(item.firstDate || item.dt).toLocaleDateString('tr-TR')}</span>
-                    <span><Clock size={10} /> Son: {new Date(item.lastDate || item.dt).toLocaleDateString('tr-TR')}</span>
-                  </div>
-                </div>
-                <div className="dmc-actions">
-                  <button className="dmc-del-btn" onClick={(e) => { 
-                    e.stopPropagation(); 
-                    requestConfirm('Tüm ürün kaydı silinsin mi?', () => deleteDepoItem(item.id));
-                  }}>
-                    <Trash2 size={14} />
-                  </button>
-                  <ChevronRight size={16} className={`dmc-chevron ${expandedItem === item.id ? 'rotated' : ''}`} />
-                </div>
-              </div>
-
-              {expandedItem === item.id && (
-                <div className="dmc-details animate-fadeIn">
-                  <div className="details-header">📜 İşlem Geçmişi</div>
-                  <div className="history-timeline">
-                    {(item.history || []).map(log => (
-                      <div key={log.id} className="history-item">
-                        <div className="hi-dot" />
-                        <div className="hi-content">
-                          <div className="hi-top">
-                            <small>{new Date(log.date).toLocaleDateString('tr-TR')} {new Date(log.date).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</small>
-                            <span className={`hi-source-badge ${log.source}`}>{log.source === 'valiz' ? '🎒 Valiz' : '🛒 Alışveriş'}</span>
-                          </div>
-                          <p>{log.note} - <strong>{log.qty} Adet</strong> {log.pr > 0 && `(${formatMoney(log.pr)})`}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-function TaxManagementContent({ data, onClose }) {
-  const { updateTasinmaz } = useStore();
-  const [form, setForm] = useState({ tax: data.tax, taxPaid1: data.taxPaid1, taxPaid2: data.taxPaid2 });
-
-  return (
-    <div className="edit-form-v2">
-      <div className="form-group-v2">
-        <label>Yıllık Emlak Vergisi (₺)</label>
-        <input type="number" value={form.tax} onChange={e => setForm({...form, tax: e.target.value})} />
-      </div>
-      <div className="form-toggle-row">
-        <label>Ocak Taksidi Ödendi</label>
-        <input type="checkbox" checked={form.taxPaid1} onChange={e => setForm({...form, taxPaid1: e.target.checked})} />
-      </div>
-      <div className="form-toggle-row">
-        <label>Haziran Taksidi Ödendi</label>
-        <input type="checkbox" checked={form.taxPaid2} onChange={e => setForm({...form, taxPaid2: e.target.checked})} />
-      </div>
-      <button className="save-btn-v2" onClick={() => {
-        updateTasinmaz(data.id, form);
-        toast.success('Vergi bilgileri güncellendi! 🏛️');
-        onClose();
-      }}>Bilgileri Kaydet</button>
-    </div>
-  );
-}
-
-function DaskManagementContent({ data, onClose }) {
-  const { updateTasinmaz } = useStore();
-  const [form, setForm] = useState({ daskExpiry: data.daskExpiry, daskFile: data.daskFile });
-
-  return (
-    <div className="edit-form-v2">
-      <div className="form-group-v2">
-        <label>Poliçe Bitiş Tarihi</label>
-        <input type="date" value={form.daskExpiry} onChange={e => setForm({...form, daskExpiry: e.target.value})} />
-      </div>
-      <div className="form-group-v2">
-        <label>Poliçe Dosyası / Fotoğrafı</label>
-        <div style={{ position: 'relative' }}>
-          <div className={`file-upload-box ${form.daskFile ? 'has-file' : ''}`} onClick={() => document.getElementById('dask-pdf').click()}>
-            {form.daskFile ? <FileText size={24} color="#3b82f6" /> : <Camera size={24} />}
-            <span style={{ fontSize: '13px', fontWeight: '700' }}>{form.daskFile || 'Poliçe Yükle (PDF/Görüntü)'}</span>
-            <input 
-              type="file" 
-              id="dask-pdf" 
-              style={{ display: 'none' }} 
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (file) setForm({...form, daskFile: file.name});
-              }} 
-            />
-          </div>
-          {form.daskFile && (
-            <button 
-              className="file-remove-btn" 
-              onClick={(e) => { e.stopPropagation(); setForm({...form, daskFile: null}); }}
-              title="Poliçeyi Kaldır"
-            >
-              <Trash2 size={14} />
-            </button>
-          )}
-        </div>
-      </div>
-      <button className="save-btn-v2" onClick={() => {
-        updateTasinmaz(data.id, form);
-        toast.success('DASK bilgileri güncellendi! 🛡️');
-        onClose();
-      }}>Bilgileri Kaydet</button>
-    </div>
-  );
-}
-
-function AidatManagementContent({ data, onClose }) {
-  const { updateTasinmaz, addExpense } = useStore();
-  const [form, setForm] = useState({ aidat: data.aidat, aidatPaid: data.aidatPaid });
-  const [paymentMethod, setPaymentMethod] = useState('');
-
-  return (
-    <div className="edit-form-v2">
-      <div className="form-group-v2">
-        <label>Aylık Aidat Tutarı (₺)</label>
-        <input type="number" value={form.aidat} onChange={e => setForm({...form, aidat: Number(e.target.value)})} />
-      </div>
-      <div className="form-toggle-row">
-        <label>Bu Ayki Aidat Ödendi</label>
-        <input type="checkbox" checked={form.aidatPaid} onChange={e => setForm({...form, aidatPaid: e.target.checked})} />
-      </div>
-      {form.aidatPaid && (
-        <div className="mt-12">
-          <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
-        </div>
-      )}
-      <button className="save-btn-v2" onClick={() => {
-        updateTasinmaz(data.id, form);
-        if (form.aidatPaid) {
-          addExpense({
-            title: `${data.name} Aidat Ödemesi`,
-            amount: Number(form.aidat),
-            category: 'ev',
-            source: 'Ev Hub',
-            defaultPay: paymentMethod
-          });
-        }
-        toast.success('Aidat bilgileri güncellendi! 💳');
-        onClose();
-      }}>Bilgileri Kaydet</button>
-    </div>
-  );
-}
