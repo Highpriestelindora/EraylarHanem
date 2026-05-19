@@ -148,12 +148,39 @@ const TURKISH_MONTHS = [
   'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
 ];
 
-const getStartMonth = (targetDate, duration) => {
-  if (!targetDate) return null;
-  const target = new Date(targetDate);
+const addMonthsToDate = (dateStr, monthsVal) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+
+  const months = parseInt(monthsVal, 10);
+  if (isNaN(months) || months <= 0) return dateStr;
+
+  const result = new Date(date.getTime());
+  result.setMonth(result.getMonth() + months);
+  
+  // Format as YYYY-MM-DD
+  const yyyy = result.getFullYear();
+  const mm = String(result.getMonth() + 1).padStart(2, '0');
+  const dd = String(result.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const getStartMonth = (g) => {
+  if (g.yearlyPlan?.startDate) {
+    const start = new Date(g.yearlyPlan.startDate);
+    if (!isNaN(start.getTime())) {
+      const monthName = TURKISH_MONTHS[start.getMonth()];
+      const year = start.getFullYear();
+      return `${monthName} ${year}`;
+    }
+  }
+
+  if (!g.targetDate) return null;
+  const target = new Date(g.targetDate);
   if (isNaN(target.getTime())) return null;
 
-  const dur = parseInt(duration, 10);
+  const dur = parseInt(g.duration, 10);
   if (isNaN(dur) || dur <= 0) return null;
 
   const start = new Date(target.getTime());
@@ -164,14 +191,26 @@ const getStartMonth = (targetDate, duration) => {
   return `${monthName} ${year}`;
 };
 
-const getRemainingMonths = (targetDate) => {
-  if (!targetDate) return null;
-  const target = new Date(targetDate);
+const getRemainingMonths = (g) => {
+  if (!g.targetDate) return null;
+  const target = new Date(g.targetDate);
   if (isNaN(target.getTime())) return null;
 
   const now = new Date();
-  const diffTime = target.getTime() - now.getTime();
   
+  // Determine start date
+  let start = null;
+  if (g.yearlyPlan?.startDate) {
+    start = new Date(g.yearlyPlan.startDate);
+  } else if (g.duration) {
+    const dur = parseInt(g.duration, 10);
+    if (!isNaN(dur) && dur > 0) {
+      start = new Date(target.getTime());
+      start.setMonth(start.getMonth() - dur);
+    }
+  }
+
+  const diffTime = target.getTime() - now.getTime();
   if (diffTime <= 0) {
     return {
       text: 'Süresi Doldu! 🚨',
@@ -179,12 +218,19 @@ const getRemainingMonths = (targetDate) => {
     };
   }
 
-  const diffYears = target.getFullYear() - now.getFullYear();
-  const diffMonths = target.getMonth() - now.getMonth();
+  // Cap countdown if today is before the start date
+  let calculationDate = now;
+  if (start && now < start) {
+    calculationDate = start;
+  }
+
+  const diffYears = target.getFullYear() - calculationDate.getFullYear();
+  const diffMonths = target.getMonth() - calculationDate.getMonth();
   const totalMonths = diffYears * 12 + diffMonths;
 
   if (totalMonths <= 0) {
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const activeDiffTime = target.getTime() - calculationDate.getTime();
+    const diffDays = Math.ceil(activeDiffTime / (1000 * 60 * 60 * 24));
     if (diffDays <= 0) {
       return { text: 'Süresi Doldu! 🚨', class: 'urgent' };
     }
@@ -195,7 +241,8 @@ const getRemainingMonths = (targetDate) => {
   }
 
   if (totalMonths === 1) {
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const activeDiffTime = target.getTime() - calculationDate.getTime();
+    const diffDays = Math.ceil(activeDiffTime / (1000 * 60 * 60 * 24));
     return {
       text: `${diffDays} Gün Kaldı ⏳`,
       class: 'urgent'
@@ -215,14 +262,22 @@ const getRemainingMonths = (targetDate) => {
   };
 };
 
-const getTimeProgressInfo = (targetDate, duration) => {
-  if (!targetDate || !duration) return null;
-  const target = new Date(targetDate);
-  const dur = parseInt(duration, 10);
-  if (isNaN(target.getTime()) || isNaN(dur) || dur <= 0) return null;
+const getTimeProgressInfo = (g) => {
+  if (!g.targetDate) return null;
+  const target = new Date(g.targetDate);
+  if (isNaN(target.getTime())) return null;
 
-  const start = new Date(target.getTime());
-  start.setMonth(start.getMonth() - dur);
+  let start = null;
+  if (g.yearlyPlan?.startDate) {
+    start = new Date(g.yearlyPlan.startDate);
+  } else {
+    const dur = parseInt(g.duration, 10);
+    if (isNaN(dur) || dur <= 0) return null;
+    start = new Date(target.getTime());
+    start.setMonth(start.getMonth() - dur);
+  }
+
+  if (isNaN(start.getTime())) return null;
 
   const now = new Date();
   const totalMs = target.getTime() - start.getTime();
@@ -424,8 +479,8 @@ export default function Hedefler() {
     const owner = (g.owner || 'ortak').toLowerCase();
 
     // Date calculations
-    const startMonth = getStartMonth(g.targetDate, g.duration);
-    const countdown = getRemainingMonths(g.targetDate);
+    const startMonth = getStartMonth(g);
+    const countdown = getRemainingMonths(g);
 
     // Roadmap normalization
     const now = new Date();
@@ -483,7 +538,7 @@ export default function Hedefler() {
 
             {/* Visual Time Progress Bar */}
             {(() => {
-              const timeInfo = getTimeProgressInfo(g.targetDate, g.duration);
+              const timeInfo = getTimeProgressInfo(g);
               if (!timeInfo) return null;
               return (
                 <div className="gcp-time-visual-progress">
@@ -865,7 +920,10 @@ export default function Hedefler() {
                         
                         const newSteps = normalizeYearlyPlan(selectedGoal.yearlyPlan, updatedFields.duration, isLongTerm);
                         const serializedPlan = serializeYearlyPlan(newSteps, isLongTerm);
-                        newData.yearlyPlan = serializedPlan;
+                        newData.yearlyPlan = {
+                            ...serializedPlan,
+                            startDate: selectedGoal.yearlyPlan?.startDate || ''
+                        };
                     }
                     if (selectedGoal.type === 'money') {
                         updateGoal(selectedGoal.id, newData);
@@ -1033,6 +1091,7 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
         target: goal?.target || 100,
         current: goal?.current || 0,
         targetDate: goal?.targetDate || goal?.deadline || '',
+        startDate: goal?.yearlyPlan?.startDate || '',
         duration: goal?.duration || '',
         priority: goal?.priority || 'Orta',
         owner: goal?.owner?.toLowerCase() || (currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem'),
@@ -1078,13 +1137,17 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
             return;
         }
         
+        const calculatedTargetDate = addMonthsToDate(form.startDate, parsed);
+        
         setForm(prev => ({
             ...prev,
-            duration: parsed
+            duration: parsed,
+            targetDate: calculatedTargetDate
         }));
         
         onQuickUpdate({
-            duration: parsed
+            duration: parsed,
+            targetDate: calculatedTargetDate
         });
         setIsDurationModalOpen(false);
     };
@@ -1103,6 +1166,7 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
                 target: goal.target || 100,
                 current: goal.current || 0,
                 targetDate: goal.targetDate || goal.deadline || '',
+                startDate: goal.yearlyPlan?.startDate || '',
                 duration: goal.duration || '',
                 priority: goal.priority || 'Orta',
                 owner: goal.owner?.toLowerCase() || 'gorkem',
@@ -1136,6 +1200,24 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
             }, 100);
         }
     }, [isEditing, initialEditStep]);
+
+    const handleStartDateChange = (val) => {
+        const calculatedTargetDate = addMonthsToDate(val, form.duration);
+        setForm(prev => ({
+            ...prev,
+            startDate: val,
+            targetDate: calculatedTargetDate
+        }));
+    };
+
+    const handleDurationChange = (val) => {
+        const calculatedTargetDate = addMonthsToDate(form.startDate, val);
+        setForm(prev => ({
+            ...prev,
+            duration: val,
+            targetDate: calculatedTargetDate
+        }));
+    };
 
     if (!isEditing) {
         const ownerObj = getOwnerBadge(goal?.owner);
@@ -1287,7 +1369,12 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
                 </div>
                 <div className="form-group">
                     <label>Süre (Ay)</label>
-                    <input type="number" value={form.duration} onChange={e => setForm({...form, duration: e.target.value})} placeholder="Örn: 8" />
+                    <input 
+                        type="number" 
+                        value={form.duration} 
+                        onChange={e => handleDurationChange(e.target.value)} 
+                        placeholder="Örn: 8" 
+                    />
                 </div>
             </div>
             
@@ -1385,8 +1472,30 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
 
             <div className="form-grid" style={{ marginTop: '16px' }}>
                 <div className="form-group">
-                    <label>Bitiş Tarihi</label>
-                    <input type="date" value={form.targetDate} onChange={e => setForm({...form, targetDate: e.target.value})} />
+                    <label>Başlangıç Tarihi</label>
+                    <input 
+                        type="date" 
+                        value={form.startDate} 
+                        onChange={e => handleStartDateChange(e.target.value)} 
+                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                    />
+                </div>
+                <div className="form-group">
+                    <label>Hesaplanan Bitiş Tarihi</label>
+                    <div style={{ 
+                        padding: '12px', 
+                        borderRadius: '8px', 
+                        background: '#f8fafc', 
+                        border: '1px dashed #cbd5e1',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        color: '#475569',
+                        minHeight: '44px',
+                        display: 'flex',
+                        alignItems: 'center'
+                    }}>
+                        {form.targetDate ? new Date(form.targetDate).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Başlangıç tarihi ve süre girin'}
+                    </div>
                 </div>
             </div>
             
@@ -1404,7 +1513,10 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
                 const serializedPlan = serializeYearlyPlan(steps, isLongTerm);
                 onSave({
                     ...form,
-                    yearlyPlan: serializedPlan
+                    yearlyPlan: {
+                        ...serializedPlan,
+                        startDate: form.startDate
+                    }
                 });
             }}>KAYDET</button>
         </div>

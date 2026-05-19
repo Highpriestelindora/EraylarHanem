@@ -25,12 +25,21 @@ const TURKISH_MONTHS = [
   'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
 ];
 
-const getStartMonth = (targetDate, duration) => {
-  if (!targetDate) return null;
-  const target = new Date(targetDate);
+const getStartMonth = (g) => {
+  if (g.yearlyPlan?.startDate) {
+    const start = new Date(g.yearlyPlan.startDate);
+    if (!isNaN(start.getTime())) {
+      const monthName = TURKISH_MONTHS[start.getMonth()];
+      const year = start.getFullYear();
+      return `${monthName} ${year}`;
+    }
+  }
+
+  if (!g.targetDate) return null;
+  const target = new Date(g.targetDate);
   if (isNaN(target.getTime())) return null;
 
-  const dur = parseInt(duration, 10);
+  const dur = parseInt(g.duration, 10);
   if (isNaN(dur) || dur <= 0) return null;
 
   const start = new Date(target.getTime());
@@ -41,14 +50,26 @@ const getStartMonth = (targetDate, duration) => {
   return `${monthName} ${year}`;
 };
 
-const getRemainingMonths = (targetDate) => {
-  if (!targetDate) return null;
-  const target = new Date(targetDate);
+const getRemainingMonths = (g) => {
+  if (!g.targetDate) return null;
+  const target = new Date(g.targetDate);
   if (isNaN(target.getTime())) return null;
 
   const now = new Date();
-  const diffTime = target.getTime() - now.getTime();
   
+  // Determine start date
+  let start = null;
+  if (g.yearlyPlan?.startDate) {
+    start = new Date(g.yearlyPlan.startDate);
+  } else if (g.duration) {
+    const dur = parseInt(g.duration, 10);
+    if (!isNaN(dur) && dur > 0) {
+      start = new Date(target.getTime());
+      start.setMonth(start.getMonth() - dur);
+    }
+  }
+
+  const diffTime = target.getTime() - now.getTime();
   if (diffTime <= 0) {
     return {
       text: 'Süresi Doldu! 🚨',
@@ -56,12 +77,19 @@ const getRemainingMonths = (targetDate) => {
     };
   }
 
-  const diffYears = target.getFullYear() - now.getFullYear();
-  const diffMonths = target.getMonth() - now.getMonth();
+  // Cap countdown if today is before the start date
+  let calculationDate = now;
+  if (start && now < start) {
+    calculationDate = start;
+  }
+
+  const diffYears = target.getFullYear() - calculationDate.getFullYear();
+  const diffMonths = target.getMonth() - calculationDate.getMonth();
   const totalMonths = diffYears * 12 + diffMonths;
 
   if (totalMonths <= 0) {
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const activeDiffTime = target.getTime() - calculationDate.getTime();
+    const diffDays = Math.ceil(activeDiffTime / (1000 * 60 * 60 * 24));
     if (diffDays <= 0) {
       return { text: 'Süresi Doldu! 🚨', class: 'urgent' };
     }
@@ -72,7 +100,8 @@ const getRemainingMonths = (targetDate) => {
   }
 
   if (totalMonths === 1) {
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const activeDiffTime = target.getTime() - calculationDate.getTime();
+    const diffDays = Math.ceil(activeDiffTime / (1000 * 60 * 60 * 24));
     return {
       text: `${diffDays} Gün Kaldı ⏳`,
       class: 'urgent'
@@ -498,10 +527,10 @@ const Home = () => {
       const perc = (g.current / g.target) * 100;
       if (perc >= 100) return;
 
-      const countdown = getRemainingMonths(g.targetDate);
+      const countdown = getRemainingMonths(g);
       if (countdown && (countdown.class === 'urgent' || countdown.class === 'warning')) {
         const ownerName = g.owner === 'ortak' ? 'Ortak' : (g.owner === 'esra' ? 'Esra' : 'Görkem');
-        const startMonth = getStartMonth(g.targetDate, g.duration);
+        const startMonth = getStartMonth(g);
         const startText = startMonth ? `${startMonth}'da başladı` : '';
         cards.push({
           id: `hedef-smart-${g.id}`,
@@ -726,8 +755,8 @@ const Home = () => {
                 const isMoney = g.type === 'money';
                 const owner = (g.owner || 'ortak').toLowerCase();
                 const ownerEmoji = owner.includes('gorkem') ? '👨‍💻' : owner.includes('esra') ? '👩‍🍳' : '👥';
-                const startMonth = getStartMonth(g.targetDate, g.duration);
-                const countdown = getRemainingMonths(g.targetDate);
+                const startMonth = getStartMonth(g);
+                const countdown = getRemainingMonths(g);
                 
                 return (
                   <div key={g.id} className={`hags-goal-card glass owner-${owner}`} onClick={() => navigate('/hedefler')}>
