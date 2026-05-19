@@ -385,7 +385,29 @@ async function pushGenericToSupabase(tableName, payload) {
 
     const { error } = await supabase.from(tableName).upsert(finalPayload);
     if (error) {
-      if (error.message && error.message.includes("family_id")) {
+      const isColumnError = error.message?.includes("column") || error.code === 'PGRST204';
+      if (isColumnError && tableName === 'ev_depo') {
+        console.warn(`[Self-Healing] Table ev_depo is missing some new columns. Retrying with basic columns.`);
+        const basicPayload = {
+          id: finalPayload.id,
+          name: finalPayload.name,
+          quantity: finalPayload.quantity,
+          price: finalPayload.price,
+          date: finalPayload.date,
+          category: finalPayload.category,
+          family_id: finalPayload.family_id
+        };
+        const { error: retryErr } = await supabase.from(tableName).upsert(basicPayload);
+        if (retryErr) {
+          if (retryErr.message?.includes("family_id")) {
+            delete basicPayload.family_id;
+            const { error: retryErr2 } = await supabase.from(tableName).upsert(basicPayload);
+            if (retryErr2) throw retryErr2;
+          } else {
+            throw retryErr;
+          }
+        }
+      } else if (error.message && error.message.includes("family_id")) {
         console.warn(`[Self-Healing] Table ${tableName} is missing family_id column. Retrying without it.`);
         const retryPayload = { ...payload };
         const { error: retryError } = await supabase.from(tableName).upsert(retryPayload);
@@ -2293,6 +2315,11 @@ const useStore = create(
                 totalQty: Number(item.quantity || 1),
                 firstDate: item.date || new Date().toISOString().split('T')[0],
                 lastDate: item.date || new Date().toISOString().split('T')[0],
+                owner: item.owner || 'ortak',
+                emoji: item.emoji || '',
+                brand: item.brand || '',
+                size: item.size || '',
+                notes: item.notes || '',
                 history: [{
                   id: Date.now(),
                   date: item.date || new Date().toISOString().split('T')[0],
@@ -8813,7 +8840,7 @@ const useStore = create(
       addDepoItem: (itemData) => {
         const state = get();
         const currentDepo = Array.isArray(state.ev.depo) ? state.ev.depo : [];
-        const { name, mainCat, subCat, qty, price, source, note } = itemData;
+        const { name, mainCat, subCat, qty, price, source, note, owner, emoji, brand, size, notes } = itemData;
 
         if (!name) return;
 
@@ -8835,6 +8862,11 @@ const useStore = create(
             subCat: subCat || item.subCat,
             totalQty: Number(item.totalQty || 0) + Number(qty || 1),
             lastDate: now,
+            owner: owner || item.owner || 'ortak',
+            emoji: emoji || item.emoji || '',
+            brand: brand || item.brand || '',
+            size: size || item.size || '',
+            notes: notes || item.notes || '',
             history: [
               {
                 id: Date.now(),
@@ -8857,6 +8889,11 @@ const useStore = create(
             totalQty: Number(qty || 1),
             firstDate: now,
             lastDate: now,
+            owner: owner || 'ortak',
+            emoji: emoji || '',
+            brand: brand || '',
+            size: size || '',
+            notes: notes || '',
             history: [{
               id: Date.now(),
               date: now,
@@ -8883,7 +8920,12 @@ const useStore = create(
             quantity: Number(syncedItem.totalQty || syncedItem.qty || 1),
             price: Number(syncedItem.price || syncedItem.history?.[0]?.pr || 0),
             date: syncedItem.lastDate || syncedItem.firstDate || syncedItem.dt || new Date().toISOString().split('T')[0],
-            category: syncedItem.mainCat || syncedItem.category || 'Genel'
+            category: syncedItem.mainCat || syncedItem.category || 'Genel',
+            owner: syncedItem.owner || 'ortak',
+            emoji: syncedItem.emoji || '',
+            brand: syncedItem.brand || '',
+            size: syncedItem.size || '',
+            notes: syncedItem.notes || ''
           };
           pushGenericToSupabase('ev_depo', dbPayload);
         }
@@ -8922,7 +8964,12 @@ const useStore = create(
             quantity: Number(syncedItem.totalQty || syncedItem.qty || 1),
             price: Number(syncedItem.price || syncedItem.history?.[0]?.pr || 0),
             date: syncedItem.lastDate || syncedItem.firstDate || syncedItem.dt || new Date().toISOString().split('T')[0],
-            category: syncedItem.mainCat || syncedItem.category || 'Genel'
+            category: syncedItem.mainCat || syncedItem.category || 'Genel',
+            owner: syncedItem.owner || 'ortak',
+            emoji: syncedItem.emoji || '',
+            brand: syncedItem.brand || '',
+            size: syncedItem.size || '',
+            notes: syncedItem.notes || ''
           };
           pushGenericToSupabase('ev_depo', dbPayload);
         }
@@ -8937,11 +8984,18 @@ const useStore = create(
       },
 
       syncValizToDepo: (name, source, qty = 1) => {
-        // Wrapper for addDepoItem to maintain compatibility
+        const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F9FF}]/u;
+        const match = name.match(emojiRegex);
+        const emoji = match ? match[0] : '';
+        let cleanName = name;
+        if (emoji) {
+          cleanName = name.replace(emoji, '').trim();
+        }
         get().addDepoItem({
-          name: name,
+          name: cleanName,
           source: source || 'valiz',
           qty: qty,
+          emoji: emoji,
           note: 'Valizden aktarıldı'
         });
       },

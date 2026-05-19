@@ -130,7 +130,7 @@ export default function Ev() {
     updateHomeSecurity, 
     updateTasinmaz, addTasinmaz, deleteTasinmaz,
     addPeriodicBakim, updatePeriodicBakim, resetPeriodicBakim, deletePeriodicBakim,
-    deleteDepoItem, updateDepoItem, clearDepo,
+    deleteDepoItem, updateDepoItem, addDepoItem, clearDepo,
     addOnarimItem, toggleOnarimItem, clearCompletedOnarimItems, updateOnarimItem, deleteOnarimItem,
     addAbonelik, updateAbonelik, deleteAbonelik,
     addDuzenliOdeme, updateDuzenliOdeme, deleteDuzenliOdeme,
@@ -386,6 +386,7 @@ export default function Ev() {
             depo={ev.depo} 
             deleteDepoItem={deleteDepoItem} 
             updateDepoItem={updateDepoItem}
+            addDepoItem={addDepoItem}
             clearDepo={clearDepo} 
             requestConfirm={requestConfirm}
           />
@@ -1808,29 +1809,84 @@ function EmergencyKitModal({ type, items, onClose, requestConfirm }) {
   );
 }
 
-function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConfirm }) {
+function DepoView({ depo, deleteDepoItem, updateDepoItem, addDepoItem, clearDepo, requestConfirm }) {
   const [expandedItem, setExpandedItem] = useState(null);
   const [depoFilter, setDepoFilter] = useState('Hepsi');
+  const [wardrobeFilter, setWardrobeFilter] = useState('Hepsi'); // 'Hepsi', 'esra', 'gorkem'
+  
   const [editingItem, setEditingItem] = useState(null);
   const [editName, setEditName] = useState('');
   const [editCategory, setEditCategory] = useState('Genel');
   const [editQty, setEditQty] = useState(1);
+  const [editOwner, setEditOwner] = useState('ortak');
+  const [editEmoji, setEditEmoji] = useState('');
+  const [editBrand, setEditBrand] = useState('');
+  const [editSize, setEditSize] = useState('');
+  const [editNotes, setEditNotes] = useState('');
 
   const categories = ['Hepsi', 'Gardırop', 'Teknoloji', 'Genel'];
 
-  const filteredDepo = (depo || []).filter(item => 
-    depoFilter === 'Hepsi' ? true : item.mainCat === depoFilter
-  );
+  const filteredDepo = (depo || []).filter(item => {
+    const matchesCat = depoFilter === 'Hepsi' ? true : item.mainCat === depoFilter;
+    if (!matchesCat) return false;
+    if (depoFilter === 'Gardırop' && wardrobeFilter !== 'Hepsi') {
+      return (item.owner || 'ortak') === wardrobeFilter;
+    }
+    return true;
+  });
 
   const handleSave = () => {
     if (!editName.trim()) return toast.error('Ürün ismi boş olamaz');
-    updateDepoItem(editingItem.id, {
-      name: editName.trim(),
+
+    // Auto emoji detection
+    let finalEmoji = editEmoji.trim();
+    if (!finalEmoji) {
+      const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F9FF}]/u;
+      const match = editName.match(emojiRegex);
+      if (match) {
+        finalEmoji = match[0];
+      }
+    }
+
+    // Clean emoji from name
+    let finalName = editName.trim();
+    if (finalEmoji) {
+      finalName = finalName.replace(finalEmoji, '').trim();
+    }
+
+    const payload = {
+      name: finalName,
       mainCat: editCategory,
-      totalQty: Number(editQty)
-    });
+      totalQty: Number(editQty),
+      owner: editOwner,
+      emoji: finalEmoji,
+      brand: editBrand.trim(),
+      size: editSize.trim(),
+      notes: editNotes.trim()
+    };
+
+    if (editingItem.id === 'new') {
+      addDepoItem(payload);
+    } else {
+      updateDepoItem(editingItem.id, payload);
+    }
     setEditingItem(null);
   };
+
+  const startEdit = (item, e) => {
+    if (e) e.stopPropagation();
+    setEditingItem(item);
+    setEditName(item.name || item.nm || '');
+    setEditCategory(item.mainCat || 'Genel');
+    setEditQty(item.totalQty || item.qt || 1);
+    setEditOwner(item.owner || 'ortak');
+    setEditEmoji(item.emoji || '');
+    setEditBrand(item.brand || '');
+    setEditSize(item.size || '');
+    setEditNotes(item.notes || '');
+  };
+
+  const quickEmojis = ['👕', '👗', '👠', '👖', '👟', '💻', '🔌', '📦', '🔋', '💄', '🔑', '🕶️'];
 
   return (
     <div className="depo-view animate-fadeIn">
@@ -1839,8 +1895,23 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConf
           <Package size={22} color="var(--ev)" />
           <h3 style={{ margin: 0 }}>Akıllı Ev Deposu</h3>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <small className="stat-badge">{filteredDepo.length} Ürün Grubu</small>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <small className="stat-badge">{filteredDepo.length} Ürün</small>
+          
+          <button className="icon-btn-mini" onClick={() => {
+            setEditingItem({ id: 'new' });
+            setEditName('');
+            setEditCategory('Genel');
+            setEditQty(1);
+            setEditOwner('ortak');
+            setEditEmoji('');
+            setEditBrand('');
+            setEditSize('');
+            setEditNotes('');
+          }} title="Yeni Ekle" style={{ background: 'var(--ev)', color: 'white', border: 'none', borderRadius: '6px', padding: '6px' }}>
+            <Plus size={14} />
+          </button>
+
           {depo?.length > 0 && (
             <button className="icon-btn-mini" onClick={() => { 
               requestConfirm('Tüm depoyu sıfırlamak istediğinize emin misiniz?', () => clearDepo());
@@ -1856,12 +1927,44 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConf
           <button 
             key={cat} 
             className={`filter-chip ${depoFilter === cat ? 'active' : ''}`}
-            onClick={() => setDepoFilter(cat)}
+            onClick={() => {
+              setDepoFilter(cat);
+              setWardrobeFilter('Hepsi');
+            }}
           >
             {cat}
           </button>
         ))}
       </div>
+
+      {depoFilter === 'Gardırop' && (
+        <div className="wardrobe-sub-filters animate-fadeIn" style={{ display: 'flex', gap: '8px', marginBottom: '12px', paddingLeft: '4px' }}>
+          {[
+            { id: 'Hepsi', label: '👥 Tümü' },
+            { id: 'esra', label: '👩 Esra\'nın Gardırobu' },
+            { id: 'gorkem', label: '👨 Görkem\'in Gardırobu' }
+          ].map(sub => (
+            <button
+              key={sub.id}
+              className={`filter-chip-mini ${wardrobeFilter === sub.id ? 'active' : ''}`}
+              onClick={() => setWardrobeFilter(sub.id)}
+              style={{
+                fontSize: '11px',
+                padding: '5px 12px',
+                borderRadius: '20px',
+                border: '1px solid rgba(0,0,0,0.05)',
+                background: wardrobeFilter === sub.id ? 'var(--ev)' : 'rgba(255,255,255,0.6)',
+                color: wardrobeFilter === sub.id ? 'white' : '#64748b',
+                cursor: 'pointer',
+                fontWeight: '600',
+                transition: 'all 0.2s'
+              }}
+            >
+              {sub.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="depo-list-v3">
         {filteredDepo.length === 0 ? (
@@ -1872,43 +1975,66 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConf
         ) : (
           filteredDepo.map(item => (
             <div key={item.id} className={`depo-master-card ${expandedItem === item.id ? 'expanded' : ''}`} onClick={() => setExpandedItem(expandedItem === item.id ? null : item.id)}>
-              <div className="dmc-main">
-                <div className="dmc-icon-box">
-                  {item.mainCat === 'Gardırop' ? '👕' : (item.mainCat === 'Teknoloji' ? '💻' : '📦')}
+              <div className="dmc-main" style={{ padding: '14px 16px' }}>
+                <div className="dmc-icon-box" style={{ fontSize: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {item.emoji || (item.mainCat === 'Gardırop' ? '👕' : (item.mainCat === 'Teknoloji' ? '💻' : '📦'))}
                 </div>
-                <div className="dmc-info">
-                  <div className="dmc-top-row">
-                    <strong className="dmc-name">{item.name || item.nm || 'İsimsiz Ürün'}</strong>
-                    <span className="dmc-qty-pill">{(item.totalQty || item.qt || '1').toString().split(' ')[0]} Adet</span>
+                <div className="dmc-info" style={{ flex: 1, paddingLeft: '4px' }}>
+                  <div className="dmc-top-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong className="dmc-name" style={{ fontSize: '14px', color: '#1e293b' }}>{item.name || item.nm || 'İsimsiz Ürün'}</strong>
+                    <span className="dmc-qty-pill" style={{ background: 'rgba(0,0,0,0.05)', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>{(item.totalQty || item.qt || '1').toString().split(' ')[0]} Adet</span>
                   </div>
-                  <div className="dmc-meta-row">
+                  
+                  <div className="dmc-details-row" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
+                    {item.owner && item.owner !== 'ortak' && (
+                      <span className="dmc-meta-badge owner" style={{ background: item.owner === 'esra' ? '#fdf2f8' : '#eff6ff', color: item.owner === 'esra' ? '#db2777' : '#2563eb', padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                        {item.owner === 'esra' ? '👩 Esra' : '👨 Görkem'}
+                      </span>
+                    )}
+                    {item.brand && (
+                      <span className="dmc-meta-badge brand" style={{ background: 'rgba(0,0,0,0.03)', color: '#475569', padding: '2px 8px', borderRadius: '6px', fontSize: '11px' }}>
+                        🏷️ {item.brand}
+                      </span>
+                    )}
+                    {item.size && (
+                      <span className="dmc-meta-badge size" style={{ background: 'rgba(0,0,0,0.03)', color: '#475569', padding: '2px 8px', borderRadius: '6px', fontSize: '11px' }}>
+                        📏 {item.size}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="dmc-meta-row" style={{ marginTop: '6px', display: 'flex', gap: '10px', fontSize: '10px', color: '#94a3b8' }}>
                     <span><Calendar size={10} /> İlk: {new Date(item.firstDate || item.dt).toLocaleDateString('tr-TR')}</span>
                     <span><Clock size={10} /> Son: {new Date(item.lastDate || item.dt).toLocaleDateString('tr-TR')}</span>
                   </div>
                 </div>
-                <div className="dmc-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button className="dmc-edit-btn" onClick={(e) => { 
-                    e.stopPropagation(); 
-                    setEditingItem(item);
-                    setEditName(item.name || item.nm || '');
-                    setEditCategory(item.mainCat || 'Genel');
-                    setEditQty(item.totalQty || item.qt || 1);
-                  }} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}>
+                <div className="dmc-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <button className="dmc-edit-btn" onClick={(e) => startEdit(item, e)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}>
                     <Edit2 size={14} />
                   </button>
                   <button className="dmc-del-btn" onClick={(e) => { 
                     e.stopPropagation(); 
                     requestConfirm('Tüm ürün kaydı silinsin mi?', () => deleteDepoItem(item.id));
-                  }}>
+                  }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}>
                     <Trash2 size={14} />
                   </button>
-                  <ChevronRight size={16} className={`dmc-chevron ${expandedItem === item.id ? 'rotated' : ''}`} style={{ transition: 'transform 0.2s' }} />
+                  <ChevronRight size={16} className={`dmc-chevron ${expandedItem === item.id ? 'rotated' : ''}`} style={{ transition: 'transform 0.2s', color: '#94a3b8' }} />
                 </div>
               </div>
 
               {expandedItem === item.id && (
-                <div className="dmc-details animate-fadeIn">
-                  <div className="details-header">📜 İşlem Geçmişi</div>
+                <div className="dmc-details animate-fadeIn" style={{ borderTop: '1px dashed rgba(0,0,0,0.08)', padding: '12px 16px', background: 'rgba(0,0,0,0.01)' }}>
+                  {item.notes && (
+                    <div style={{ marginBottom: '10px', fontSize: '12px', color: '#475569', lineHeight: '1.4' }}>
+                      <strong>📝 Not:</strong> {item.notes}
+                    </div>
+                  )}
+                  {item.price > 0 && (
+                    <div style={{ marginBottom: '10px', fontSize: '12px', color: '#475569' }}>
+                      <strong>💰 Fiyat:</strong> {formatMoney(item.price)}
+                    </div>
+                  )}
+                  <div className="details-header" style={{ fontWeight: '600', fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', marginBottom: '8px' }}>📜 İşlem Geçmişi</div>
                   <div className="history-timeline">
                     {(item.history || []).map(log => (
                       <div key={log.id} className="history-item">
@@ -1933,7 +2059,7 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConf
       <ActionSheet 
         isOpen={!!editingItem} 
         onClose={() => setEditingItem(null)} 
-        title="Depo Ürününü Düzenle"
+        title={editingItem?.id === 'new' ? 'Yeni Ürün Ekle' : 'Depo Ürününü Düzenle'}
       >
         <div className="premium-form-container">
           <div className="form-group-premium">
@@ -1963,7 +2089,12 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConf
                   type="button"
                   key={cat}
                   className={`filter-chip ${editCategory === cat ? 'active' : ''}`}
-                  onClick={() => setEditCategory(cat)}
+                  onClick={() => {
+                    setEditCategory(cat);
+                    if (cat !== 'Gardırop') {
+                      setEditOwner('ortak');
+                    }
+                  }}
                   style={{ 
                     flex: 1, 
                     padding: '10px', 
@@ -1979,6 +2110,37 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConf
               ))}
             </div>
           </div>
+
+          {editCategory === 'Gardırop' && (
+            <div className="form-group-premium animate-fadeIn">
+              <label>Gardırop Sahibi</label>
+              <div className="owner-selector-chips" style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                {[
+                  { id: 'ortak', label: '👥 Ortak' },
+                  { id: 'esra', label: '👩 Esra' },
+                  { id: 'gorkem', label: '👨 Görkem' }
+                ].map(owner => (
+                  <button
+                    type="button"
+                    key={owner.id}
+                    className={`filter-chip ${editOwner === owner.id ? 'active' : ''}`}
+                    onClick={() => setEditOwner(owner.id)}
+                    style={{ 
+                      flex: 1, 
+                      padding: '10px', 
+                      borderRadius: '8px', 
+                      cursor: 'pointer',
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      fontSize: '13px',
+                      fontWeight: editOwner === owner.id ? 'bold' : 'normal'
+                    }}
+                  >
+                    {owner.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="form-group-premium">
             <label>Miktar (Adet)</label>
@@ -2021,6 +2183,111 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, clearDepo, requestConf
                 +
               </button>
             </div>
+          </div>
+
+          <div className="form-group-premium">
+            <label>İkon / Emoji (İsteğe Bağlı)</label>
+            <input 
+              type="text" 
+              value={editEmoji} 
+              onChange={e => setEditEmoji(e.target.value)} 
+              placeholder="Bir emoji girin..." 
+              maxLength="2"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '10px',
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(255,255,255,0.7)',
+                fontSize: '14px',
+                outline: 'none',
+                marginBottom: '8px'
+              }}
+            />
+            <div className="quick-emojis" style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {quickEmojis.map(emo => (
+                <button
+                  type="button"
+                  key={emo}
+                  onClick={() => setEditEmoji(emo)}
+                  style={{
+                    background: 'rgba(0,0,0,0.03)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    width: '32px',
+                    height: '32px',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {emo}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <div className="form-group-premium" style={{ flex: 1 }}>
+              <label>Marka</label>
+              <input 
+                type="text" 
+                value={editBrand} 
+                onChange={e => setEditBrand(e.target.value)} 
+                placeholder="Örn: Nike" 
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  background: 'rgba(255,255,255,0.7)',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            <div className="form-group-premium" style={{ flex: 1 }}>
+              <label>Beden</label>
+              <input 
+                type="text" 
+                value={editSize} 
+                onChange={e => setEditSize(e.target.value)} 
+                placeholder="Örn: L / 42" 
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(0,0,0,0.1)',
+                  background: 'rgba(255,255,255,0.7)',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="form-group-premium">
+            <label>Açıklama / Notlar</label>
+            <textarea 
+              value={editNotes} 
+              onChange={e => setEditNotes(e.target.value)} 
+              placeholder="Ürün hakkında notlar..." 
+              rows="3"
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '10px',
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(255,255,255,0.7)',
+                fontSize: '14px',
+                outline: 'none',
+                resize: 'none',
+                fontFamily: 'inherit'
+              }}
+            />
           </div>
 
           <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
