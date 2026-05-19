@@ -2855,6 +2855,29 @@
   cursor: pointer;
 }
 
+.vc-clear-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: none;
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: #ef4444 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vc-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.16) !important;
+  transform: scale(1.05);
+}
+
+.vc-clear-btn:active {
+  transform: scale(0.95);
+}
+
 .vc-list {
   display: flex;
   flex-direction: column;
@@ -6826,4 +6849,136 @@
   50% { left: 80%; }
   100% { left: 5%; }
 }
+
+/* Sürüş Yol Bilgisi, Maliyet ve Checklist Tasarımları */
+.car-cost-dashboard {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 10px;
+  backdrop-filter: blur(8px);
+}
+
+.ccd-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 4px;
+}
+
+.ccd-item.total {
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 8px;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.05);
+}
+
+.ccd-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.ccd-value {
+  font-size: 13px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.ccd-item.total .ccd-value {
+  color: #10b981;
+}
+
+.ccd-subtext {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 1px;
+}
+
+.nav-link-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white !important;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+}
+
+.nav-link-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+  filter: brightness(1.05);
+}
+
+.nav-link-btn:active {
+  transform: translateY(1px);
+}
+
+.car-checklist-panel {
+  margin-top: 12px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-top: 10px;
+}
+
+.ccp-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 8px;
+}
+
+.ccp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.ccp-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: left;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ccp-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.ccp-item.checked {
+  background: rgba(16, 185, 129, 0.06);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+
+.ccp-item svg {
+  flex-shrink: 0;
+}
+
 

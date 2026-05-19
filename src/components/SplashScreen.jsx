@@ -36,6 +36,12 @@ const SplashScreen = ({ finishLoading }) => {
     { t: "Waffle kapıda kuyruk sallama antrenmanı yapıyor... 🐕", m: "🐕" },
     { t: "En güzel anılar bu kapının ardında... 🏠", m: "🏠" },
     { t: "Sevgiyle örülen bir yuva hazırlanıyor... ✨", m: "✨" },
+    { t: "Waffle Antalya yolculuğu için HGS limitini kontrol ediyor... 🚗", m: "🚗" },
+    { t: "Mayıs pasaport yerine kimliğini çoktan hazırladı... 🪪", m: "🪪" },
+    { t: "Esra Görkem'in valizini gözetleme girişimlerini engelledi... 🕵️‍♀️", m: "🕵️‍♀️" },
+    { t: "Görkem yol bilgisini girmek için direksiyon başına geçiyor... 🚗", m: "🚗" },
+    { t: "Valiz temizleme sihirbazı iş başında... 🧹", m: "🧹" },
+    { t: "Eraylar Hanem yeni tatil rotasını çiziyor... 🗺️", m: "🗺️" },
     { t: "Eraylar Hanesi'nde her şey yolunda! 🛸", m: "🛸" }
   ];
 
@@ -204,7 +210,7 @@ const SplashScreen = ({ finishLoading }) => {
             letterSpacing: '1.2px',
             textShadow: '0 2px 4px rgba(0,0,0,0.3)'
           }}>
-            v4.3.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"SOCRATES"</span>
+            v4.4.0 <span style={{ color: 'white', opacity: 0.7, fontWeight: 700 }}>"ODYSSEY"</span>
           </span>
         </div>
         <span style={{

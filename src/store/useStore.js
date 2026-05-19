@@ -5846,6 +5846,15 @@ const useStore = create(
           toast.error(`"${title}" isimli bir tatil zaten mevcut! ⚠️`);
           return null;
         }
+        const locationType = trip.locationType || 'yurtdisi';
+        const city = (trip.city || '').toLowerCase().trim();
+        const tripTitle = (trip.title || '').toLowerCase().trim();
+        const isDomestic = locationType === 'yurtici' || 
+                           city.includes('antalya') || 
+                           tripTitle.includes('antalya');
+        
+        const firstItemText = isDomestic ? 'Kimlik' : 'Pasaport';
+
         const newTrip = {
           id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(),
           family_id: state.family_id,
@@ -5855,16 +5864,6 @@ const useStore = create(
           travelers: trip.travelers || 'ikimiz',
           locationType: trip.locationType || 'yurtdisi',
           transportType: trip.transportType || 'ucak',
-          valiz: {
-            gorkem: [
-              { id: 1, text: 'Pasaport', done: false },
-              { id: 2, text: 'Şarj Cihazları', done: false }
-            ],
-            esra: [
-              { id: 1, text: 'Pasaport', done: false },
-              { id: 2, text: 'Kozmetik / Bakım', done: false }
-            ]
-          },
           budget: { est: Number(trip.budget) || 0, real: 0 },
           transportation: {
             departure: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' },
@@ -5872,6 +5871,16 @@ const useStore = create(
           },
           accommodation: { hotel: '', address: '', bookingId: '', link: '' },
           ...trip,
+          valiz: trip.valiz || {
+            gorkem: [
+              { id: 1, text: firstItemText, done: false },
+              { id: 2, text: 'Şarj Cihazları', done: false }
+            ],
+            esra: [
+              { id: 1, text: firstItemText, done: false },
+              { id: 2, text: 'Kozmetik / Bakım', done: false }
+            ]
+          },
           created_at: new Date().toISOString()
         };
         const updatedTrips = [newTrip, ...state.tatil.trips];

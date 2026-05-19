@@ -444,14 +444,49 @@ async function fetchWeatherForTrip(city, country, startDate, endDate) {
           const lastYear = new Date(start);
           lastYear.setFullYear(lastYear.getFullYear() - 1);
           const startArchive = lastYear.toISOString().split('T')[0];
-          const endArchive = new Date(lastYear.getTime() + 7 * 864e5).toISOString().split('T')[0];
-          const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=temperature_2m_max&timezone=auto`);
+          const tripDurationMs = end.getTime() - start.getTime();
+          const endArchive = new Date(lastYear.getTime() + tripDurationMs).toISOString().split('T')[0];
+          const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=weathercode,temperature_2m_max&timezone=auto`);
           const data = await res.json();
           if (data.daily?.temperature_2m_max) {
             const temps = data.daily.temperature_2m_max.filter(t => t != null);
             if (temps.length > 0) {
               const avg = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
-              return { temp: avg, isSun: true, label: `${start.toLocaleString('tr-TR', { month: 'long' })} Ort.`, isHistorical: true };
+              
+              const tripDates = [];
+              let curr = new Date(start);
+              while (curr <= end) {
+                tripDates.push(curr.toISOString().split('T')[0]);
+                curr.setDate(curr.getDate() + 1);
+              }
+              
+              const mappedTime = data.daily.time.map((t, idx) => {
+                if (tripDates[idx]) return tripDates[idx];
+                try {
+                  const d = new Date(t);
+                  d.setFullYear(d.getFullYear() + 1);
+                  return d.toISOString().split('T')[0];
+                } catch (e) {
+                  return t;
+                }
+              });
+
+              const codes = data.daily.weathercode || [];
+              const isSun = codes.length > 0 ? (codes.every(c => c < 3) || codes[0] < 3) : true;
+
+              const mappedDaily = {
+                time: mappedTime,
+                weathercode: data.daily.weathercode || mappedTime.map(() => 0),
+                temperature_2m_max: data.daily.temperature_2m_max
+              };
+
+              return {
+                temp: avg,
+                isSun: isSun,
+                label: `${temps.length} Günlük Ort. (Geçen Yıl)`,
+                isHistorical: true,
+                daily: mappedDaily
+              };
             }
           }
         } catch (e) {}
@@ -1784,24 +1819,42 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
   const [retForm, setRetForm] = useState(trip.transportation?.return?.flightNo ? trip.transportation.return : fallbackRet);
   const [accForm, setAccForm] = useState(trip.accommodation?.hotel ? trip.accommodation : getFallbackData('hotel', trip));
 
-  const [depCarForm, setDepCarForm] = useState(trip.transportation?.depCar || {
+  const [depCarForm, setDepCarForm] = useState(() => ({
     startPoint: 'İstanbul',
     endPoint: trip.city || 'Antalya',
     distance: trip.city && normalizeText(trip.city) === 'antalya' ? '700' : '',
     duration: trip.city && normalizeText(trip.city) === 'antalya' ? '8' : '',
     route: 'D650 (Afyon üzerinden)',
     stops: 'Afyon (Mola / Sucuk Döner 😋)',
-    departureTime: '06:00'
-  });
-  const [retCarForm, setRetCarForm] = useState(trip.transportation?.retCar || {
+    departureTime: '06:00',
+    fuelConsumption: '7.5',
+    fuelPrice: '43',
+    tollsCost: '0',
+    navigationLink: '',
+    checkTires: false,
+    checkOil: false,
+    checkWater: false,
+    checkHgs: false,
+    ...(trip.transportation?.depCar || {})
+  }));
+  const [retCarForm, setRetCarForm] = useState(() => ({
     startPoint: trip.city || 'Antalya',
     endPoint: 'İstanbul',
     distance: trip.city && normalizeText(trip.city) === 'antalya' ? '700' : '',
     duration: trip.city && normalizeText(trip.city) === 'antalya' ? '8' : '',
     route: 'D650 (Afyon üzerinden)',
     stops: 'Bozüyük (Köfte Molası 😋)',
-    departureTime: '10:00'
-  });
+    departureTime: '10:00',
+    fuelConsumption: '7.5',
+    fuelPrice: '43',
+    tollsCost: '0',
+    navigationLink: '',
+    checkTires: false,
+    checkOil: false,
+    checkWater: false,
+    checkHgs: false,
+    ...(trip.transportation?.retCar || {})
+  }));
 
   const [depTrainForm, setDepTrainForm] = useState(trip.transportation?.depTrain || {
     trainNo: '', wagon: '', seat: '', pnr: '', time: '', duration: '', station: 'Söğütlüçeşme', destStation: trip.city || 'Ankara'
@@ -1822,23 +1875,41 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
     const rawRet = trip.transportation?.return?.flightNo ? trip.transportation.return : getFallbackData('flight_return', trip);
     const rawAcc = trip.accommodation?.hotel ? trip.accommodation : getFallbackData('hotel', trip);
 
-    const rawDepCar = trip.transportation?.depCar || {
+    const rawDepCar = {
       startPoint: 'İstanbul',
       endPoint: trip.city || 'Antalya',
       distance: trip.city && normalizeText(trip.city) === 'antalya' ? '700' : '',
       duration: trip.city && normalizeText(trip.city) === 'antalya' ? '8' : '',
       route: 'D650 (Afyon üzerinden)',
       stops: 'Afyon (Mola / Sucuk Döner 😋)',
-      departureTime: '06:00'
+      departureTime: '06:00',
+      fuelConsumption: '7.5',
+      fuelPrice: '43',
+      tollsCost: '0',
+      navigationLink: '',
+      checkTires: false,
+      checkOil: false,
+      checkWater: false,
+      checkHgs: false,
+      ...(trip.transportation?.depCar || {})
     };
-    const rawRetCar = trip.transportation?.retCar || {
+    const rawRetCar = {
       startPoint: trip.city || 'Antalya',
       endPoint: 'İstanbul',
       distance: trip.city && normalizeText(trip.city) === 'antalya' ? '700' : '',
       duration: trip.city && normalizeText(trip.city) === 'antalya' ? '8' : '',
       route: 'D650 (Afyon üzerinden)',
       stops: 'Bozüyük (Köfte Molası 😋)',
-      departureTime: '10:00'
+      departureTime: '10:00',
+      fuelConsumption: '7.5',
+      fuelPrice: '43',
+      tollsCost: '0',
+      navigationLink: '',
+      checkTires: false,
+      checkOil: false,
+      checkWater: false,
+      checkHgs: false,
+      ...(trip.transportation?.retCar || {})
     };
 
     const rawDepTrain = trip.transportation?.depTrain || {
@@ -1880,6 +1951,28 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
       setAccForm(rawAcc);
     }
   }, [trip]);
+
+  const toggleCarCheck = (section, field) => {
+    const isDep = section === 'dep';
+    const form = isDep ? depCarForm : retCarForm;
+    const updatedForm = {
+      ...form,
+      [field]: !form[field]
+    };
+    if (isDep) {
+      setDepCarForm(updatedForm);
+    } else {
+      setRetCarForm(updatedForm);
+    }
+    const updates = {
+      ...trip,
+      transportation: {
+        ...(trip.transportation || {}),
+        [isDep ? 'depCar' : 'retCar']: updatedForm
+      }
+    };
+    onUpdate(updates);
+  };
 
   const handleSave = (section) => {
     const updates = { 
@@ -2108,6 +2201,10 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
                   <input placeholder="Tahmini Süre (Saat)" value={depCarForm.duration} onChange={e => setDepCarForm({...depCarForm, duration: e.target.value})} />
                   <input placeholder="Güzergah (örn. D650)" value={depCarForm.route} onChange={e => setDepCarForm({...depCarForm, route: e.target.value})} />
                   <input placeholder="Mola Noktaları" value={depCarForm.stops} onChange={e => setDepCarForm({...depCarForm, stops: e.target.value})} />
+                  <input type="number" step="0.1" placeholder="Yakıt Tüketimi (L/100km)" value={depCarForm.fuelConsumption} onChange={e => setDepCarForm({...depCarForm, fuelConsumption: e.target.value})} />
+                  <input type="number" placeholder="Litre Fiyatı (TL)" value={depCarForm.fuelPrice} onChange={e => setDepCarForm({...depCarForm, fuelPrice: e.target.value})} />
+                  <input type="number" placeholder="Otoyol / HGS Ücreti (TL)" value={depCarForm.tollsCost} onChange={e => setDepCarForm({...depCarForm, tollsCost: e.target.value})} />
+                  <input placeholder="Navigasyon Harita Linki" value={depCarForm.navigationLink} onChange={e => setDepCarForm({...depCarForm, navigationLink: e.target.value})} />
                 </div>
               ) : (
                 <div className="sc-display">
@@ -2146,6 +2243,71 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
                       </div>
                     </div>
                   )}
+
+                  {/* Cost Calculation Dashboard */}
+                  {(() => {
+                    const distanceNum = parseFloat(depCarForm.distance) || 0;
+                    const consumptionNum = parseFloat(depCarForm.fuelConsumption) || 7.5;
+                    const fuelPriceNum = parseFloat(depCarForm.fuelPrice) || 43;
+                    const tollsCostNum = parseFloat(depCarForm.tollsCost) || 0;
+                    const totalFuelCost = Math.round((distanceNum / 100) * consumptionNum * fuelPriceNum);
+                    const totalTripCost = Math.round(totalFuelCost + tollsCostNum);
+                    return (
+                      <div className="car-cost-dashboard">
+                        <div className="ccd-item">
+                          <span className="ccd-label">⛽ Yakıt Maliyeti</span>
+                          <span className="ccd-value">{totalFuelCost.toLocaleString('tr-TR')} ₺</span>
+                          <small className="ccd-subtext">{consumptionNum} L/100km · {fuelPriceNum} ₺/L</small>
+                        </div>
+                        <div className="ccd-item">
+                          <span className="ccd-label">🛣️ Köprü & Otoyol</span>
+                          <span className="ccd-value">{tollsCostNum.toLocaleString('tr-TR')} ₺</span>
+                          <small className="ccd-subtext">HGS / Geçiş Ücreti</small>
+                        </div>
+                        <div className="ccd-item total">
+                          <span className="ccd-label">💰 Toplam Yol Maliyeti</span>
+                          <span className="ccd-value">{totalTripCost.toLocaleString('tr-TR')} ₺</span>
+                          <small className="ccd-subtext">Yakıt + Otoyol</small>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Open Navigation Link */}
+                  {depCarForm.navigationLink && (
+                    <a 
+                      href={depCarForm.navigationLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="nav-link-btn"
+                    >
+                      <ExternalLink size={14} style={{ marginRight: '6px' }} />
+                      Haritada Aç / Navigasyon
+                    </a>
+                  )}
+
+                  {/* Pre-Trip Car Health Checklist */}
+                  <div className="car-checklist-panel">
+                    <div className="ccp-title">🛠️ Yolculuk Öncesi Araç Kontrolleri</div>
+                    <div className="ccp-grid">
+                      <button className={`ccp-item ${depCarForm.checkTires ? 'checked' : ''}`} onClick={() => toggleCarCheck('dep', 'checkTires')}>
+                        {depCarForm.checkTires ? <CheckSquare size={16} /> : <Square size={16} />}
+                        <span>Lastik Basınçları</span>
+                      </button>
+                      <button className={`ccp-item ${depCarForm.checkOil ? 'checked' : ''}`} onClick={() => toggleCarCheck('dep', 'checkOil')}>
+                        {depCarForm.checkOil ? <CheckSquare size={16} /> : <Square size={16} />}
+                        <span>Motor Yağı</span>
+                      </button>
+                      <button className={`ccp-item ${depCarForm.checkWater ? 'checked' : ''}`} onClick={() => toggleCarCheck('dep', 'checkWater')}>
+                        {depCarForm.checkWater ? <CheckSquare size={16} /> : <Square size={16} />}
+                        <span>Silecek & Cam Suyu</span>
+                      </button>
+                      <button className={`ccp-item ${depCarForm.checkHgs ? 'checked' : ''}`} onClick={() => toggleCarCheck('dep', 'checkHgs')}>
+                        {depCarForm.checkHgs ? <CheckSquare size={16} /> : <Square size={16} />}
+                        <span>HGS Bakiyesi</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -2370,6 +2532,10 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
                   <input placeholder="Tahmini Süre (Saat)" value={retCarForm.duration} onChange={e => setRetCarForm({...retCarForm, duration: e.target.value})} />
                   <input placeholder="Güzergah (örn. D650)" value={retCarForm.route} onChange={e => setRetCarForm({...retCarForm, route: e.target.value})} />
                   <input placeholder="Mola Noktaları" value={retCarForm.stops} onChange={e => setRetCarForm({...retCarForm, stops: e.target.value})} />
+                  <input type="number" step="0.1" placeholder="Yakıt Tüketimi (L/100km)" value={retCarForm.fuelConsumption} onChange={e => setRetCarForm({...retCarForm, fuelConsumption: e.target.value})} />
+                  <input type="number" placeholder="Litre Fiyatı (TL)" value={retCarForm.fuelPrice} onChange={e => setRetCarForm({...retCarForm, fuelPrice: e.target.value})} />
+                  <input type="number" placeholder="Otoyol / HGS Ücreti (TL)" value={retCarForm.tollsCost} onChange={e => setRetCarForm({...retCarForm, tollsCost: e.target.value})} />
+                  <input placeholder="Navigasyon Harita Linki" value={retCarForm.navigationLink} onChange={e => setRetCarForm({...retCarForm, navigationLink: e.target.value})} />
                 </div>
               ) : (
                 <div className="sc-display">
@@ -2407,6 +2573,48 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
                         🛑 Molalar: {retCarForm.stops}
                       </div>
                     </div>
+                  )}
+
+                  {/* Cost Calculation Dashboard */}
+                  {(() => {
+                    const distanceNum = parseFloat(retCarForm.distance) || 0;
+                    const consumptionNum = parseFloat(retCarForm.fuelConsumption) || 7.5;
+                    const fuelPriceNum = parseFloat(retCarForm.fuelPrice) || 43;
+                    const tollsCostNum = parseFloat(retCarForm.tollsCost) || 0;
+                    const totalFuelCost = Math.round((distanceNum / 100) * consumptionNum * fuelPriceNum);
+                    const totalTripCost = Math.round(totalFuelCost + tollsCostNum);
+                    return (
+                      <div className="car-cost-dashboard">
+                        <div className="ccd-item">
+                          <span className="ccd-label">⛽ Yakıt Maliyeti</span>
+                          <span className="ccd-value">{totalFuelCost.toLocaleString('tr-TR')} ₺</span>
+                          <small className="ccd-subtext">{consumptionNum} L/100km · {fuelPriceNum} ₺/L</small>
+                        </div>
+                        <div className="ccd-item">
+                          <span className="ccd-label">🛣️ Köprü & Otoyol</span>
+                          <span className="ccd-value">{tollsCostNum.toLocaleString('tr-TR')} ₺</span>
+                          <small className="ccd-subtext">HGS / Geçiş Ücreti</small>
+                        </div>
+                        <div className="ccd-item total">
+                          <span className="ccd-label">💰 Toplam Yol Maliyeti</span>
+                          <span className="ccd-value">{totalTripCost.toLocaleString('tr-TR')} ₺</span>
+                          <small className="ccd-subtext">Yakıt + Otoyol</small>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Open Navigation Link */}
+                  {retCarForm.navigationLink && (
+                    <a 
+                      href={retCarForm.navigationLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="nav-link-btn"
+                    >
+                      <ExternalLink size={14} style={{ marginRight: '6px' }} />
+                      Haritada Aç / Navigasyon
+                    </a>
                   )}
                 </div>
               )}
@@ -2776,20 +2984,32 @@ function HotelMap({ name, address, city, country }) {
 }
 
 function ValizSection({ trip, weatherForecast, onAutoFill }) {
-  const { updateTripValiz, setModuleData, tatil, syncValizToDepo, updateDepoItem, currentUser, ev } = useStore();
+  const { updateTripValiz, updateTrip, setModuleData, tatil, syncValizToDepo, updateDepoItem, currentUser, ev } = useStore();
   
-  // Default to traveler type if solo, otherwise default to logged-in user
+  // Enforce privacy by strictly locking active user to logged-in user
   const defaultPackingUser = useMemo(() => {
-    if (trip.travelers === 'esra') return 'esra';
-    if (trip.travelers === 'gorkem') return 'gorkem';
-    return currentUser?.name?.toLowerCase() === 'esra' ? 'esra' : 'gorkem';
-  }, [trip.travelers, currentUser]);
+    const nameLower = currentUser?.name?.toLowerCase() || '';
+    if (nameLower.includes('esra')) return 'esra';
+    return 'gorkem';
+  }, [currentUser]);
 
   const [activePackingUser, setActivePackingUser] = useState(defaultPackingUser);
   const [newItem, setNewItem] = useState('');
   const [showAssistant, setShowAssistant] = useState(false);
   const [editingItemId, setEditingItemId] = useState(null);
   const [editingText, setEditingText] = useState('');
+
+  const clearValiz = () => {
+    const owner = activePackingUser;
+    const updatedValiz = {
+      ...trip.valiz,
+      [owner]: []
+    };
+    const updatedTrips = tatil.trips.map(t => t.id === trip.id ? { ...t, valiz: updatedValiz } : t);
+    setModuleData('tatil', { ...tatil, trips: updatedTrips });
+    updateTrip(trip.id, { valiz: updatedValiz });
+    toast.success('Valiz listesi temizlendi! 🧹');
+  };
 
   // Parse quantity from text e.g. "Çorap (5 adet)" → 5
   const parseQty = (text) => {
@@ -3047,23 +3267,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
         </div>
       )}
 
-      {/* User Suitcase Tabs (only shown if both are traveling) */}
-      {trip.travelers === 'ikimiz' && (
-        <div className="valiz-user-tabs glass mb-15">
-          <button 
-            className={`v-utab gorkem ${activePackingUser === 'gorkem' ? 'active' : ''}`}
-            onClick={() => setActivePackingUser('gorkem')}
-          >
-            👨‍💻 Görkem
-          </button>
-          <button 
-            className={`v-utab esra ${activePackingUser === 'esra' ? 'active' : ''}`}
-            onClick={() => setActivePackingUser('esra')}
-          >
-            👩 Esra
-          </button>
-        </div>
-      )}
+      {/* User Suitcase Tabs are completely removed/hidden to ensure strict privacy between Görkem and Esra */}
 
       <div className="valiz-column-premium glass">
         <div className={`vc-header ${activePackingUser}`}>
@@ -3075,7 +3279,18 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
               onChange={e => setNewItem(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addItem(newItem)}
             />
-            <button className="vc-add-btn" onClick={() => addItem(newItem)}><Plus size={18} /></button>
+            <button className="vc-add-btn" onClick={() => addItem(newItem)} title="Ekle"><Plus size={18} /></button>
+            <button 
+              className="vc-clear-btn" 
+              onClick={() => {
+                if (window.confirm('Valiz listenizi tamamen temizlemek istediğinize emin misiniz? 🧹')) {
+                  clearValiz();
+                }
+              }}
+              title="Listeyi Temizle"
+            >
+              <Trash2 size={18} />
+            </button>
           </div>
         </div>
 
