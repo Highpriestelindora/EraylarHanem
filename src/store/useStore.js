@@ -875,7 +875,7 @@ async function pushAlisverisToSupabase(item, kime) {
       alindi: !!item.done,
       tamamlanma_tarihi: item.doneDate || null,
       liste_tipi: listeTipi,
-      ekleyen: 'Sistem'
+      ekleyen: item.doneBy || 'Sistem'
     };
     const { error } = await supabase.from('alisveris_listesi').upsert(payload);
     if (error) throw error;
@@ -1179,17 +1179,36 @@ async function pushEvAbonelikToSupabase(item) {
 
 async function pushEvOnarimToSupabase(item) {
   try {
-    const res = await supabase.from('ev_onarim').upsert({
-      id: String(item.id), task: item.task, status: item.status || 'bekliyor',
-      created_by: item.createdBy || null, created_at: item.createdAt || null,
-      completed_by: item.completedBy || null, completed_at: item.completedAt || null,
-      cleared_by: item.clearedBy || null, cleared_at: item.clearedAt || null,
+    const payload = {
+      id: String(item.id),
+      task: item.task,
+      status: item.status || 'Pending',
+      created_by: item.createdBy || null,
+      created_at: item.createdAt || null,
+      completed_by: item.completedBy || null,
+      completed_at: item.completedAt || null,
+      cleared_by: item.clearedBy || null,
+      cleared_at: item.clearedAt || null,
       is_archived: !!item.isArchived,
       assigned_to: item.assignedTo || null,
       due_date: item.dueDate || null,
       family_id: DEFAULT_FID
-    });
-    if(res.error) console.error('❌ Onarım Sync Error:', res.error); else console.log('✅ Onarım Sync Success');
+    };
+    const res = await supabase.from('ev_onarim').upsert(payload);
+    if (res.error) {
+      // Self-heal: if family_id column missing, retry without it
+      if (res.error.code === 'PGRST204' || res.error.message?.includes('family_id')) {
+        console.warn('[Self-Healing] ev_onarim missing family_id column, retrying without it');
+        const { family_id, ...fallback } = payload;
+        const res2 = await supabase.from('ev_onarim').upsert(fallback);
+        if (res2.error) console.error('❌ Onarım Sync Error (fallback):', res2.error);
+        else console.log('✅ Onarım Sync Success (fallback)');
+      } else {
+        console.error('❌ Onarım Sync Error:', res.error);
+      }
+    } else {
+      console.log('✅ Onarım Sync Success:', item.id);
+    }
   } catch(e) { console.warn('Ev Onarım Hatası:', e); }
 }
 
@@ -2210,7 +2229,7 @@ const useStore = create(
                  savedLocations, evAyarlar, acilDurum, araclar] = await Promise.all([
             supabase.from('ev_duzenli_odemeler').select('*'),
             supabase.from('ev_abonelikler').select('*'),
-            supabase.from('ev_onarim').select('*'),
+            supabase.from('ev_onarim').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('ev_demirbaslar').select('*'),
             supabase.from('ev_bakimlar').select('*'),
             supabase.from('garaj_yakit').select('*').eq('family_id', DEFAULT_FID),
@@ -5790,13 +5809,19 @@ const useStore = create(
         const state = get();
         const targetOwner = owner === 'market' ? 'mutfak' : owner;
         
+        const currentUserKey = state.currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
         let updatedItem = null;
         
         if (targetOwner === 'mutfak') {
           const list = (state.mutfak.alisveris || []).map(i => {
             if (i.id === itemId) {
               const newDone = !i.done;
-              updatedItem = { ...i, done: newDone, doneDate: newDone ? new Date().toISOString() : null };
+              updatedItem = { 
+                ...i, 
+                done: newDone, 
+                doneDate: newDone ? new Date().toISOString() : null,
+                doneBy: newDone ? currentUserKey : null
+              };
               return updatedItem;
             }
             return i;
@@ -5806,7 +5831,12 @@ const useStore = create(
           const list = (state.alisveris[targetOwner] || []).map(i => {
             if (i.id === itemId) {
               const newDone = !i.done;
-              updatedItem = { ...i, done: newDone, doneDate: newDone ? new Date().toISOString() : null };
+              updatedItem = { 
+                ...i, 
+                done: newDone, 
+                doneDate: newDone ? new Date().toISOString() : null,
+                doneBy: newDone ? currentUserKey : null
+              };
               return updatedItem;
             }
             return i;

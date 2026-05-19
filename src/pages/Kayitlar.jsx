@@ -58,6 +58,7 @@ export default function Kayitlar() {
         title: item.task,
         date: item.clearedAt || item.completedAt || item.createdAt,
         type: 'maintenance',
+        user: item.clearedBy || item.completedBy || item.createdBy || 'sistem',
         onDelete: () => deleteOnarimItem(item.id)
       });
     });
@@ -73,6 +74,7 @@ export default function Kayitlar() {
           title: `${item.nm} (Alındı)`,
           date: item.doneDate || item.dt,
           type: 'shopping',
+          user: item.doneBy || (listKey === 'ev' ? 'ortak' : listKey),
           onDelete: () => deleteAlisverisItem(item.id, listKey)
         });
       });
