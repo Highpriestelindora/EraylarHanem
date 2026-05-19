@@ -2789,4 +2789,179 @@
   }
 }
 
+/* ==========================================================================
+   DREAM HUB - PREMIUM DREAM PANOSU (DREAM BOARD) GLOW CARD STYLES
+   ========================================================================== */
+
+.dream-card-premium {
+  position: relative;
+  padding: 30px;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 220px;
+  transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.03);
+}
+
+.dream-card-glow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dream-card-premium:hover .dream-card-glow {
+  opacity: 1;
+}
+
+/* Owner-specific premium cosmic gradients with matching glows */
+.dream-card-premium.dream-owner-gorkem {
+  background: linear-gradient(135deg, rgba(244, 247, 254, 0.85) 0%, rgba(99, 102, 241, 0.06) 100%);
+  border: 1.5px solid rgba(99, 102, 241, 0.16);
+  box-shadow: 0 12px 24px -10px rgba(99, 102, 241, 0.05);
+}
+.dream-card-premium.dream-owner-gorkem:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 25px 40px -12px rgba(99, 102, 241, 0.25), 0 0 25px 4px rgba(99, 102, 241, 0.08);
+}
+.dream-card-premium.dream-owner-gorkem .dream-type-badge,
+.dream-card-premium.dream-owner-gorkem .dream-owner-badge {
+  background: rgba(238, 242, 255, 0.85);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+}
+
+.dream-card-premium.dream-owner-esra {
+  background: linear-gradient(135deg, rgba(255, 245, 245, 0.85) 0%, rgba(244, 63, 94, 0.06) 100%);
+  border: 1.5px solid rgba(244, 63, 94, 0.16);
+  box-shadow: 0 12px 24px -10px rgba(244, 63, 94, 0.05);
+}
+.dream-card-premium.dream-owner-esra:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(244, 63, 94, 0.5);
+  box-shadow: 0 25px 40px -12px rgba(244, 63, 94, 0.25), 0 0 25px 4px rgba(244, 63, 94, 0.08);
+}
+.dream-card-premium.dream-owner-esra .dream-type-badge,
+.dream-card-premium.dream-owner-esra .dream-owner-badge {
+  background: rgba(255, 241, 242, 0.85);
+  border: 1px solid rgba(244, 63, 94, 0.1);
+  color: #e11d48;
+}
+
+.dream-card-premium.dream-owner-ortak {
+  background: linear-gradient(135deg, rgba(253, 246, 227, 0.85) 0%, rgba(124, 58, 237, 0.06) 100%);
+  border: 1.5px solid rgba(124, 58, 237, 0.16);
+  box-shadow: 0 12px 24px -10px rgba(124, 58, 237, 0.05);
+}
+.dream-card-premium.dream-owner-ortak:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(124, 58, 237, 0.5);
+  box-shadow: 0 25px 40px -12px rgba(124, 58, 237, 0.25), 0 0 25px 4px rgba(124, 58, 237, 0.08);
+}
+.dream-card-premium.dream-owner-ortak .dream-type-badge,
+.dream-card-premium.dream-owner-ortak .dream-owner-badge {
+  background: rgba(245, 243, 255, 0.85);
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+}
+
+.dream-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1;
+}
+
+.dream-type-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+}
+
+.dream-owner-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.01);
+}
+
+.dream-card-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  padding: 10px 0;
+}
+
+.dream-text {
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.6;
+  color: #0f172a;
+  font-family: 'Fraunces', serif;
+  letter-spacing: -0.3px;
+  font-style: italic;
+  text-align: center;
+  width: 100%;
+}
+
+.dream-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  z-index: 1;
+}
+
+.dream-action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.85);
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.dream-action-btn:hover {
+  background: #ffffff;
+  color: #4f46e5;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.dream-action-btn.del:hover {
+  color: #e11d48;
+  background: #fff1f2;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15);
+}
+
 

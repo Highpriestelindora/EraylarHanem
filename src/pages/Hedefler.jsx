@@ -321,6 +321,28 @@ const isGoalVisible = (g, currentUser) => {
 
 
 
+const getDreamTypeDetails = (type) => {
+  switch (type) {
+    case 'career': return { emoji: '💼', label: 'Kariyer' };
+    case 'finance': return { emoji: '💰', label: 'Finans' };
+    case 'lifestyle': return { emoji: '🌱', label: 'Yaşam' };
+    case 'family': return { emoji: '🏡', label: 'Aile' };
+    case 'travel': return { emoji: '✈️', label: 'Seyahat' };
+    default: return { emoji: '✨', label: 'Genel' };
+  }
+};
+
+const getDreamOwnerDetails = (owner) => {
+  const o = (owner || 'ortak').toLowerCase().trim();
+  if (o === 'gorkem' || o === 'görkem') {
+    return { name: 'Görkem', className: 'dream-owner-gorkem', emoji: '👑' };
+  }
+  if (o === 'esra') {
+    return { name: 'Esra', className: 'dream-owner-esra', emoji: '🌸' };
+  }
+  return { name: 'Aile', className: 'dream-owner-ortak', emoji: '🏡' };
+};
+
 export default function Hedefler() {
   const [activeTab, setActiveTab] = useState('kisa');
   const [selectedGoal, setSelectedGoal] = useState(null); // For details/edit
@@ -344,6 +366,7 @@ export default function Hedefler() {
   } = hedefler || {};
 
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [planForm, setPlanForm] = useState({ text: '', owner: 'ortak', type: 'career' });
   const [showPlanModal, setShowPlanModal] = useState(false);
 
   const moneyGoals = kasa?.kumbaralar || [];
@@ -821,54 +844,55 @@ export default function Hedefler() {
                         <h3>🌟 Hayal Merkezi</h3>
                         <p style={{ fontSize: '11px', color: '#64748b', fontWeight: '700' }}>GELECEĞİ BURADA İNŞA EDİYORUZ</p>
                     </div>
-                    <button className="pill-btn-premium" onClick={() => { setSelectedPlan(null); setShowPlanModal(true); }}>
+                    <button className="pill-btn-premium" onClick={() => { setSelectedPlan(null); setPlanForm({ text: '', owner: 'ortak', type: 'career' }); setShowPlanModal(true); }}>
                         <Plus size={16} /> HAYAL EKLE
                     </button>
                 </div>
 
                 <div className="showcase-container">
-                    {showcaseVisions.length > 0 ? (
+                    {longTermVision.length > 0 ? (
                         <div className="vision-showcase-grid">
-                            {showcaseVisions.map((plan, idx) => (
-                                <div key={plan.id} className={`vision-showcase-card glass delay-${idx}`}>
-                                    <div className="vsc-badge">HAYAL #{idx + 1}</div>
-                                    <div className="vsc-text">{plan.text}</div>
-                                    <div className="vsc-footer">
-                                        <button className="vsc-action" onClick={() => { setSelectedPlan(plan); setShowPlanModal(true); }}><Edit3 size={14} /></button>
-                                        <button className="vsc-action del" onClick={() => setGoalToDelete({ ...plan, historyType: 'vision' })}><Trash2 size={14} /></button>
-                                    </div>
-                                </div>
-                            ))}
+                            {longTermVision
+                                .filter(p => {
+                                    const owner = (p.owner || 'ortak').toLowerCase();
+                                    return filterOwner === 'all' || owner.includes(filterOwner) || owner === 'aile' || owner === 'ortak';
+                                })
+                                .map((plan, idx) => {
+                                    const typeInfo = getDreamTypeDetails(plan.type);
+                                    const ownerInfo = getDreamOwnerDetails(plan.owner);
+                                    return (
+                                        <div key={plan.id} className={`dream-card-premium ${ownerInfo.className} animate-float delay-${idx % 3}`}>
+                                            <div className="dream-card-glow"></div>
+                                            <div className="dream-card-header">
+                                                <span className="dream-type-badge">{typeInfo.emoji} {typeInfo.label}</span>
+                                                <span className="dream-owner-badge">{ownerInfo.emoji} {ownerInfo.name}</span>
+                                            </div>
+                                            <div className="dream-card-body">
+                                                <p className="dream-text">"{plan.text}"</p>
+                                            </div>
+                                            <div className="dream-card-footer">
+                                                <button className="dream-action-btn" onClick={() => { 
+                                                    setSelectedPlan(plan); 
+                                                    setPlanForm({ text: plan.text || '', owner: plan.owner || 'ortak', type: plan.type || 'career' });
+                                                    setShowPlanModal(true); 
+                                                }} title="Düzenle">
+                                                    <Edit3 size={14} />
+                                                </button>
+                                                <button className="dream-action-btn del" onClick={() => setGoalToDelete({ ...plan, historyType: 'vision' })} title="Sil">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            }
                         </div>
                     ) : (
                         <div className="empty-state-v2 glass">
                             <Compass size={40} style={{ color: '#cbd5e1' }} />
-                            <p>Henüz bir vizyon planı eklenmemiş. Hayal kurmaya başla!</p>
+                            <p>Henüz bir hayal planı eklenmemiş. Hayal kurmaya başla! ✨</p>
                         </div>
                     )}
-                </div>
-
-                <div className="vision-all-list mt-32">
-                    <h4 style={{ fontSize: '14px', marginBottom: '16px', color: '#1e293b' }}>📚 Tüm Vizyon Arşivi</h4>
-                    <div className="vizyon-grid-premium">
-                        {longTermVision
-                            .filter(p => {
-                                const owner = (p.owner || 'ortak').toLowerCase();
-                                return filterOwner === 'all' || owner.includes(filterOwner) || owner === 'aile' || owner === 'ortak';
-                            })
-                            .map(plan => (
-                            <div key={plan.id} className="vision-item-premium glass">
-                                <div className="vip-content">
-                                    <Zap size={14} style={{ color: '#f59e0b' }} />
-                                    <span>{plan.text}</span>
-                                </div>
-                                <div className="vip-actions">
-                                    <button onClick={() => { setSelectedPlan(plan); setShowPlanModal(true); }}><Edit3 size={14} /></button>
-                                    <button onClick={() => setGoalToDelete({ ...plan, historyType: 'vision' })} className="del"><Trash2 size={14} /></button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
                 </div>
             </div>
         )}
@@ -941,25 +965,160 @@ export default function Hedefler() {
       <ActionSheet 
         isOpen={showPlanModal} 
         onClose={() => setShowPlanModal(false)}
-        title={selectedPlan ? "✏️ Planı Düzenle" : "✨ Yeni Vizyon Planı"}
+        title={selectedPlan ? "✏️ Hayali Düzenle" : "🔮 Yeni Hayal Ekle"}
       >
-        <div className="modal-form" style={{ padding: '20px' }}>
+        <div className="modal-form" style={{ padding: '24px' }}>
           <div className="form-group">
-            <label>Plan Açıklaması</label>
+            <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b', marginBottom: '8px', display: 'block' }}>✨ Hayal Açıklaması</label>
             <textarea 
-              defaultValue={selectedPlan?.text} 
-              id="planText"
-              placeholder="Örn: Yazılım mimarı olarak global bir projede yer al."
-              style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: '12px', border: '1.5px solid #e2e8f0' }}
+              value={planForm.text} 
+              onChange={(e) => setPlanForm({ ...planForm, text: e.target.value })}
+              placeholder="Örn: Kendi kendine aylık 2000 euro pasif gelir getiren bir sistem kurmak."
+              style={{ 
+                width: '100%', 
+                minHeight: '90px', 
+                padding: '14px', 
+                borderRadius: '16px', 
+                border: '2px solid #f1f5f9', 
+                background: '#f8fafc',
+                fontSize: '14px',
+                fontWeight: '600',
+                lineHeight: '1.5',
+                color: '#1e293b',
+                transition: 'border-color 0.2s ease',
+                resize: 'vertical'
+              }}
             />
           </div>
-          <button className="premium-submit-btn" onClick={() => {
-            const text = document.getElementById('planText').value;
-            if (selectedPlan) updateVisionPlan(selectedPlan.id, { text });
-            else addVisionPlan({ text });
-            setShowPlanModal(false);
-            toast.success(selectedPlan ? 'Plan güncellendi!' : 'Plan eklendi!');
-          }}>KAYDET</button>
+
+          <div className="form-group" style={{ marginTop: '16px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b', marginBottom: '8px', display: 'block' }}>👑 Hedef Sahibi</label>
+            <div className="premium-select-buttons" style={{ display: 'flex', gap: '8px' }}>
+              {[
+                { id: 'gorkem', label: 'Görkem', emoji: '👑', activeBg: '#4f46e5', activeShadow: 'rgba(79, 70, 229, 0.25)' },
+                { id: 'esra', label: 'Esra', emoji: '🌸', activeBg: '#e11d48', activeShadow: 'rgba(225, 29, 72, 0.25)' },
+                { id: 'ortak', label: 'Aile', emoji: '🏡', activeBg: '#7c3aed', activeShadow: 'rgba(124, 58, 237, 0.25)' }
+              ].map(opt => {
+                const isActive = planForm.owner === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={`select-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => setPlanForm({ ...planForm, owner: opt.id })}
+                    style={{
+                      flex: 1,
+                      padding: '12px 14px',
+                      borderRadius: '16px',
+                      border: '1.5px solid ' + (isActive ? opt.activeBg : '#e2e8f0'),
+                      background: isActive ? opt.activeBg : 'white',
+                      color: isActive ? 'white' : '#475569',
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: isActive ? `0 6px 16px -4px ${opt.activeShadow}` : 'none',
+                      transform: isActive ? 'translateY(-2px)' : 'none'
+                    }}
+                  >
+                    <span style={{ fontSize: '16px' }}>{opt.emoji}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="form-group" style={{ marginTop: '20px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '800', color: '#1e293b', marginBottom: '8px', display: 'block' }}>🔮 Hayal Türü</label>
+            <div className="premium-select-buttons-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              {[
+                { id: 'career', label: 'Kariyer', emoji: '💼', activeBg: '#4f46e5', activeShadow: 'rgba(79, 70, 229, 0.2)' },
+                { id: 'finance', label: 'Finans', emoji: '💰', activeBg: '#059669', activeShadow: 'rgba(5, 150, 105, 0.2)' },
+                { id: 'lifestyle', label: 'Yaşam', emoji: '🌱', activeBg: '#d97706', activeShadow: 'rgba(217, 119, 6, 0.2)' },
+                { id: 'family', label: 'Aile', emoji: '🏡', activeBg: '#7c3aed', activeShadow: 'rgba(124, 58, 237, 0.2)' },
+                { id: 'travel', label: 'Seyahat', emoji: '✈️', activeBg: '#2563eb', activeShadow: 'rgba(37, 99, 235, 0.2)' },
+                { id: 'general', label: 'Genel', emoji: '✨', activeBg: '#475569', activeShadow: 'rgba(71, 85, 105, 0.2)' }
+              ].map(opt => {
+                const isActive = planForm.type === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={`select-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => setPlanForm({ ...planForm, type: opt.id })}
+                    style={{
+                      padding: '12px 6px',
+                      borderRadius: '16px',
+                      border: '1.5px solid ' + (isActive ? opt.activeBg : '#e2e8f0'),
+                      background: isActive ? opt.activeBg : 'white',
+                      color: isActive ? 'white' : '#475569',
+                      fontSize: '12px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: isActive ? `0 6px 16px -4px ${opt.activeShadow}` : 'none',
+                      transform: isActive ? 'translateY(-2px)' : 'none'
+                    }}
+                  >
+                    <span style={{ fontSize: '20px' }}>{opt.emoji}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <button 
+            className="premium-submit-btn" 
+            style={{ 
+              marginTop: '28px',
+              width: '100%',
+              padding: '16px',
+              borderRadius: '20px',
+              fontSize: '14px',
+              fontWeight: '800',
+              letterSpacing: '1px',
+              background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+              color: 'white',
+              border: 'none',
+              boxShadow: '0 8px 24px -6px rgba(79, 70, 229, 0.4)',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+            onClick={() => {
+              if (!planForm.text.trim()) {
+                toast.error('Lütfen bir hayal açıklaması yazın! ✨');
+                return;
+              }
+              if (selectedPlan) {
+                updateVisionPlan(selectedPlan.id, { 
+                  text: planForm.text, 
+                  owner: planForm.owner, 
+                  type: planForm.type 
+                });
+              } else {
+                addVisionPlan({ 
+                  text: planForm.text, 
+                  owner: planForm.owner, 
+                  type: planForm.type 
+                });
+              }
+              setShowPlanModal(false);
+              toast.success(selectedPlan ? 'Plan güncellendi! 🔮' : 'Yeni plan eklendi! ✨');
+            }}
+          >
+            KAYDET VE MÜHÜRLE 🔮
+          </button>
         </div>
       </ActionSheet>
 

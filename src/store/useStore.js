@@ -3818,7 +3818,7 @@ const useStore = create(
             }
 
             if (dbVizyon.data) {
-              h.longTermVision = dbVizyon.data.map(x => ({ id: x.id, text: x.text, owner: x.owner }));
+              h.longTermVision = dbVizyon.data.map(x => ({ id: x.id, text: x.text, owner: x.owner, type: x.type }));
             }
 
             if (dbTasinmazlar.data) {
