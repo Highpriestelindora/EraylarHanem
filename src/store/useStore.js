@@ -374,71 +374,37 @@ const DEFAULT_FID = 'eraylar-family-shared-id';
 // ── Generic Helpers for SSOT Migration ──────────────────────────────────
 async function pushGenericToSupabase(tableName, payload) {
   try {
-    const familyId = DEFAULT_FID;
-    // Ensure payload has family_id — do NOT mangle the id field
-    const finalPayload = { ...payload, family_id: familyId };
-
+    const finalPayload = { ...payload, family_id: DEFAULT_FID };
+    console.log(`📤 [${tableName}] upsert:`, finalPayload);
     const { error } = await supabase.from(tableName).upsert(finalPayload);
     if (error) {
-      const isColumnError = error.message?.includes("column") || error.code === 'PGRST204';
-      if (isColumnError && tableName === 'ev_depo') {
-        console.warn(`[Self-Healing] Table ev_depo is missing some new columns. Retrying with basic columns.`);
-        const basicPayload = {
-          id: finalPayload.id,
-          name: finalPayload.name,
-          quantity: finalPayload.quantity,
-          price: finalPayload.price,
-          date: finalPayload.date,
-          category: finalPayload.category,
-          family_id: finalPayload.family_id
-        };
-        const { error: retryErr } = await supabase.from(tableName).upsert(basicPayload);
-        if (retryErr) {
-          if (retryErr.message?.includes("family_id")) {
-            delete basicPayload.family_id;
-            const { error: retryErr2 } = await supabase.from(tableName).upsert(basicPayload);
-            if (retryErr2) throw retryErr2;
-          } else {
-            throw retryErr;
-          }
-        }
-      } else if (error.message && error.message.includes("family_id")) {
-        console.warn(`[Self-Healing] Table ${tableName} is missing family_id column. Retrying without it.`);
-        const retryPayload = { ...payload };
-        const { error: retryError } = await supabase.from(tableName).upsert(retryPayload);
-        if (retryError) throw retryError;
-      } else {
-        throw error;
+      console.error(`❌ [${tableName}] upsert hatası:`, error);
+      // Show toast only for critical tables
+      if (tableName === 'ev_depo') {
+        const { toast } = await import('react-hot-toast');
+        toast.error(`Depo kaydı hatasi: ${error.message}`, { duration: 5000 });
       }
+    } else {
+      console.log(`✅ [${tableName}] upsert başarılı: ${payload.id}`);
     }
   } catch (e) {
-    console.warn(`Supabase ${tableName} upsert hatası:`, e);
+    console.error(`❌ [${tableName}] upsert exception:`, e);
   }
 }
 
 async function removeGenericFromSupabase(tableName, id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    const { error } = await supabase.from(tableName)
-      .delete()
-      .eq('id', finalId)
-      .eq('family_id', familyId);
-    if (error) {
-      if (error.message && error.message.includes("family_id")) {
-        console.warn(`[Self-Healing] Table ${tableName} is missing family_id column on delete. Retrying without it.`);
-        const { error: retryError } = await supabase.from(tableName)
-          .delete()
-          .eq('id', finalId);
-        if (retryError) throw retryError;
-      } else {
-        throw error;
-      }
-    }
+    const cleanId = String(id);
+    console.log(`🗑️ [${tableName}] delete id: ${cleanId}`);
+    const { error } = await supabase.from(tableName).delete().eq('id', cleanId);
+    if (error) console.error(`❌ [${tableName}] delete hatası:`, error);
+    else console.log(`✅ [${tableName}] delete başarılı: ${cleanId}`);
   } catch (e) {
-    console.warn(`Supabase ${tableName} delete hatası:`, e);
+    console.error(`❌ [${tableName}] delete exception:`, e);
   }
 }
+
+
 
 // Çok daha güvenilir UUID oluşturucu
 const generateUniqueId = () => {
