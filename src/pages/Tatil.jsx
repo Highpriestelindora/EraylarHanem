@@ -403,7 +403,7 @@ async function fetchWeatherForTrip(city, country, startDate, endDate) {
         } catch (e) {}
       }
 
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=auto`);
+      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=auto&forecast_days=16`);
       const data = await res.json();
 
       if (data.daily?.time?.length) {
