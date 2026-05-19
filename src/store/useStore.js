@@ -375,13 +375,8 @@ const DEFAULT_FID = 'eraylar-family-shared-id';
 async function pushGenericToSupabase(tableName, payload) {
   try {
     const familyId = DEFAULT_FID;
-    // Ensure payload has family_id
+    // Ensure payload has family_id — do NOT mangle the id field
     const finalPayload = { ...payload, family_id: familyId };
-    
-    // Optional: Composite ID protection
-    if (finalPayload.id && !String(finalPayload.id).includes(familyId)) {
-      finalPayload.id = `${finalPayload.id}-${familyId}`;
-    }
 
     const { error } = await supabase.from(tableName).upsert(finalPayload);
     if (error) {
@@ -2246,7 +2241,7 @@ const useStore = create(
             supabase.from('saglik_moods').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.eq.ERAYLAR`).order('date', { ascending: false }).limit(100),
             supabase.from('saglik_logs').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.eq.ERAYLAR`).order('date', { ascending: false }).limit(200),
             supabase.from('saglik_sleep').select('*'),
-            supabase.from('ev_depo').select('*'),
+            supabase.from('ev_depo').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('ev_faturalar').select('*'),
             supabase.from('garaj_park').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('ev_tracking').select('*').eq('id', `personality-${DEFAULT_FID}`).eq('family_id', DEFAULT_FID),
@@ -8946,6 +8941,7 @@ const useStore = create(
         if (syncedItem) {
           const dbPayload = {
             id: syncedItem.id,
+            family_id: DEFAULT_FID,
             name: syncedItem.name || syncedItem.nm,
             quantity: Number(syncedItem.totalQty || syncedItem.qty || 1),
             price: Number(syncedItem.price || syncedItem.history?.[0]?.pr || 0),
@@ -8990,6 +8986,7 @@ const useStore = create(
         if (syncedItem) {
           const dbPayload = {
             id: syncedItem.id,
+            family_id: DEFAULT_FID,
             name: syncedItem.name || syncedItem.nm,
             quantity: Number(syncedItem.totalQty || syncedItem.qty || 1),
             price: Number(syncedItem.price || syncedItem.history?.[0]?.pr || 0),
