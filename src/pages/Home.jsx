@@ -20,6 +20,100 @@ const MOODS = [
   { id: 'sick', emoji: '🤒', label: 'Hasta', color: '#fef2f2' }
 ];
 
+const TURKISH_MONTHS = [
+  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+];
+
+const getStartMonth = (targetDate, duration) => {
+  if (!targetDate) return null;
+  const target = new Date(targetDate);
+  if (isNaN(target.getTime())) return null;
+
+  const dur = parseInt(duration, 10);
+  if (isNaN(dur) || dur <= 0) return null;
+
+  const start = new Date(target.getTime());
+  start.setMonth(start.getMonth() - dur);
+
+  const monthName = TURKISH_MONTHS[start.getMonth()];
+  const year = start.getFullYear();
+  return `${monthName} ${year}`;
+};
+
+const getRemainingMonths = (targetDate) => {
+  if (!targetDate) return null;
+  const target = new Date(targetDate);
+  if (isNaN(target.getTime())) return null;
+
+  const now = new Date();
+  const diffTime = target.getTime() - now.getTime();
+  
+  if (diffTime <= 0) {
+    return {
+      text: 'Süresi Doldu! 🚨',
+      class: 'urgent'
+    };
+  }
+
+  const diffYears = target.getFullYear() - now.getFullYear();
+  const diffMonths = target.getMonth() - now.getMonth();
+  const totalMonths = diffYears * 12 + diffMonths;
+
+  if (totalMonths <= 0) {
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) {
+      return { text: 'Süresi Doldu! 🚨', class: 'urgent' };
+    }
+    return {
+      text: `${diffDays} Gün Kaldı ⏳`,
+      class: 'urgent'
+    };
+  }
+
+  if (totalMonths === 1) {
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return {
+      text: `${diffDays} Gün Kaldı ⏳`,
+      class: 'urgent'
+    };
+  }
+
+  let colorClass = 'safe';
+  if (totalMonths <= 2) {
+    colorClass = 'urgent';
+  } else if (totalMonths <= 5) {
+    colorClass = 'warning';
+  }
+
+  return {
+    text: `${totalMonths} Ay Kaldı ⏳`,
+    class: colorClass
+  };
+};
+
+const isGoalVisible = (g, currentUser) => {
+  const owner = (g.owner || 'ortak').toLowerCase().trim();
+  if (owner === 'ortak' || owner === 'aile' || owner === 'hepsi') {
+    return true;
+  }
+  const currentUserName = (currentUser?.name || '').toLowerCase().trim();
+  const creator = (g.createdBy || '').toLowerCase().trim();
+  
+  const matchUser = (nameStr, userStr) => {
+    const normalize = (s) => s.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+    return normalize(nameStr) === normalize(userStr);
+  };
+  
+  if (matchUser(owner, currentUserName)) {
+    return true;
+  }
+  if (matchUser(creator, currentUserName)) {
+    return true;
+  }
+  return false;
+};
+
 const Home = () => {
   // Selective Selectors for Performance
   const currentUser = useStore(state => state.currentUser);
@@ -31,6 +125,32 @@ const Home = () => {
   const addMood = useStore(state => state.addMood);
   const selectedVehicleId = useStore(state => state.selectedVehicleId);
   const calculateGlobalScore = useStore(state => state.calculateGlobalScore);
+  const hedefler = useStore(state => state.hedefler) || {};
+  const kasa = useStore(state => state.kasa) || {};
+
+  const activeVisionAndMoneyGoals = useMemo(() => {
+    const goalsList = hedefler.goals || [];
+    const moneyList = kasa.kumbaralar || [];
+    
+    const combined = [
+      ...goalsList.map(g => ({ ...g, type: 'vision' })),
+      ...moneyList.map(g => ({ 
+        ...g, 
+        type: 'money', 
+        title: g.name, 
+        targetDate: g.deadline,
+        owner: g.owner || 'ortak'
+      }))
+    ];
+    
+    const visible = combined.filter(g => isGoalVisible(g, currentUser));
+    
+    return visible.filter(g => {
+      const current = parseFloat(g.current) || 0;
+      const target = parseFloat(g.target) || 1;
+      return current < target;
+    });
+  }, [hedefler.goals, kasa.kumbaralar, currentUser]);
   
   const isOnline = system?.isOnline ?? true;
   const navigate = useNavigate();
@@ -360,6 +480,42 @@ const Home = () => {
       });
     }
 
+    // ── 17. HEDEFLER: Akıllı Asistan Reminders ──
+    const goalsList = store.hedefler?.goals || [];
+    const moneyList = store.kasa?.kumbaralar || [];
+    const combinedGoals = [
+      ...goalsList.map(g => ({ ...g, type: 'vision' })),
+      ...moneyList.map(g => ({ 
+        ...g, 
+        type: 'money', 
+        title: g.name, 
+        targetDate: g.deadline,
+        owner: g.owner || 'ortak'
+      }))
+    ].filter(g => isGoalVisible(g, currentUser));
+
+    combinedGoals.forEach(g => {
+      const perc = (g.current / g.target) * 100;
+      if (perc >= 100) return;
+
+      const countdown = getRemainingMonths(g.targetDate);
+      if (countdown && (countdown.class === 'urgent' || countdown.class === 'warning')) {
+        const ownerName = g.owner === 'ortak' ? 'Ortak' : (g.owner === 'esra' ? 'Esra' : 'Görkem');
+        const startMonth = getStartMonth(g.targetDate, g.duration);
+        const startText = startMonth ? `${startMonth}'da başladı` : '';
+        cards.push({
+          id: `hedef-smart-${g.id}`,
+          icon: '🎯',
+          text: `${g.title.substring(0, 30)}${g.title.length > 30 ? '...' : ''}`,
+          subtext: `${ownerName} Hedefi · ${startText} · ${countdown.text}`,
+          type: countdown.class === 'urgent' ? 'critical' : 'warning',
+          color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)',
+          module: '/hedefler',
+          priority: countdown.class === 'urgent' ? 91 : 69
+        });
+      }
+    });
+
     // ── FALLBACK: Eğlenceli & Nazik Kartlar ──
     const funCards = [
       { id: 'fun-1', icon: '💖', text: `Güzel bir gün ${userName}!`, subtext: 'Her şey yolunda görünüyor', type: 'fun', color: 'var(--primary)', module: null, priority: 10 },
@@ -548,6 +704,65 @@ const Home = () => {
               {insights.map((_, i) => (
                 <div key={i} className={`ai-dot ${i === activeCardIdx ? 'active' : ''}`} />
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Beautiful Active Goals Slider Section */}
+        <div className="home-active-goals-section">
+          <div className="hags-header-row" onClick={() => navigate('/hedefler')}>
+            <span>🎯 GÜNCEL HEDEFLERİMİZ</span>
+            <span className="hags-view-all">Tümünü Gör <ChevronRight size={14} /></span>
+          </div>
+          
+          {activeVisionAndMoneyGoals.length === 0 ? (
+            <div className="hags-empty-card glass" onClick={() => navigate('/hedefler')}>
+              <span>✨ Henüz aktif bir hedef yok. Yeni bir hedef belirleyerek hanenin geleceğini şekillendir!</span>
+            </div>
+          ) : (
+            <div className="hags-carousel">
+              {activeVisionAndMoneyGoals.slice(0, 4).map((g) => {
+                const perc = (g.current / g.target) * 100;
+                const isMoney = g.type === 'money';
+                const owner = (g.owner || 'ortak').toLowerCase();
+                const ownerEmoji = owner.includes('gorkem') ? '👨‍💻' : owner.includes('esra') ? '👩‍🍳' : '👥';
+                const startMonth = getStartMonth(g.targetDate, g.duration);
+                const countdown = getRemainingMonths(g.targetDate);
+                
+                return (
+                  <div key={g.id} className={`hags-goal-card glass owner-${owner}`} onClick={() => navigate('/hedefler')}>
+                    <div className="hags-card-top">
+                      <div className="hags-title-area">
+                        <strong className="hags-title">{g.title}</strong>
+                        <span className="hags-owner-badge">{ownerEmoji} {g.owner?.toUpperCase()}</span>
+                      </div>
+                      {countdown && (
+                        <span className={`hags-countdown-badge ${countdown.class}`}>
+                          {countdown.text}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="hags-progress-container">
+                      <div className="hags-progress-labels">
+                        <span className="hags-start-date">
+                          {startMonth ? `Başlangıç: ${startMonth}` : 'Tarih Belirtilmedi'}
+                        </span>
+                        <span className="hags-perc">%{Math.round(perc)}</span>
+                      </div>
+                      <div className="hags-progress-track">
+                        <div className="hags-progress-fill" style={{ width: `${Math.min(perc, 100)}%` }} />
+                      </div>
+                      {isMoney && (
+                        <div className="hags-money-details">
+                          <span>{new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.current)}</span>
+                          <span> / {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.target)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

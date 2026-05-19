@@ -698,3 +698,216 @@
   filter: grayscale(1);
   cursor: not-allowed;
 }
+
+/* Premium Active Goals Section */
+.home-active-goals-section {
+  padding: 24px 20px 0;
+}
+
+.hags-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #b45309;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.hags-view-all {
+  font-size: 11px;
+  font-weight: 700;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: transform 0.2s;
+}
+
+.hags-view-all:hover {
+  transform: translateX(3px);
+}
+
+.hags-empty-card {
+  padding: 22px;
+  border-radius: 28px;
+  text-align: center;
+  background: rgba(251, 191, 36, 0.05);
+  border: 1px dashed rgba(217, 119, 6, 0.2);
+  color: #b45309;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hags-empty-card:active {
+  transform: scale(0.98);
+}
+
+.hags-carousel {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 4px 4px 12px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hags-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.hags-goal-card {
+  min-width: 260px;
+  width: 260px;
+  padding: 18px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(217, 119, 6, 0.15);
+  box-shadow: 0 10px 25px rgba(217, 119, 6, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.hags-goal-card:active {
+  transform: scale(0.97);
+}
+
+/* User customization for owners */
+.hags-goal-card.owner-gorkem {
+  border-left: 5px solid #4C1D95;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(243, 232, 255, 0.6) 100%);
+  box-shadow: 0 10px 25px rgba(76, 29, 149, 0.04);
+}
+
+.hags-goal-card.owner-esra {
+  border-left: 5px solid #E11D48;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 228, 230, 0.6) 100%);
+  box-shadow: 0 10px 25px rgba(225, 29, 72, 0.04);
+}
+
+.hags-goal-card.owner-ortak, .hags-goal-card.owner-aile {
+  border-left: 5px solid #D97706;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(254, 243, 199, 0.6) 100%);
+  box-shadow: 0 10px 25px rgba(217, 119, 6, 0.04);
+}
+
+.hags-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.hags-title-area {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.hags-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hags-owner-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+
+.hags-countdown-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hags-countdown-badge.safe {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.hags-countdown-badge.warning {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.hags-countdown-badge.urgent {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid rgba(239, 110, 110, 0.2);
+  animation: mini-shake 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes mini-shake {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-1px); }
+}
+
+.hags-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hags-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.hags-start-date {
+  font-weight: 700;
+  color: #64748b;
+}
+
+.hags-perc {
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.hags-progress-track {
+  height: 6px;
+  width: 100%;
+  background: rgba(226, 232, 240, 0.8);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.hags-progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #fbbf24 0%, #d97706 100%);
+}
+
+.hags-money-details {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 10px;
+  font-weight: 800;
+  color: #475569;
+  margin-top: 2px;
+}

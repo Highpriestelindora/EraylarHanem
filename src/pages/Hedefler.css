@@ -27,16 +27,35 @@
 .section-header-v2 {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  margin-top: 24px;
   margin-bottom: 16px;
+  position: relative;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
 }
 
 .section-header-v2 h3 {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--txt-light);
+  letter-spacing: 1.5px;
+  color: #64748b;
+  font-family: 'Outfit', sans-serif;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-header-v2 .count-badge {
+  background: rgba(99, 102, 241, 0.08);
+  color: #4f46e5;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.03);
 }
 
 /* Owner Filter */
@@ -100,25 +119,48 @@
 }
 
 .goal-card-premium {
-  padding: 16px;
+  padding: 26px 30px;
   border-radius: 28px;
-  background: white;
-  border: 1px solid var(--brd);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(226, 232, 240, 0.7);
   display: flex;
-  gap: 16px;
+  gap: 24px;
   align-items: center;
-  transition: all 0.3s;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   cursor: pointer;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.012), 0 1px 2px rgba(15, 23, 42, 0.005);
+  border-left: 6px solid var(--owner-accent, #cbd5e1);
 }
 
 .goal-card-premium:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.05);
-  border-color: #e2e8f0;
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.045), 0 4px 12px rgba(15, 23, 42, 0.01);
+  border-color: rgba(99, 102, 241, 0.15);
 }
 
-.gcp-ring-box { width: 56px; height: 56px; position: relative; flex-shrink: 0; }
+.gcp-ring-box {
+  width: 60px;
+  height: 60px;
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.025);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.goal-card-premium:hover .gcp-ring-box {
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+  border-color: rgba(99, 102, 241, 0.15);
+}
+
 .circular-chart-v2 { width: 100%; height: 100%; }
 .gcp-icon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.9; }
 
@@ -650,60 +692,78 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  gap: 12px;
+  margin-bottom: 24px;
+  gap: 16px;
 }
 
 .owner-filter-chips-v3 {
   display: flex;
-  background: rgba(0, 0, 0, 0.05);
-  padding: 4px;
-  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.6);
+  padding: 3px;
+  border-radius: 30px;
   gap: 2px;
   flex: 1;
-  max-width: 280px;
+  max-width: 290px;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.02);
 }
 
 .chip-v3 {
   flex: 1;
-  padding: 8px 4px;
+  padding: 6px 14px;
   border: none;
   background: transparent;
   color: #64748b;
-  font-size: 11px;
-  font-weight: 700;
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-radius: 30px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   white-space: nowrap;
 }
 
+.chip-v3:hover {
+  color: #4f46e5;
+}
+
 .chip-v3.active {
   background: white;
-  color: #1e293b;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  transform: scale(1.02);
+  color: #4f46e5;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.04);
 }
 
 .add-goal-btn-v3 {
-  background: var(--txt);
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 14px;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  transition: all 0.2s;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.07) 0%, rgba(79, 70, 229, 0.04) 100%);
+  color: #4f46e5;
+  border: 1.5px solid rgba(99, 102, 241, 0.18);
+  padding: 7px 16px;
+  border-radius: 30px;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
   align-items: center;
   gap: 6px;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.add-goal-btn-v3:hover {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.22);
+  transform: translateY(-1.5px);
 }
 
 .add-goal-btn-v3:active {
-  transform: scale(0.96);
+  transform: translateY(0) scale(0.96);
   opacity: 0.9;
 }
 
@@ -857,4 +917,1876 @@
 
 .vsc-action:hover { background: #f1f5f9; color: #1e293b; }
 .vsc-action.del:hover { background: #fff1f2; color: #e11d48; }
+
+/* Premium Steps Accordion */
+.premium-accordion-section {
+  margin-top: 24px;
+}
+
+.pas-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.pas-icon {
+  color: #7c3aed;
+}
+
+.premium-accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.accordion-item {
+  border-radius: 20px;
+  border: 1.5px solid #f1f5f9;
+  background: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.accordion-item.active {
+  border-color: #ddd6fe;
+  box-shadow: 0 10px 25px rgba(124, 58, 237, 0.06);
+  background: linear-gradient(180deg, #ffffff 0%, #fbfbfe 100%);
+}
+
+.accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.accordion-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.step-badge {
+  font-size: 10px;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.accordion-item.active .step-badge {
+  background: #7c3aed;
+  color: white;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.chevron-icon {
+  color: #94a3b8;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s;
+}
+
+.accordion-item.active .chevron-icon {
+  color: #7c3aed;
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.accordion-content.expanded {
+  max-height: 1200px;
+}
+
+.content-inner {
+  padding: 16px 20px 20px 20px;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.6;
+  font-weight: 600;
+}
+
+.content-inner p {
+  margin: 0;
+  white-space: pre-line;
+}
+
+/* Premium step details formatting */
+.step-details-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-detail-line {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #334155; /* Slate Gray - highly readable */
+  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.step-detail-line.line-header {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a; /* Darkest slate */
+  margin-top: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1.5px dashed rgba(0, 0, 0, 0.08);
+  padding-bottom: 4px;
+  display: block;
+}
+
+.step-detail-line.line-header:first-child {
+  margin-top: 0;
+}
+
+.line-bullet {
+  font-size: 11px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.step-1 .line-bullet {
+  color: #f97316;
+}
+.step-2 .line-bullet {
+  color: #0d9488;
+}
+.step-3 .line-bullet {
+  color: #db2777;
+}
+
+.no-details {
+  color: #94a3b8;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Edit Mode Accordion styles */
+.form-label-premium {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #475569 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.edit-accordion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.edit-accordion-item {
+  border-radius: 16px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.edit-accordion-item.active {
+  border-color: #7c3aed;
+  background: white;
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.04);
+}
+
+.edit-accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.edit-accordion-header .header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.step-title-preview {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.edit-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.edit-accordion-content.expanded {
+  max-height: 500px;
+}
+
+.edit-content-inner {
+  padding: 0 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sub-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sub-form-group label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  margin-bottom: 0;
+}
+
+.sub-form-group input,
+.sub-form-group textarea {
+  width: 100% !important;
+  padding: 10px 12px !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  background: #f8fafc !important;
+  transition: all 0.2s !important;
+}
+
+.sub-form-group input:focus,
+.sub-form-group textarea:focus {
+  border-color: #7c3aed !important;
+  background: white !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08) !important;
+}
+
+.sub-form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* --- PREMIUM COLORFUL STEP STYLES & INLINE BUTTONS --- */
+
+/* Step 1: Coral / Orange */
+.accordion-item.step-1 {
+  border-color: rgba(249, 115, 22, 0.2);
+}
+.accordion-item.step-1 .step-badge {
+  background: rgba(249, 115, 22, 0.1);
+  color: rgb(249, 115, 22);
+}
+.accordion-item.step-1.active {
+  border-color: rgba(249, 115, 22, 0.5);
+  box-shadow: 0 12px 30px rgba(249, 115, 22, 0.12);
+  background: linear-gradient(180deg, #fffbeb 0%, #fff7ed 100%);
+}
+.accordion-item.step-1.active .step-badge {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+.accordion-item.step-1.active .chevron-icon,
+.accordion-item.step-1.active .step-edit-inline-btn {
+  color: rgb(249, 115, 22);
+}
+
+/* Step 2: Teal / Green */
+.accordion-item.step-2 {
+  border-color: rgba(13, 148, 136, 0.2);
+}
+.accordion-item.step-2 .step-badge {
+  background: rgba(13, 148, 136, 0.1);
+  color: rgb(13, 148, 136);
+}
+.accordion-item.step-2.active {
+  border-color: rgba(13, 148, 136, 0.5);
+  box-shadow: 0 12px 30px rgba(13, 148, 136, 0.12);
+  background: linear-gradient(180deg, #f0fdfa 0%, #ccfbf1 100%);
+}
+.accordion-item.step-2.active .step-badge {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: white;
+}
+.accordion-item.step-2.active .chevron-icon,
+.accordion-item.step-2.active .step-edit-inline-btn {
+  color: rgb(13, 148, 136);
+}
+
+/* Step 3: Purple / Magenta */
+.accordion-item.step-3 {
+  border-color: rgba(219, 39, 119, 0.2);
+}
+.accordion-item.step-3 .step-badge {
+  background: rgba(219, 39, 119, 0.1);
+  color: rgb(219, 39, 119);
+}
+.accordion-item.step-3.active {
+  border-color: rgba(219, 39, 119, 0.5);
+  box-shadow: 0 12px 30px rgba(219, 39, 119, 0.12);
+  background: linear-gradient(180deg, #fdf2f8 0%, #fce7f3 100%);
+}
+.accordion-item.step-3.active .step-badge {
+  background: linear-gradient(135deg, #db2777, #be185d);
+  color: white;
+}
+.accordion-item.step-3.active .chevron-icon,
+.accordion-item.step-3.active .step-edit-inline-btn {
+  color: rgb(219, 39, 119);
+}
+
+/* Edit Accordion - Step 1: Coral / Orange */
+.edit-accordion-item.step-1 {
+  border-color: rgba(249, 115, 22, 0.2);
+}
+.edit-accordion-item.step-1 .step-badge {
+  background: rgba(249, 115, 22, 0.1);
+  color: rgb(249, 115, 22);
+}
+.edit-accordion-item.step-1.active {
+  border-color: rgba(249, 115, 22, 0.4);
+  background: white;
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.06);
+}
+.edit-accordion-item.step-1.active .step-badge {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+}
+.edit-accordion-item.step-1.active .chevron-icon {
+  color: rgb(249, 115, 22);
+}
+
+/* Edit Accordion - Step 2: Teal / Green */
+.edit-accordion-item.step-2 {
+  border-color: rgba(13, 148, 136, 0.2);
+}
+.edit-accordion-item.step-2 .step-badge {
+  background: rgba(13, 148, 136, 0.1);
+  color: rgb(13, 148, 136);
+}
+.edit-accordion-item.step-2.active {
+  border-color: rgba(13, 148, 136, 0.4);
+  background: white;
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.06);
+}
+.edit-accordion-item.step-2.active .step-badge {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+  color: white;
+}
+.edit-accordion-item.step-2.active .chevron-icon {
+  color: rgb(13, 148, 136);
+}
+
+/* Edit Accordion - Step 3: Purple / Magenta */
+.edit-accordion-item.step-3 {
+  border-color: rgba(219, 39, 119, 0.2);
+}
+.edit-accordion-item.step-3 .step-badge {
+  background: rgba(219, 39, 119, 0.1);
+  color: rgb(219, 39, 119);
+}
+.edit-accordion-item.step-3.active {
+  border-color: rgba(219, 39, 119, 0.4);
+  background: white;
+  box-shadow: 0 6px 16px rgba(219, 39, 119, 0.06);
+}
+.edit-accordion-item.step-3.active .step-badge {
+  background: linear-gradient(135deg, #db2777, #be185d);
+  color: white;
+}
+.edit-accordion-item.step-3.active .chevron-icon {
+  color: rgb(219, 39, 119);
+}
+
+/* Inline Edit Buttons */
+.step-edit-inline-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.step-edit-inline-btn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+  transform: scale(1.1);
+}
+
+.notes-edit-inline-btn {
+  background: rgba(124, 58, 237, 0.06);
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.notes-edit-inline-btn:hover {
+  background: #7c3aed;
+  color: white;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.2);
+  transform: translateY(-1px);
+}
+
+.notes-edit-inline-btn:active {
+  transform: scale(0.95);
+}
+
+/* Premium Owner-Specific Goal Cards (More Colorful) */
+.goal-card-premium.owner-gorkem {
+  --owner-accent: #0d9488;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+}
+.goal-card-premium.owner-gorkem:hover {
+  border-color: rgba(13, 148, 136, 0.3);
+  box-shadow: 0 20px 40px rgba(13, 148, 136, 0.08);
+}
+
+.goal-card-premium.owner-esra {
+  --owner-accent: #e11d48;
+  background: linear-gradient(135deg, #ffffff 0%, #fff1f2 100%);
+}
+.goal-card-premium.owner-esra:hover {
+  border-color: rgba(225, 29, 72, 0.25);
+  box-shadow: 0 20px 40px rgba(225, 29, 72, 0.06);
+}
+
+.goal-card-premium.owner-ortak, 
+.goal-card-premium.owner-aile {
+  --owner-accent: #7c3aed;
+  background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
+}
+.goal-card-premium.owner-ortak:hover,
+.goal-card-premium.owner-aile:hover {
+  border-color: rgba(124, 58, 237, 0.3);
+  box-shadow: 0 20px 40px rgba(124, 58, 237, 0.08);
+}
+
+/* ==========================================================================
+   PREMIUM LEAFLET-STYLE LIGHT THEME MODAL (PROFESSIONAL & PLAYFUL)
+   ========================================================================== */
+
+/* 1. Modal Wrapper Backdrop & Shell */
+.ActionSheet:has(.goal-detail-view),
+.ActionSheet:has(.modal-form) {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-top: 1.5px solid #e2e8f0 !important;
+  border-left: 1.5px solid #e2e8f0 !important;
+  border-right: 1.5px solid #e2e8f0 !important;
+  box-shadow: 0 -15px 40px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 2. Drag Handle Override */
+.ActionSheet:has(.goal-detail-view) > div:first-child > div,
+.ActionSheet:has(.modal-form) > div:first-child > div {
+  background: #cbd5e1 !important;
+  width: 44px !important;
+  height: 5px !important;
+  border-radius: 99px !important;
+  transition: background 0.3s !important;
+}
+.ActionSheet:has(.goal-detail-view) > div:first-child:hover > div,
+.ActionSheet:has(.modal-form) > div:first-child:hover > div {
+  background: #94a3b8 !important;
+}
+
+/* 3. Header Override */
+.ActionSheet:has(.goal-detail-view) > div:nth-child(2),
+.ActionSheet:has(.modal-form) > div:nth-child(2) {
+  background: transparent !important;
+  border-bottom: 1.5px solid #f1f5f9 !important;
+}
+.ActionSheet:has(.goal-detail-view) > div:nth-child(2) h3,
+.ActionSheet:has(.modal-form) > div:nth-child(2) h3 {
+  color: #0f172a !important;
+  font-family: 'Outfit', 'Inter', sans-serif !important;
+  font-size: 19px !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.5px !important;
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
+  text-shadow: none !important;
+}
+
+/* Close Button in Header */
+.ActionSheet:has(.goal-detail-view) > div:nth-child(2) button,
+.ActionSheet:has(.modal-form) > div:nth-child(2) button {
+  background: #f1f5f9 !important;
+  color: #64748b !important;
+  border: 1.5px solid #e2e8f0 !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.ActionSheet:has(.goal-detail-view) > div:nth-child(2) button:hover,
+.ActionSheet:has(.modal-form) > div:nth-child(2) button:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* 4. Scrollbar Elegance */
+.ActionSheet:has(.goal-detail-view) ::-webkit-scrollbar,
+.ActionSheet:has(.modal-form) ::-webkit-scrollbar {
+  width: 6px !important;
+  height: 6px !important;
+}
+.ActionSheet:has(.goal-detail-view) ::-webkit-scrollbar-track,
+.ActionSheet:has(.modal-form) ::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+.ActionSheet:has(.goal-detail-view) ::-webkit-scrollbar-thumb,
+.ActionSheet:has(.modal-form) ::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 99px !important;
+}
+.ActionSheet:has(.goal-detail-view) ::-webkit-scrollbar-thumb:hover,
+.ActionSheet:has(.modal-form) ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}
+
+/* 5. Ambient Lighting Soft Pastels */
+.goal-detail-view,
+.modal-form {
+  position: relative !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  z-index: 1;
+}
+.goal-detail-view::before,
+.modal-form::before {
+  content: '';
+  position: absolute;
+  top: -15%;
+  left: -15%;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.04) 0%, transparent 70%);
+  filter: blur(40px);
+  z-index: -1;
+  pointer-events: none;
+}
+.goal-detail-view::after,
+.modal-form::after {
+  content: '';
+  position: absolute;
+  bottom: -15%;
+  right: -15%;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.03) 0%, transparent 70%);
+  filter: blur(45px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* 6. Metadata Box */
+.goal-detail-view .gd-meta {
+  background: #ffffff !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  padding: 14px 20px !important;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.02) !important;
+  position: relative !important;
+  z-index: 2;
+  margin-bottom: 24px !important;
+}
+.goal-detail-view .gd-meta-item {
+  color: #475569 !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.2px !important;
+}
+.goal-detail-view .gd-meta-item svg {
+  color: #6366f1 !important;
+}
+
+/* 7. Roadmap Container & Accordion Section */
+.premium-accordion-section {
+  position: relative !important;
+  z-index: 2 !important;
+}
+.premium-accordion-section .pas-title {
+  color: #1e293b !important;
+  font-size: 13.5px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+  margin-bottom: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+.premium-accordion-section .pas-icon {
+  color: #6366f1 !important;
+}
+
+/* Leaflet Stack Container */
+.premium-accordion,
+.edit-accordion-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04) !important;
+  background: #ffffff !important;
+  width: 100% !important;
+}
+
+/* Leaflet Accordion Items */
+.premium-accordion .accordion-item.glass,
+.edit-accordion-item {
+  background: #ffffff !important;
+  border: none !important;
+  border-bottom: 1.5px solid #f1f5f9 !important;
+  border-radius: 0 !important;
+  margin-bottom: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  WebkitBackdropFilter: none !important;
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border-left: 4px solid transparent !important;
+}
+
+.premium-accordion .accordion-item.glass:hover,
+.edit-accordion-item:hover {
+  background: #f8fafc !important;
+}
+
+/* Border radius adjustments for stacked Leaflet list items */
+.premium-accordion .accordion-item.glass:first-child,
+.edit-accordion-item:first-child {
+  border-top-left-radius: 14px !important;
+  border-top-right-radius: 14px !important;
+}
+
+.premium-accordion .accordion-item.glass:last-child,
+.edit-accordion-item:last-child {
+  border-bottom-left-radius: 14px !important;
+  border-bottom-right-radius: 14px !important;
+  border-bottom: none !important;
+}
+
+/* Accordion Header */
+.premium-accordion .accordion-header {
+  padding: 18px 22px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  cursor: pointer !important;
+}
+.premium-accordion .accordion-header .header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+.premium-accordion .accordion-header .step-title {
+  color: #1e293b !important;
+  font-size: 14.5px !important;
+  font-weight: 750 !important;
+  line-height: 1.45 !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  letter-spacing: -0.1px !important;
+}
+.premium-accordion .accordion-header .chevron-icon {
+  color: #94a3b8 !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s !important;
+}
+
+/* Step Badges */
+.step-badge {
+  padding: 5px 12px !important;
+  border-radius: 9999px !important;
+  font-size: 9.5px !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  white-space: nowrap !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Step specific badges & active states with colored left border strip and soft background tint */
+
+/* Step 1: Coral / Orange */
+.premium-accordion .accordion-item.step-1 .step-badge,
+.edit-accordion-item.step-1 .step-badge {
+  background: rgba(249, 115, 22, 0.06) !important;
+  color: #ea580c !important;
+  border: 1px solid rgba(249, 115, 22, 0.15) !important;
+}
+.premium-accordion .accordion-item.step-1.active,
+.edit-accordion-item.step-1.active {
+  background: #fffaf5 !important;
+  border-left: 4px solid #f97316 !important;
+}
+.premium-accordion .accordion-item.step-1.active .step-badge,
+.edit-accordion-item.step-1.active .step-badge {
+  background: linear-gradient(135deg, #f97316, #ea580c) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2) !important;
+}
+.premium-accordion .accordion-item.step-1.active .step-title,
+.edit-accordion-item.step-1.active .step-title-preview {
+  color: #7c2d12 !important;
+}
+.premium-accordion .accordion-item.step-1.active .chevron-icon,
+.premium-accordion .accordion-item.step-1.active .step-edit-inline-btn,
+.edit-accordion-item.step-1.active .chevron-icon {
+  color: #f97316 !important;
+}
+
+/* Step 2: Teal / Green */
+.premium-accordion .accordion-item.step-2 .step-badge,
+.edit-accordion-item.step-2 .step-badge {
+  background: rgba(13, 148, 136, 0.06) !important;
+  color: #0f766e !important;
+  border: 1px solid rgba(13, 148, 136, 0.15) !important;
+}
+.premium-accordion .accordion-item.step-2.active,
+.edit-accordion-item.step-2.active {
+  background: #f4fbf9 !important;
+  border-left: 4px solid #0d9488 !important;
+}
+.premium-accordion .accordion-item.step-2.active .step-badge,
+.edit-accordion-item.step-2.active .step-badge {
+  background: linear-gradient(135deg, #0d9488, #0f766e) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.2) !important;
+}
+.premium-accordion .accordion-item.step-2.active .step-title,
+.edit-accordion-item.step-2.active .step-title-preview {
+  color: #115e59 !important;
+}
+.premium-accordion .accordion-item.step-2.active .chevron-icon,
+.premium-accordion .accordion-item.step-2.active .step-edit-inline-btn,
+.edit-accordion-item.step-2.active .chevron-icon {
+  color: #0d9488 !important;
+}
+
+/* Step 3: Pink / Magenta */
+.premium-accordion .accordion-item.step-3 .step-badge,
+.edit-accordion-item.step-3 .step-badge {
+  background: rgba(219, 39, 119, 0.06) !important;
+  color: #be185d !important;
+  border: 1px solid rgba(219, 39, 119, 0.15) !important;
+}
+.premium-accordion .accordion-item.step-3.active,
+.edit-accordion-item.step-3.active {
+  background: #fdf5f8 !important;
+  border-left: 4px solid #db2777 !important;
+}
+.premium-accordion .accordion-item.step-3.active .step-badge,
+.edit-accordion-item.step-3.active .step-badge {
+  background: linear-gradient(135deg, #db2777, #be185d) !important;
+  color: white !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(219, 39, 119, 0.2) !important;
+}
+.premium-accordion .accordion-item.step-3.active .step-title,
+.edit-accordion-item.step-3.active .step-title-preview {
+  color: #831843 !important;
+}
+.premium-accordion .accordion-item.step-3.active .chevron-icon,
+.premium-accordion .accordion-item.step-3.active .step-edit-inline-btn,
+.edit-accordion-item.step-3.active .chevron-icon {
+  color: #db2777 !important;
+}
+
+/* Accordion Content Details List */
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.accordion-content.expanded {
+  max-height: 1200px !important;
+}
+.premium-accordion .content-inner {
+  padding: 0 24px 22px 24px !important;
+}
+.step-details-list {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+.step-detail-line {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+  font-size: 13.5px !important;
+  line-height: 1.65 !important;
+}
+.step-detail-line.line-header {
+  font-weight: 850 !important;
+  color: #4f46e5 !important;
+  font-size: 13px !important;
+  margin-top: 10px !important;
+  margin-bottom: 4px !important;
+  letter-spacing: 0.6px !important;
+  text-transform: uppercase !important;
+  border-left: 3px solid #4f46e5;
+  padding-left: 8px !important;
+}
+.step-detail-line.line-item {
+  font-weight: 600 !important;
+  color: #334155 !important;
+}
+.step-detail-line .line-bullet {
+  color: #6366f1 !important;
+  font-weight: 950 !important;
+  font-size: 15px !important;
+  display: inline-block !important;
+  transform: scale(1.15) !important;
+  line-height: 1 !important;
+  margin-top: 2px !important;
+}
+.accordion-item.step-1.active .line-bullet {
+  color: #f97316 !important;
+}
+.accordion-item.step-2.active .line-bullet {
+  color: #0d9488 !important;
+}
+.accordion-item.step-3.active .line-bullet {
+  color: #db2777 !important;
+}
+.no-details {
+  font-size: 13px !important;
+  color: #64748b !important;
+  font-style: italic !important;
+  margin: 0 !important;
+  text-align: center !important;
+  padding: 16px 0 !important;
+}
+
+/* 8. Goal Notes Section Styling */
+.gd-notes {
+  position: relative !important;
+  z-index: 2 !important;
+}
+.gd-notes .glass {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 16px !important;
+  padding: 18px 22px !important;
+  min-height: 110px !important;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.02) !important;
+}
+
+/* Inline Edit Icons & Buttons */
+.step-edit-inline-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+  border-radius: 8px !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+}
+.step-edit-inline-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  transform: scale(1.1) !important;
+}
+.notes-edit-inline-btn {
+  background: rgba(99, 102, 241, 0.06) !important;
+  border: 1px solid rgba(99, 102, 241, 0.15) !important;
+  color: #4f46e5 !important;
+  font-size: 11.5px !important;
+  font-weight: 850 !important;
+  padding: 7px 14px !important;
+  border-radius: 9px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+}
+.notes-edit-inline-btn:hover {
+  background: #4f46e5 !important;
+  color: white !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* 9. Action Buttons in Modal Footer */
+.gd-actions {
+  position: relative !important;
+  z-index: 2 !important;
+}
+.pill-btn-v2 {
+  padding: 13px 26px !important;
+  font-size: 13.5px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.6px !important;
+  border-radius: 14px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  border: none !important;
+}
+/* Success Button (BAŞARDIM) - Vivid Emerald/Teal Glow */
+.pill-btn-v2.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2) !important;
+}
+.pill-btn-v2.success:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.35) !important;
+}
+/* Danger Button (BAŞARAMADIM) - Rose Pink/Coral Glow */
+.pill-btn-v2.danger {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2) !important;
+}
+.pill-btn-v2.danger:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(244, 63, 94, 0.35) !important;
+}
+/* Neutral Button (KAPAT) - Elegant Light Gray */
+.pill-btn-v2.neutral {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1.5px solid #e2e8f0 !important;
+  box-shadow: none !important;
+}
+.pill-btn-v2.neutral:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  transform: translateY(-2px) !important;
+}
+.pill-btn-v2:active {
+  transform: translateY(0) scale(0.96) !important;
+}
+
+/* ==========================================================================
+   10. GOAL CREATE/EDIT FORM MODAL STYLING (MATCHED LIGHT THEME)
+   ========================================================================== */
+.modal-form {
+  position: relative !important;
+  z-index: 2 !important;
+}
+.modal-form .form-group label {
+  color: #475569 !important;
+  font-weight: 850 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+  margin-bottom: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+.modal-form .form-label-premium {
+  color: #4f46e5 !important;
+}
+.modal-form .form-label-premium svg {
+  color: #6366f1 !important;
+}
+
+/* Inputs, Textareas, Select elements */
+.modal-form input,
+.modal-form textarea,
+.modal-form select {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  border-radius: 14px !important;
+  padding: 13px 18px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  font-family: inherit !important;
+}
+.modal-form input:focus,
+.modal-form textarea:focus,
+.modal-form select:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  outline: none !important;
+}
+.modal-form input::placeholder,
+.modal-form textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Native light style date pickers */
+.modal-form input[type="date"] {
+  color-scheme: light !important;
+}
+
+/* Select option styling */
+.modal-form select option {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+/* Edit Step Accordion */
+.edit-accordion-header {
+  padding: 16px 20px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+.edit-accordion-header .header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+}
+.edit-accordion-header .step-title-preview {
+  color: #334155 !important;
+  font-size: 13.5px !important;
+  font-weight: 750 !important;
+}
+.edit-accordion-header .chevron-icon {
+  color: #94a3b8 !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.edit-accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+.edit-accordion-content.expanded {
+  max-height: 600px !important;
+}
+.edit-content-inner {
+  padding: 0 20px 20px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+.sub-form-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+.sub-form-group label {
+  font-size: 10px !important;
+  font-weight: 850 !important;
+  color: #64748b !important;
+  margin-bottom: 0 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+/* Edit Step Input & Textarea Specific Override */
+.sub-form-group input,
+.sub-form-group textarea {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+.sub-form-group input:focus,
+.sub-form-group textarea:focus {
+  background: #ffffff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Save Submit Button */
+.premium-submit-btn {
+  width: 100% !important;
+  padding: 14px 20px !important;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.8px !important;
+  border-radius: 16px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  margin-top: 14px !important;
+}
+.premium-submit-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.45) !important;
+  background: linear-gradient(135deg, #818cf8 0%, #5850ec 100%) !important;
+}
+.premium-submit-btn:active {
+  transform: translateY(0) scale(0.97) !important;
+}
+
+/* Premium Metadata Badges */
+.gd-meta-chips-container {
+  display: flex !important;
+  gap: 12px !important;
+  margin-bottom: 24px !important;
+  margin-top: 5px !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+}
+
+.gd-meta-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 8px 16px !important;
+  border-radius: 20px !important;
+  font-size: 13.5px !important;
+  font-weight: 800 !important;
+  border: 1.5px solid transparent !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: default !important;
+  user-select: none !important;
+}
+
+.gd-meta-chip:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Görkem Crown Badge */
+.owner-badge-gorkem {
+  background: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+.owner-badge-gorkem:hover {
+  border-color: #34d399 !important;
+  background: #d1fae5 !important;
+}
+
+/* Esra Blossom Badge */
+.owner-badge-esra {
+  background: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #be123c !important;
+}
+.owner-badge-esra:hover {
+  border-color: #fda4af !important;
+  background: #ffe4e6 !important;
+}
+
+/* Aile / Ortak House Badge */
+.owner-badge-ortak {
+  background: #faf5ff !important;
+  border-color: #e9d5ff !important;
+  color: #6d28d9 !important;
+}
+.owner-badge-ortak:hover {
+  border-color: #d8b4fe !important;
+  background: #f3e8ff !important;
+}
+
+/* Duration Hourglass Badge */
+.gd-meta-duration {
+  background: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  color: #4338ca !important;
+}
+.gd-meta-duration:hover {
+  border-color: #a5b4fc !important;
+  background: #e0e7ff !important;
+}
+
+.gd-meta-emoji {
+  font-size: 16px !important;
+  display: inline-block !important;
+  line-height: 1 !important;
+}
+
+.gd-meta-text {
+  letter-spacing: 0.3px !important;
+  font-family: inherit !important;
+}
+
+/* Clickable Owner Badge */
+.gd-meta-chip.clickable {
+  cursor: pointer !important;
+  position: relative !important;
+  padding-right: 32px !important; /* Space for cycle arrow */
+}
+.gd-meta-chip.clickable:hover {
+  border-color: currentColor !important;
+  transform: translateY(-2px) scale(1.03) !important;
+}
+.gd-meta-cycle-indicator {
+  position: absolute !important;
+  right: 10px !important;
+  font-size: 10px !important;
+  opacity: 0.5 !important;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease !important;
+  line-height: 1 !important;
+}
+.gd-meta-chip.clickable:hover .gd-meta-cycle-indicator {
+  transform: rotate(180deg) !important;
+  opacity: 0.95 !important;
+}
+
+/* Creator Registrant Badges */
+.creator-badge-gorkem {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+.creator-badge-gorkem:hover {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+}
+
+.creator-badge-esra {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #64748b !important;
+}
+.creator-badge-esra:hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.creator-badge-other {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+.creator-badge-other:hover {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+}
+
+/* --- PREMIUM CAPACITY TRACKER CARD --- */
+.capacity-tracker-card {
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 24px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.capacity-tracker-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+.capacity-tracker-card.full {
+  border-color: #fecaca;
+  background: linear-gradient(135deg, white, #fff5f5);
+}
+
+.ctc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ctc-title-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #1e293b;
+}
+
+.ctc-icon {
+  color: #7c3aed;
+}
+
+.capacity-tracker-card.full .ctc-icon {
+  color: #ef4444;
+}
+
+.ctc-title-box strong {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.ctc-count {
+  font-size: 14px;
+  font-weight: 900;
+  color: #7c3aed;
+  background: rgba(124, 58, 237, 0.1);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.capacity-tracker-card.full .ctc-count {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.ctc-progress-wrapper {
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.ctc-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  border-radius: 4px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.capacity-tracker-card.full .ctc-progress-bar {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.ctc-footer-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.capacity-tracker-card.full .ctc-footer-text {
+  color: #ef4444;
+  font-weight: 800;
+}
+
+/* --- STEPPED ROADMAP TIMELINE --- */
+.gcp-steps-timeline {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 16px 0;
+  padding: 12px 6px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 16px;
+  position: relative;
+  gap: 8px;
+}
+
+.gcp-steps-timeline::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  height: 2px;
+  background: #e2e8f0;
+  z-index: 1;
+}
+
+.gcp-timeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  text-align: center;
+  position: relative;
+  z-index: 2;
+}
+
+.gcp-step-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 900;
+  background: white;
+  border: 2px solid #cbd5e1;
+  color: #64748b;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* Step Statuses */
+.gcp-timeline-step.completed .gcp-step-dot {
+  background: var(--theme-color);
+  border-color: var(--theme-color);
+  color: white;
+  box-shadow: 0 0 10px var(--theme-shadow);
+}
+
+.gcp-timeline-step.active .gcp-step-dot {
+  background: white;
+  border-color: var(--theme-color);
+  color: var(--theme-color);
+  box-shadow: 0 0 8px var(--theme-shadow);
+  animation: step-pulse 2s infinite alternate ease-in-out;
+}
+
+@keyframes step-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 4px var(--theme-shadow); }
+  100% { transform: scale(1.15); box-shadow: 0 0 12px var(--theme-shadow); }
+}
+
+/* Color Specific Theme Variables */
+.gcp-timeline-step.coral {
+  --theme-color: #ff6b6b;
+  --theme-shadow: rgba(255, 107, 107, 0.4);
+}
+
+.gcp-timeline-step.teal {
+  --theme-color: #0d9488;
+  --theme-shadow: rgba(13, 148, 136, 0.4);
+}
+
+.gcp-timeline-step.pink {
+  --theme-color: #db2777;
+  --theme-shadow: rgba(219, 39, 119, 0.4);
+}
+
+.gcp-step-info {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gcp-step-range {
+  font-size: 8px;
+  font-weight: 900;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gcp-step-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #475569;
+  margin-top: 2px;
+  max-width: 90px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gcp-timeline-step.active .gcp-step-text {
+  color: #1f2937;
+  font-weight: 800;
+}
+
+.gcp-timeline-step.completed .gcp-step-text {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+/* --- GOAL CARD DATE META ROW & COUNTDOWN BADGES --- */
+.gcp-date-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  margin-bottom: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.gcp-date-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gcp-date-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.gcp-date-val {
+  font-size: 11px;
+  font-weight: 800;
+  color: #475569;
+}
+
+.gcp-countdown-badge {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid transparent;
+}
+
+.gcp-countdown-badge.safe {
+  background: rgba(16, 185, 129, 0.06);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.18);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.03);
+}
+
+.gcp-countdown-badge.warning {
+  background: rgba(245, 158, 11, 0.06);
+  color: #d97706;
+  border-color: rgba(245, 158, 11, 0.18);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.03);
+}
+
+.gcp-countdown-badge.urgent {
+  background: rgba(239, 68, 68, 0.06);
+  color: #e11d48;
+  border-color: rgba(239, 68, 68, 0.18);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.03);
+  animation: badge-pulse 1.8s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes badge-pulse {
+  0% { opacity: 0.85; }
+  100% { opacity: 1; transform: scale(1.02); }
+}
+
+/* --- GOAL CARD TIME VISUAL PROGRESS --- */
+.gcp-time-visual-progress {
+  margin: 14px 0 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gcp-tvp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gcp-tvp-label {
+  font-size: 9.5px;
+  font-weight: 850;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gcp-tvp-val {
+  font-size: 10px;
+  font-weight: 850;
+  color: #64748b;
+}
+
+.gcp-tvp-track {
+  height: 5px;
+  background: rgba(226, 232, 240, 0.6);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.gcp-tvp-bar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gcp-tvp-bar.safe {
+  background: linear-gradient(90deg, #10b981, #34d399);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.2);
+}
+
+.gcp-tvp-bar.warning {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.2);
+}
+
+.gcp-tvp-bar.urgent {
+  background: linear-gradient(90deg, #ef4444, #f87171);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+/* --- MODAL SELECTOR BUTTONS --- */
+.premium-select-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.premium-select-buttons .select-btn {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.premium-select-buttons .select-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.premium-select-buttons .select-btn.active {
+  background: #1e293b;
+  color: white;
+  border-color: #1e293b;
+  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.15);
+  transform: translateY(-1px);
+}
+
+.premium-select-buttons .select-btn .emoji {
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   IPHONE 15 & SMARTPHONE MOBILE RESPONSIVE OPTIMIZATIONS (ZERO HORIZONTAL SCROLL)
+   ========================================================================== */
+@media (max-width: 480px) {
+  /* 1. Eliminate Horizontal Page Scrolling & Restrict Body/Viewport Width */
+  .hedefler-container {
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
+  
+  .hedefler-scroll-content {
+    padding: 12px 14px !important;
+    padding-bottom: 90px !important;
+    overflow-x: hidden !important;
+  }
+
+  /* 2. Vertically Stack Filter Chips and Add Goal Button */
+  .filter-actions-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    margin-bottom: 20px !important;
+    width: 100% !important;
+  }
+
+  .owner-filter-chips-v3 {
+    max-width: none !important;
+    width: 100% !important;
+    border-radius: 30px !important;
+    padding: 4px !important;
+    box-sizing: border-box !important;
+  }
+
+  .chip-v3 {
+    padding: 8px 10px !important;
+    font-size: 10.5px !important;
+  }
+
+  .add-goal-btn-v3 {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 10px 16px !important;
+    font-size: 11px !important;
+    border-radius: 30px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 3. Tighten Goal Cards Spacing and Ring Sizes */
+  .goal-card-premium {
+    padding: 16px 18px !important;
+    gap: 14px !important;
+    border-radius: 20px !important;
+    flex-direction: row !important; /* Keep icon & progress aligned with content */
+    align-items: flex-start !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .gcp-ring-box {
+    width: 46px !important;
+    height: 46px !important;
+    margin-top: 2px !important;
+  }
+
+  .gcp-content {
+    width: 0 !important; /* Force flex child to respect container constraints */
+    flex: 1 !important;
+  }
+
+  .gcp-header strong {
+    font-size: 14.5px !important;
+  }
+
+  /* Wrap Date Meta Items and countdown badge properly */
+  .gcp-date-meta {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .gcp-date-val {
+    font-size: 10px !important;
+  }
+
+  .gcp-countdown-badge {
+    padding: 4px 8px !important;
+    font-size: 8px !important;
+  }
+
+  /* 4. Convert Horizontal Roadmaps to Gorgeous Vertical Timeline Cards */
+  .gcp-steps-timeline {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 12px 14px !important;
+    background: rgba(0, 0, 0, 0.015) !important;
+    border-radius: 12px !important;
+    margin: 12px 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .gcp-steps-timeline::before {
+    display: none !important; /* Hide horizontal path connecting line */
+  }
+
+  .gcp-timeline-step {
+    flex-direction: row !important;
+    align-items: center !important;
+    text-align: left !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .gcp-step-dot {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 9.5px !important;
+    flex-shrink: 0 !important;
+    border-width: 1.5px !important;
+  }
+
+  .gcp-step-info {
+    margin-top: 0 !important;
+    align-items: flex-start !important;
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .gcp-step-range {
+    font-size: 7.5px !important;
+    color: #94a3b8 !important;
+    line-height: 1 !important;
+  }
+
+  .gcp-step-text {
+    max-width: none !important;
+    white-space: normal !important;
+    font-size: 10.5px !important;
+    margin-top: 2px !important;
+    line-height: 1.3 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  
+  /* 5. Compact Vision showcasing and badges grid */
+  .badges-grid-premium {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  
+  .vision-showcase-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .vision-quote-card {
+    padding: 30px 20px !important;
+    border-radius: 24px !important;
+    margin-bottom: 16px !important;
+  }
+  
+  .vision-quote-text {
+    font-size: 18px !important;
+  }
+}
+
 

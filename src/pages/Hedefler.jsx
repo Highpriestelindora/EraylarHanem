@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   Target, Plus, CheckCircle, XCircle, Circle, Trash2, Trophy, 
   Sparkles, Heart, Star, ChevronRight, ArrowLeft,
-  Calendar, Camera, User, Users, Flame, Award,
+  Calendar, Camera, User, Users, Award,
   TrendingUp, Compass, Flag, Shield, Briefcase, Zap,
   Edit3, MoreVertical, Clock, Info
 } from 'lucide-react';
@@ -11,6 +11,7 @@ import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import ActionSheet from '../components/ActionSheet';
 import ConfirmModal from '../components/ConfirmModal';
+import InputModal from '../components/InputModal';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import './Hedefler.css';
@@ -31,11 +32,246 @@ const VISION_QUOTES = [
   "İçindeki ışığı asla söndürme; o senin vizyonun. 💡"
 ];
 
+const calculateRanges = (durationVal, isLongTerm) => {
+  const duration = parseInt(durationVal, 10);
+  if (isNaN(duration) || duration <= 0) {
+    return isLongTerm ? ['1. Yıl', '2. Yıl', '3. Yıl'] : ['1. Aşama', '2. Aşama', '3. Aşama'];
+  }
+
+  const d = duration;
+  const s1 = Math.ceil(d / 3);
+  const s2 = Math.ceil((d - s1) / 2);
+  const s3 = d - s1 - s2;
+
+  const ranges = [];
+  
+  if (s1 === 1) ranges.push('1. Ay');
+  else if (s1 > 1) ranges.push(`1 - ${s1}. Ay`);
+
+  const start2 = s1 + 1;
+  const end2 = s1 + s2;
+  if (start2 === end2) ranges.push(`${start2}. Ay`);
+  else ranges.push(`${start2} - ${end2}. Ay`);
+
+  const start3 = s1 + s2 + 1;
+  const end3 = d;
+  if (start3 === end3) ranges.push(`${start3}. Ay`);
+  else if (start3 < end3) ranges.push(`${start3} - ${end3}. Ay`);
+
+  if (d === 2) {
+    return ['1. Ay', '2. Ay', '3. Ay (Plan Dışı)'];
+  }
+  if (d === 1) {
+    return ['1. - 10. Gün', '11. - 20. Gün', '21. - 30. Gün'];
+  }
+
+  return ranges;
+};
+
+const normalizeYearlyPlan = (yearlyPlan, duration, isLongTerm) => {
+  const defaultRanges = calculateRanges(duration, isLongTerm);
+  const steps = [
+    { id: 1, range: defaultRanges[0], title: '', note: '' },
+    { id: 2, range: defaultRanges[1], title: '', note: '' },
+    { id: 3, range: defaultRanges[2], title: '', note: '' },
+  ];
+
+  if (!yearlyPlan) {
+    return steps;
+  }
+
+  if (yearlyPlan.step1_title !== undefined || yearlyPlan.step1_note !== undefined) {
+    steps[0].title = yearlyPlan.step1_title || '';
+    steps[0].note = yearlyPlan.step1_note || '';
+    steps[1].title = yearlyPlan.step2_title || '';
+    steps[1].note = yearlyPlan.step2_note || '';
+    steps[2].title = yearlyPlan.step3_title || '';
+    steps[2].note = yearlyPlan.step3_note || '';
+    return steps;
+  }
+
+  const getLegacyTitle = (text, defaultVal) => {
+    if (!text) return defaultVal;
+    return text.length > 40 ? text.substring(0, 40) + '...' : text;
+  };
+
+  if (yearlyPlan.month1 !== undefined || yearlyPlan.month2 !== undefined || yearlyPlan.month3 !== undefined) {
+    steps[0].title = getLegacyTitle(yearlyPlan.month1, isLongTerm ? '1. Yıl' : '1. Ay');
+    steps[0].note = yearlyPlan.month1 || '';
+    steps[1].title = getLegacyTitle(yearlyPlan.month2, isLongTerm ? '2. Yıl' : '2. Ay');
+    steps[1].note = yearlyPlan.month2 || '';
+    steps[2].title = getLegacyTitle(yearlyPlan.month3, isLongTerm ? '3. Yıl' : '3. Ay');
+    steps[2].note = yearlyPlan.month3 || '';
+    return steps;
+  }
+
+  if (yearlyPlan.year1 !== undefined || yearlyPlan.year2 !== undefined || yearlyPlan.year3 !== undefined) {
+    steps[0].title = getLegacyTitle(yearlyPlan.year1, '1. Yıl');
+    steps[0].note = yearlyPlan.year1 || '';
+    steps[1].title = getLegacyTitle(yearlyPlan.year2, '2. Yıl');
+    steps[1].note = yearlyPlan.year2 || '';
+    steps[2].title = getLegacyTitle(yearlyPlan.year3, '3. Yıl');
+    steps[2].note = yearlyPlan.year3 || '';
+    return steps;
+  }
+
+  return steps;
+};
+
+const serializeYearlyPlan = (steps, isLongTerm) => {
+  return {
+    step1_title: steps[0]?.title || '',
+    step1_note: steps[0]?.note || '',
+    step1_range: steps[0]?.range || '',
+    step2_title: steps[1]?.title || '',
+    step2_note: steps[1]?.note || '',
+    step2_range: steps[1]?.range || '',
+    step3_title: steps[2]?.title || '',
+    step3_note: steps[2]?.note || '',
+    step3_range: steps[2]?.range || '',
+    
+    // Legacy support
+    ...(isLongTerm ? {
+      year1: steps[0]?.note || steps[0]?.title || '',
+      year2: steps[1]?.note || steps[1]?.title || '',
+      year3: steps[2]?.note || steps[2]?.title || '',
+    } : {
+      month1: steps[0]?.note || steps[0]?.title || '',
+      month2: steps[1]?.note || steps[1]?.title || '',
+      month3: steps[2]?.note || steps[2]?.title || '',
+    })
+  };
+};
+
+const TURKISH_MONTHS = [
+  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+];
+
+const getStartMonth = (targetDate, duration) => {
+  if (!targetDate) return null;
+  const target = new Date(targetDate);
+  if (isNaN(target.getTime())) return null;
+
+  const dur = parseInt(duration, 10);
+  if (isNaN(dur) || dur <= 0) return null;
+
+  const start = new Date(target.getTime());
+  start.setMonth(start.getMonth() - dur);
+
+  const monthName = TURKISH_MONTHS[start.getMonth()];
+  const year = start.getFullYear();
+  return `${monthName} ${year}`;
+};
+
+const getRemainingMonths = (targetDate) => {
+  if (!targetDate) return null;
+  const target = new Date(targetDate);
+  if (isNaN(target.getTime())) return null;
+
+  const now = new Date();
+  const diffTime = target.getTime() - now.getTime();
+  
+  if (diffTime <= 0) {
+    return {
+      text: 'Süresi Doldu! 🚨',
+      class: 'urgent'
+    };
+  }
+
+  const diffYears = target.getFullYear() - now.getFullYear();
+  const diffMonths = target.getMonth() - now.getMonth();
+  const totalMonths = diffYears * 12 + diffMonths;
+
+  if (totalMonths <= 0) {
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays <= 0) {
+      return { text: 'Süresi Doldu! 🚨', class: 'urgent' };
+    }
+    return {
+      text: `${diffDays} Gün Kaldı ⏳`,
+      class: 'urgent'
+    };
+  }
+
+  if (totalMonths === 1) {
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return {
+      text: `${diffDays} Gün Kaldı ⏳`,
+      class: 'urgent'
+    };
+  }
+
+  let colorClass = 'safe';
+  if (totalMonths <= 2) {
+    colorClass = 'urgent';
+  } else if (totalMonths <= 5) {
+    colorClass = 'warning';
+  }
+
+  return {
+    text: `${totalMonths} Ay Kaldı ⏳`,
+    class: colorClass
+  };
+};
+
+const getTimeProgressInfo = (targetDate, duration) => {
+  if (!targetDate || !duration) return null;
+  const target = new Date(targetDate);
+  const dur = parseInt(duration, 10);
+  if (isNaN(target.getTime()) || isNaN(dur) || dur <= 0) return null;
+
+  const start = new Date(target.getTime());
+  start.setMonth(start.getMonth() - dur);
+
+  const now = new Date();
+  const totalMs = target.getTime() - start.getTime();
+  const elapsedMs = now.getTime() - start.getTime();
+
+  if (elapsedMs <= 0) {
+    return { percent: 0, elapsedText: 'Yeni Başladı 🌱' };
+  }
+  if (elapsedMs >= totalMs) {
+    return { percent: 100, elapsedText: 'Süre Doldu 🚨' };
+  }
+
+  const percent = Math.min(100, Math.max(0, Math.round((elapsedMs / totalMs) * 100)));
+  return {
+    percent,
+    elapsedText: `%${percent} Geçti ⏳`
+  };
+};
+
+const isGoalVisible = (g, currentUser) => {
+  const owner = (g.owner || 'ortak').toLowerCase().trim();
+  if (owner === 'ortak' || owner === 'aile' || owner === 'hepsi') {
+    return true;
+  }
+  const currentUserName = (currentUser?.name || '').toLowerCase().trim();
+  const creator = (g.createdBy || '').toLowerCase().trim();
+  
+  const matchUser = (nameStr, userStr) => {
+    const normalize = (s) => s.replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c');
+    return normalize(nameStr) === normalize(userStr);
+  };
+  
+  if (matchUser(owner, currentUserName)) {
+    return true;
+  }
+  if (matchUser(creator, currentUserName)) {
+    return true;
+  }
+  return false;
+};
+
+
+
 export default function Hedefler() {
   const [activeTab, setActiveTab] = useState('kisa');
   const [selectedGoal, setSelectedGoal] = useState(null); // For details/edit
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [initialEditStep, setInitialEditStep] = useState(null);
   const [goalToDelete, setGoalToDelete] = useState(null);
   const [reflectionGoal, setReflectionGoal] = useState(null); // { id, type, mode: 'success' | 'fail' }
   const [reflectionText, setReflectionText] = useState('');
@@ -79,17 +315,27 @@ export default function Hedefler() {
     oneYearFromNow.setFullYear(now.getFullYear() + 1);
 
     const st = unifiedGoals.filter(g => {
+        if (!isGoalVisible(g, currentUser)) return false;
         if (!g.targetDate) return true;
         return new Date(g.targetDate) <= oneYearFromNow;
     });
 
     const lt = unifiedGoals.filter(g => {
+        if (!isGoalVisible(g, currentUser)) return false;
         if (!g.targetDate) return false;
         return new Date(g.targetDate) > oneYearFromNow;
     });
 
     return { shortTermGoals: st, longTermGoals: lt };
-  }, [unifiedGoals]);
+  }, [unifiedGoals, currentUser]);
+
+  const filteredCompletedHistory = useMemo(() => {
+    return completedHistory.filter(h => isGoalVisible(h, currentUser));
+  }, [completedHistory, currentUser]);
+
+  const filteredFailedHistory = useMemo(() => {
+    return failedHistory.filter(h => isGoalVisible(h, currentUser));
+  }, [failedHistory, currentUser]);
 
   const handleComplete = (id, type) => {
     setReflectionGoal({ id, type, mode: 'success' });
@@ -162,10 +408,12 @@ export default function Hedefler() {
     } else if (action === 'edit') {
       setSelectedGoal(g);
       setIsEditing(true);
+      setInitialEditStep(null);
       setShowGoalModal(true);
     } else {
       setSelectedGoal(g);
       setIsEditing(false);
+      setInitialEditStep(null);
       setShowGoalModal(true);
     }
   };
@@ -173,8 +421,21 @@ export default function Hedefler() {
   const renderGoalCard = (g) => {
     const isMoney = g.type === 'money';
     const perc = (g.current / g.target) * 100;
+    const owner = (g.owner || 'ortak').toLowerCase();
+
+    // Date calculations
+    const startMonth = getStartMonth(g.targetDate, g.duration);
+    const countdown = getRemainingMonths(g.targetDate);
+
+    // Roadmap normalization
+    const now = new Date();
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(now.getFullYear() + 1);
+    const isLongTerm = g.targetDate ? new Date(g.targetDate) > oneYearFromNow : false;
+    const steps = normalizeYearlyPlan(g.yearlyPlan, g.duration || '', isLongTerm);
+
     return (
-      <div key={g.id} className={`goal-card-premium glass ${perc > 80 ? 'focus-glow' : ''}`} onClick={() => handleGoalAction(g, 'view')}>
+      <div key={g.id} className={`goal-card-premium glass ${perc > 80 ? 'focus-glow' : ''} owner-${owner}`} onClick={() => handleGoalAction(g, 'view')}>
          <div className="gcp-ring-box">
             <svg viewBox="0 0 36 36" className="circular-chart-v2">
               <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -199,6 +460,73 @@ export default function Hedefler() {
                  <button className="gcp-mini-btn del" onClick={() => handleGoalAction(g, 'delete')}><Trash2 size={14} /></button>
               </div>
             </div>
+
+            {/* Dynamic Dates & Countdown */}
+            <div className="gcp-date-meta">
+              {startMonth ? (
+                <div className="gcp-date-item">
+                  <span className="gcp-date-label">Başlangıç:</span>
+                  <span className="gcp-date-val">{startMonth}</span>
+                </div>
+              ) : (
+                <div className="gcp-date-item">
+                  <span className="gcp-date-label">Başlangıç:</span>
+                  <span className="gcp-date-val">Belirtilmedi</span>
+                </div>
+              )}
+              {countdown && (
+                <span className={`gcp-countdown-badge ${countdown.class}`}>
+                  {countdown.text}
+                </span>
+              )}
+            </div>
+
+            {/* Visual Time Progress Bar */}
+            {(() => {
+              const timeInfo = getTimeProgressInfo(g.targetDate, g.duration);
+              if (!timeInfo) return null;
+              return (
+                <div className="gcp-time-visual-progress">
+                  <div className="gcp-tvp-header">
+                    <span className="gcp-tvp-label">Zaman Akışı</span>
+                    <span className="gcp-tvp-val">{timeInfo.elapsedText}</span>
+                  </div>
+                  <div className="gcp-tvp-track">
+                    <div 
+                      className={`gcp-tvp-bar ${countdown?.class || 'safe'}`} 
+                      style={{ width: `${timeInfo.percent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Premium 3-Step Horizontal Timeline */}
+            <div className="gcp-steps-timeline">
+              {steps.map((step, index) => {
+                let status = 'pending';
+                if (perc >= 100) {
+                  status = 'completed';
+                } else if (perc > 0) {
+                  if (index === 0) status = perc > 33.3 ? 'completed' : 'active';
+                  else if (index === 1) status = perc > 66.6 ? 'completed' : (perc > 33.3 ? 'active' : 'pending');
+                  else if (index === 2) status = perc > 66.6 ? 'active' : 'pending';
+                }
+                const colors = ['coral', 'teal', 'pink'];
+                return (
+                  <div key={step.id} className={`gcp-timeline-step ${status} ${colors[index]}`}>
+                    <div className="gcp-step-dot" title={`${step.range}: ${step.title || 'Planlanıyor'}`}>
+                      {status === 'completed' ? '✓' : step.id}
+                    </div>
+                    <div className="gcp-step-info">
+                      <span className="gcp-step-range">{step.range}</span>
+                      <span className="gcp-step-text" title={step.title || 'Planlanıyor'}>{step.title || 'Planlanıyor'}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
             <div className="gcp-milestones">
                {isMoney ? (
                  <div className="money-milestone">
@@ -208,10 +536,11 @@ export default function Hedefler() {
                ) : (
                  <div className="vision-milestone">
                     <span>%{Math.round(perc)} Tamamlandı</span>
-                 </div>
+                  </div>
                )}
             </div>
-                <div className="gcp-footer">
+            
+            <div className="gcp-footer">
                 <div className="gcp-progress-text">
                   {perc >= 100 ? (
                      <button className="complete-btn" onClick={(e) => { e.stopPropagation(); handleComplete(g.id, g.type); }}>TAMAMLA ✅</button>
@@ -225,7 +554,7 @@ export default function Hedefler() {
                   <Clock size={10} /> {g.targetDate || 'Tarihsiz'}
                   {g.duration && <span style={{ color: '#94a3b8' }}>· {g.duration} Ay</span>}
                 </small>
-              </div>
+            </div>
           </div>
        </div>
     );
@@ -282,7 +611,7 @@ export default function Hedefler() {
               ))}
             </div>
             
-            <button className="add-goal-btn-v3" onClick={() => { setSelectedGoal(null); setIsEditing(true); setShowGoalModal(true); }}>
+            <button className="add-goal-btn-v3" onClick={() => { setSelectedGoal(null); setIsEditing(true); setInitialEditStep(null); setShowGoalModal(true); }}>
                <Plus size={14} /> HEDEF EKLE
             </button>
          </div>
@@ -308,7 +637,7 @@ export default function Hedefler() {
           <div className="aktif-view animate-fadeIn">
             <div className="goals-section">
               <div className="section-header-v2">
-                <h3>🎯 Kısa Vadeli Stratejiler</h3>
+                <h3>⏱️ Yakın Dönem Odakları</h3>
                 <span className="count-badge">{shortTermGoals.length}</span>
               </div>
               <div className="goals-grid-v2">
@@ -327,7 +656,7 @@ export default function Hedefler() {
           <div className="aktif-view animate-fadeIn">
             <div className="goals-section">
               <div className="section-header-v2">
-                <h3>🔭 Vizyoner Hedefler (+1 Yıl)</h3>
+                <h3>🔭 Gelecek Ufukları</h3>
                 <span className="count-badge">{longTermGoals.length}</span>
               </div>
               <div className="goals-grid-v2">
@@ -346,11 +675,11 @@ export default function Hedefler() {
             <div className="kazanimlar-tab-content animate-fadeIn">
                 <div className="section-header-v2">
                     <h3>✅ Kazanımlar Geçmişi</h3>
-                    <span className="count-badge">{completedHistory.length}</span>
+                    <span className="count-badge">{filteredCompletedHistory.length}</span>
                 </div>
                 
                 <div className="kazanimlar-list">
-                    {completedHistory
+                    {filteredCompletedHistory
                         .filter(h => {
                             const owner = (h.owner || 'ortak').toLowerCase();
                             return filterOwner === 'all' || owner.includes(filterOwner) || owner === 'aile' || owner === 'ortak';
@@ -387,11 +716,16 @@ export default function Hedefler() {
             <div className="kazanimlar-tab-content animate-fadeIn">
                 <div className="section-header-v2">
                     <h3>❌ Kayıplar ve Dersler</h3>
-                    <span className="count-badge">{failedHistory.length}</span>
+                    <span className="count-badge">{filteredFailedHistory.length}</span>
                 </div>
                 
                 <div className="kazanimlar-list">
-                    {failedHistory.map(h => (
+                    {filteredFailedHistory
+                        .filter(h => {
+                            const owner = (h.owner || 'ortak').toLowerCase();
+                            return filterOwner === 'all' || owner.includes(filterOwner) || owner === 'aile' || owner === 'ortak';
+                        })
+                        .map(h => (
                         <div key={h.id} className="kazanim-card failure glass">
                             <div className="kc-header">
                                 <div className="kc-title-box">
@@ -494,6 +828,13 @@ export default function Hedefler() {
          <GoalForm 
             goal={selectedGoal} 
             isEditing={isEditing} 
+            initialEditStep={initialEditStep}
+            onEdit={(stepId) => {
+                setIsEditing(true);
+                if (stepId !== undefined) {
+                    setInitialEditStep(stepId);
+                }
+            }}
             activeTab={activeTab}
             currentUser={currentUser}
             handleFail={handleFail}
@@ -505,10 +846,35 @@ export default function Hedefler() {
                     else updateVisionGoal(selectedGoal.id, data);
                     toast.success('Hedef güncellendi! ✨');
                 } else {
-                    addVisionGoal(data);
+                    addVisionGoal({
+                        ...data,
+                        createdBy: currentUser?.name || 'Görkem'
+                    });
                     toast.success('Yeni hedef eklendi! 🎯');
                 }
                 setShowGoalModal(false);
+            }}
+            onQuickUpdate={(updatedFields) => {
+                if (selectedGoal) {
+                    let newData = { ...selectedGoal, ...updatedFields };
+                    if (updatedFields.duration !== undefined) {
+                        const now = new Date();
+                        const oneYearFromNow = new Date();
+                        oneYearFromNow.setFullYear(now.getFullYear() + 1);
+                        const isLongTerm = selectedGoal.targetDate ? new Date(selectedGoal.targetDate) > oneYearFromNow : false;
+                        
+                        const newSteps = normalizeYearlyPlan(selectedGoal.yearlyPlan, updatedFields.duration, isLongTerm);
+                        const serializedPlan = serializeYearlyPlan(newSteps, isLongTerm);
+                        newData.yearlyPlan = serializedPlan;
+                    }
+                    if (selectedGoal.type === 'money') {
+                        updateGoal(selectedGoal.id, newData);
+                    } else {
+                        updateVisionGoal(selectedGoal.id, newData);
+                    }
+                    setSelectedGoal(newData);
+                    toast.success('Hedef başarıyla güncellendi! ✨');
+                }
             }}
          />
       </ActionSheet>
@@ -603,8 +969,64 @@ export default function Hedefler() {
   );
 }
 
-function GoalForm({ goal, isEditing, activeTab, currentUser, handleFail, handleComplete, onClose, onSave }) {
+const getOwnerBadge = (owner) => {
+    const o = (owner || '').toLowerCase().trim();
+    if (o === 'gorkem' || o === 'görkem') {
+        return {
+            emoji: '👑',
+            text: 'Görkem',
+            className: 'owner-badge-gorkem'
+        };
+    }
+    if (o === 'esra') {
+        return {
+            emoji: '🌸',
+            text: 'Esra',
+            className: 'owner-badge-esra'
+        };
+    }
+    return {
+        emoji: '🏡',
+        text: 'Aile',
+        className: 'owner-badge-ortak'
+    };
+};
+
+const getRegistrantBadge = (createdBy, owner) => {
+    let creator = createdBy || '';
+    if (!creator) {
+        const o = (owner || '').toLowerCase().trim();
+        if (o === 'gorkem' || o === 'görkem') creator = 'Görkem';
+        else if (o === 'esra') creator = 'Esra';
+        else creator = 'Görkem';
+    }
+    
+    const c = creator.toLowerCase().trim();
+    if (c === 'gorkem' || c === 'görkem') {
+        return {
+            emoji: '✍️',
+            text: 'Kayıt: Görkem',
+            className: 'creator-badge-gorkem'
+        };
+    }
+    if (c === 'esra') {
+        return {
+            emoji: '✍️',
+            text: 'Kayıt: Esra',
+            className: 'creator-badge-esra'
+        };
+    }
+    return {
+        emoji: '✍️',
+        text: `Kayıt: ${creator}`,
+        className: 'creator-badge-other'
+    };
+};
+
+function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, currentUser, handleFail, handleComplete, onClose, onSave, onQuickUpdate }) {
     const isLongTerm = activeTab === 'uzun' || (goal && new Date(goal.targetDate) > new Date(Date.now() + 365 * 24 * 60 * 60 * 1000));
+    
+    const [isDurationModalOpen, setIsDurationModalOpen] = useState(false);
     
     const [form, setForm] = useState({
         title: goal?.title || goal?.name || '',
@@ -615,39 +1037,210 @@ function GoalForm({ goal, isEditing, activeTab, currentUser, handleFail, handleC
         priority: goal?.priority || 'Orta',
         owner: goal?.owner?.toLowerCase() || (currentUser?.name?.toLowerCase().includes('esra') ? 'esra' : 'gorkem'),
         notes: goal?.notes || '',
+        createdBy: goal?.createdBy || '',
         yearlyPlan: goal?.yearlyPlan || (isLongTerm ? { year1: '', year2: '', year3: '' } : { month1: '', month2: '', month3: '' })
     });
 
+    const initialSteps = useMemo(() => {
+        return normalizeYearlyPlan(goal?.yearlyPlan, goal?.duration || '', isLongTerm);
+    }, [goal, isLongTerm]);
+
+    const [steps, setSteps] = useState(initialSteps);
+    const [expandedStep, setExpandedStep] = useState(initialEditStep);
+    const notesRef = React.useRef(null);
+
+    const handleOwnerCycle = () => {
+        if (!goal || !onQuickUpdate) return;
+        const currentOwner = (goal.owner || 'gorkem').toLowerCase().trim();
+        let nextOwner = 'gorkem';
+        if (currentOwner === 'gorkem') nextOwner = 'esra';
+        else if (currentOwner === 'esra') nextOwner = 'ortak';
+        
+        setForm(prev => ({
+            ...prev,
+            owner: nextOwner
+        }));
+        
+        onQuickUpdate({
+            owner: nextOwner
+        });
+    };
+
+    const handleDurationClick = () => {
+        setIsDurationModalOpen(true);
+    };
+
+    const handleDurationConfirm = (newDuration) => {
+        if (!goal || !onQuickUpdate) return;
+        const parsed = parseInt(newDuration, 10);
+        if (isNaN(parsed) || parsed <= 0) {
+            toast.error('Lütfen geçerli bir ay süresi girin!');
+            return;
+        }
+        
+        setForm(prev => ({
+            ...prev,
+            duration: parsed
+        }));
+        
+        onQuickUpdate({
+            duration: parsed
+        });
+        setIsDurationModalOpen(false);
+    };
+
+    // Keep steps state synced when goal.yearlyPlan or goal.duration changes externally
+    React.useEffect(() => {
+        setSteps(normalizeYearlyPlan(goal?.yearlyPlan, goal?.duration || '', isLongTerm));
+    }, [goal?.yearlyPlan, goal?.duration, isLongTerm]);
+
+    // Keep form state synced when goal changes externally
+    React.useEffect(() => {
+        if (goal) {
+            setForm(prev => ({
+                ...prev,
+                title: goal.title || goal.name || '',
+                target: goal.target || 100,
+                current: goal.current || 0,
+                targetDate: goal.targetDate || goal.deadline || '',
+                duration: goal.duration || '',
+                priority: goal.priority || 'Orta',
+                owner: goal.owner?.toLowerCase() || 'gorkem',
+                notes: goal.notes || '',
+                createdBy: goal.createdBy || '',
+                yearlyPlan: goal.yearlyPlan || prev.yearlyPlan
+            }));
+        }
+    }, [goal]);
+
+    // Dynamically update ranges when duration changes
+    React.useEffect(() => {
+        const newRanges = calculateRanges(form.duration, isLongTerm);
+        setSteps(prev => prev.map((step, idx) => ({
+            ...step,
+            range: newRanges[idx] || step.range
+        })));
+    }, [form.duration, isLongTerm]);
+
+    React.useEffect(() => {
+        if (initialEditStep !== undefined) {
+            setExpandedStep(initialEditStep);
+        }
+    }, [initialEditStep]);
+
+    React.useEffect(() => {
+        if (isEditing && initialEditStep === 'notes' && notesRef.current) {
+            setTimeout(() => {
+                notesRef.current?.focus();
+                notesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }, [isEditing, initialEditStep]);
+
     if (!isEditing) {
+        const ownerObj = getOwnerBadge(goal?.owner);
+        const creatorObj = getRegistrantBadge(goal?.createdBy, goal?.owner);
         return (
             <div className="goal-detail-view" style={{ padding: '20px' }}>
-                <div className="gd-meta" style={{ display: 'flex', gap: '15px', marginBottom: '20px', padding: '15px', background: '#f8fafc', borderRadius: '12px' }}>
-                    <div className="gd-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748b' }}>
-                        <User size={14} />
-                        <span>{goal?.owner || 'Bilinmiyor'}</span>
+                <div className="gd-meta-chips-container">
+                    <div className={`gd-meta-chip ${creatorObj.className}`} title="Bu hedefi kayıt eden kişi">
+                        <span className="gd-meta-emoji">{creatorObj.emoji}</span>
+                        <span className="gd-meta-text">{creatorObj.text}</span>
                     </div>
-                    <div className="gd-meta-item" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#64748b' }}>
-                        <Clock size={14} />
-                        <span>{goal?.duration ? `${goal.duration} Ay` : 'Süre Belirtilmemiş'}</span>
+                    <div 
+                        className={`gd-meta-chip clickable ${ownerObj.className}`}
+                        onClick={handleOwnerCycle}
+                        title="Hedef sahibini değiştirmek için tıklayın"
+                    >
+                        <span className="gd-meta-emoji">{ownerObj.emoji}</span>
+                        <span className="gd-meta-text">{ownerObj.text}</span>
+                        <span className="gd-meta-cycle-indicator">🔄</span>
+                    </div>
+                    <div 
+                        className="gd-meta-chip clickable gd-meta-duration"
+                        onClick={handleDurationClick}
+                        title="Hedef süresini değiştirmek için tıklayın"
+                    >
+                        <span className="gd-meta-emoji">⏳</span>
+                        <span className="gd-meta-text">
+                            {goal?.duration ? `${goal.duration} Ay` : 'Süresiz'}
+                        </span>
+                        <span className="gd-meta-cycle-indicator">🔄</span>
                     </div>
                 </div>
 
-                {goal?.yearlyPlan && (
-                    <div className="gd-plan mt-16">
-                        <h4 style={{ fontSize: '14px', marginBottom: '8px' }}>📅 {isLongTerm ? 'Yıllık Dağılım' : 'Aylık Plan'}</h4>
-                        {Object.entries(goal.yearlyPlan).map(([k, t]) => t && (
-                            <div key={k} style={{ padding: '8px', borderLeft: '3px solid #fbbf24', background: '#fffbeb', marginBottom: '4px', fontSize: '12px' }}>
-                                <strong>{k.includes('year') ? k.replace('year', 'Yıl ') : k.replace('month', 'Ay ')}:</strong> {t}
-                            </div>
-                        ))}
+                <div className="premium-accordion-section mt-20">
+                    <h4 className="pas-title">
+                        <Compass size={16} className="pas-icon" />
+                        <span>Adım Adım Yol Haritası</span>
+                    </h4>
+                    <div className="premium-accordion">
+                        {steps.map(step => {
+                            const isExpanded = expandedStep === step.id;
+                            return (
+                                <div key={step.id} className={`accordion-item glass ${isExpanded ? 'active' : ''} step-${step.id}`}>
+                                    <div className="accordion-header" onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
+                                        <div className="header-left">
+                                            <span className="step-badge">{step.range}</span>
+                                            <strong className="step-title">{step.title || `${step.id}. Aşama`}</strong>
+                                        </div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <button 
+                                                type="button"
+                                                className="step-edit-inline-btn" 
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    onEdit(step.id); 
+                                                }}
+                                                title="Aşamayı Düzenle"
+                                            >
+                                                <Edit3 size={13} />
+                                            </button>
+                                            <ChevronRight size={18} className={`chevron-icon ${isExpanded ? 'rotate-90' : ''}`} />
+                                        </div>
+                                    </div>
+                                    <div className={`accordion-content ${isExpanded ? 'expanded' : ''}`}>
+                                        <div className="content-inner">
+                                            {step.note ? (
+                                                <ul className="step-details-list">
+                                                    {step.note.split('\n').map((line, lIdx) => {
+                                                        const trimmed = line.trim();
+                                                        if (!trimmed) return null;
+                                                        const isHeader = trimmed.endsWith(':') || trimmed.startsWith('★') || trimmed.startsWith('●') || trimmed.startsWith('■');
+                                                        return (
+                                                            <li key={lIdx} className={`step-detail-line ${isHeader ? 'line-header' : 'line-item'}`}>
+                                                                {!isHeader && <span className="line-bullet">✦</span>}
+                                                                <span>{trimmed.replace(/^[-*•✦]\s*/, '')}</span>
+                                                            </li>
+                                                        );
+                                                    })}
+                                                </ul>
+                                            ) : (
+                                                <p className="no-details">Bu aşama için detaylı açıklama girilmemiş.</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
-                )}
+                </div>
 
-                <div className="gd-notes mt-16">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', color: '#1e293b', fontWeight: '600' }}>
-                        <Info size={16} /> <span>Hedef Notları</span>
+                <div className="gd-notes mt-20">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontWeight: '600' }}>
+                            <Info size={16} /> <span>Hedef Notları</span>
+                        </div>
+                        <button 
+                            type="button"
+                            className="notes-edit-inline-btn" 
+                            onClick={() => onEdit('notes')}
+                            title="Notları Düzenle"
+                        >
+                            <Edit3 size={13} /> Notu Düzenle
+                        </button>
                     </div>
-                    <div className="glass" style={{ padding: '15px', borderRadius: '12px', minHeight: '100px', fontSize: '14px', lineHeight: '1.6' }}>
+                    <div className="glass" style={{ padding: '15px', borderRadius: '12px', minHeight: '100px', fontSize: '14px', lineHeight: '1.6', color: '#475569', fontWeight: '600' }}>
                         {goal?.notes || "Bu hedef için henüz bir not eklenmemiş."}
                     </div>
                 </div>
@@ -663,12 +1256,26 @@ function GoalForm({ goal, isEditing, activeTab, currentUser, handleFail, handleC
                         KAPAT
                     </button>
                 </div>
+
+                <InputModal
+                    isOpen={isDurationModalOpen}
+                    title="Hedef Süresi Güncelle"
+                    message={`"${goal?.title || goal?.name}" hedefinin yeni süresini ay olarak girin:`}
+                    defaultValue={goal?.duration || "8"}
+                    placeholder="Örn: 12"
+                    type="number"
+                    confirmText="SÜREYİ GÜNCELLE ✨"
+                    cancelText="İPTAL"
+                    icon="⏳"
+                    onConfirm={handleDurationConfirm}
+                    onCancel={() => setIsDurationModalOpen(false)}
+                />
             </div>
         );
     }
 
     return (
-        <div className="modal-form" style={{ padding: '20px', maxHeight: '70vh', overflowY: 'auto' }}>
+        <div className="modal-form" style={{ padding: '20px' }}>
             <div className="form-group">
                 <label>Hedef Başlığı</label>
                 <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="Örn: Almanca B2" />
@@ -685,25 +1292,98 @@ function GoalForm({ goal, isEditing, activeTab, currentUser, handleFail, handleC
             </div>
             
             <div className="form-group">
-                <label>{isLongTerm ? 'Yıllık Plan / Kilometre Taşları' : 'Aylık Plan / Adımlar'}</label>
-                <div className="yearly-plan-inputs" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {isLongTerm ? (
-                        <>
-                            <input value={form.yearlyPlan.year1} onChange={e => setForm({...form, yearlyPlan: {...form.yearlyPlan, year1: e.target.value}})} placeholder="1. Yıl Planı" />
-                            <input value={form.yearlyPlan.year2} onChange={e => setForm({...form, yearlyPlan: {...form.yearlyPlan, year2: e.target.value}})} placeholder="2. Yıl Planı" />
-                            <input value={form.yearlyPlan.year3} onChange={e => setForm({...form, yearlyPlan: {...form.yearlyPlan, year3: e.target.value}})} placeholder="3. Yıl Planı" />
-                        </>
-                    ) : (
-                        <>
-                            <input value={form.yearlyPlan.month1} onChange={e => setForm({...form, yearlyPlan: {...form.yearlyPlan, month1: e.target.value}})} placeholder="1. Ay Planı" />
-                            <input value={form.yearlyPlan.month2} onChange={e => setForm({...form, yearlyPlan: {...form.yearlyPlan, month2: e.target.value}})} placeholder="2. Ay Planı" />
-                            <input value={form.yearlyPlan.month3} onChange={e => setForm({...form, yearlyPlan: {...form.yearlyPlan, month3: e.target.value}})} placeholder="3. Ay Planı" />
-                        </>
-                    )}
+                <label className="form-label-premium">
+                    <Compass size={14} style={{ color: '#7c3aed' }} />
+                    <span>Aşama ve Yol Haritası Detayları</span>
+                </label>
+                <div className="edit-accordion-container">
+                    {steps.map((step, idx) => {
+                        const isExpanded = expandedStep === step.id;
+                        return (
+                            <div key={step.id} className={`edit-accordion-item ${isExpanded ? 'active' : ''} step-${step.id}`}>
+                                <div className="edit-accordion-header" onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
+                                    <div className="header-left">
+                                        <span className="step-badge">{step.range}</span>
+                                        <span className="step-title-preview">
+                                            {step.title || `${step.id}. Aşama`}
+                                        </span>
+                                    </div>
+                                    <ChevronRight size={16} className={`chevron-icon ${isExpanded ? 'rotate-90' : ''}`} />
+                                </div>
+                                <div className={`edit-accordion-content ${isExpanded ? 'expanded' : ''}`}>
+                                    <div className="edit-content-inner">
+                                        <div className="sub-form-group">
+                                            <label>Aşama Başlığı</label>
+                                            <input 
+                                                type="text" 
+                                                value={step.title} 
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setSteps(prev => prev.map((s, i) => i === idx ? { ...s, title: val } : s));
+                                                }}
+                                                placeholder={`Örn: ${step.range} - Başlangıç Aşaması`} 
+                                            />
+                                        </div>
+                                        <div className="sub-form-group">
+                                            <label>Detaylar & Yapılacaklar</label>
+                                            <textarea 
+                                                value={step.note} 
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    setSteps(prev => prev.map((s, i) => i === idx ? { ...s, note: val } : s));
+                                                }}
+                                                placeholder="Bu aşamada neler hedefleniyor, hangi adımlar atılacak?" 
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
             <div className="form-grid">
+                <div className="form-group">
+                    <label>Hedef Sahibi</label>
+                    <div className="premium-select-buttons">
+                        {[
+                            { id: 'gorkem', label: 'Görkem', emoji: '👑' },
+                            { id: 'esra', label: 'Esra', emoji: '🌸' },
+                            { id: 'ortak', label: 'Aile/Ortak', emoji: '🏡' }
+                        ].map(opt => (
+                            <button
+                                key={opt.id}
+                                type="button"
+                                className={`select-btn ${form.owner === opt.id ? 'active' : ''}`}
+                                onClick={() => setForm({ ...form, owner: opt.id })}
+                            >
+                                <span className="emoji">{opt.emoji}</span> {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <div className="form-group">
+                    <label>Kayıt Eden</label>
+                    <div className="premium-select-buttons">
+                        {[
+                            { id: 'Görkem', label: 'Görkem', emoji: '✍️' },
+                            { id: 'Esra', label: 'Esra', emoji: '✍️' }
+                        ].map(opt => (
+                            <button
+                                key={opt.id}
+                                type="button"
+                                className={`select-btn ${form.createdBy === opt.id ? 'active' : ''}`}
+                                onClick={() => setForm({ ...form, createdBy: opt.id })}
+                            >
+                                <span className="emoji">{opt.emoji}</span> {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+
+            <div className="form-grid" style={{ marginTop: '16px' }}>
                 <div className="form-group">
                     <label>Bitiş Tarihi</label>
                     <input type="date" value={form.targetDate} onChange={e => setForm({...form, targetDate: e.target.value})} />
@@ -713,13 +1393,20 @@ function GoalForm({ goal, isEditing, activeTab, currentUser, handleFail, handleC
             <div className="form-group">
                 <label>Açıklama & Detaylar</label>
                 <textarea 
+                    ref={notesRef}
                     value={form.notes} 
                     onChange={e => setForm({...form, notes: e.target.value})} 
                     placeholder="Hedefe nasıl ulaşacaksın?"
                     style={{ width: '100%', minHeight: '80px', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
                 />
             </div>
-            <button className="premium-submit-btn" onClick={() => onSave(form)}>KAYDET</button>
+            <button className="premium-submit-btn" onClick={() => {
+                const serializedPlan = serializeYearlyPlan(steps, isLongTerm);
+                onSave({
+                    ...form,
+                    yearlyPlan: serializedPlan
+                });
+            }}>KAYDET</button>
         </div>
     );
 }
