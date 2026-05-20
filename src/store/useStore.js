@@ -4233,7 +4233,7 @@ const useStore = create(
         }
 
         const newPoolItem = {
-          id: Date.now(),
+          id: expense.id || Date.now(),
           dt: new Date().toISOString().split('T')[0],
           confirmed: false,
           defaultPay,
@@ -4388,12 +4388,18 @@ const useStore = create(
         const item = state.finans.approvalPool.find(i => i.id === poolId);
         if (!item) return;
 
+        // If this originates from a fatura, mark the fatura as Paid (Ödendi)
+        const faturaExists = (state.ev?.faturalar || []).some(f => String(f.id) === String(poolId));
+        if (faturaExists) {
+          get().payFatura(poolId);
+        }
+
         // updates can contain: kart_id, banka_id, odenme_turu
         await get().addHarcama({
           ...item,
           ...updates,
           kaynak: item.source || 'Onay Havuzu'
-    });
+        });
 
         const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
         set({ finans: { ...get().finans, approvalPool: updatedPool } });
@@ -4407,6 +4413,13 @@ const useStore = create(
       // Onay havuzundan siler
       reddetHarcama: (poolId) => {
         const state = get();
+
+        // If this originates from a fatura, delete the fatura as well
+        const faturaExists = (state.ev?.faturalar || []).some(f => String(f.id) === String(poolId));
+        if (faturaExists) {
+          get().deleteFatura(poolId);
+        }
+
         const updatedPool = state.finans.approvalPool.filter(i => i.id !== poolId);
         set({ finans: { ...state.finans, approvalPool: updatedPool } });
         syncFinansOnayHavuzu(updatedPool); // Gölge Yazım
@@ -7456,6 +7469,7 @@ const useStore = create(
 
         // Finance Integration
         get().addExpense({
+          id: newFatura.id,
           title: `Fatura: ${fatura.name}`,
           amount: Number(fatura.amount),
           category: 'fatura',
