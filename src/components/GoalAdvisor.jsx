@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Sparkles, TrendingUp, AlertTriangle, CheckCircle2, Lightbulb, Play } from 'lucide-react';
+import './GoalAdvisor.css';
 
 const GoalAdvisor = ({ visionGoals, moneyGoals, onSimulate }) => {
   const advice = useMemo(() => {
