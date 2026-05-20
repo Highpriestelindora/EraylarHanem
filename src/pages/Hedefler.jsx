@@ -379,7 +379,7 @@ export default function Hedefler() {
         type: 'money', 
         title: g.name, 
         targetDate: g.deadline,
-        owner: g.owner || 'ortak'
+        owner: 'ortak'
       }))
     ];
     return combined;
@@ -1413,26 +1413,45 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
                         <span className="gd-meta-emoji">{creatorObj.emoji}</span>
                         <span className="gd-meta-text">{creatorObj.text}</span>
                     </div>
-                    <div 
-                        className={`gd-meta-chip clickable ${ownerObj.className}`}
-                        onClick={handleOwnerCycle}
-                        title="Hedef sahibini değiştirmek için tıklayın"
-                    >
-                        <span className="gd-meta-emoji">{ownerObj.emoji}</span>
-                        <span className="gd-meta-text">{ownerObj.text}</span>
-                        <span className="gd-meta-cycle-indicator">🔄</span>
-                    </div>
-                    <div 
-                        className="gd-meta-chip clickable gd-meta-duration"
-                        onClick={handleDurationClick}
-                        title="Hedef süresini değiştirmek için tıklayın"
-                    >
-                        <span className="gd-meta-emoji">⏳</span>
-                        <span className="gd-meta-text">
-                            {goal?.duration ? `${goal.duration} Ay` : 'Süresiz'}
-                        </span>
-                        <span className="gd-meta-cycle-indicator">🔄</span>
-                    </div>
+                    {goal?.type === 'money' ? (
+                        <div className={`gd-meta-chip ${ownerObj.className}`} title="Bu bir ortak birikim kumbarasıdır">
+                            <span className="gd-meta-emoji">{ownerObj.emoji}</span>
+                            <span className="gd-meta-text">{ownerObj.text}</span>
+                        </div>
+                    ) : (
+                        <div 
+                            className={`gd-meta-chip clickable ${ownerObj.className}`}
+                            onClick={handleOwnerCycle}
+                            title="Hedef sahibini değiştirmek için tıklayın"
+                        >
+                            <span className="gd-meta-emoji">{ownerObj.emoji}</span>
+                            <span className="gd-meta-text">{ownerObj.text}</span>
+                            <span className="gd-meta-cycle-indicator">🔄</span>
+                        </div>
+                    )}
+                    {goal?.type === 'money' ? (
+                        <div 
+                            className="gd-meta-chip gd-meta-duration"
+                            title="Kumbara Bitiş Tarihi"
+                        >
+                            <span className="gd-meta-emoji">⏳</span>
+                            <span className="gd-meta-text">
+                                {goal?.targetDate ? new Date(goal.targetDate).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Süresiz'}
+                            </span>
+                        </div>
+                    ) : (
+                        <div 
+                            className="gd-meta-chip clickable gd-meta-duration"
+                            onClick={handleDurationClick}
+                            title="Hedef süresini değiştirmek için tıklayın"
+                        >
+                            <span className="gd-meta-emoji">⏳</span>
+                            <span className="gd-meta-text">
+                                {goal?.duration ? `${goal.duration} Ay` : 'Süresiz'}
+                            </span>
+                            <span className="gd-meta-cycle-indicator">🔄</span>
+                        </div>
+                    )}
                 </div>
 
                 {goal?.type === 'money' ? (
@@ -1593,15 +1612,17 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
                     <label>Hedef Tutar/Yüzde</label>
                     <input type="number" value={form.target} onChange={e => setForm({...form, target: Number(e.target.value)})} />
                 </div>
-                <div className="form-group">
-                    <label>Süre (Ay)</label>
-                    <input 
-                        type="number" 
-                        value={form.duration} 
-                        onChange={e => handleDurationChange(e.target.value)} 
-                        placeholder="Örn: 8" 
-                    />
-                </div>
+                {!isMoney && (
+                    <div className="form-group">
+                        <label>Süre (Ay)</label>
+                        <input 
+                            type="number" 
+                            value={form.duration} 
+                            onChange={e => handleDurationChange(e.target.value)} 
+                            placeholder="Örn: 8" 
+                        />
+                    </div>
+                )}
             </div>
             
             {!isMoney && (
@@ -1658,74 +1679,111 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
                 </div>
             )}
 
-            <div className="form-grid">
-                <div className="form-group">
-                    <label>Hedef Sahibi</label>
-                    <div className="premium-select-buttons">
-                        {[
-                            { id: 'gorkem', label: 'Görkem', emoji: '👑' },
-                            { id: 'esra', label: 'Esra', emoji: '🌸' },
-                            { id: 'ortak', label: 'Aile/Ortak', emoji: '🏡' }
-                        ].map(opt => (
-                            <button
-                                key={opt.id}
-                                type="button"
-                                className={`select-btn ${form.owner === opt.id ? 'active' : ''}`}
-                                onClick={() => setForm({ ...form, owner: opt.id })}
-                            >
-                                <span className="emoji">{opt.emoji}</span> {opt.label}
-                            </button>
-                        ))}
+            {!isMoney ? (
+                <div className="form-grid">
+                    <div className="form-group">
+                        <label>Hedef Sahibi</label>
+                        <div className="premium-select-buttons">
+                            {[
+                                { id: 'gorkem', label: 'Görkem', emoji: '👑' },
+                                { id: 'esra', label: 'Esra', emoji: '🌸' },
+                                { id: 'ortak', label: 'Aile/Ortak', emoji: '🏡' }
+                            ].map(opt => (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    className={`select-btn ${form.owner === opt.id ? 'active' : ''}`}
+                                    onClick={() => setForm({ ...form, owner: opt.id })}
+                                >
+                                    <span className="emoji">{opt.emoji}</span> {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="form-group">
+                        <label>Kayıt Eden</label>
+                        <div className="premium-select-buttons">
+                            {[
+                                { id: 'Görkem', label: 'Görkem', emoji: '✍️' },
+                                { id: 'Esra', label: 'Esra', emoji: '✍️' }
+                            ].map(opt => (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    className={`select-btn ${form.createdBy === opt.id ? 'active' : ''}`}
+                                    onClick={() => setForm({ ...form, createdBy: opt.id })}
+                                >
+                                    <span className="emoji">{opt.emoji}</span> {opt.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
-                <div className="form-group">
-                    <label>Kayıt Eden</label>
-                    <div className="premium-select-buttons">
-                        {[
-                            { id: 'Görkem', label: 'Görkem', emoji: '✍️' },
-                            { id: 'Esra', label: 'Esra', emoji: '✍️' }
-                        ].map(opt => (
-                            <button
-                                key={opt.id}
-                                type="button"
-                                className={`select-btn ${form.createdBy === opt.id ? 'active' : ''}`}
-                                onClick={() => setForm({ ...form, createdBy: opt.id })}
-                            >
-                                <span className="emoji">{opt.emoji}</span> {opt.label}
-                            </button>
-                        ))}
+            ) : (
+                <div className="form-grid">
+                    <div className="form-group">
+                        <label>Kayıt Eden</label>
+                        <div className="premium-select-buttons">
+                            {[
+                                { id: 'Görkem', label: 'Görkem', emoji: '✍️' },
+                                { id: 'Esra', label: 'Esra', emoji: '✍️' }
+                            ].map(opt => (
+                                <button
+                                    key={opt.id}
+                                    type="button"
+                                    className={`select-btn ${form.createdBy === opt.id ? 'active' : ''}`}
+                                    onClick={() => setForm({ ...form, createdBy: opt.id })}
+                                >
+                                    <span className="emoji">{opt.emoji}</span> {opt.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            <div className="form-grid" style={{ marginTop: '16px' }}>
-                <div className="form-group">
-                    <label>Başlangıç Tarihi</label>
-                    <input 
-                        type="date" 
-                        value={form.startDate} 
-                        onChange={e => handleStartDateChange(e.target.value)} 
-                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                    />
-                </div>
-                <div className="form-group">
-                    <label>Hesaplanan Bitiş Tarihi</label>
-                    <div style={{ 
-                        padding: '12px', 
-                        borderRadius: '8px', 
-                        background: '#f8fafc', 
-                        border: '1px dashed #cbd5e1',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        color: '#475569',
-                        minHeight: '44px',
-                        display: 'flex',
-                        alignItems: 'center'
-                    }}>
-                        {form.targetDate ? new Date(form.targetDate).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Başlangıç tarihi ve süre girin'}
+            {isMoney ? (
+                <div className="form-grid" style={{ marginTop: '16px' }}>
+                    <div className="form-group">
+                        <label>Bitiş Tarihi</label>
+                        <input 
+                            type="date" 
+                            value={form.targetDate} 
+                            onChange={e => setForm({ ...form, targetDate: e.target.value })} 
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                        />
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className="form-grid" style={{ marginTop: '16px' }}>
+                    <div className="form-group">
+                        <label>Başlangıç Tarihi</label>
+                        <input 
+                            type="date" 
+                            value={form.startDate} 
+                            onChange={e => handleStartDateChange(e.target.value)} 
+                            style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label>Hesaplanan Bitiş Tarihi</label>
+                        <div style={{ 
+                            padding: '12px', 
+                            borderRadius: '8px', 
+                            background: '#f8fafc', 
+                            border: '1px dashed #cbd5e1',
+                            fontSize: '13px',
+                            fontWeight: '700',
+                            color: '#475569',
+                            minHeight: '44px',
+                            display: 'flex',
+                            alignItems: 'center'
+                        }}>
+                            {form.targetDate ? new Date(form.targetDate).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Başlangıç tarihi ve süre girin'}
+                        </div>
+                    </div>
+                </div>
+            )}
             
             <div className="form-group">
                 <label>Açıklama & Detaylar</label>

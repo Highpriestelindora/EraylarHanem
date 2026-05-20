@@ -89,7 +89,7 @@ export default function Kasa() {
     { id: 'birikim', label: 'Birikim', emoji: '🪙' },
     { id: 'banka', label: 'Banka', emoji: '🏦' },
     { id: 'tasinmaz', label: 'Taşınmaz', emoji: '🏠' },
-    { id: 'kumbara', label: 'Kumbara', emoji: '🎯' }
+    { id: 'kumbara', label: 'Kumbara', emoji: '🐷' }
   ];
 
   const portfolioData = {
@@ -566,7 +566,7 @@ export default function Kasa() {
             />
 
             <div className="section-header-kasa" style={{ marginTop: '24px' }}>
-              <h3>🎯 Kumbaralar</h3>
+              <h3>🐷 Kumbaralar</h3>
               <button 
                 className="kasa-add-btn" 
                 title="Yeni hedef oluştur"
@@ -626,8 +626,8 @@ export default function Kasa() {
           modal.type === 'editVarlik' ? '📝 Varlığı Düzenle' :
           modal.type === 'addTasinmaz' ? '🏠 Yeni Taşınmaz Ekle' :
           modal.type === 'editTasinmaz' ? '🏠 Taşınmazı Düzenle' :
-          modal.type === 'addGoal' ? '🎯 Yeni Hedef' :
-          modal.type === 'editGoal' ? '🎯 Hedefi Düzenle' :
+          modal.type === 'addGoal' ? '🐷 Yeni Kumbara' :
+          modal.type === 'editGoal' ? '🐷 Kumbarayı Düzenle' :
           modal.type === 'fillGoal' ? '💰 Kumbaraya Ekle' : 
           modal.type === 'addBanka' ? '🏦 Yeni Banka Hesabı' :
           modal.type === 'editBanka' ? '🏦 Hesabı Düzenle' :
@@ -749,7 +749,7 @@ function KasaModals({ type, data, onClose }) {
         if (kasa.bakiyeler[source] < Number(form.amount)) throw new Error('Ortak hesapta yeterli bakiye yok!');
         updateKasaBakiye(source, kasa.bakiyeler[source] - Number(form.amount));
         updateGoal(data.id, { current: data.current + Number(form.amount) });
-        toast.success('Kumbaraya eklendi! 🎯');
+        toast.success('Kumbaraya eklendi! 🐷');
       } else if (type === 'addBanka') {
         useStore.getState().addBankaHesabi(form);
       } else if (type === 'editBanka') {
@@ -906,7 +906,7 @@ function KasaModals({ type, data, onClose }) {
         <div className="form-grid" style={{ gridTemplateColumns: '1fr 3fr' }}>
           <div className="form-group">
             <label>İkon</label>
-            <input value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} placeholder="🎯" />
+            <input value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} placeholder="🐷" />
           </div>
           <div className="form-group">
             <label>Hedef Adı</label>

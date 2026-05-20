@@ -3800,7 +3800,7 @@ const useStore = create(
             }
 
             if (dbHedefler.data) {
-              const mapped = dbHedefler.data.map(x => ({ 
+              const mapped = dbHedefler.data.filter(x => x.type !== 'money').map(x => ({ 
                 id: x.id, 
                 name: x.title, 
                 title: x.title, 
@@ -3812,32 +3812,61 @@ const useStore = create(
                 owner: x.owner, 
                 notes: x.notes, 
                 yearlyPlan: x.yearly_plan,
-                type: x.type || (x.target > 1000 ? 'money' : 'vision')
+                type: 'vision'
               }));
 
-              h.goals = mapped.filter(x => x.type === 'vision');
-              k.kumbaralar = mapped.filter(x => x.type === 'money');
+              h.goals = mapped;
+
+              // Self-Migration Block: If any goal in dbHedefler has type === 'money', move it to kasa_kumbaralar
+              const legacyMoneyGoals = dbHedefler.data.filter(x => x.type === 'money');
+              if (legacyMoneyGoals.length > 0) {
+                console.log(`📦 [Migration] Found ${legacyMoneyGoals.length} legacy money goals in hedefler_aktif. Migrating to kasa_kumbaralar...`);
+                setTimeout(async () => {
+                  for (const lg of legacyMoneyGoals) {
+                    try {
+                      const newKumbara = {
+                        id: lg.id,
+                        name: lg.title,
+                        target: Number(lg.target || 0),
+                        current: Number(lg.current || 0),
+                        deadline: lg.target_date || null,
+                        owner: 'ortak',
+                        category: 'Genel',
+                        icon: '🪙'
+                      };
+                      await pushGenericToSupabase('kasa_kumbaralar', newKumbara);
+                      await removeGenericFromSupabase('hedefler_aktif', lg.id);
+                      console.log(`✅ [Migration] Successfully migrated legacy money goal: "${lg.title}"`);
+                    } catch (migrationErr) {
+                      console.error(`❌ [Migration] Error migrating legacy money goal:`, migrationErr);
+                    }
+                  }
+                  get().fetchPhase3Data();
+                }, 100);
+              }
+            } else {
+              h.goals = [];
             }
 
-            // Legacy check: if kasa_kumbaralar still has unique items not in hedefler_aktif, merge them
             if (dbKumbaralar.data) {
-              dbKumbaralar.data.forEach(g => {
-                const isAlreadyIn = k.kumbaralar.some(ex => String(ex.id) === String(g.id));
-                if (!isAlreadyIn) {
-                  k.kumbaralar.push({
-                    id: g.id,
-                    name: g.name,
-                    target: Number(g.target || 0),
-                    current: Number(g.current || 0),
-                    deadline: g.deadline,
-                    icon: g.icon,
-                    priority: g.priority,
-                    category: g.category,
-                    type: 'money',
-                    ...(g.details || {})
-                  });
-                }
-              });
+              k.kumbaralar = dbKumbaralar.data.map(g => ({
+                id: g.id,
+                name: g.name,
+                title: g.name,
+                target: Number(g.target || 0),
+                current: Number(g.current || 0),
+                targetDate: g.deadline,
+                deadline: g.deadline,
+                icon: g.icon || '🪙',
+                owner: 'ortak', // Force owner to 'ortak' for kumbara targets
+                priority: g.priority || 'Orta',
+                category: g.category || 'Genel',
+                type: 'money',
+                notes: g.notes || '',
+                ...(g.details || {})
+              }));
+            } else {
+              k.kumbaralar = [];
             }
 
             if (dbGecmis.data) {
@@ -4106,7 +4135,7 @@ const useStore = create(
               // 2. Faz 3 SQL Tabloları Güncellemesi
               const phase3Tables = [
                 'finans_kartlar', 'finans_krediler', 'finans_onay_havuzu', 
-                'hedefler_aktif', 'hedefler_gecmis', 'hedefler_vizyon'
+                'hedefler_aktif', 'hedefler_gecmis', 'hedefler_vizyon', 'kasa_kumbaralar'
               ];
               if (phase3Tables.includes(table)) {
                 console.log(`🔄 [Realtime] ${table} değişti, veriler eşitleniyor...`);
@@ -5048,7 +5077,17 @@ const useStore = create(
             await pushHedefToSupabase({ ...g, type: 'vision' });
           }
           for (const g of moneyGoals) {
-            await pushHedefToSupabase({ ...g, type: 'money' });
+            const dbPayload = {
+              id: String(g.id),
+              name: g.name || g.title || '',
+              target: Number(g.target) || 0,
+              current: Number(g.current) || 0,
+              deadline: g.targetDate || g.deadline || null,
+              icon: g.icon || '🪙',
+              owner: 'ortak',
+              category: g.category || 'Genel'
+            };
+            await pushGenericToSupabase('kasa_kumbaralar', dbPayload);
           }
           // Push vision plans to hedefler_vizyon
           for (const p of visionPlans) {
@@ -5066,7 +5105,7 @@ const useStore = create(
 
       addGoal: async (goal) => {
         const state = get();
-        const name = goal.name || 'Yeni Hedef';
+        const name = goal.name || goal.title || 'Yeni Hedef';
         
         // Mükerrer Kontrolü (State üzerinden)
         const allGoals = [...(state.kasa.kumbaralar || []), ...(state.hedefler.goals || [])];
@@ -5082,18 +5121,30 @@ const useStore = create(
         const newGoal = { 
           id: Date.now(), 
           current: 0, 
-          deadline: '', 
+          deadline: goal.targetDate || goal.deadline || '', 
           priority: 'Orta',
           category: 'Genel',
           notes: '',
           createdAt: new Date().toISOString(),
           createdBy: state.users?.gorkem?.name || 'Sistem', 
           ...goal,
-          type: 'money'
+          type: 'money',
+          owner: 'ortak' // Piggy bank targets are always ortak
         };
         
         set({ kasa: { ...state.kasa, kumbaralar: [newGoal, ...(state.kasa.kumbaralar || [])] } });
-        await pushHedefToSupabase(newGoal);
+        
+        const dbPayload = {
+          id: String(newGoal.id),
+          name: newGoal.name || newGoal.title || 'İsimsiz Kumbara',
+          target: Number(newGoal.target) || 0,
+          current: Number(newGoal.current) || 0,
+          deadline: newGoal.targetDate || newGoal.deadline || null,
+          icon: newGoal.icon || '🪙',
+          owner: 'ortak',
+          category: newGoal.category || 'Genel'
+        };
+        await pushGenericToSupabase('kasa_kumbaralar', dbPayload);
         get().addLog('Hedef Eklendi', `Yeni hedef: ${name}`);
 
         toast.success('Hedef eklendi! 🎯');
@@ -5101,21 +5152,39 @@ const useStore = create(
 
       updateGoal: (id, updates) => {
         const state = get();
-        const updated = (state.kasa.kumbaralar || []).map(g => g.id === id ? { ...g, ...updates } : g);
+        const updated = (state.kasa.kumbaralar || []).map(g => {
+          if (g.id === id) {
+            const merged = { ...g, ...updates };
+            // Ensure title/name consistency
+            merged.name = updates.title || updates.name || merged.name || merged.title || '';
+            merged.title = merged.name;
+            return merged;
+          }
+          return g;
+        });
         set({ kasa: { ...state.kasa, kumbaralar: updated } });
         const updatedGoal = updated.find(g => g.id === id);
         if (updatedGoal) {
-          pushHedefToSupabase(updatedGoal); // Gölge Yazım
+          const dbPayload = {
+            id: String(updatedGoal.id),
+            name: updatedGoal.name || '',
+            target: Number(updatedGoal.target) || 0,
+            current: Number(updatedGoal.current) || 0,
+            deadline: updatedGoal.targetDate || updatedGoal.deadline || null,
+            icon: updatedGoal.icon || '🪙',
+            owner: 'ortak',
+            category: updatedGoal.category || 'Genel'
+          };
+          pushGenericToSupabase('kasa_kumbaralar', dbPayload);
         }
-
       },
 
       deleteGoal: (id) => {
         const state = get();
         const g = (state.kasa.kumbaralar || []).find(x => x.id === id);
         set({ kasa: { ...state.kasa, kumbaralar: (state.kasa.kumbaralar || []).filter(x => x.id !== id) } });
-        deleteHedefFromSupabase(id); // Gölge Yazım
-        if (g) get().addLog('Hedef Silindi', `${g.name}`);
+        removeGenericFromSupabase('kasa_kumbaralar', id);
+        if (g) get().addLog('Hedef Silindi', `${g.name || g.title}`);
       },
 
       // --- Vision Goal Actions ---
@@ -8795,7 +8864,19 @@ const useStore = create(
           const goals = state.hedefler?.goals || [];
           const moneyGoals = state.kasa?.kumbaralar || [];
           for (const g of goals) await pushHedefToSupabase(g);
-          for (const g of moneyGoals) await pushHedefToSupabase(g);
+          for (const g of moneyGoals) {
+            const dbPayload = {
+              id: String(g.id),
+              name: g.name || g.title || '',
+              target: Number(g.target) || 0,
+              current: Number(g.current) || 0,
+              deadline: g.targetDate || g.deadline || null,
+              icon: g.icon || '🪙',
+              owner: 'ortak',
+              category: g.category || 'Genel'
+            };
+            await pushGenericToSupabase('kasa_kumbaralar', dbPayload);
+          }
 
           // 2. Geçmiş
           const compHist = state.hedefler?.completedHistory || [];
@@ -8837,29 +8918,63 @@ const useStore = create(
 
         if (found) {
           set({ kasa: { ...state.kasa, kumbaralar: updatedMoney } });
-          pushHedefToSupabase(updatedMoney.find(g => g.id === id));
+          const targetKumbara = updatedMoney.find(g => g.id === id);
+          if (targetKumbara) {
+            const dbPayload = {
+              id: String(targetKumbara.id),
+              name: targetKumbara.name || targetKumbara.title || '',
+              target: Number(targetKumbara.target) || 0,
+              current: Number(targetKumbara.current) || 0,
+              deadline: targetKumbara.targetDate || targetKumbara.deadline || null,
+              icon: targetKumbara.icon || '🪙',
+              owner: 'ortak',
+              category: targetKumbara.category || 'Genel'
+            };
+            pushGenericToSupabase('kasa_kumbaralar', dbPayload);
+          }
         }
       },
 
       updateGoal: (id, updates) => {
         const state = get();
-        const updated = (state.kasa.kumbaralar || []).map(g =>
-          g.id === id ? { ...g, ...updates } : g
-        );
+        const updated = (state.kasa.kumbaralar || []).map(g => {
+          if (g.id === id) {
+            const merged = { ...g, ...updates };
+            // Ensure title/name consistency
+            merged.name = updates.title || updates.name || merged.name || merged.title || '';
+            merged.title = merged.name;
+            return merged;
+          }
+          return g;
+        });
         set({ kasa: { ...state.kasa, kumbaralar: updated } });
         const g = updated.find(x => x.id === id);
-        if (g) pushHedefToSupabase(g);
+        if (g) {
+          const dbPayload = {
+            id: String(g.id),
+            name: g.name || '',
+            target: Number(g.target) || 0,
+            current: Number(g.current) || 0,
+            deadline: g.targetDate || g.deadline || null,
+            icon: g.icon || '🪙',
+            owner: 'ortak',
+            category: g.category || 'Genel'
+          };
+          pushGenericToSupabase('kasa_kumbaralar', dbPayload);
+        }
       },
 
       deleteGoal: (id) => {
         const state = get();
+        const g = (state.kasa.kumbaralar || []).find(x => x.id === id);
         set({
           kasa: {
             ...state.kasa,
-            kumbaralar: (state.kasa.kumbaralar || []).filter(g => g.id !== id)
+            kumbaralar: (state.kasa.kumbaralar || []).filter(x => x.id !== id)
           }
         });
-        deleteHedefFromSupabase(id);
+        removeGenericFromSupabase('kasa_kumbaralar', id);
+        if (g) get().addLog('Hedef Silindi', `${g.name || g.title}`);
       },
 
       completeGoal: (id, type, reflection) => {
@@ -8885,7 +9000,7 @@ const useStore = create(
                 completedHistory: [completedGoal, ...(current.hedefler.completedHistory || [])]
               }
             }));
-            deleteHedefFromSupabase(id);
+            removeGenericFromSupabase('kasa_kumbaralar', id);
           } else {
             set(current => ({
               hedefler: {
@@ -8924,7 +9039,7 @@ const useStore = create(
                 failedHistory: [failedGoal, ...(current.hedefler.failedHistory || [])]
               }
             }));
-            deleteHedefFromSupabase(id);
+            removeGenericFromSupabase('kasa_kumbaralar', id);
           } else {
             set(current => ({
               hedefler: {
