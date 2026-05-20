@@ -8,7 +8,7 @@ import {
   Plus, Trash2, Calendar, MapPin, 
   Hotel, Wallet, CheckSquare, Square, Trash, Cloud, Sun, CloudRain, CloudSnow, CloudLightning,
   ArrowRight, AlertCircle, Info, Timer, X, ArrowLeft,
-  PlusCircle, ChevronRight, ExternalLink, Moon,
+  PlusCircle, ChevronRight, ExternalLink, Moon, Home, Compass, HelpCircle,
   ChevronUp, ChevronDown,
   Search, Flag, Edit3, Check, DollarSign, Package, RotateCcw,
   Car, Train, Ship
@@ -36,6 +36,307 @@ const CITY_TRANSLATIONS = {
 const normalizeText = (text) => {
   if (!text) return "";
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').toLowerCase().trim();
+};
+
+const DRIVING_ROUTES = {
+  'antalya': {
+    distance: '700',
+    duration: '8',
+    route: 'İstanbul - Osmangazi Köprüsü - Bursa - Kütahya - Afyon - Burdur - Antalya (En Kısa Paralı Rota)',
+    stops: 'Afyon (Kolaylı Tesisleri / Sucuk Döner 😋)',
+    returnStops: 'Bozüyük (Ömür Köfte / Köfte Molası 😋)',
+    tollsCost: '550',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Antalya/'
+  },
+  'ankara': {
+    distance: '450',
+    duration: '5',
+    route: 'İstanbul - Anadolu Otoyolu (O-4) (Otoyol Rota)',
+    stops: 'Bolu Dağı (Koru Park / Et Mangal 🥩)',
+    returnStops: 'Bolu (Düzce Tesisleri / Çay Molası ☕)',
+    tollsCost: '120',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Ankara/'
+  },
+  'izmir': {
+    distance: '480',
+    duration: '4.5',
+    route: 'İstanbul - Osmangazi Köprüsü - O-5 İzmir Otoyolu (Otoyol Rota)',
+    stops: 'Oksijen Tesisleri (Yemek & Dinlenme 🍔☕)',
+    returnStops: 'Bursa Oksijen (Kahve Molası ☕)',
+    tollsCost: '750',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Izmir/'
+  },
+  'bodrum': {
+    distance: '700',
+    duration: '7.5',
+    route: 'İstanbul - Osmangazi Köprüsü - O-5 - Milas - Bodrum (Hızlı Paralı Rota)',
+    stops: 'Bursa Oksijen 375 & Aydın Giriş (Çöp Şiş Rota 😋)',
+    returnStops: 'Manisa (Mesir Tesisleri) & Yalova Oksijen',
+    tollsCost: '820',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Bodrum,+Mu%C4%9Fla/'
+  },
+  'fethiye': {
+    distance: '780',
+    duration: '8.5',
+    route: 'İstanbul - Osmangazi Köprüsü - O-5 - Muğla - Fethiye',
+    stops: 'Balıkesir Oksijen & Çine (Köfteci Tahsin 😋)',
+    returnStops: 'Muğla (Sakar Geçidi Seyir Alanı 🌅) & Bursa Oksijen',
+    tollsCost: '820',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Fethiye,+Mu%C4%9Fla/'
+  },
+  'marmaris': {
+    distance: '720',
+    duration: '7.5',
+    route: 'İstanbul - Osmangazi Köprüsü - O-5 - Muğla - Marmaris',
+    stops: 'Manisa Giriş & Çine (Çöp Şiş Molası 😋)',
+    returnStops: 'Balıkesir Oksijen & Gebze Oksijen',
+    tollsCost: '820',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Marmaris,+Mu%C4%9Fla/'
+  },
+  'mugla': {
+    distance: '670',
+    duration: '7',
+    route: 'İstanbul - Osmangazi Köprüsü - O-5 - Aydın - Muğla',
+    stops: 'Balıkesir Oksijen & Çine (Yemek Molası 😋)',
+    returnStops: 'Bursa Oksijen & Yalova Oksijen',
+    tollsCost: '820',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Mugla/'
+  },
+  'bursa': {
+    distance: '155',
+    duration: '2',
+    route: 'İstanbul - Osmangazi Köprüsü - Bursa Otoyolu',
+    stops: 'Gebze Oksijen (Yol Üstü Kahvesi ☕)',
+    returnStops: 'Dilovası Oksijen (Manzara Molası 🌉)',
+    tollsCost: '350',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Bursa/'
+  },
+  'sapanca': {
+    distance: '135',
+    duration: '1.5',
+    route: 'İstanbul - Anadolu Otoyolu (O-4)',
+    stops: 'Kartepe sapağı (Dere Ağzı Alabalık 🐟)',
+    returnStops: 'Sakarya Tesisleri (Çay Molası ☕)',
+    tollsCost: '45',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Sapanca,+Sakarya/'
+  },
+  'sakarya': {
+    distance: '145',
+    duration: '1.5',
+    route: 'İstanbul - Anadolu Otoyolu (O-4)',
+    stops: 'Sapanca Otoyol Tesisleri (Çay Molası ☕)',
+    returnStops: 'Gebze Tesisleri',
+    tollsCost: '45',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Sakarya/'
+  },
+  'canakkale': {
+    distance: '310',
+    duration: '3.5',
+    route: 'İstanbul - Tekirdağ - Malkara - 1915 Çanakkale Köprüsü Rota',
+    stops: 'Tekirdağ (Özcanlar Köfte Molası 😋)',
+    returnStops: 'Gelibolu (Balık Ekmeği Molası 🐟)',
+    tollsCost: '690',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Canakkale/'
+  },
+  'bolu': {
+    distance: '260',
+    duration: '3',
+    route: 'İstanbul - Anadolu Otoyolu (O-4)',
+    stops: 'Sapanca Oksijen Tesisleri (Çay Molası ☕)',
+    returnStops: 'Düzce Dinlenme Tesisleri',
+    tollsCost: '60',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Bolu/'
+  },
+  'kapadokya': {
+    distance: '730',
+    duration: '7.5',
+    route: 'İstanbul - Bolu - Ankara Otoyolu - Şereflikoçhisar - Nevşehir',
+    stops: 'Bolu Dağı & Tuz Gölü (Fotoğraf ve Manzara Molası 📸)',
+    returnStops: 'Aksaray Dinlenme Tesisi & Sakarya Oksijen',
+    tollsCost: '180',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Kapadokya/'
+  },
+  'nevsehir': {
+    distance: '730',
+    duration: '7.5',
+    route: 'İstanbul - Bolu - Ankara Otoyolu - Şereflikoçhisar - Nevşehir',
+    stops: 'Bolu Dağı & Tuz Gölü (Fotoğraf ve Manzara Molası 📸)',
+    returnStops: 'Aksaray Dinlenme Tesisi & Sakarya Oksijen',
+    tollsCost: '180',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Nevsehir/'
+  },
+  'selanik': {
+    distance: '600',
+    duration: '6.5',
+    route: 'İstanbul - Tekirdağ - İpsala Sınır Kapısı - Dedeağaç - Kavala - Selanik (A2 Egnatia Odos)',
+    stops: 'Keşan (Satır Et Molası 🥩) & Kavala (Kurabiye & Kahve ☕)',
+    returnStops: 'Kavala Kurabiyecisi & İpsala Gümrük 🛂',
+    tollsCost: '500', // 350 TL + 15 € (~500 TL)
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Thessaloniki,+Greece/'
+  },
+  'thessaloniki': {
+    distance: '600',
+    duration: '6.5',
+    route: 'İstanbul - Tekirdağ - İpsala Sınır Kapısı - Dedeağaç - Kavala - Selanik (A2 Egnatia Odos)',
+    stops: 'Keşan (Satır Et Molası 🥩) & Kavala (Kurabiye & Kahve ☕)',
+    returnStops: 'Kavala Kurabiyecisi & İpsala Gümrük 🛂',
+    tollsCost: '500',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Thessaloniki,+Greece/'
+  },
+  'atina': {
+    distance: '1100',
+    duration: '11',
+    route: 'İstanbul - İpsala - Selanik - Atina (A1 Otoyolu)',
+    stops: 'Selanik (Mola ☕) & Lamia (Yemek Molası 🍔)',
+    returnStops: 'Lamia & Selanik Giriş',
+    tollsCost: '1800', // 350 TL + 40 €
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Athens,+Greece/'
+  },
+  'athens': {
+    distance: '1100',
+    duration: '11',
+    route: 'İstanbul - İpsala - Selanik - Atina (A1 Otoyolu)',
+    stops: 'Selanik (Mola ☕) & Lamia (Yemek Molası 🍔)',
+    returnStops: 'Lamia & Selanik Giriş',
+    tollsCost: '1800',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Athens,+Greece/'
+  },
+  'halkidiki': {
+    distance: '680',
+    duration: '7.5',
+    route: 'İstanbul - İpsala - Kavala - Halkidiki',
+    stops: 'Keşan & Asprovalta (Deniz Kenarı Mola 🌊)',
+    returnStops: 'Kavala & İpsala Gümrük',
+    tollsCost: '900',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Chalkidiki,+Greece/'
+  },
+  'thassos': {
+    distance: '450',
+    duration: '5.5',
+    route: 'İstanbul - İpsala - Keramoti (Feribot 🚢) - Thassos',
+    stops: 'İpsala Sınır Kapısı (Gümrük Molası 🛂)',
+    returnStops: 'Keramoti Limanı & Keşan',
+    tollsCost: '1460', // 350 TL + 30 €
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Keramoti,+Greece/'
+  },
+  'tasoz': {
+    distance: '450',
+    duration: '5.5',
+    route: 'İstanbul - İpsala - Keramoti (Feribot 🚢) - Thassos',
+    stops: 'İpsala Sınır Kapısı (Gümrük Molası 🛂)',
+    returnStops: 'Keramoti Limanı & Keşan',
+    tollsCost: '1460',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Keramoti,+Greece/'
+  },
+  'dedeagac': {
+    distance: '300',
+    duration: '3.5',
+    route: 'İstanbul - Tekirdağ - İpsala - Alexandroupoli',
+    stops: 'Keşan (Köfte Molası 😋)',
+    returnStops: 'Keşan Satır Et',
+    tollsCost: '335',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Alexandroupoli,+Greece/'
+  },
+  'alexandroupoli': {
+    distance: '300',
+    duration: '3.5',
+    route: 'İstanbul - Tekirdağ - İpsala - Alexandroupoli',
+    stops: 'Keşan (Köfte Molası 😋)',
+    returnStops: 'Keşan Satır Et',
+    tollsCost: '335',
+    navigationLink: 'https://www.google.com/maps/dir/Istanbul/Alexandroupoli,+Greece/'
+  },
+  'izmir-antalya': {
+    distance: '450',
+    duration: '5.5',
+    route: 'İzmir - Aydın Otoyolu - Denizli - Acıpayam - Korkuteli - Antalya (En Kısa Güzergah)',
+    stops: 'Denizli Giriş (Fırın Kebabı 🥩) & Korkuteli (Yanık Dondurma 🍦)',
+    returnStops: 'Denizli & Aydın Oksijen Tesisleri',
+    tollsCost: '150',
+    navigationLink: 'https://www.google.com/maps/dir/Izmir/Antalya/'
+  },
+  'ankara-antalya': {
+    distance: '480',
+    duration: '5.5',
+    route: 'Ankara - Konya Yolu - Kulu - Cihanbeyli - Konya - Seydişehir - Akseki - Antalya (Manzaralı Yol)',
+    stops: 'Konya (Etliekmek Molası 🍕) & Seydişehir (Dinlenme Tesisleri)',
+    returnStops: 'Akseki & Cihanbeyli',
+    tollsCost: '0',
+    navigationLink: 'https://www.google.com/maps/dir/Ankara/Antalya/'
+  },
+  'ankara-bodrum': {
+    distance: '710',
+    duration: '8',
+    route: 'Ankara - Polatlı - Afyon - Denizli - Muğla - Milas - Bodrum',
+    stops: 'Polatlı & Afyon (Sucuk Döner 😋) & Denizli (Yemek Molası)',
+    returnStops: 'Denizli & Afyon Tesisleri',
+    tollsCost: '0',
+    navigationLink: 'https://www.google.com/maps/dir/Ankara/Bodrum,+Mu%C4%9Fla/'
+  }
+};
+
+const getDrivingRouteInfo = (from, to) => {
+  const normFrom = normalizeText(from || 'İstanbul');
+  const normTo = normalizeText(to || '');
+  
+  if (normFrom.includes('izmir') && normTo.includes('antalya')) return DRIVING_ROUTES['izmir-antalya'];
+  if (normFrom.includes('ankara') && normTo.includes('antalya')) return DRIVING_ROUTES['ankara-antalya'];
+  if (normFrom.includes('ankara') && normTo.includes('bodrum')) return DRIVING_ROUTES['ankara-bodrum'];
+  
+  const matchedKey = Object.keys(DRIVING_ROUTES).find(key => normTo.includes(key));
+  if (matchedKey) {
+    return DRIVING_ROUTES[matchedKey];
+  }
+  
+  return {
+    distance: '500',
+    duration: '6',
+    route: `${from || 'İstanbul'} - Çevre Otoyolu - Devlet Yolu (D100/E80 Rota)`,
+    stops: 'Yol Üstü Dinlenme Tesisleri ☕',
+    returnStops: 'Yol Üstü Dinlenme Tesisleri ☕',
+    tollsCost: '0',
+  };
+};
+
+const calculateArrivalTime = (depTime, durationStr) => {
+  if (!depTime) return '';
+  const parts = String(depTime).trim().split(':');
+  if (parts.length < 2) return '';
+  let hours = parseInt(parts[0], 10);
+  let minutes = parseInt(parts[1], 10);
+  if (isNaN(hours) || isNaN(minutes)) return '';
+
+  let durationHours = 0;
+  let durationMinutes = 0;
+  const cleanDuration = String(durationStr).toLowerCase().replace(/saat/g, '').replace(/h/g, '').trim();
+  
+  if (cleanDuration.includes(':')) {
+    const dp = cleanDuration.split(':');
+    durationHours = parseInt(dp[0], 10) || 0;
+    durationMinutes = parseInt(dp[1], 10) || 0;
+  } else {
+    const val = parseFloat(cleanDuration) || 0;
+    durationHours = Math.floor(val);
+    durationMinutes = Math.round((val - durationHours) * 60);
+  }
+
+  let totalMinutes = minutes + durationMinutes;
+  let extraHours = Math.floor(totalMinutes / 60);
+  let arrMinutes = totalMinutes % 60;
+  let arrHours = (hours + durationHours + extraHours) % 24;
+
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${pad(arrHours)}:${pad(arrMinutes)}`;
+};
+
+const parseTollsCost = (val) => {
+  if (!val) return 0;
+  const str = String(val).toUpperCase().trim();
+  const num = parseFloat(str.replace(/[^0-9.]/g, '')) || 0;
+  if (str.includes('€') || str.includes('EUR') || str.includes('EURO')) {
+    return Math.round(num * 37); // EUR to TL conversion rate = 37
+  }
+  return Math.round(num);
 };
 
 // --- DYNAMIC AI PARSER ENGINE ---
@@ -1321,7 +1622,7 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
         )}
 
         {step === 3 && (
-          <div className="w-step">
+          <div className="w-step animate-fadeIn">
             <h4>🚗 Ulaşım & Konaklama</h4>
             <div className="w-option-group">
               <label>Ulaşım Aracı</label>
@@ -1332,14 +1633,45 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
                   { id: 'gemi', icon: '🚢', label: 'Gemi' },
                   { id: 'tren', icon: '🚆', label: 'Tren' }
                 ].map(t => (
-                  <button key={t.id} className={formData.transportType === t.id ? 'active' : ''} onClick={() => setFormData({...formData, transportType: t.id})}>
+                  <button type="button" key={t.id} className={formData.transportType === t.id ? 'active' : ''} onClick={() => setFormData({...formData, transportType: t.id})}>
                     <span style={{fontSize:'20px'}}>{t.icon}</span>
                     <span>{t.label}</span>
                   </button>
                 ))}
               </div>
             </div>
-            <input placeholder="Konaklama (Otel/AirBnb)" value={formData.hotel} onChange={e => setFormData({...formData, hotel: e.target.value})} style={{marginTop:'15px'}} />
+            
+            <div className="w-option-group" style={{ marginTop: '15px' }}>
+              <label>Konaklama Seçeneği</label>
+              <select
+                style={{ width: '100%', padding: '10px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', background: 'var(--card-bg, #fff)', color: 'var(--text-color, #333)', fontSize: '13px', fontWeight: '500', marginBottom: '10px' }}
+                value={formData.accommodationType || 'hotel'}
+                onChange={(e) => {
+                  const typeVal = e.target.value;
+                  setFormData(prev => ({
+                    ...prev,
+                    accommodationType: typeVal,
+                    hotel: typeVal === 'none' ? 'Konaklama Yok' : (prev.hotel === 'Konaklama Yok' ? '' : prev.hotel)
+                  }));
+                }}
+              >
+                <option value="hotel">🏨 Otel Konaklaması</option>
+                <option value="airbnb">🏠 Airbnb / Kiralık Ev</option>
+                <option value="home">🏡 Kendi Evimiz / Aile Evi</option>
+                <option value="camp">⛺ Kamp Alanı</option>
+                <option value="other">❓ Diğer Konaklama</option>
+                <option value="none">🚫 Konaklama Yok (Günübirlik / Yolda)</option>
+              </select>
+            </div>
+
+            {formData.accommodationType !== 'none' && (
+              <input 
+                placeholder={formData.accommodationType === 'airbnb' ? "Airbnb Adı / Detayı" : formData.accommodationType === 'home' ? "Ev Detayı / Sahibi" : "Otel Adı"} 
+                value={formData.hotel === 'Konaklama Yok' ? '' : formData.hotel} 
+                onChange={e => setFormData({...formData, hotel: e.target.value})} 
+                style={{ marginTop: '5px' }} 
+              />
+            )}
           </div>
         )}
 
@@ -1817,44 +2149,54 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
   // Local state for forms
   const [depForm, setDepForm] = useState(trip.transportation?.departure?.flightNo ? trip.transportation.departure : fallbackDep);
   const [retForm, setRetForm] = useState(trip.transportation?.return?.flightNo ? trip.transportation.return : fallbackRet);
-  const [accForm, setAccForm] = useState(trip.accommodation?.hotel ? trip.accommodation : getFallbackData('hotel', trip));
+  const [accForm, setAccForm] = useState(() => {
+    return (trip.accommodation && (trip.accommodation.hotel !== undefined || trip.accommodation.type !== undefined))
+      ? trip.accommodation
+      : getFallbackData('hotel', trip);
+  });
 
-  const [depCarForm, setDepCarForm] = useState(() => ({
-    startPoint: 'İstanbul',
-    endPoint: trip.city || 'Antalya',
-    distance: trip.city && normalizeText(trip.city) === 'antalya' ? '700' : '',
-    duration: trip.city && normalizeText(trip.city) === 'antalya' ? '8' : '',
-    route: 'D650 (Afyon üzerinden)',
-    stops: 'Afyon (Mola / Sucuk Döner 😋)',
-    departureTime: '06:00',
-    fuelConsumption: '7.5',
-    fuelPrice: '43',
-    tollsCost: '0',
-    navigationLink: '',
-    checkTires: false,
-    checkOil: false,
-    checkWater: false,
-    checkHgs: false,
-    ...(trip.transportation?.depCar || {})
-  }));
-  const [retCarForm, setRetCarForm] = useState(() => ({
-    startPoint: trip.city || 'Antalya',
-    endPoint: 'İstanbul',
-    distance: trip.city && normalizeText(trip.city) === 'antalya' ? '700' : '',
-    duration: trip.city && normalizeText(trip.city) === 'antalya' ? '8' : '',
-    route: 'D650 (Afyon üzerinden)',
-    stops: 'Bozüyük (Köfte Molası 😋)',
-    departureTime: '10:00',
-    fuelConsumption: '7.5',
-    fuelPrice: '43',
-    tollsCost: '0',
-    navigationLink: '',
-    checkTires: false,
-    checkOil: false,
-    checkWater: false,
-    checkHgs: false,
-    ...(trip.transportation?.retCar || {})
-  }));
+  const [depCarForm, setDepCarForm] = useState(() => {
+    const routeInfo = getDrivingRouteInfo('İstanbul', trip.city);
+    return {
+      startPoint: 'İstanbul',
+      endPoint: trip.city || 'Antalya',
+      distance: routeInfo.distance,
+      duration: routeInfo.duration,
+      route: routeInfo.route,
+      stops: routeInfo.stops,
+      departureTime: '06:00',
+      fuelConsumption: '7.5',
+      fuelPrice: '43',
+      tollsCost: routeInfo.tollsCost,
+      navigationLink: routeInfo.navigationLink || '',
+      checkTires: false,
+      checkOil: false,
+      checkWater: false,
+      checkHgs: false,
+      ...(trip.transportation?.depCar || {})
+    };
+  });
+  const [retCarForm, setRetCarForm] = useState(() => {
+    const routeInfo = getDrivingRouteInfo('İstanbul', trip.city);
+    return {
+      startPoint: trip.city || 'Antalya',
+      endPoint: 'İstanbul',
+      distance: routeInfo.distance,
+      duration: routeInfo.duration,
+      route: routeInfo.route,
+      stops: routeInfo.returnStops || routeInfo.stops,
+      departureTime: '10:00',
+      fuelConsumption: '7.5',
+      fuelPrice: '43',
+      tollsCost: routeInfo.tollsCost,
+      navigationLink: routeInfo.navigationLink || '',
+      checkTires: false,
+      checkOil: false,
+      checkWater: false,
+      checkHgs: false,
+      ...(trip.transportation?.retCar || {})
+    };
+  });
 
   const [depTrainForm, setDepTrainForm] = useState(trip.transportation?.depTrain || {
     trainNo: '', wagon: '', seat: '', pnr: '', time: '', duration: '', station: 'Söğütlüçeşme', destStation: trip.city || 'Ankara'
@@ -1873,20 +2215,25 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
   useEffect(() => {
     const rawDep = trip.transportation?.departure?.flightNo ? trip.transportation.departure : getFallbackData('flight', trip);
     const rawRet = trip.transportation?.return?.flightNo ? trip.transportation.return : getFallbackData('flight_return', trip);
-    const rawAcc = trip.accommodation?.hotel ? trip.accommodation : getFallbackData('hotel', trip);
+    
+    const rawAcc = (trip.accommodation && (trip.accommodation.hotel !== undefined || trip.accommodation.type !== undefined))
+      ? trip.accommodation
+      : getFallbackData('hotel', trip);
+
+    const routeInfo = getDrivingRouteInfo(trip.transportation?.depCar?.startPoint || 'İstanbul', trip.city);
 
     const rawDepCar = {
       startPoint: 'İstanbul',
       endPoint: trip.city || 'Antalya',
-      distance: trip.city && normalizeText(trip.city) === 'antalya' ? '700' : '',
-      duration: trip.city && normalizeText(trip.city) === 'antalya' ? '8' : '',
-      route: 'D650 (Afyon üzerinden)',
-      stops: 'Afyon (Mola / Sucuk Döner 😋)',
+      distance: routeInfo.distance,
+      duration: routeInfo.duration,
+      route: routeInfo.route,
+      stops: routeInfo.stops,
       departureTime: '06:00',
       fuelConsumption: '7.5',
       fuelPrice: '43',
-      tollsCost: '0',
-      navigationLink: '',
+      tollsCost: routeInfo.tollsCost,
+      navigationLink: routeInfo.navigationLink || '',
       checkTires: false,
       checkOil: false,
       checkWater: false,
@@ -1896,15 +2243,15 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
     const rawRetCar = {
       startPoint: trip.city || 'Antalya',
       endPoint: 'İstanbul',
-      distance: trip.city && normalizeText(trip.city) === 'antalya' ? '700' : '',
-      duration: trip.city && normalizeText(trip.city) === 'antalya' ? '8' : '',
-      route: 'D650 (Afyon üzerinden)',
-      stops: 'Bozüyük (Köfte Molası 😋)',
+      distance: routeInfo.distance,
+      duration: routeInfo.duration,
+      route: routeInfo.route,
+      stops: routeInfo.returnStops || routeInfo.stops,
       departureTime: '10:00',
       fuelConsumption: '7.5',
       fuelPrice: '43',
-      tollsCost: '0',
-      navigationLink: '',
+      tollsCost: routeInfo.tollsCost,
+      navigationLink: routeInfo.navigationLink || '',
       checkTires: false,
       checkOil: false,
       checkWater: false,
@@ -1937,6 +2284,20 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
     setRetTrainForm(rawRetTrain);
     setDepShipForm(rawDepShip);
     setRetShipForm(rawRetShip);
+
+    // Auto-save calculated route to Supabase if it wasn't there before
+    if (effectiveTransportType === 'araba' && (!trip.transportation?.depCar || !trip.transportation.depCar.distance)) {
+      setTimeout(() => {
+        onUpdate({
+          ...trip,
+          transportation: {
+            ...(trip.transportation || {}),
+            depCar: rawDepCar,
+            retCar: rawRetCar
+          }
+        });
+      }, 200);
+    }
 
     if (cleanedHotel !== rawAcc.hotel || cleanedAddress !== rawAcc.address) {
       const fixedAcc = { ...rawAcc, hotel: cleanedHotel, address: cleanedAddress };
@@ -2192,124 +2553,80 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
               </button>
             </div>
             <div className="sc-content">
-              {editingSection === 'dep' ? (
-                <div className="sc-inputs">
-                  <input placeholder="Kalkış Yeri (örn. İstanbul)" value={depCarForm.startPoint} onChange={e => setDepCarForm({...depCarForm, startPoint: e.target.value})} />
-                  <input placeholder="Varış Yeri (örn. Antalya)" value={depCarForm.endPoint} onChange={e => setDepCarForm({...depCarForm, endPoint: e.target.value})} />
-                  <input placeholder="Kalkış Saati" value={depCarForm.departureTime} onChange={e => setDepCarForm({...depCarForm, departureTime: e.target.value})} />
-                  <input placeholder="Mesafe (KM)" value={depCarForm.distance} onChange={e => setDepCarForm({...depCarForm, distance: e.target.value})} />
-                  <input placeholder="Tahmini Süre (Saat)" value={depCarForm.duration} onChange={e => setDepCarForm({...depCarForm, duration: e.target.value})} />
-                  <input placeholder="Güzergah (örn. D650)" value={depCarForm.route} onChange={e => setDepCarForm({...depCarForm, route: e.target.value})} />
-                  <input placeholder="Mola Noktaları" value={depCarForm.stops} onChange={e => setDepCarForm({...depCarForm, stops: e.target.value})} />
-                  <input type="number" step="0.1" placeholder="Yakıt Tüketimi (L/100km)" value={depCarForm.fuelConsumption} onChange={e => setDepCarForm({...depCarForm, fuelConsumption: e.target.value})} />
-                  <input type="number" placeholder="Litre Fiyatı (TL)" value={depCarForm.fuelPrice} onChange={e => setDepCarForm({...depCarForm, fuelPrice: e.target.value})} />
-                  <input type="number" placeholder="Otoyol / HGS Ücreti (TL)" value={depCarForm.tollsCost} onChange={e => setDepCarForm({...depCarForm, tollsCost: e.target.value})} />
-                  <input placeholder="Navigasyon Harita Linki" value={depCarForm.navigationLink} onChange={e => setDepCarForm({...depCarForm, navigationLink: e.target.value})} />
-                </div>
-              ) : (
-                <div className="sc-display">
-                  <div className="flight-header-row">
-                    <strong>{depCarForm.route || 'Rota Belirtilmedi'}</strong>
-                    {depCarForm.distance && <span className="f-pnr-badge green">{depCarForm.distance} KM</span>}
-                  </div>
-                  
-                  {/* Road Trip Timeline */}
-                  <div className="car-route-timeline">
-                    <div className="airport-node" style={{ zIndex: 2 }}>
-                      <span className="ap-code" style={{ fontSize: '11px' }}>{depCarForm.startPoint || 'İstanbul'}</span>
-                      <span className="ap-city">Başlangıç</span>
-                      <span className="ap-time">{depCarForm.departureTime || '06:00'}</span>
-                    </div>
-                    
-                    <div className="timeline-connector" style={{ opacity: 0.3 }}>
-                      <div className="line-bar"></div>
-                    </div>
-                    
-                    <div className="moving-car" style={{ bottom: '38%', zIndex: 1, color: '#10b981' }}>
-                      <Car size={12} />
-                    </div>
-                    
-                    <div className="airport-node dest" style={{ zIndex: 2 }}>
-                      <span className="ap-code" style={{ fontSize: '11px' }}>{depCarForm.endPoint || 'Antalya'}</span>
-                      <span className="ap-city">Hedef</span>
-                      <span className="ap-time">~{depCarForm.duration || '8'} Saat</span>
-                    </div>
-                  </div>
+              {(() => {
+                const depStart = depCarForm.startPoint || 'İstanbul';
+                const depEnd = depCarForm.endPoint || trip.city || 'Antalya';
+                const depRouteInfo = getDrivingRouteInfo(depStart, depEnd);
+                const depDuration = depRouteInfo.duration || '6';
+                const depArrivalTime = calculateArrivalTime(depCarForm.departureTime || '06:00', depDuration);
+                const googleMapsLink = `https://www.google.com/maps/dir/${encodeURIComponent(depStart)}/${encodeURIComponent(depEnd)}/`;
 
-                  {depCarForm.stops && (
-                    <div className="flight-detailed-info" style={{ marginTop: '8px' }}>
-                      <div className="f-badge active" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                        🛑 Molalar: {depCarForm.stops}
+                return editingSection === 'dep' ? (
+                  <div className="sc-inputs">
+                    <input 
+                      placeholder="Tahmini Yola Çıkış Saati (örn. 06:00)" 
+                      value={depCarForm.departureTime} 
+                      onChange={e => setDepCarForm({...depCarForm, departureTime: e.target.value})} 
+                    />
+                    <input 
+                      placeholder="Mola Yeri (örn. Afyon Kolaylı Tesisleri)" 
+                      value={depCarForm.stops} 
+                      onChange={e => setDepCarForm({...depCarForm, stops: e.target.value})} 
+                    />
+                  </div>
+                ) : (
+                  <div className="sc-display">
+                    <div className="flight-header-row" style={{ justifyContent: 'center', marginBottom: '14px' }}>
+                      <strong style={{ fontSize: '15px', color: 'var(--text-color, #1e293b)' }}>
+                        🚗 {depStart} ➔ {depEnd} (Sürüş)
+                      </strong>
+                    </div>
+                    
+                    {/* Road Trip Timeline */}
+                    <div className="car-route-timeline" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+                      <div className="airport-node" style={{ zIndex: 2 }}>
+                        <span className="ap-code" style={{ fontSize: '13px', fontWeight: 'bold' }}>{depStart}</span>
+                        <span className="ap-city">Çıkış Saati</span>
+                        <span className="ap-time" style={{ color: '#2563eb', fontWeight: 'bold' }}>{depCarForm.departureTime || '06:00'}</span>
+                      </div>
+                      
+                      <div className="timeline-connector" style={{ opacity: 0.8, flex: 1, margin: '0 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-color, #64748b)', fontWeight: '600', marginBottom: '4px' }}>
+                          ⏱️ ~{depDuration} Saat
+                        </span>
+                        <div className="line-bar" style={{ width: '100%', borderTop: '2px dashed var(--border-color, #cbd5e1)' }}></div>
+                      </div>
+                      
+                      <div className="airport-node dest" style={{ zIndex: 2 }}>
+                        <span className="ap-code" style={{ fontSize: '13px', fontWeight: 'bold' }}>{depEnd}</span>
+                        <span className="ap-city">Tahmini Varış</span>
+                        <span className="ap-time" style={{ color: '#16a34a', fontWeight: 'bold' }}>
+                          {depArrivalTime}
+                        </span>
                       </div>
                     </div>
-                  )}
 
-                  {/* Cost Calculation Dashboard */}
-                  {(() => {
-                    const distanceNum = parseFloat(depCarForm.distance) || 0;
-                    const consumptionNum = parseFloat(depCarForm.fuelConsumption) || 7.5;
-                    const fuelPriceNum = parseFloat(depCarForm.fuelPrice) || 43;
-                    const tollsCostNum = parseFloat(depCarForm.tollsCost) || 0;
-                    const totalFuelCost = Math.round((distanceNum / 100) * consumptionNum * fuelPriceNum);
-                    const totalTripCost = Math.round(totalFuelCost + tollsCostNum);
-                    return (
-                      <div className="car-cost-dashboard">
-                        <div className="ccd-item">
-                          <span className="ccd-label">⛽ Yakıt Maliyeti</span>
-                          <span className="ccd-value">{totalFuelCost.toLocaleString('tr-TR')} ₺</span>
-                          <small className="ccd-subtext">{consumptionNum} L/100km · {fuelPriceNum} ₺/L</small>
-                        </div>
-                        <div className="ccd-item">
-                          <span className="ccd-label">🛣️ Köprü & Otoyol</span>
-                          <span className="ccd-value">{tollsCostNum.toLocaleString('tr-TR')} ₺</span>
-                          <small className="ccd-subtext">HGS / Geçiş Ücreti</small>
-                        </div>
-                        <div className="ccd-item total">
-                          <span className="ccd-label">💰 Toplam Yol Maliyeti</span>
-                          <span className="ccd-value">{totalTripCost.toLocaleString('tr-TR')} ₺</span>
-                          <small className="ccd-subtext">Yakıt + Otoyol</small>
+                    {depCarForm.stops && (
+                      <div className="flight-detailed-info" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                        <div className="f-badge active" style={{ display: 'block', background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.15)', padding: '10px 14px', borderRadius: '12px', fontSize: '12px', textAlign: 'left', width: '100%' }}>
+                          <strong>📍 Mola Yeri:</strong> {depCarForm.stops}
                         </div>
                       </div>
-                    );
-                  })()}
+                    )}
 
-                  {/* Open Navigation Link */}
-                  {depCarForm.navigationLink && (
                     <a 
-                      href={depCarForm.navigationLink} 
+                      href={googleMapsLink} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="nav-link-btn"
+                      style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#3b82f6', color: '#fff', padding: '10px', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '12px', width: '100%' }}
                     >
                       <ExternalLink size={14} style={{ marginRight: '6px' }} />
-                      Haritada Aç / Navigasyon
+                      Haritada Aç / Yol Tarifi
                     </a>
-                  )}
-
-                  {/* Pre-Trip Car Health Checklist */}
-                  <div className="car-checklist-panel">
-                    <div className="ccp-title">🛠️ Yolculuk Öncesi Araç Kontrolleri</div>
-                    <div className="ccp-grid">
-                      <button className={`ccp-item ${depCarForm.checkTires ? 'checked' : ''}`} onClick={() => toggleCarCheck('dep', 'checkTires')}>
-                        {depCarForm.checkTires ? <CheckSquare size={16} /> : <Square size={16} />}
-                        <span>Lastik Basınçları</span>
-                      </button>
-                      <button className={`ccp-item ${depCarForm.checkOil ? 'checked' : ''}`} onClick={() => toggleCarCheck('dep', 'checkOil')}>
-                        {depCarForm.checkOil ? <CheckSquare size={16} /> : <Square size={16} />}
-                        <span>Motor Yağı</span>
-                      </button>
-                      <button className={`ccp-item ${depCarForm.checkWater ? 'checked' : ''}`} onClick={() => toggleCarCheck('dep', 'checkWater')}>
-                        {depCarForm.checkWater ? <CheckSquare size={16} /> : <Square size={16} />}
-                        <span>Silecek & Cam Suyu</span>
-                      </button>
-                      <button className={`ccp-item ${depCarForm.checkHgs ? 'checked' : ''}`} onClick={() => toggleCarCheck('dep', 'checkHgs')}>
-                        {depCarForm.checkHgs ? <CheckSquare size={16} /> : <Square size={16} />}
-                        <span>HGS Bakiyesi</span>
-                      </button>
-                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           </div>
         ) : effectiveTransportType === 'tren' ? (
@@ -2523,101 +2840,80 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
               </button>
             </div>
             <div className="sc-content">
-              {editingSection === 'ret' ? (
-                <div className="sc-inputs">
-                  <input placeholder="Kalkış Yeri (örn. Antalya)" value={retCarForm.startPoint} onChange={e => setRetCarForm({...retCarForm, startPoint: e.target.value})} />
-                  <input placeholder="Varış Yeri (örn. İstanbul)" value={retCarForm.endPoint} onChange={e => setRetCarForm({...retCarForm, endPoint: e.target.value})} />
-                  <input placeholder="Kalkış Saati" value={retCarForm.departureTime} onChange={e => setRetCarForm({...retCarForm, departureTime: e.target.value})} />
-                  <input placeholder="Mesafe (KM)" value={retCarForm.distance} onChange={e => setRetCarForm({...retCarForm, distance: e.target.value})} />
-                  <input placeholder="Tahmini Süre (Saat)" value={retCarForm.duration} onChange={e => setRetCarForm({...retCarForm, duration: e.target.value})} />
-                  <input placeholder="Güzergah (örn. D650)" value={retCarForm.route} onChange={e => setRetCarForm({...retCarForm, route: e.target.value})} />
-                  <input placeholder="Mola Noktaları" value={retCarForm.stops} onChange={e => setRetCarForm({...retCarForm, stops: e.target.value})} />
-                  <input type="number" step="0.1" placeholder="Yakıt Tüketimi (L/100km)" value={retCarForm.fuelConsumption} onChange={e => setRetCarForm({...retCarForm, fuelConsumption: e.target.value})} />
-                  <input type="number" placeholder="Litre Fiyatı (TL)" value={retCarForm.fuelPrice} onChange={e => setRetCarForm({...retCarForm, fuelPrice: e.target.value})} />
-                  <input type="number" placeholder="Otoyol / HGS Ücreti (TL)" value={retCarForm.tollsCost} onChange={e => setRetCarForm({...retCarForm, tollsCost: e.target.value})} />
-                  <input placeholder="Navigasyon Harita Linki" value={retCarForm.navigationLink} onChange={e => setRetCarForm({...retCarForm, navigationLink: e.target.value})} />
-                </div>
-              ) : (
-                <div className="sc-display">
-                  <div className="flight-header-row">
-                    <strong>{retCarForm.route || 'Rota Belirtilmedi'}</strong>
-                    {retCarForm.distance && <span className="f-pnr-badge green">{retCarForm.distance} KM</span>}
-                  </div>
-                  
-                  {/* Road Trip Timeline */}
-                  <div className="car-route-timeline">
-                    <div className="airport-node" style={{ zIndex: 2 }}>
-                      <span className="ap-code" style={{ fontSize: '11px' }}>{retCarForm.startPoint || 'Antalya'}</span>
-                      <span className="ap-city">Başlangıç</span>
-                      <span className="ap-time">{retCarForm.departureTime || '10:00'}</span>
-                    </div>
-                    
-                    <div className="timeline-connector" style={{ opacity: 0.3 }}>
-                      <div className="line-bar"></div>
-                    </div>
-                    
-                    <div className="moving-car" style={{ bottom: '38%', zIndex: 1, color: '#10b981', transform: 'scaleX(-1)' }}>
-                      <Car size={12} />
-                    </div>
-                    
-                    <div className="airport-node dest" style={{ zIndex: 2 }}>
-                      <span className="ap-code" style={{ fontSize: '11px' }}>{retCarForm.endPoint || 'İstanbul'}</span>
-                      <span className="ap-city">Hedef</span>
-                      <span className="ap-time">~{retCarForm.duration || '8'} Saat</span>
-                    </div>
-                  </div>
+              {(() => {
+                const retStart = retCarForm.startPoint || trip.city || 'Antalya';
+                const retEnd = retCarForm.endPoint || 'İstanbul';
+                const retRouteInfo = getDrivingRouteInfo(retStart, retEnd);
+                const retDuration = retRouteInfo.duration || '6';
+                const retArrivalTime = calculateArrivalTime(retCarForm.departureTime || '10:00', retDuration);
+                const googleMapsLink = `https://www.google.com/maps/dir/${encodeURIComponent(retStart)}/${encodeURIComponent(retEnd)}/`;
 
-                  {retCarForm.stops && (
-                    <div className="flight-detailed-info" style={{ marginTop: '8px' }}>
-                      <div className="f-badge active" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                        🛑 Molalar: {retCarForm.stops}
+                return editingSection === 'ret' ? (
+                  <div className="sc-inputs">
+                    <input 
+                      placeholder="Tahmini Yola Çıkış Saati (örn. 10:00)" 
+                      value={retCarForm.departureTime} 
+                      onChange={e => setRetCarForm({...retCarForm, departureTime: e.target.value})} 
+                    />
+                    <input 
+                      placeholder="Mola Yeri (örn. Bozüyük Ömür Köfte)" 
+                      value={retCarForm.stops} 
+                      onChange={e => setRetCarForm({...retCarForm, stops: e.target.value})} 
+                    />
+                  </div>
+                ) : (
+                  <div className="sc-display">
+                    <div className="flight-header-row" style={{ justifyContent: 'center', marginBottom: '14px' }}>
+                      <strong style={{ fontSize: '15px', color: 'var(--text-color, #1e293b)' }}>
+                        🚗 {retStart} ➔ {retEnd} (Sürüş)
+                      </strong>
+                    </div>
+                    
+                    {/* Road Trip Timeline */}
+                    <div className="car-route-timeline" style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+                      <div className="airport-node" style={{ zIndex: 2 }}>
+                        <span className="ap-code" style={{ fontSize: '13px', fontWeight: 'bold' }}>{retStart}</span>
+                        <span className="ap-city">Çıkış Saati</span>
+                        <span className="ap-time" style={{ color: '#2563eb', fontWeight: 'bold' }}>{retCarForm.departureTime || '10:00'}</span>
+                      </div>
+                      
+                      <div className="timeline-connector" style={{ opacity: 0.8, flex: 1, margin: '0 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-color, #64748b)', fontWeight: '600', marginBottom: '4px' }}>
+                          ⏱️ ~{retDuration} Saat
+                        </span>
+                        <div className="line-bar" style={{ width: '100%', borderTop: '2px dashed var(--border-color, #cbd5e1)' }}></div>
+                      </div>
+                      
+                      <div className="airport-node dest" style={{ zIndex: 2 }}>
+                        <span className="ap-code" style={{ fontSize: '13px', fontWeight: 'bold' }}>{retEnd}</span>
+                        <span className="ap-city">Tahmini Varış</span>
+                        <span className="ap-time" style={{ color: '#16a34a', fontWeight: 'bold' }}>
+                          {retArrivalTime}
+                        </span>
                       </div>
                     </div>
-                  )}
 
-                  {/* Cost Calculation Dashboard */}
-                  {(() => {
-                    const distanceNum = parseFloat(retCarForm.distance) || 0;
-                    const consumptionNum = parseFloat(retCarForm.fuelConsumption) || 7.5;
-                    const fuelPriceNum = parseFloat(retCarForm.fuelPrice) || 43;
-                    const tollsCostNum = parseFloat(retCarForm.tollsCost) || 0;
-                    const totalFuelCost = Math.round((distanceNum / 100) * consumptionNum * fuelPriceNum);
-                    const totalTripCost = Math.round(totalFuelCost + tollsCostNum);
-                    return (
-                      <div className="car-cost-dashboard">
-                        <div className="ccd-item">
-                          <span className="ccd-label">⛽ Yakıt Maliyeti</span>
-                          <span className="ccd-value">{totalFuelCost.toLocaleString('tr-TR')} ₺</span>
-                          <small className="ccd-subtext">{consumptionNum} L/100km · {fuelPriceNum} ₺/L</small>
-                        </div>
-                        <div className="ccd-item">
-                          <span className="ccd-label">🛣️ Köprü & Otoyol</span>
-                          <span className="ccd-value">{tollsCostNum.toLocaleString('tr-TR')} ₺</span>
-                          <small className="ccd-subtext">HGS / Geçiş Ücreti</small>
-                        </div>
-                        <div className="ccd-item total">
-                          <span className="ccd-label">💰 Toplam Yol Maliyeti</span>
-                          <span className="ccd-value">{totalTripCost.toLocaleString('tr-TR')} ₺</span>
-                          <small className="ccd-subtext">Yakıt + Otoyol</small>
+                    {retCarForm.stops && (
+                      <div className="flight-detailed-info" style={{ marginTop: '12px', marginBottom: '12px' }}>
+                        <div className="f-badge active" style={{ display: 'block', background: 'rgba(16, 185, 129, 0.08)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.15)', padding: '10px 14px', borderRadius: '12px', fontSize: '12px', textAlign: 'left', width: '100%' }}>
+                          <strong>📍 Mola Yeri:</strong> {retCarForm.stops}
                         </div>
                       </div>
-                    );
-                  })()}
+                    )}
 
-                  {/* Open Navigation Link */}
-                  {retCarForm.navigationLink && (
                     <a 
-                      href={retCarForm.navigationLink} 
+                      href={googleMapsLink} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="nav-link-btn"
+                      style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#3b82f6', color: '#fff', padding: '10px', borderRadius: '12px', textDecoration: 'none', fontWeight: 'bold', fontSize: '12px', width: '100%' }}
                     >
                       <ExternalLink size={14} style={{ marginRight: '6px' }} />
-                      Haritada Aç / Navigasyon
+                      Haritada Aç / Yol Tarifi
                     </a>
-                  )}
-                </div>
-              )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         ) : effectiveTransportType === 'tren' ? (
@@ -2818,71 +3114,138 @@ function TripSmartDetails({ trip, onUpdate, onOpenTracker, onOpenMap, onViewPdf 
         }
 
         {/* Accommodation */}
-        <div className={`smart-card mini ${editingSection === 'acc' ? 'editing' : ''}`}>
-          <div className="sc-header-row">
-            <div className="sc-label">
-              <Hotel size={14} className="sc-icon orange" />
-              <span>Otel</span>
-            </div>
-            <button className="sc-edit-btn" onClick={() => editingSection === 'acc' ? handleSave('acc') : setEditingSection('acc')}>
-              {editingSection === 'acc' ? <Check size={14} /> : <Edit3 size={14} />}
-            </button>
-          </div>
-          <div className="sc-content">
-            {editingSection === 'acc' ? (
-              <div className="sc-inputs">
-                <input placeholder="Otel Adı" value={accForm.hotel} onChange={e => setAccForm({...accForm, hotel: e.target.value})} />
-                <input placeholder="Adres" value={accForm.address} onChange={e => setAccForm({...accForm, address: e.target.value})} />
-                <input placeholder="Booking Link" value={accForm.link} onChange={e => setAccForm({...accForm, link: e.target.value})} />
-              </div>
-            ) : (
-              <div className="sc-display" style={{ width: '100%' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <strong>{accForm.hotel || 'Otel Girilmedi'}</strong>
-                  <small className="truncate" style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', display: 'block' }}>
-                    {accForm.address || 'Adres belirtilmedi'}
-                  </small>
+        {(() => {
+          const type = accForm.type || 'hotel';
+          let accIcon = <Hotel size={14} className="sc-icon orange" />;
+          let accLabel = 'Otel';
+          
+          if (type === 'airbnb') {
+            accIcon = <Home size={14} className="sc-icon blue" />;
+            accLabel = 'Airbnb / Ev';
+          } else if (type === 'home') {
+            accIcon = <Home size={14} className="sc-icon green" />;
+            accLabel = 'Kendi Evimiz';
+          } else if (type === 'camp') {
+            accIcon = <Compass size={14} className="sc-icon emerald" />;
+            accLabel = 'Kamp Alanı';
+          } else if (type === 'other') {
+            accIcon = <HelpCircle size={14} className="sc-icon purple" />;
+            accLabel = 'Konaklama';
+          } else if (type === 'none') {
+            accIcon = <Moon size={14} className="sc-icon slate" />;
+            accLabel = 'Konaklama Yok';
+          }
+          
+          return (
+            <div className={`smart-card mini ${editingSection === 'acc' ? 'editing' : ''}`}>
+              <div className="sc-header-row">
+                <div className="sc-label">
+                  {accIcon}
+                  <span>{accLabel}</span>
                 </div>
+                <button className="sc-edit-btn" onClick={() => editingSection === 'acc' ? handleSave('acc') : setEditingSection('acc')}>
+                  {editingSection === 'acc' ? <Check size={14} /> : <Edit3 size={14} />}
+                </button>
+              </div>
+              <div className="sc-content">
+                {editingSection === 'acc' ? (
+                  <div className="sc-inputs">
+                    <div style={{ marginBottom: '8px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: 'bold', color: '#f59e0b', display: 'block', marginBottom: '4px' }}>Konaklama Tipi:</label>
+                      <select
+                        style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.15)', background: 'var(--card-bg, #fff)', color: 'var(--text-color, #333)', fontSize: '12px' }}
+                        value={accForm.type || 'hotel'}
+                        onChange={(e) => {
+                          const typeVal = e.target.value;
+                          if (typeVal === 'none') {
+                            setAccForm({
+                              type: 'none',
+                              hotel: 'Konaklama Yok',
+                              address: 'Konaklama yapılmayacak / Günübirlik seyahat',
+                              link: '',
+                              bookingId: ''
+                            });
+                          } else {
+                            setAccForm(prev => ({
+                              ...prev,
+                              type: typeVal,
+                              hotel: prev.hotel === 'Konaklama Yok' ? '' : prev.hotel,
+                              address: prev.address === 'Konaklama yapılmayacak / Günübirlik seyahat' ? '' : prev.address
+                            }));
+                          }
+                        }}
+                      >
+                        <option value="hotel">🏨 Otel</option>
+                        <option value="airbnb">🏠 Airbnb / Kiralık Ev</option>
+                        <option value="home">🏡 Kendi Evimiz</option>
+                        <option value="camp">⛺ Kamp Alanı</option>
+                        <option value="other">❓ Diğer</option>
+                        <option value="none">🚫 Konaklama Yok</option>
+                      </select>
+                    </div>
+                    {accForm.type !== 'none' && (
+                      <>
+                        <input placeholder="Konaklama Yeri Adı" value={accForm.hotel} onChange={e => setAccForm({...accForm, hotel: e.target.value})} />
+                        <input placeholder="Adres" value={accForm.address} onChange={e => setAccForm({...accForm, address: e.target.value})} />
+                        <input placeholder="Rezervasyon / Konum Linki" value={accForm.link} onChange={e => setAccForm({...accForm, link: e.target.value})} />
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="sc-display" style={{ width: '100%' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <strong>{accForm.hotel || 'Konaklama Girilmedi'}</strong>
+                      <small className="truncate" style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', display: 'block' }}>
+                        {accForm.address || 'Adres belirtilmedi'}
+                      </small>
+                    </div>
 
-                {/* Visual Hotel Booking Timeline */}
-                {trip.startDate && trip.endDate && (
-                  <div className="hotel-booking-timeline">
-                    <div className="booking-node">
-                      <span className="b-label">🔑 GİRİŞ</span>
-                      <span className="b-date">
-                        {new Date(trip.startDate).toLocaleString('tr-TR', { day: 'numeric', month: 'short' })}
-                      </span>
-                      <span className="b-time">15:00 Sonrası</span>
-                    </div>
-                    
-                    <div className="booking-duration">
-                      <div className="duration-line"></div>
-                      <span className="duration-badge">
-                        🌙 {Math.max(1, Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5))} Gece
-                      </span>
-                      <div className="duration-line"></div>
-                    </div>
-                    
-                    <div className="booking-node dest">
-                      <span className="b-label">🚪 ÇIKIŞ</span>
-                      <span className="b-date">
-                        {new Date(trip.endDate).toLocaleString('tr-TR', { day: 'numeric', month: 'short' })}
-                      </span>
-                      <span className="b-time">12:00 Öncesi</span>
-                    </div>
+                    {/* Visual Hotel Booking Timeline */}
+                    {type !== 'none' && trip.startDate && trip.endDate && (
+                      <div className="hotel-booking-timeline">
+                        <div className="booking-node">
+                          <span className="b-label">🔑 GİRİŞ</span>
+                          <span className="b-date">
+                            {new Date(trip.startDate).toLocaleString('tr-TR', { day: 'numeric', month: 'short' })}
+                          </span>
+                          <span className="b-time">15:00 Sonrası</span>
+                        </div>
+                        
+                        <div className="booking-duration">
+                          <div className="duration-line"></div>
+                          <span className="duration-badge">
+                            🌙 {Math.max(1, Math.round((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5))} Gece
+                          </span>
+                          <div className="duration-line"></div>
+                        </div>
+                        
+                        <div className="booking-node dest">
+                          <span className="b-label">🚪 ÇIKIŞ</span>
+                          <span className="b-date">
+                            {new Date(trip.endDate).toLocaleString('tr-TR', { day: 'numeric', month: 'short' })}
+                          </span>
+                          <span className="b-time">12:00 Öncesi</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-          {editingSection !== 'acc' && (
-            <div className="sc-mini-row" style={{ display: 'flex', gap: '8px' }}>
-              <button className="sc-mini-action" style={{ flex: 1 }} onClick={openMaps}>
-                <MapPin size={12} /> 📍 Haritada Göster
-              </button>
+              {editingSection !== 'acc' && type !== 'none' && (
+                <div className="sc-mini-row" style={{ display: 'flex', gap: '8px' }}>
+                  <button className="sc-mini-action" style={{ flex: 1 }} onClick={openMaps}>
+                    <MapPin size={12} /> 📍 Haritada Göster
+                  </button>
+                  {accForm.link && (
+                    <a href={accForm.link} target="_blank" rel="noopener noreferrer" className="sc-mini-action text-center" style={{ flex: 1, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      <ExternalLink size={12} /> Rezervasyon/Detay
+                    </a>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })()}
       </div>
     </div>
   );

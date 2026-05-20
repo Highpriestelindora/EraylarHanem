@@ -5855,6 +5855,85 @@ const useStore = create(
         
         const firstItemText = isDomestic ? 'Kimlik' : 'Pasaport';
 
+        let initialTransportation = trip.transportation || {
+          departure: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' },
+          return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
+        };
+
+        if (trip.transportType === 'araba' && !initialTransportation.depCar) {
+          const normalizedCity = city.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ı/g, 'i').replace(/İ/g, 'i').trim();
+          let routeData = {
+            distance: '500',
+            duration: '6',
+            route: 'İstanbul - Çevre Otoyolu - Devlet Yolu (D100/E80 Rota)',
+            stops: 'Yol Üstü Dinlenme Tesisleri ☕',
+            returnStops: 'Yol Üstü Dinlenme Tesisleri ☕',
+            tollsCost: '0',
+            navigationLink: `https://www.google.com/maps/dir/Istanbul/${encodeURIComponent(trip.city || '')}/`
+          };
+
+          const storeRoutes = {
+            'antalya': { distance: '700', duration: '8', route: 'İstanbul - Osmangazi Köprüsü - Bursa - Kütahya - Afyon - Burdur - Antalya (En Kısa Paralı Rota)', stops: 'Afyon (Kolaylı Tesisleri / Sucuk Döner 😋)', returnStops: 'Bozüyük (Ömür Köfte / Köfte Molası 😋)', tollsCost: '550' },
+            'ankara': { distance: '450', duration: '5', route: 'İstanbul - Anadolu Otoyolu (O-4) (Otoyol Rota)', stops: 'Bolu Dağı (Koru Park / Et Mangal 🥩)', returnStops: 'Bolu (Düzce Tesisleri / Çay Molası ☕)', tollsCost: '120' },
+            'izmir': { distance: '480', duration: '4.5', route: 'İstanbul - Osmangazi Köprüsü - O-5 İzmir Otoyolu (Otoyol Rota)', stops: 'Oksijen Tesisleri (Yemek & Dinlenme 🍔☕)', returnStops: 'Bursa Oksijen (Kahve Molası ☕)', tollsCost: '750' },
+            'bodrum': { distance: '700', duration: '7.5', route: 'İstanbul - Osmangazi Köprüsü - O-5 - Milas - Bodrum (Hızlı Paralı Rota)', stops: 'Bursa Oksijen 375 & Aydın Giriş (Çöp Şiş Rota 😋)', returnStops: 'Manisa (Mesir Tesisleri) & Yalova Oksijen', tollsCost: '820' },
+            'fethiye': { distance: '780', duration: '8.5', route: 'İstanbul - Osmangazi Köprüsü - O-5 - Muğla - Fethiye', stops: 'Balıkesir Oksijen & Çine (Köfteci Tahsin 😋)', returnStops: 'Muğla (Sakar Geçidi Seyir Alanı 🌅) & Bursa Oksijen', tollsCost: '820' },
+            'marmaris': { distance: '720', duration: '7.5', route: 'İstanbul - Osmangazi Köprüsü - O-5 - Muğla - Marmaris', stops: 'Manisa Giriş & Çine (Çöp Şiş Molası 😋)', returnStops: 'Balıkesir Oksijen & Gebze Oksijen', tollsCost: '820' },
+            'mugla': { distance: '670', duration: '7', route: 'İstanbul - Osmangazi Köprüsü - O-5 - Aydın - Muğla', stops: 'Balıkesir Oksijen & Çine (Yemek Molası 😋)', returnStops: 'Bursa Oksijen & Yalova Oksijen', tollsCost: '820' },
+            'bursa': { distance: '155', duration: '2', route: 'İstanbul - Osmangazi Köprüsü - Bursa Otoyolu', stops: 'Gebze Oksijen (Yol Üstü Kahvesi ☕)', returnStops: 'Dilovası Oksijen (Manzara Molası 🌉)', tollsCost: '350' },
+            'sapanca': { distance: '135', duration: '1.5', route: 'İstanbul - Anadolu Otoyolu (O-4)', stops: 'Kartepe sapağı (Dere Ağzı Alabalık 🐟)', returnStops: 'Sakarya Tesisleri (Çay Molası ☕)', tollsCost: '45' },
+            'sakarya': { distance: '145', duration: '1.5', route: 'İstanbul - Anadolu Otoyolu (O-4)', stops: 'Sapanca Otoyol Tesisleri (Çay Molası ☕)', returnStops: 'Gebze Tesisleri', tollsCost: '45' },
+            'canakkale': { distance: '310', duration: '3.5', route: 'İstanbul - Tekirdağ - Malkara - 1915 Çanakkale Köprüsü Rota', stops: 'Tekirdağ (Özcanlar Köfte Molası 😋)', returnStops: 'Gelibolu (Balık Ekmeği Molası 🐟)', tollsCost: '690' },
+            'bolu': { distance: '260', duration: '3', route: 'İstanbul - Anadolu Otoyolu (O-4)', stops: 'Sapanca Oksijen Tesisleri (Çay Molası ☕)', returnStops: 'Düzce Dinlenme Tesisleri', tollsCost: '60' },
+            'kapadokya': { distance: '730', duration: '7.5', route: 'İstanbul - Bolu - Ankara Otoyolu - Şereflikoçhisar - Nevşehir', stops: 'Bolu Dağı & Tuz Gölü (Fotoğraf ve Manzara Molası 📸)', returnStops: 'Aksaray Dinlenme Tesisi & Sakarya Oksijen', tollsCost: '180' },
+            'nevsehir': { distance: '730', duration: '7.5', route: 'İstanbul - Bolu - Ankara Otoyolu - Şereflikoçhisar - Nevşehir', stops: 'Bolu Dağı & Tuz Gölü (Fotoğraf ve Manzara Molası 📸)', returnStops: 'Aksaray Dinlenme Tesisi & Sakarya Oksijen', tollsCost: '180' },
+            'selanik': { distance: '600', duration: '6.5', route: 'İstanbul - Tekirdağ - İpsala Sınır Kapısı - Dedeağaç - Kavala - Selanik (A2 Egnatia Odos)', stops: 'Keşan (Satır Et Molası 🥩) & Kavala (Kurabiye & Kahve ☕)', returnStops: 'Kavala Kurabiyecisi & İpsala Gümrük 🛂', tollsCost: '500' },
+            'thessaloniki': { distance: '600', duration: '6.5', route: 'İstanbul - Tekirdağ - İpsala Sınır Kapısı - Dedeağaç - Kavala - Selanik (A2 Egnatia Odos)', stops: 'Keşan (Satır Et Molası 🥩) & Kavala (Kurabiye & Kahve ☕)', returnStops: 'Kavala Kurabiyecisi & İpsala Gümrük 🛂', tollsCost: '500' },
+            'atina': { distance: '1100', duration: '11', route: 'İstanbul - İpsala - Selanik - Atina (A1 Otoyolu)', stops: 'Selanik (Mola ☕) & Lamia (Yemek Molası 🍔)', returnStops: 'Lamia & Selanik Giriş', tollsCost: '1800' },
+            'athens': { distance: '1100', duration: '11', route: 'İstanbul - İpsala - Selanik - Atina (A1 Otoyolu)', stops: 'Selanik (Mola ☕) & Lamia (Yemek Molası 🍔)', returnStops: 'Lamia & Selanik Giriş', tollsCost: '1800' },
+            'halkidiki': { distance: '680', duration: '7.5', route: 'İstanbul - İpsala - Kavala - Halkidiki', stops: 'Keşan & Asprovalta (Deniz Kenarı Mola 🌊)', returnStops: 'Kavala & İpsala Gümrük', tollsCost: '900' },
+            'thassos': { distance: '450', duration: '5.5', route: 'İstanbul - İpsala - Keramoti (Feribot 🚢) - Thassos', stops: 'İpsala Sınır Kapısı (Gümrük Molası 🛂)', returnStops: 'Keramoti Limanı & Keşan', tollsCost: '1460' },
+            'tasoz': { distance: '450', duration: '5.5', route: 'İstanbul - İpsala - Keramoti (Feribot 🚢) - Thassos', stops: 'İpsala Sınır Kapısı (Gümrük Molası 🛂)', returnStops: 'Keramoti Limanı & Keşan', tollsCost: '1460' },
+            'dedeagac': { distance: '300', duration: '3.5', route: 'İstanbul - Tekirdağ - İpsala - Alexandroupoli', stops: 'Keşan (Köfte Molası 😋)', returnStops: 'Keşan Satır Et', tollsCost: '335' },
+            'alexandroupoli': { distance: '300', duration: '3.5', route: 'İstanbul - Tekirdağ - İpsala - Alexandroupoli', stops: 'Keşan (Köfte Molası 😋)', returnStops: 'Keşan Satır Et', tollsCost: '335' }
+          };
+
+          const matchedKey = Object.keys(storeRoutes).find(key => normalizedCity.includes(key));
+          if (matchedKey) {
+            routeData = storeRoutes[matchedKey];
+          }
+
+          initialTransportation.depCar = {
+            startPoint: 'İstanbul',
+            endPoint: trip.city || 'Antalya',
+            distance: routeData.distance,
+            duration: routeData.duration,
+            route: routeData.route,
+            stops: routeData.stops,
+            departureTime: '06:00',
+            fuelConsumption: '7.5',
+            fuelPrice: '43',
+            tollsCost: routeData.tollsCost,
+            navigationLink: routeData.navigationLink || `https://www.google.com/maps/dir/Istanbul/${encodeURIComponent(trip.city || '')}/`,
+            checkTires: false, checkOil: false, checkWater: false, checkHgs: false
+          };
+
+          initialTransportation.retCar = {
+            startPoint: trip.city || 'Antalya',
+            endPoint: 'İstanbul',
+            distance: routeData.distance,
+            duration: routeData.duration,
+            route: routeData.route,
+            stops: routeData.returnStops || routeData.stops,
+            departureTime: '10:00',
+            fuelConsumption: '7.5',
+            fuelPrice: '43',
+            tollsCost: routeData.tollsCost,
+            navigationLink: routeData.navigationLink || `https://www.google.com/maps/dir/${encodeURIComponent(trip.city || '')}/Istanbul/`,
+            checkTires: false, checkOil: false, checkWater: false, checkHgs: false
+          };
+        }
+
         const newTrip = {
           id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(),
           family_id: state.family_id,
@@ -5865,11 +5944,14 @@ const useStore = create(
           locationType: trip.locationType || 'yurtdisi',
           transportType: trip.transportType || 'ucak',
           budget: { est: Number(trip.budget) || 0, real: 0 },
-          transportation: {
-            departure: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' },
-            return: { flightNo: '', airline: '', pnr: '', time: '', status: 'Planlandı' }
+          transportation: initialTransportation,
+          accommodation: trip.accommodation || {
+            type: trip.accommodationType || (trip.hotel && trip.hotel.toLowerCase().trim() === 'none' ? 'none' : 'hotel'),
+            hotel: trip.hotel || '',
+            address: (trip.accommodationType === 'none' || (trip.hotel && trip.hotel.toLowerCase().trim() === 'none')) ? 'Konaklama yapılmayacak / Günübirlik seyahat' : '',
+            bookingId: '',
+            link: ''
           },
-          accommodation: { hotel: '', address: '', bookingId: '', link: '' },
           ...trip,
           valiz: trip.valiz || {
             gorkem: [
