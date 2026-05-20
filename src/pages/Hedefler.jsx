@@ -579,44 +579,68 @@ export default function Hedefler() {
               );
             })()}
 
-            {/* Premium 3-Step Horizontal Timeline */}
-            <div className="gcp-steps-timeline">
-              {steps.map((step, index) => {
-                let status = 'pending';
-                if (perc >= 100) {
-                  status = 'completed';
-                } else if (perc > 0) {
-                  if (index === 0) status = perc > 33.3 ? 'completed' : 'active';
-                  else if (index === 1) status = perc > 66.6 ? 'completed' : (perc > 33.3 ? 'active' : 'pending');
-                  else if (index === 2) status = perc > 66.6 ? 'active' : 'pending';
-                }
-                const colors = ['coral', 'teal', 'pink'];
-                return (
-                  <div key={step.id} className={`gcp-timeline-step ${status} ${colors[index]}`}>
-                    <div className="gcp-step-dot" title={`${step.range}: ${step.title || 'Planlanıyor'}`}>
-                      {status === 'completed' ? '✓' : step.id}
-                    </div>
-                    <div className="gcp-step-info">
-                      <span className="gcp-step-range">{step.range}</span>
-                      <span className="gcp-step-text" title={step.title || 'Planlanıyor'}>{step.title || 'Planlanıyor'}</span>
-                    </div>
+            {isMoney ? (
+              <div className="gcp-kumbara-progress-box">
+                <div className="gcp-kumbara-stats">
+                  <div className="gcp-kumbara-stat-item">
+                    <span className="gcp-kumbara-stat-label">Biriken</span>
+                    <strong className="gcp-kumbara-stat-val">
+                      {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.current)}
+                    </strong>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="gcp-kumbara-stat-item right">
+                    <span className="gcp-kumbara-stat-label">Hedef</span>
+                    <strong className="gcp-kumbara-stat-val">
+                      {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.target)}
+                    </strong>
+                  </div>
+                </div>
 
-            <div className="gcp-milestones">
-               {isMoney ? (
-                 <div className="money-milestone">
-                    <strong>{new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.current)}</strong>
-                    <span> / {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(g.target)}</span>
-                 </div>
-               ) : (
-                 <div className="vision-milestone">
-                    <span>%{Math.round(perc)} Tamamlandı</span>
+                <div className="gcp-kumbara-bar-container">
+                  <div className="gcp-kumbara-bar-fill-track">
+                    <div 
+                      className="gcp-kumbara-bar-fill" 
+                      style={{ width: `${Math.min(100, perc)}%` }}
+                    />
                   </div>
-               )}
-            </div>
+                  <span className="gcp-kumbara-percent">%{Math.round(perc)}</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Premium 3-Step Horizontal Timeline */}
+                <div className="gcp-steps-timeline">
+                  {steps.map((step, index) => {
+                    let status = 'pending';
+                    if (perc >= 100) {
+                      status = 'completed';
+                    } else if (perc > 0) {
+                      if (index === 0) status = perc > 33.3 ? 'completed' : 'active';
+                      else if (index === 1) status = perc > 66.6 ? 'completed' : (perc > 33.3 ? 'active' : 'pending');
+                      else if (index === 2) status = perc > 66.6 ? 'active' : 'pending';
+                    }
+                    const colors = ['coral', 'teal', 'pink'];
+                    return (
+                      <div key={step.id} className={`gcp-timeline-step ${status} ${colors[index]}`}>
+                        <div className="gcp-step-dot" title={`${step.range}: ${step.title || 'Planlanıyor'}`}>
+                          {status === 'completed' ? '✓' : step.id}
+                        </div>
+                        <div className="gcp-step-info">
+                          <span className="gcp-step-range">{step.range}</span>
+                          <span className="gcp-step-text" title={step.title || 'Planlanıyor'}>{step.title || 'Planlanıyor'}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="gcp-milestones">
+                  <div className="vision-milestone">
+                     <span>%{Math.round(perc)} Tamamlandı</span>
+                  </div>
+                </div>
+              </>
+            )}
             
             <div className="gcp-footer">
                 <div className="gcp-progress-text">
@@ -1242,6 +1266,7 @@ const getRegistrantBadge = (createdBy, owner) => {
 
 function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, currentUser, handleFail, handleComplete, onClose, onSave, onQuickUpdate }) {
     const isLongTerm = activeTab === 'uzun' || (goal && new Date(goal.targetDate) > new Date(Date.now() + 365 * 24 * 60 * 60 * 1000));
+    const isMoney = goal?.type === 'money';
     
     const [isDurationModalOpen, setIsDurationModalOpen] = useState(false);
     
@@ -1410,62 +1435,104 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
                     </div>
                 </div>
 
-                <div className="premium-accordion-section mt-20">
-                    <h4 className="pas-title">
-                        <Compass size={16} className="pas-icon" />
-                        <span>Adım Adım Yol Haritası</span>
-                    </h4>
-                    <div className="premium-accordion">
-                        {steps.map(step => {
-                            const isExpanded = expandedStep === step.id;
-                            return (
-                                <div key={step.id} className={`accordion-item glass ${isExpanded ? 'active' : ''} step-${step.id}`}>
-                                    <div className="accordion-header" onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
-                                        <div className="header-left">
-                                            <span className="step-badge">{step.range}</span>
-                                            <strong className="step-title">{step.title || `${step.id}. Aşama`}</strong>
-                                        </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <button 
-                                                type="button"
-                                                className="step-edit-inline-btn" 
-                                                onClick={(e) => { 
-                                                    e.stopPropagation(); 
-                                                    onEdit(step.id); 
-                                                }}
-                                                title="Aşamayı Düzenle"
-                                            >
-                                                <Edit3 size={13} />
-                                            </button>
-                                            <ChevronRight size={18} className={`chevron-icon ${isExpanded ? 'rotate-90' : ''}`} />
-                                        </div>
-                                    </div>
-                                    <div className={`accordion-content ${isExpanded ? 'expanded' : ''}`}>
-                                        <div className="content-inner">
-                                            {step.note ? (
-                                                <ul className="step-details-list">
-                                                    {step.note.split('\n').map((line, lIdx) => {
-                                                        const trimmed = line.trim();
-                                                        if (!trimmed) return null;
-                                                        const isHeader = trimmed.endsWith(':') || trimmed.startsWith('★') || trimmed.startsWith('●') || trimmed.startsWith('■');
-                                                        return (
-                                                            <li key={lIdx} className={`step-detail-line ${isHeader ? 'line-header' : 'line-item'}`}>
-                                                                {!isHeader && <span className="line-bullet">✦</span>}
-                                                                <span>{trimmed.replace(/^[-*•✦]\s*/, '')}</span>
-                                                            </li>
-                                                        );
-                                                    })}
-                                                </ul>
-                                            ) : (
-                                                <p className="no-details">Bu aşama için detaylı açıklama girilmemiş.</p>
-                                            )}
-                                        </div>
-                                    </div>
+                {goal?.type === 'money' ? (
+                    <div className="premium-kumbara-detail-section mt-20 glass">
+                        <div className="pkd-header">
+                            <span className="pkd-emoji">🪙</span>
+                            <div className="pkd-title">
+                                <strong>{goal.title || goal.name}</strong>
+                                <span className="pkd-subtitle">Ortak Birikim Kumbarası</span>
+                            </div>
+                        </div>
+                        
+                        <div className="pkd-progress-area">
+                            <div className="pkd-stats">
+                                <div className="pkd-stat-box">
+                                    <span className="pkd-stat-label">Şu Ana Kadar Biriken</span>
+                                    <strong className="pkd-stat-value">
+                                        {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(goal.current)}
+                                    </strong>
                                 </div>
-                            );
-                        })}
+                                <div className="pkd-stat-box right">
+                                    <span className="pkd-stat-label">Toplam Hedef</span>
+                                    <strong className="pkd-stat-value">
+                                        {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(goal.target)}
+                                    </strong>
+                                </div>
+                            </div>
+                            
+                            <div className="pkd-bar-container">
+                                <div className="pkd-bar-fill-track">
+                                    <div 
+                                        className="pkd-bar-fill" 
+                                        style={{ width: `${Math.min(100, (goal.current / goal.target) * 100)}%` }}
+                                    />
+                                </div>
+                                <div className="pkd-bar-meta">
+                                    <span>Tamamlanma Oranı</span>
+                                    <strong className="pkd-percent-val">%{Math.round((goal.current / goal.target) * 100)}</strong>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="premium-accordion-section mt-20">
+                        <h4 className="pas-title">
+                            <Compass size={16} className="pas-icon" />
+                            <span>Adım Adım Yol Haritası</span>
+                        </h4>
+                        <div className="premium-accordion">
+                            {steps.map(step => {
+                                const isExpanded = expandedStep === step.id;
+                                return (
+                                    <div key={step.id} className={`accordion-item glass ${isExpanded ? 'active' : ''} step-${step.id}`}>
+                                        <div className="accordion-header" onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
+                                            <div className="header-left">
+                                                <span className="step-badge">{step.range}</span>
+                                                <strong className="step-title">{step.title || `${step.id}. Aşama`}</strong>
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                <button 
+                                                    type="button"
+                                                    className="step-edit-inline-btn" 
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        onEdit(step.id); 
+                                                    }}
+                                                    title="Aşamayı Düzenle"
+                                                >
+                                                    <Edit3 size={13} />
+                                                </button>
+                                                <ChevronRight size={18} className={`chevron-icon ${isExpanded ? 'rotate-90' : ''}`} />
+                                            </div>
+                                        </div>
+                                        <div className={`accordion-content ${isExpanded ? 'expanded' : ''}`}>
+                                            <div className="content-inner">
+                                                {step.note ? (
+                                                    <ul className="step-details-list">
+                                                        {step.note.split('\n').map((line, lIdx) => {
+                                                            const trimmed = line.trim();
+                                                            if (!trimmed) return null;
+                                                            const isHeader = trimmed.endsWith(':') || trimmed.startsWith('★') || trimmed.startsWith('●') || trimmed.startsWith('■');
+                                                            return (
+                                                                <li key={lIdx} className={`step-detail-line ${isHeader ? 'line-header' : 'line-item'}`}>
+                                                                    {!isHeader && <span className="line-bullet">✦</span>}
+                                                                    <span>{trimmed.replace(/^[-*•✦]\s*/, '')}</span>
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                ) : (
+                                                    <p className="no-details">Bu aşama için detaylı açıklama girilmemiş.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 <div className="gd-notes mt-20">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -1537,57 +1604,59 @@ function GoalForm({ goal, isEditing, initialEditStep, onEdit, activeTab, current
                 </div>
             </div>
             
-            <div className="form-group">
-                <label className="form-label-premium">
-                    <Compass size={14} style={{ color: '#7c3aed' }} />
-                    <span>Aşama ve Yol Haritası Detayları</span>
-                </label>
-                <div className="edit-accordion-container">
-                    {steps.map((step, idx) => {
-                        const isExpanded = expandedStep === step.id;
-                        return (
-                            <div key={step.id} className={`edit-accordion-item ${isExpanded ? 'active' : ''} step-${step.id}`}>
-                                <div className="edit-accordion-header" onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
-                                    <div className="header-left">
-                                        <span className="step-badge">{step.range}</span>
-                                        <span className="step-title-preview">
-                                            {step.title || `${step.id}. Aşama`}
-                                        </span>
-                                    </div>
-                                    <ChevronRight size={16} className={`chevron-icon ${isExpanded ? 'rotate-90' : ''}`} />
-                                </div>
-                                <div className={`edit-accordion-content ${isExpanded ? 'expanded' : ''}`}>
-                                    <div className="edit-content-inner">
-                                        <div className="sub-form-group">
-                                            <label>Aşama Başlığı</label>
-                                            <input 
-                                                type="text" 
-                                                value={step.title} 
-                                                onChange={e => {
-                                                    const val = e.target.value;
-                                                    setSteps(prev => prev.map((s, i) => i === idx ? { ...s, title: val } : s));
-                                                }}
-                                                placeholder={`Örn: ${step.range} - Başlangıç Aşaması`} 
-                                            />
+            {!isMoney && (
+                <div className="form-group">
+                    <label className="form-label-premium">
+                        <Compass size={14} style={{ color: '#7c3aed' }} />
+                        <span>Aşama ve Yol Haritası Detayları</span>
+                    </label>
+                    <div className="edit-accordion-container">
+                        {steps.map((step, idx) => {
+                            const isExpanded = expandedStep === step.id;
+                            return (
+                                <div key={step.id} className={`edit-accordion-item ${isExpanded ? 'active' : ''} step-${step.id}`}>
+                                    <div className="edit-accordion-header" onClick={() => setExpandedStep(isExpanded ? null : step.id)}>
+                                        <div className="header-left">
+                                            <span className="step-badge">{step.range}</span>
+                                            <span className="step-title-preview">
+                                                {step.title || `${step.id}. Aşama`}
+                                            </span>
                                         </div>
-                                        <div className="sub-form-group">
-                                            <label>Detaylar & Yapılacaklar</label>
-                                            <textarea 
-                                                value={step.note} 
-                                                onChange={e => {
-                                                    const val = e.target.value;
-                                                    setSteps(prev => prev.map((s, i) => i === idx ? { ...s, note: val } : s));
-                                                }}
-                                                placeholder="Bu aşamada neler hedefleniyor, hangi adımlar atılacak?" 
-                                            />
+                                        <ChevronRight size={16} className={`chevron-icon ${isExpanded ? 'rotate-90' : ''}`} />
+                                    </div>
+                                    <div className={`edit-accordion-content ${isExpanded ? 'expanded' : ''}`}>
+                                        <div className="edit-content-inner">
+                                            <div className="sub-form-group">
+                                                <label>Aşama Başlığı</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={step.title} 
+                                                    onChange={e => {
+                                                        const val = e.target.value;
+                                                        setSteps(prev => prev.map((s, i) => i === idx ? { ...s, title: val } : s));
+                                                    }}
+                                                    placeholder={`Örn: ${step.range} - Başlangıç Aşaması`} 
+                                                />
+                                            </div>
+                                            <div className="sub-form-group">
+                                                <label>Detaylar & Yapılacaklar</label>
+                                                <textarea 
+                                                    value={step.note} 
+                                                    onChange={e => {
+                                                        const val = e.target.value;
+                                                        setSteps(prev => prev.map((s, i) => i === idx ? { ...s, note: val } : s));
+                                                    }}
+                                                    placeholder="Bu aşamada neler hedefleniyor, hangi adımlar atılacak?" 
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="form-grid">
                 <div className="form-group">

@@ -2964,4 +2964,215 @@
   box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15);
 }
 
+/* --- PREMIUM KUMBARA (PIGGY BANK) TARGET WIDGETS --- */
+.gcp-kumbara-progress-box {
+  margin: 16px 0;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8), 0 4px 12px rgba(15, 23, 42, 0.015);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.goal-card-premium:hover .gcp-kumbara-progress-box {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 8px 20px rgba(16, 185, 129, 0.04);
+}
+
+.gcp-kumbara-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gcp-kumbara-stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gcp-kumbara-stat-item.right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.gcp-kumbara-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gcp-kumbara-stat-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.gcp-kumbara-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gcp-kumbara-bar-fill-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(241, 245, 249, 0.8);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.gcp-kumbara-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 99px;
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+}
+
+.gcp-kumbara-percent {
+  font-size: 11px;
+  font-weight: 800;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 8px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  letter-spacing: -0.2px;
+}
+
+/* Detail modal premium kumbara widget */
+.premium-kumbara-detail-section {
+  padding: 24px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  margin-top: 20px;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 10px 30px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pkd-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px dashed rgba(226, 232, 240, 0.8);
+  padding-bottom: 14px;
+}
+
+.pkd-emoji {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+}
+
+.pkd-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pkd-title strong {
+  font-size: 18px;
+  font-weight: 900;
+  color: #1e293b;
+}
+
+.pkd-subtitle {
+  font-size: 11px;
+  color: #10b981;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.pkd-progress-area {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pkd-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pkd-stat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pkd-stat-box.right {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.pkd-stat-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pkd-stat-value {
+  font-size: 20px;
+  font-weight: 950;
+  color: #0f172a;
+}
+
+.pkd-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pkd-bar-fill-track {
+  height: 14px;
+  background: rgba(241, 245, 249, 0.9);
+  border-radius: 99px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.pkd-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #059669);
+  border-radius: 99px;
+  transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+.pkd-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.pkd-percent-val {
+  color: #10b981;
+  font-size: 15px;
+  font-weight: 900;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 10px;
+  border-radius: 8px;
+}
+
 
