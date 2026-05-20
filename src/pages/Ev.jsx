@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Lightbulb, Wrench, ShieldCheck, 
   CheckCircle2, Plus, Trash2, Edit2, 
@@ -161,6 +161,7 @@ export default function Ev() {
     setPersonalSafePage, updatePersonalSafeNote 
   } = useStore();
   const notebookRef = React.useRef(null);
+  const scrollContainerRef = useRef(null);
   const [isStamping, setIsStamping] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [editingAbo, setEditingAbo] = useState(null);
@@ -177,9 +178,14 @@ export default function Ev() {
   const [showLocationSettings, setShowLocationSettings] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsChartsReady(true), 600);
-    return () => clearTimeout(timer);
-  }, []);
+      const timer = setTimeout(() => setIsChartsReady(true), 600);
+      return () => clearTimeout(timer);
+    }, []);
+
+    // Reset scroll to top when active tab changes
+    useEffect(() => {
+      scrollContainerRef.current?.scrollTo(0, 0);
+    }, [activeTab]);
 
 
   const requestConfirm = (message, onConfirm) => {
@@ -372,7 +378,7 @@ export default function Ev() {
         </nav>
       </header>
 
-      <div className="ev-scroll-content">
+      <div className="ev-scroll-content" ref={scrollContainerRef}>
         {showLocationSettings && (
         <LocationModal 
           isOpen={showLocationSettings}

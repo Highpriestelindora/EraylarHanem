@@ -1138,6 +1138,22 @@ async function pushEvAbonelikToSupabase(item) {
   } catch(e) { console.warn('Ev Abonelik Hatası:', e); }
 }
 
+async function pushEvFaturaToSupabase(item) {
+  try {
+    await supabase.from('ev_faturalar').upsert({
+      id: String(item.id),
+      name: item.name || null,
+      provider: item.provider || null,
+      amount: item.amount ? Number(item.amount) : 0,
+      due_date: item.dueDate || item.due_date || null,
+      status: item.status || 'Bekliyor',
+      auto_pay: item.autoPay !== undefined ? !!item.autoPay : !!item.auto_pay,
+      icon: item.icon || '📜',
+      family_id: DEFAULT_FID
+    });
+  } catch(e) { console.warn('Ev Fatura Hatası:', e); }
+}
+
 async function pushEvOnarimToSupabase(item) {
   try {
     const payload = {
@@ -2310,7 +2326,19 @@ const useStore = create(
                 }]
               }));
             }
-            if (faturalar.data) ev.faturalar = faturalar.data;
+            if (faturalar.data) {
+              ev.faturalar = faturalar.data.map(item => ({
+                id: item.id,
+                name: item.name,
+                provider: item.provider,
+                amount: Number(item.amount || 0),
+                dueDate: item.due_date,
+                status: item.status || 'Bekliyor',
+                autoPay: !!item.auto_pay,
+                icon: item.icon || '📜',
+                familyId: item.family_id
+              }));
+            }
              if (personality.data && personality.data[0]) {
               if (!ev.tracking) ev.tracking = {};
               ev.tracking.personality = personality.data[0].veri;
@@ -7418,7 +7446,7 @@ const useStore = create(
       addFatura: (fatura, paymentInfo) => {
         const state = get();
         const newFatura = {
-          id: Date.now(),
+          id: generateUniqueId(),
           status: 'Bekliyor',
           ...fatura
         };
@@ -7436,7 +7464,7 @@ const useStore = create(
           defaultPay: paymentInfo
         });
 
-        pushGenericToSupabase('ev_faturalar', newFatura);
+        pushEvFaturaToSupabase(newFatura);
         toast.success('Fatura kaydedildi ve Finans\'a aktarıldı! 🧾');
       },
 
@@ -7452,8 +7480,16 @@ const useStore = create(
         set({ ev: { ...state.ev, faturalar: updatedFaturalar } });
 
         const updatedFatura = updatedFaturalar.find(f => f.id === id);
-        if (updatedFatura) pushGenericToSupabase('ev_faturalar', updatedFatura);
+        if (updatedFatura) pushEvFaturaToSupabase(updatedFatura);
         toast.success(`${fatura.name} faturası ödendi! 💸`);
+      },
+
+      deleteFatura: (id) => {
+        const state = get();
+        const updatedFaturalar = (state.ev.faturalar || []).filter(f => f.id !== id);
+        set({ ev: { ...state.ev, faturalar: updatedFaturalar } });
+        removeGenericFromSupabase('ev_faturalar', id);
+        toast.success('Fatura geçmişten silindi! 🗑️');
       },
 
 

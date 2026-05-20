@@ -2853,6 +2853,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .vc-clear-btn {
@@ -2867,6 +2868,7 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .vc-clear-btn:hover {
@@ -6038,7 +6040,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
+  padding: 18px 20px;
   border-radius: 20px;
   background: white;
   border: 1px solid var(--brd);
@@ -6073,17 +6075,21 @@
 .rd-main-line strong {
   font-size: 14px;
   color: var(--txt);
-  line-height: 1.3 !important;
+  line-height: 1.5 !important;
+  padding-top: 3px;
+  overflow: visible !important;
   display: block;
 }
 
 .rd-meta-inline {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--txt-light);
   display: flex;
   align-items: center;
   gap: 4px;
-  line-height: 1.2 !important;
+  line-height: 1.4 !important;
+  overflow: visible !important;
+  padding-bottom: 2px;
 }
 
 .traveler-mini-label {
@@ -6981,4 +6987,41 @@
   flex-shrink: 0;
 }
 
+/* PREMIUM FILTERS */
+.premium-filters-container {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 4px 12px 4px;
+  margin-bottom: 15px;
+  scrollbar-width: none;
+}
+.premium-filters-container::-webkit-scrollbar { display: none; }
 
+.premium-filter-select {
+  appearance: none;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), inset 0 2px 4px rgba(255,255,255,0.5);
+  backdrop-filter: blur(10px);
+  padding: 10px 36px 10px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E293B;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  outline: none;
+}
+.premium-filter-select:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(255,255,255,0.8);
+}
+.premium-filter-select:focus {
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}

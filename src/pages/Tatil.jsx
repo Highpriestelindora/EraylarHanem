@@ -4897,15 +4897,45 @@ const LEGACY_CITY_COORDS = {
 };
 
 function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
-  const [selectedContinent, setSelectedContinent] = useState('world');
   const [showCityWizard, setShowCityWizard] = useState(null); // trip object
-  const [visibleTravelers, setVisibleTravelers] = useState(['gorkem', 'esra', 'ikimiz']);
   const [hiddenStats, setHiddenStats] = useState([]); // Array of 'esra', 'gorkem'
+  
+  const [filterYear, setFilterYear] = useState('Hepsi');
+  const [filterLocation, setFilterLocation] = useState('Hepsi');
+  const [filterTraveler, setFilterTraveler] = useState('Hepsi');
   
   const allTripsForMap = useMemo(() => {
     const dbTrips = tatil.trips || [];
     return dbTrips.filter(t => calculateTripStatus(t.startDate, t.endDate) === 'completed');
   }, [tatil.trips]);
+
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    allTripsForMap.forEach(t => {
+      const y = new Date(t.startDate).getFullYear();
+      if (!isNaN(y)) years.add(y);
+    });
+    return Array.from(years).sort((a, b) => b - a);
+  }, [allTripsForMap]);
+
+  const filteredTrips = useMemo(() => {
+    let trips = [...allTripsForMap];
+    
+    if (filterYear !== 'Hepsi') {
+      trips = trips.filter(t => new Date(t.startDate).getFullYear().toString() === filterYear.toString());
+    }
+    if (filterLocation !== 'Hepsi') {
+      trips = trips.filter(t => t.locationType === filterLocation);
+    }
+    if (filterTraveler !== 'Hepsi') {
+      trips = trips.filter(t => t.travelers === filterTraveler);
+    }
+    
+    // Sort by year descending (newest first)
+    trips.sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+    
+    return trips;
+  }, [allTripsForMap, filterYear, filterLocation, filterTraveler]);
 
   const visitedData = useMemo(() => {
     const gorkemPlaces = new Set();
@@ -4950,26 +4980,12 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
   const gorkemStats = visitedData.gorkem;
   const ortakStats = visitedData.ortak;
 
-  const continents = [
-    { id: 'world', label: 'Dünya' },
-    { id: 'turkiye', label: 'Türkiye' },
-    { id: 'europe', label: 'Avrupa' },
-    { id: 'asia', label: 'Asya' },
-    { id: 'americas', label: 'Amerika' },
-    { id: 'africa', label: 'Afrika' },
-    { id: 'oceania', label: 'Okyanusya' }
-  ];
-
-  const isTurkeyMode = selectedContinent === 'turkiye';
-
   const allPins = useMemo(() => {
     const pins = [];
     const seen = new Set();
 
-    allTripsForMap.forEach(trip => {
-      // Filter by visible travelers toggle
+    filteredTrips.forEach(trip => {
       const traveler = trip.travelers || 'ikimiz';
-      if (!visibleTravelers.includes(traveler)) return;
 
       const tripPins = [];
       if (trip.visitedCities && trip.visitedCities.length > 0) {
@@ -4991,7 +5007,7 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
       });
     });
     return pins;
-  }, [allTripsForMap, visibleTravelers]);
+  }, [filteredTrips]);
 
   return (
     <div className="tab-pane animate-fadeIn">
@@ -5047,63 +5063,45 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
         </div>
       </div>
 
-      <div className="continent-selector-blue mb-15">
-        {continents.map(c => (
-          <button 
-            key={c.id} 
-            className={`cont-btn-blue ${selectedContinent === c.id ? 'active' : ''}`}
-            onClick={() => setSelectedContinent(c.id)}
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
-
       <div className="map-frame-premium glass" style={{ height: '350px', position: 'relative', overflow: 'hidden' }}>
         <LeafletMap 
           pins={allPins} 
-          region={selectedContinent} 
+          region="world" 
         />
-        
-        {/* Floating Pill HUD */}
-        <div className="map-traveler-pill-container floating-hud animate-fadeIn">
-          <div className="mtp-inner glass">
-            {[
-              { id: 'esra', label: 'Esra' },
-              { id: 'ikimiz', label: 'Ortak' },
-              { id: 'gorkem', label: 'Görkem' }
-            ].map((t, idx) => (
-              <React.Fragment key={t.id}>
-                {idx > 0 && <div className="mtp-divider" />}
-                <button 
-                  className={`mtp-btn ${visibleTravelers.includes(t.id) ? 'active' : ''} ${t.id}`}
-                  onClick={() => {
-                    setVisibleTravelers(prev => 
-                      prev.includes(t.id) ? prev.filter(x => x !== t.id) : [...prev, t.id]
-                    );
-                  }}
-                >
-                  {t.label}
-                </button>
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
       </div>
 
-      <div className="full-trip-history" style={{ marginTop: '55px' }}>
-        <h4 className="section-title-cute" style={{ marginBottom: '20px' }}>Tüm Seyahatleriniz (Anılar)</h4>
+      <div className="full-trip-history" style={{ marginTop: '30px' }}>
+        <h4 className="section-title-cute" style={{ marginBottom: '15px' }}>Tüm Seyahatleriniz (Anılar)</h4>
+        
+        <div className="premium-filters-container mb-15">
+          <select className="premium-filter-select" style={{ minWidth: '110px' }} value={filterYear} onChange={e => setFilterYear(e.target.value)}>
+            <option value="Hepsi">Tüm Yıllar</option>
+            {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <select className="premium-filter-select" style={{ minWidth: '130px' }} value={filterLocation} onChange={e => setFilterLocation(e.target.value)}>
+            <option value="Hepsi">Tümü (İç/Dış)</option>
+            <option value="yurtici">Yurt İçi</option>
+            <option value="yurtdisi">Yurt Dışı</option>
+          </select>
+          <select className="premium-filter-select" style={{ minWidth: '110px' }} value={filterTraveler} onChange={e => setFilterTraveler(e.target.value)}>
+            <option value="Hepsi">Tüm Kişiler</option>
+            <option value="gorkem">Görkem</option>
+            <option value="esra">Esra</option>
+            <option value="ikimiz">İkimiz</option>
+          </select>
+        </div>
+
         <div className="rd-list-compact scrollable-history">
-          {allTripsForMap.map(t => (
+          {filteredTrips.map(t => (
             <div key={t.id} className="rd-item-small glass animate-slideRight">
               <div className="rd-clickable-area" onClick={() => setShowCityWizard(t)}>
                 <span className="rd-flag-small">{getCountryFlag(t.title, t.city, t.country)}</span>
                 <div className="rd-info-small">
-                  <div className="rd-main-line">
-                    <strong>{t.city || t.title}</strong>
-                    <span className="rd-meta-inline">
+                  <div className="rd-main-line" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                    <strong style={{ lineHeight: '1.4', paddingBottom: '2px', overflow: 'visible' }}>{t.city || t.title}</strong>
+                    <span className="rd-meta-inline" style={{ fontSize: '11px', opacity: 0.7 }}>
                       {t.country} · {new Date(t.startDate).getFullYear()} 
-                      {t.travelers !== 'ikimiz' && <span className="traveler-mini-label">({t.travelers === 'gorkem' ? 'G' : 'E'})</span>}
+                      {t.travelers !== 'ikimiz' && <span className="traveler-mini-label" style={{ marginLeft: '4px' }}>({t.travelers === 'gorkem' ? 'G' : 'E'})</span>}
                     </span>
                   </div>
                 </div>
@@ -5129,7 +5127,7 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
               </div>
             </div>
           ))}
-          {allTripsForMap.length === 0 && <div className="empty-mini-state">Henüz kaydedilmiş anı yok...</div>}
+          {filteredTrips.length === 0 && <div className="empty-mini-state">Bu filtrelere uygun seyahat bulunamadı...</div>}
         </div>
       </div>
 
