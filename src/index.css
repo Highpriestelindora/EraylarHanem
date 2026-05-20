@@ -72,10 +72,9 @@ html, body {
   overflow: hidden;
 }
 
-/* Universal Responsive Sanitizer */
+/* Universal Box Sizing - but NOT max-width to avoid breaking SVG, canvas, overlays */
 * {
   box-sizing: border-box !important;
-  max-width: 100% !important;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -574,11 +573,14 @@ input[type="time"] {
   width: 100% !important;
 }
 
-/* Long text protection in cards */
+/* Long text protection in cards - don't use overflow:hidden on glass as it breaks overlays */
 .glass, .card, .setting-item {
   min-width: 0 !important;
+}
+
+/* Specific overflow protection for list/grid cards (not modals/overlays) */
+.cute-card, .setting-item, [class*="-card"]:not([class*="-overlay"]):not([class*="simulator"]):not([class*="modal"]) {
   max-width: 100% !important;
-  overflow: hidden !important;
 }
 
 /* Fix ActionSheet and Modal backgrounds */
@@ -1529,3 +1531,161 @@ input[type="time"] {
   }
   .kbi-save-btn { width: 100%; }
 }
+
+/* ==========================================================================
+   iOS / iPhone 14 Pro Max & iPhone 15 COMPATIBILITY MASTER BLOCK
+   ========================================================================== */
+
+/* Ensure SVG icons are never constrained by generic max-width rules */
+svg {
+  max-width: none !important;
+  overflow: visible;
+}
+
+/* Lucide icons inside buttons/spans should not be constrained */
+button svg, span svg, a svg, div svg {
+  max-width: none !important;
+  width: auto !important;
+  flex-shrink: 0 !important;
+}
+
+/* Portal-rendered overlays escape all parent constraints */
+#root-portal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 99999998;
+  pointer-events: none;
+}
+
+#root-portal > * {
+  pointer-events: auto;
+}
+
+/* Prevent any fixed/absolute overlay from being clipped by parent overflow */
+.simulator-overlay,
+.md-confirm-overlay,
+.modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  /* iOS dvh fallback */
+  height: 100dvh !important;
+  overflow: hidden !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* iOS Safari: prevent double-tap zoom on buttons */
+button, a, input, select {
+  touch-action: manipulation;
+}
+
+/* Prevent horizontal scroll from any single element */
+body, #root, .app-container, .app-content {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+
+/* Glass cards: overflow visible to allow hover effects, but contained by parent */
+.glass {
+  overflow: visible;
+}
+
+/* Cards in lists/grids should still clip overflow */
+.goal-card-premium,
+.goal-card-v3,
+.cute-card,
+.kasa-summary-card,
+[class*="-list"] > [class*="-card"],
+[class*="-grid"] > [class*="-card"] {
+  overflow: hidden !important;
+  max-width: 100% !important;
+}
+
+/* Fix: iOS input zoom prevention (font-size >= 16px) */
+@media screen and (max-width: 768px) {
+  input:not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Goal cards on mobile: ensure kumbara progress box is always visible */
+@media (max-width: 430px) {
+  .gcp-kumbara-progress-box {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    padding: 12px !important;
+    margin: 10px 0 !important;
+    border-radius: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .gcp-kumbara-stats {
+    display: flex !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  .gcp-kumbara-stat-val {
+    font-size: 13px !important;
+  }
+
+  .gcp-kumbara-bar-container {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .gcp-kumbara-bar-fill-track {
+    flex: 1 !important;
+    height: 8px !important;
+    min-width: 0 !important;
+  }
+
+  /* Goal card layout on small screens */
+  .goal-card-premium {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    padding: 14px !important;
+    gap: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .gcp-ring-box {
+    flex-shrink: 0 !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .gcp-content {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Tab navigation scrollable on mobile */
+  .m-h-tab-v3 {
+    padding: 3px !important;
+  }
+
+  .m-h-tab-v3 button {
+    padding: 8px 10px !important;
+    font-size: 9px !important;
+    min-width: 50px !important;
+  }
+}
+
