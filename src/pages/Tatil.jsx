@@ -1929,12 +1929,13 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
         {activeSubTab === 'details' && (
           <div className="docs-view animate-fadeIn">
             {isCompleted ? (
-               <MemoryDetailView 
+             <MemoryDetailView 
                  trip={trip} 
                  onEditEval={(user) => {
                     setReviewUser(user);
                     setShowReview(true);
                  }} 
+                 onUpdateTrip={handleUpdateTrip}
                />
             ) : (
               <>
@@ -3777,7 +3778,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
   );
 }
 
-function MemoryDetailView({ trip, onEditEval }) {
+function MemoryDetailView({ trip, onEditEval, onUpdateTrip }) {
   const { currentUser } = useStore();
   const gEval = trip.evaluations?.gorkem;
   const eEval = trip.evaluations?.esra;
@@ -3873,6 +3874,140 @@ function MemoryDetailView({ trip, onEditEval }) {
           </div>
         </div>
       </div>
+
+      {/* Yapılanlar Bölümü */}
+      <TripTodoMemory trip={trip} onUpdateTrip={onUpdateTrip} />
+    </div>
+  );
+}
+
+// ─── Tatil Anısı – Yapılanlar Bölümü ───────────────────────────────────────
+function TripTodoMemory({ trip, onUpdateTrip }) {
+  const parseTodos = (notes) => {
+    if (!notes) return [];
+    try {
+      if (notes.trim().startsWith('[')) return JSON.parse(notes);
+    } catch (e) {}
+    return notes.split('\n').filter(l => l.trim()).map(l => ({ text: l.trim(), done: false }));
+  };
+
+  const [todos, setTodos] = useState(() => parseTodos(trip.notes));
+  const [editing, setEditing] = useState(false);
+  const [newText, setNewText] = useState('');
+  const [editingIdx, setEditingIdx] = useState(null);
+  const [editText, setEditText] = useState('');
+
+  const saveTodos = (list) => {
+    setTodos(list);
+    if (onUpdateTrip) onUpdateTrip({ notes: JSON.stringify(list) });
+  };
+
+  const handleToggle = (idx) => saveTodos(todos.map((t, i) => i === idx ? { ...t, done: !t.done } : t));
+  const handleDelete = (idx) => saveTodos(todos.filter((_, i) => i !== idx));
+  const handleAdd = () => {
+    if (!newText.trim()) return;
+    saveTodos([...todos, { text: newText.trim(), done: false }]);
+    setNewText('');
+  };
+  const handleSaveEdit = (idx) => {
+    if (!editText.trim()) return;
+    saveTodos(todos.map((t, i) => i === idx ? { ...t, text: editText.trim() } : t));
+    setEditingIdx(null);
+  };
+
+  const done = todos.filter(t => t.done);
+  const notDone = todos.filter(t => !t.done);
+
+  if (todos.length === 0 && !editing) return null;
+
+  return (
+    <div className="trip-todo-memory mt-20">
+      <div className="ttm-header">
+        <div className="ttm-title">
+          <span>📋</span>
+          <h3>Yapılanlar</h3>
+        </div>
+        <button className="ttm-edit-btn" onClick={() => setEditing(e => !e)} title={editing ? 'Kapat' : 'Düzenle'}>
+          {editing ? <X size={16} /> : <Edit3 size={16} color="#8B5CF6" />}
+        </button>
+      </div>
+
+      {/* Done */}
+      {done.length > 0 && (
+        <div className="ttm-group">
+          <div className="ttm-group-label done">✅ Yapıldı ({done.length})</div>
+          {todos.map((t, idx) => !t.done ? null : (
+            <div key={idx} className="ttm-item done">
+              <span className="ttm-check">✅</span>
+              {editing && editingIdx === idx ? (
+                <div className="ttm-edit-row">
+                  <input value={editText} onChange={e => setEditText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveEdit(idx)}
+                    className="ttm-edit-input" autoFocus />
+                  <button onClick={() => handleSaveEdit(idx)} className="ttm-save-btn"><Check size={12}/></button>
+                  <button onClick={() => setEditingIdx(null)} className="ttm-cancel-btn"><X size={12}/></button>
+                </div>
+              ) : (
+                <span className="ttm-text" onClick={editing ? () => { setEditingIdx(idx); setEditText(t.text); } : undefined}>{t.text}</span>
+              )}
+              {editing && editingIdx !== idx && (
+                <div className="ttm-actions">
+                  <button onClick={() => handleToggle(idx)} className="ttm-toggle-btn" title="Geri al">↩️</button>
+                  <button onClick={() => handleDelete(idx)} className="ttm-del-btn"><Trash2 size={11}/></button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Not Done */}
+      {notDone.length > 0 && (
+        <div className="ttm-group">
+          <div className="ttm-group-label notdone">❌ Yapılamadı ({notDone.length})</div>
+          {todos.map((t, idx) => t.done ? null : (
+            <div key={idx} className="ttm-item notdone">
+              <span className="ttm-check">❌</span>
+              {editing && editingIdx === idx ? (
+                <div className="ttm-edit-row">
+                  <input value={editText} onChange={e => setEditText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveEdit(idx)}
+                    className="ttm-edit-input" autoFocus />
+                  <button onClick={() => handleSaveEdit(idx)} className="ttm-save-btn"><Check size={12}/></button>
+                  <button onClick={() => setEditingIdx(null)} className="ttm-cancel-btn"><X size={12}/></button>
+                </div>
+              ) : (
+                <span className="ttm-text" onClick={editing ? () => { setEditingIdx(idx); setEditText(t.text); } : undefined}>{t.text}</span>
+              )}
+              {editing && editingIdx !== idx && (
+                <div className="ttm-actions">
+                  <button onClick={() => handleToggle(idx)} className="ttm-toggle-btn" title="Yapıldı olarak işaretle">✅</button>
+                  <button onClick={() => handleDelete(idx)} className="ttm-del-btn"><Trash2 size={11}/></button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Yeni Ekle (edit modunda) */}
+      {editing && (
+        <div className="ttm-add-row">
+          <input
+            type="text"
+            value={newText}
+            onChange={e => setNewText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+            placeholder="Yeni madde ekle..."
+            className="ttm-add-input"
+          />
+          <button onClick={handleAdd} className="ttm-add-btn"><Plus size={14}/></button>
+        </div>
+      )}
+
+      {todos.length === 0 && editing && (
+        <div className="ttm-empty">Henüz madde yok. Yukarıdan ekleyebilirsiniz. 📝</div>
+      )}
     </div>
   );
 }

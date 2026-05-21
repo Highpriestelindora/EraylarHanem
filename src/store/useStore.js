@@ -836,7 +836,8 @@ async function pushAlisverisToSupabase(item, kime) {
       alindi: !!item.done,
       tamamlanma_tarihi: item.doneDate || null,
       liste_tipi: listeTipi,
-      ekleyen: item.doneBy || 'Sistem'
+      ekleyen: item.doneBy || 'Sistem',
+      oncelik: item.oncelik || 'Lazım'
     };
     const { error } = await supabase.from('alisveris_listesi').upsert(payload);
     if (error) throw error;
@@ -1097,16 +1098,26 @@ async function deleteFinansKrediFromSupabase(id) {
 
 async function syncFinansOnayHavuzu(pool) {
   try {
-    const payloads = pool.map(p => ({
-      id: String(p.id),
-      baslik: p.title || p.baslik,
-      tutar: Number(p.amount || p.tutar),
-      kaynak: p.source || p.kaynak,
-      kayit_eden: p.payer || p.kayit_eden,
-      tarih: p.dt || p.tarih || null,
-      default_pay: p.defaultPay || null
-    }));
-    if(payloads.length > 0) await supabase.from('finans_onay_havuzu').upsert(payloads);
+    const payloads = pool.map(p => {
+      const baslik = p.title ?? p.baslik ?? 'İsimsiz Harcama';
+      let tutar = Number(p.amount ?? p.tutar ?? 0);
+      if (isNaN(tutar)) tutar = 0;
+
+      return {
+        id: String(p.id),
+        baslik: baslik || 'İsimsiz Harcama',
+        tutar: tutar,
+        kaynak: p.source ?? p.kaynak ?? null,
+        kayit_eden: p.payer ?? p.kayit_eden ?? null,
+        tarih: p.dt ?? p.tarih ?? null,
+        default_pay: p.defaultPay ?? p.default_pay ?? null
+      };
+    });
+    if(payloads.length > 0) {
+      const res = await supabase.from('finans_onay_havuzu').upsert(payloads);
+      if(res.error) console.error('❌ Onay Havuzu Sync Error:', res.error);
+      else console.log('✅ Onay Havuzu Sync Success');
+    }
   } catch(e) { console.warn('Supabase Onay Havuzu upsert hatası:', e); }
 }
 // -----------------------------------------------------------------
@@ -4030,7 +4041,8 @@ const useStore = create(
                 pr: Number(x.fiyat || 0), 
                 dt: x.tarih || x.created_at, 
                 done: !!x.alindi, 
-                doneDate: x.tamamlanma_tarihi 
+                doneDate: x.tamamlanma_tarihi,
+                oncelik: x.oncelik || 'Lazım'
               }));
               
               a.gorkem = mapAl(alisveris.data.filter(x => x.liste_tipi === 'genel_gorkem' || x.liste_tipi === 'gorkem'));
@@ -5860,7 +5872,8 @@ const useStore = create(
           pr: Number(item.pr) || 0,
           dt: new Date().toISOString(),
           done: false,
-          doneDate: null
+          doneDate: null,
+          oncelik: item.oncelik || 'Lazım'
         };
 
         if (targetOwner === 'mutfak') {
