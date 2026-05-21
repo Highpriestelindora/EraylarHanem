@@ -5949,13 +5949,7 @@ const useStore = create(
       addTrip: async (trip) => {
         const state = get();
         const title = trip.title || 'Yeni Seyahat';
-        const isDuplicate = (state.tatil.trips || []).some(
-          t => t.title?.toLowerCase().trim() === title.toLowerCase().trim()
-        );
-        if (isDuplicate) {
-          toast.error(`"${title}" isimli bir tatil zaten mevcut! ⚠️`);
-          return null;
-        }
+        // Duplicate check removed to allow adding same-titled trips
         const locationType = trip.locationType || 'yurtdisi';
         const city = (trip.city || '').toLowerCase().trim();
         const tripTitle = (trip.title || '').toLowerCase().trim();

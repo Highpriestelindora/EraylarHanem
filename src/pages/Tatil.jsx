@@ -1499,22 +1499,7 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
         }
       }
 
-      // Duplicate city check (only for new/old, or if city changed in edit)
-      const isCityChanged = initialData ? normalizeText(formData.city) !== normalizeText(initialData.city) : true;
-      
-      if (mode !== 'edit' || isCityChanged) {
-        const isDuplicate = tatil.trips.some(t => {
-          // Compare normalized city names
-          const cityMatch = normalizeText(t.city) === normalizeText(formData.city);
-          // Only count as duplicate if it's NOT the trip we are currently editing
-          const isDifferentTrip = initialData ? String(t.id) !== String(initialData.id) : true;
-          return cityMatch && isDifferentTrip;
-        });
-
-        if (isDuplicate) {
-          return toast.error('Bu şehir zaten kayıtlı! Lütfen farklı bir isim kullanın.');
-        }
-      }
+      // Duplicate city check removed to allow traveling to the same city multiple times
     }
 
     if (step < 4) setStep(step + 1);
@@ -1920,6 +1905,12 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
           <span className="btn-emoji">📑</span>
           <span>{isCompleted ? 'Anı Detayı' : 'Detaylar'}</span>
         </button>
+        {!isCompleted && (
+          <button className={`sub-tab-btn-cute ${activeSubTab === 'todo' ? 'active' : ''}`} onClick={() => setActiveSubTab('todo')}>
+            <span className="btn-emoji">📋</span>
+            <span>To Do</span>
+          </button>
+        )}
         <button className={`sub-tab-btn-cute ${activeSubTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveSubTab('budget')}>
           <span className="btn-emoji">💰</span>
           <span>Bütçe</span>
@@ -1959,13 +1950,17 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
                   <CurrencyConverter targetCurrency={trip.locationType === 'yurtdisi' ? 'EUR' : 'TRY'} />
                   <WeatherWidget city={trip.city} country={trip.country} startDate={trip.startDate} endDate={trip.endDate} />
                 </div>
-
-                <TravelChecklist 
-                  notes={trip.notes} 
-                  onChange={(val) => handleUpdateTrip({ notes: val })} 
-                />
               </>
             )}
+          </div>
+        )}
+
+        {activeSubTab === 'todo' && (
+          <div className="docs-view animate-fadeIn">
+            <TravelChecklist 
+              notes={trip.notes} 
+              onChange={(val) => handleUpdateTrip({ notes: val })} 
+            />
           </div>
         )}
 
