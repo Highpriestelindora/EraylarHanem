@@ -776,12 +776,11 @@ const Home = () => {
                   <img src={logo} alt="Logo" className="phb-logo-img" />
                   <div className="phb-brand-text">
                     <h2>Eraylar Hanem</h2>
-                    <p>Mükemmeliyet, detaylarda gizlidir. ✨</p>
                   </div>
                 </div>
                 <div className="phb-header-pets">
-                  <span className="pet-link" onClick={() => handlePetClick('waffle')}>🐶</span> 
-                  <span className="pet-link" onClick={() => handlePetClick('mayis')}>🐈</span>
+                  <span className="pet-link" onClick={(e) => { e.stopPropagation(); handlePetClick('waffle'); }}>🐶</span> 
+                  <span className="pet-link" onClick={(e) => { e.stopPropagation(); handlePetClick('mayis'); }}>🐈</span>
                 </div>
               </div>
             </div>

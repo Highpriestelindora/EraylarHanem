@@ -2928,6 +2928,13 @@ const useStore = create(
         if (moduleName === 'mutfak' && isObject && data.alisveris) {
           data.alisveris.forEach(item => pushAlisverisToSupabase(item, 'mutfak'));
         }
+        if (moduleName === 'alisveris' && isObject) {
+          ['gorkem', 'esra', 'ev', 'wishlist'].forEach(listKey => {
+            if (data[listKey]) {
+              data[listKey].forEach(item => pushAlisverisToSupabase(item, listKey));
+            }
+          });
+        }
         if (moduleName === 'ev' && isObject) {
           if (data.bakimlar) data.bakimlar.forEach(b => pushEvBakimToSupabase(b));
           if (data.demirbaslar) data.demirbaslar.forEach(d => pushEvDemirbasToSupabase(d));
