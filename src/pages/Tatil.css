@@ -7000,26 +7000,27 @@
 
 .premium-filter-select {
   appearance: none;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), inset 0 2px 4px rgba(255,255,255,0.5);
-  backdrop-filter: blur(10px);
-  padding: 10px 36px 10px 16px;
+  padding: 10px 32px 10px 12px;
   border-radius: 20px;
   font-size: 13px;
   font-weight: 700;
   color: #1E293B;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 10px center;
   outline: none;
 }
-.premium-filter-select:hover {
-  background-color: rgba(255, 255, 255, 0.9);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(255,255,255,0.8);
+@media (hover: hover) {
+  .premium-filter-select:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(255,255,255,0.8);
+  }
 }
 .premium-filter-select:focus {
   border-color: #8B5CF6;

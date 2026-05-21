@@ -5069,17 +5069,17 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
         <h4 className="section-title-cute" style={{ marginBottom: '15px' }}>Tüm Seyahatleriniz (Anılar)</h4>
         
         <div className="premium-filters-container mb-15">
-          <select className="premium-filter-select" style={{ minWidth: '110px' }} value={filterYear} onChange={e => setFilterYear(e.target.value)}>
-            <option value="Hepsi">Tüm Yıllar</option>
+          <select className="premium-filter-select" style={{ minWidth: '85px' }} value={filterYear} onChange={e => setFilterYear(e.target.value)}>
+            <option value="Hepsi">Yıl</option>
             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <select className="premium-filter-select" style={{ minWidth: '130px' }} value={filterLocation} onChange={e => setFilterLocation(e.target.value)}>
-            <option value="Hepsi">Tümü (İç/Dış)</option>
+          <select className="premium-filter-select" style={{ minWidth: '95px' }} value={filterLocation} onChange={e => setFilterLocation(e.target.value)}>
+            <option value="Hepsi">Tümü</option>
             <option value="yurtici">Yurt İçi</option>
             <option value="yurtdisi">Yurt Dışı</option>
           </select>
-          <select className="premium-filter-select" style={{ minWidth: '110px' }} value={filterTraveler} onChange={e => setFilterTraveler(e.target.value)}>
-            <option value="Hepsi">Tüm Kişiler</option>
+          <select className="premium-filter-select" style={{ minWidth: '90px' }} value={filterTraveler} onChange={e => setFilterTraveler(e.target.value)}>
+            <option value="Hepsi">Kişi</option>
             <option value="gorkem">Görkem</option>
             <option value="esra">Esra</option>
             <option value="ikimiz">İkimiz</option>
