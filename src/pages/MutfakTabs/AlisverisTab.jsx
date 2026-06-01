@@ -124,31 +124,35 @@ const AlisverisTab = () => {
 
   return (
     <div className="alisveris-tab-compact">
-      <button className="btn-notify animate-pulse-soft" onClick={handleNotifyPartner}>
-        <BellRing size={20} />
-        <span>{partnerName}'ya Haber Ver</span>
-      </button>
-
-      <div className="search-and-add">
-        <form className="add-bar glass" onSubmit={addItem}>
-          <input 
-            type="text" 
-            placeholder="Ürün ekle..." 
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            list="shopping-autocomplete"
-          />
-          <datalist id="shopping-autocomplete">
-            {uniqueStockNames.map(n => <option key={n} value={n} />)}
-          </datalist>
-          <button type="submit" className="btn-add">
-            <Plus size={20} />
-          </button>
-        </form>
-        <button onClick={addCriticalToShopping} className="btn-warn glass" title="Kritikleri Ekle">
-          <AlertTriangle size={20} />
+      {currentUser?.name !== 'Misafir' && (
+        <button className="btn-notify animate-pulse-soft" onClick={handleNotifyPartner}>
+          <BellRing size={20} />
+          <span>{partnerName}'ya Haber Ver</span>
         </button>
-      </div>
+      )}
+
+      {currentUser?.name !== 'Misafir' && (
+        <div className="search-and-add">
+          <form className="add-bar glass" onSubmit={addItem}>
+            <input 
+              type="text" 
+              placeholder="Ürün ekle..." 
+              value={newItem}
+              onChange={(e) => setNewItem(e.target.value)}
+              list="shopping-autocomplete"
+            />
+            <datalist id="shopping-autocomplete">
+              {uniqueStockNames.map(n => <option key={n} value={n} />)}
+            </datalist>
+            <button type="submit" className="btn-add">
+              <Plus size={20} />
+            </button>
+          </form>
+          <button onClick={addCriticalToShopping} className="btn-warn glass" title="Kritikleri Ekle">
+            <AlertTriangle size={20} />
+          </button>
+        </div>
+      )}
 
       {existingStockItem && existingStockItem.cr > 0 && (
         <div className="stock-warning animate-fadeIn">
@@ -175,7 +179,12 @@ const AlisverisTab = () => {
           </div>
         ) : (
           filteredList.map(item => (
-            <div key={item.id} className={`compact-item glass ${checkedIds.includes(item.id) ? 'checked' : ''}`} onClick={() => toggleCheck(item.id)}>
+            <div 
+              key={item.id} 
+              className={`compact-item glass ${checkedIds.includes(item.id) ? 'checked' : ''}`} 
+              style={{ cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }}
+              onClick={() => currentUser?.name !== 'Misafir' && toggleCheck(item.id)}
+            >
               <div className="check-box">
                 {checkedIds.includes(item.id) ? <CheckCircle2 size={24} color="#10b981" /> : <Circle size={24} color="var(--brd)" />}
               </div>
@@ -185,17 +194,19 @@ const AlisverisTab = () => {
                   {item.qt} • {item.mk}
                 </span>
               </div>
-              <div className="item-actions" style={{ display: 'flex', gap: '5px' }}>
-                <button className="edit-btn-small" onClick={(e) => { 
-                  e.stopPropagation(); 
-                  setEditQtyItem({ id: item.id, val: (item.qt || '').split(' ')[0], unit: (item.qt || '').split(' ')[1] || 'adet' }); 
-                }} style={{ background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--txt-light)', padding: '8px', borderRadius: '12px', cursor: 'pointer' }}>
-                  <ArrowRight size={14} style={{ transform: 'rotate(-45deg)' }} />
-                </button>
-                <button className="del-btn" onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              {currentUser?.name !== 'Misafir' && (
+                <div className="item-actions" style={{ display: 'flex', gap: '5px' }}>
+                  <button className="edit-btn-small" onClick={(e) => { 
+                    e.stopPropagation(); 
+                    setEditQtyItem({ id: item.id, val: (item.qt || '').split(' ')[0], unit: (item.qt || '').split(' ')[1] || 'adet' }); 
+                  }} style={{ background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--txt-light)', padding: '8px', borderRadius: '12px', cursor: 'pointer' }}>
+                    <ArrowRight size={14} style={{ transform: 'rotate(-45deg)' }} />
+                  </button>
+                  <button className="del-btn" onClick={(e) => { e.stopPropagation(); deleteItem(item.id); }}>
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}

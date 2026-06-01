@@ -7,7 +7,7 @@ import ConfirmModal from '../../components/ConfirmModal';
 import ActionSheet from '../../components/ActionSheet';
 
 const RecipesTab = () => {
-  const { mutfak, getAvailableRecipes, updateRecipe, deleteRecipe, toggleFavorite, addRecipe, addMissingToShopping } = useStore();
+  const { mutfak, getAvailableRecipes, updateRecipe, deleteRecipe, toggleFavorite, addRecipe, addMissingToShopping, currentUser } = useStore();
   const recipes = getAvailableRecipes();
   
   const [search, setSearch] = useState('');
@@ -186,9 +186,11 @@ const RecipesTab = () => {
         <button className="btn-dice" onClick={handleRollDice} style={{ flex: 1 }}>
           <Dices size={20} /> Ne Pişirsem?
         </button>
-        <button className="btn-dice" onClick={openAddModal} style={{ background: 'var(--card)', color: 'var(--mutfak)', border: '1px solid var(--brd)', flexShrink: 0, padding: '12px', width: 'auto' }}>
-          <Plus size={20} />
-        </button>
+        {currentUser?.name !== 'Misafir' && (
+          <button className="btn-dice" onClick={openAddModal} style={{ background: 'var(--card)', color: 'var(--mutfak)', border: '1px solid var(--brd)', flexShrink: 0, padding: '12px', width: 'auto' }}>
+            <Plus size={20} />
+          </button>
+        )}
       </div>
 
       <div className="category-carousel-wrapper">
@@ -234,7 +236,8 @@ const RecipesTab = () => {
             </div>
             <button 
               className="fav-btn-absolute" 
-              onClick={(e) => { e.stopPropagation(); toggleFavorite(r.id); }}
+              onClick={(e) => { if(currentUser?.name === 'Misafir') return; e.stopPropagation(); toggleFavorite(r.id); }}
+              style={{ cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }}
             >
               {r.f ? <Heart size={16} fill="#ef4444" color="#ef4444" /> : <Heart size={16} color="var(--txt-light)" />}
             </button>
@@ -260,10 +263,12 @@ const RecipesTab = () => {
                 <div className="modal-emoji-circle" style={{ fontSize: '40px', width: '80px', height: '80px', background: 'white', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 20px rgba(0,0,0,0.05)' }}>
                   {selectedRecipe.e}
                 </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="icon-btn-round" onClick={(e) => openEditModal(selectedRecipe, e)} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Edit2 size={16} /></button>
-                  <button className="icon-btn-round danger" onClick={(e) => handleDelete(selectedRecipe.id, e)} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Trash2 size={16} /></button>
-                </div>
+                {currentUser?.name !== 'Misafir' && (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="icon-btn-round" onClick={(e) => openEditModal(selectedRecipe, e)} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Edit2 size={16} /></button>
+                    <button className="icon-btn-round danger" onClick={(e) => handleDelete(selectedRecipe.id, e)} style={{ width: '36px', height: '36px', borderRadius: '50%', border: 'none', background: '#fee2e2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}><Trash2 size={16} /></button>
+                  </div>
+                )}
               </div>
               
               <h2 style={{ fontSize: '24px', fontWeight: '900', margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -279,7 +284,7 @@ const RecipesTab = () => {
                   <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--txt-light)' }}>ZORLUK</span>
                   <strong style={{ fontSize: '13px', fontWeight: '900', color: 'var(--mutfak)' }}>{getDifficulty(selectedRecipe.d)}</strong>
                 </div>
-                <div className="meta-pill" onClick={() => toggleFavorite(selectedRecipe.id)} style={{ background: 'white', padding: '10px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: 'pointer' }}>
+                <div className="meta-pill" onClick={() => currentUser?.name !== 'Misafir' && toggleFavorite(selectedRecipe.id)} style={{ background: 'white', padding: '10px', borderRadius: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }}>
                   <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--txt-light)' }}>FAVORİ</span>
                   <strong style={{ fontSize: '13px', fontWeight: '900', color: 'var(--mutfak)' }}>{selectedRecipe.f ? '❤️' : '🤍'}</strong>
                 </div>
@@ -293,13 +298,15 @@ const RecipesTab = () => {
                   <div style={{ fontSize: '12px', color: '#ef4444', fontWeight: '600', lineHeight: '1.4', marginBottom: '12px' }}>
                     {selectedRecipe.missing.join(', ')}
                   </div>
-                  <button 
-                    className="add-missing-btn"
-                    onClick={() => handleAddMissingToShopping(selectedRecipe.missing)}
-                    style={{ width: '100%', background: '#ef4444', color: 'white', border: 'none', padding: '12px', borderRadius: '14px', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}
-                  >
-                    <ShoppingCart size={16} /> Eksikleri Alışverişe Ekle
-                  </button>
+                  {currentUser?.name !== 'Misafir' && (
+                    <button 
+                      className="add-missing-btn"
+                      onClick={() => handleAddMissingToShopping(selectedRecipe.missing)}
+                      style={{ width: '100%', background: '#ef4444', color: 'white', border: 'none', padding: '12px', borderRadius: '14px', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer' }}
+                    >
+                      <ShoppingCart size={16} /> Eksikleri Alışverişe Ekle
+                    </button>
+                  )}
                 </div>
               )}
             </div>

@@ -128,7 +128,7 @@ export default function Alisveris() {
   
   const { 
     mutfak, alisveris, confirmShoppingItem, deleteShoppingItem, addShoppingItem, 
-    setModuleData, addExpense, addDepoItem 
+    setModuleData, addExpense, addDepoItem, currentUser 
   } = useStore();
 
   const getPriorityWeight = (oncelik) => {
@@ -274,7 +274,7 @@ export default function Alisveris() {
       </header>
 
         <div className="shopping-content-premium">
-        {activeTab !== 'market' && (
+        {activeTab !== 'market' && currentUser?.name !== 'Misafir' && (
           <>
             <div className="suggestions-toggle-container">
               <button 
@@ -371,17 +371,19 @@ export default function Alisveris() {
                         </div>
                       </div>
                       
-                      <div className="si-right">
-                        <button className="icon-btn-small" onClick={() => setEditingItem({ ...item, owner: activeTab })}>
-                          <Edit size={16} color="var(--txt-light)" />
-                        </button>
-                        <button className="icon-btn-small" onClick={() => handleDelete(activeTab, item.id)}>
-                          <Trash2 size={16} color="#ef4444" />
-                        </button>
-                        <button className="confirm-btn-apple" onClick={() => setConfirmingItem({ ...item, owner: activeTab })}>
-                          <CheckCircle2 size={28} />
-                        </button>
-                      </div>
+                      {currentUser?.name !== 'Misafir' && (
+                        <div className="si-right">
+                          <button className="icon-btn-small" onClick={() => setEditingItem({ ...item, owner: activeTab })}>
+                            <Edit size={16} color="var(--txt-light)" />
+                          </button>
+                          <button className="icon-btn-small" onClick={() => handleDelete(activeTab, item.id)}>
+                            <Trash2 size={16} color="#ef4444" />
+                          </button>
+                          <button className="confirm-btn-apple" onClick={() => setConfirmingItem({ ...item, owner: activeTab })}>
+                            <CheckCircle2 size={28} />
+                          </button>
+                        </div>
+                      )}
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -397,7 +399,7 @@ export default function Alisveris() {
         )}
       </div>
 
-      {activeTab !== 'market' && (
+      {currentUser?.name !== 'Misafir' && activeTab !== 'market' && (
         <button 
           className="fab-add-shopping animate-pop" 
           onClick={() => setShowAddModal(true)}

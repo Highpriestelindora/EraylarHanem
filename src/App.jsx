@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { notificationService } from './lib/notificationService';
@@ -30,13 +30,21 @@ import Ev from './pages/Ev';
 import Pet from './pages/Pet';
 import Aracim from './pages/Aracim';
 import Tatil from './pages/Tatil';
-import Kayitlar from './pages/Kayitlar';
 import Achievements from './pages/Achievements';
 import Guvenlik from './pages/Guvenlik';
 import PersonalityTest from './pages/PersonalityTest';
 import PersonalityHub from './pages/PersonalityHub';
 import Modaring from './pages/Modaring';
 import Muhendislik from './pages/Muhendislik';
+import Kayitlar from './pages/Kayitlar';
+
+function ProtectedRoute({ children }) {
+  const currentUser = useStore(state => state.currentUser);
+  if (currentUser?.name === 'Misafir') {
+    return <Navigate to="/" replace />;
+  }
+  return children;
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -47,8 +55,8 @@ function AnimatedRoutes() {
         <Route path="/" element={<AppLayout />}>
           <Route index element={<Home />} />
           <Route path="mutfak" element={<Mutfak />} />
-          <Route path="finans" element={<Finans />} />
-          <Route path="kasa" element={<Kasa />} />
+          <Route path="finans" element={<ProtectedRoute><Finans /></ProtectedRoute>} />
+          <Route path="kasa" element={<ProtectedRoute><Kasa /></ProtectedRoute>} />
           <Route path="alisveris" element={<Alisveris />} />
           <Route path="saglik" element={<Saglik />} />
           <Route path="ayarlar" element={<Ayarlar />} />
@@ -57,7 +65,7 @@ function AnimatedRoutes() {
           
           {/* Ek Modüller */}
           <Route path="sosyal" element={<Sosyal />} />
-          <Route path="hedefler" element={<Hedefler />} />
+          <Route path="hedefler" element={<ProtectedRoute><Hedefler /></ProtectedRoute>} />
           <Route path="modaring" element={<Modaring />} />
           <Route path="muhendislik" element={<Muhendislik />} />
           <Route path="ev" element={<Ev />} />

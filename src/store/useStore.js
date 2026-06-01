@@ -3249,6 +3249,13 @@ const useStore = create(
           const cid = localStorage.getItem('eraylar_client_id') || Math.random().toString(36).substring(2);
           localStorage.setItem('eraylar_client_id', cid);
 
+          // Force logout for auth v2 transition
+          const authVersion = localStorage.getItem('eraylar_auth_version');
+          if (authVersion !== 'v2') {
+            set({ currentUser: null });
+            localStorage.setItem('eraylar_auth_version', 'v2');
+          }
+
           set({ syncing: true });
           await get().loadFromSupabase();
           
@@ -9561,6 +9568,16 @@ const useStore = create(
 
       setCurrentUser: (user) => {
         set({ currentUser: user });
+      },
+
+      verifyPassword: (userName, password) => {
+        const pinMap = {
+          'görkem': '536188',
+          'gorkem': '536188',
+          'esra': '536189'
+        };
+        const key = (userName || '').toLowerCase().trim();
+        return pinMap[key] === password;
       },
 
       updateExchangeRates: async () => {

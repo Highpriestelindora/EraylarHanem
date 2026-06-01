@@ -1472,6 +1472,8 @@ function TripCard({ trip, onClick, onEdit }) {
 
 function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
   const { addTrip, updateTrip, deleteTrip, tatil } = useStore();
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(initialData || {
     title: '',
@@ -1502,7 +1504,8 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
       // Duplicate city check removed to allow traveling to the same city multiple times
     }
 
-    if (step < 4) setStep(step + 1);
+    const maxStep = isGuest ? 3 : 4;
+    if (step < maxStep) setStep(step + 1);
     else handleFinish();
   };
 
@@ -1520,7 +1523,7 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
   return (
     <div className="wizard-container-cute">
       <div className="wizard-steps-indicator">
-        {[1, 2, 3, 4].map(s => <div key={s} className={`step-dot ${step >= s ? 'active' : ''}`} />)}
+        {(isGuest ? [1, 2, 3] : [1, 2, 3, 4]).map(s => <div key={s} className={`step-dot ${step >= s ? 'active' : ''}`} />)}
       </div>
 
       <div className="wizard-step-content animate-fadeIn">
@@ -1660,7 +1663,7 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 4 && !isGuest && (
           <div className="w-step">
             <h4>💰 Bütçe Planı</h4>
             <input type="number" placeholder="Tahmini Bütçe (₺)" value={formData.budget} onChange={e => setFormData({...formData, budget: e.target.value})} />
@@ -1711,7 +1714,7 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
         )}
         {step > 1 && <button className="w-back-btn" onClick={() => setStep(step - 1)}>Geri</button>}
         <button className="w-next-btn" onClick={handleNext}>
-          {step === 4 ? (mode === 'edit' ? 'Değişiklikleri Kaydet 💾' : 'Macerayı Başlat ✨') : 'Devam Et'}
+          {step === (isGuest ? 3 : 4) ? (mode === 'edit' ? 'Değişiklikleri Kaydet 💾' : 'Macerayı Başlat ✨') : 'Devam Et'}
         </button>
       </div>
     </div>
@@ -1720,6 +1723,8 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
 
 function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, requestConfirm, onViewPdf }) {
   const { addExpense, tatil, setModuleData, deleteTrip } = useStore();
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
   const [weatherForecast, setWeatherForecast] = useState([]);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showReview, setShowReview] = useState(false);
@@ -1911,10 +1916,12 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
             <span>To Do</span>
           </button>
         )}
-        <button className={`sub-tab-btn-cute ${activeSubTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveSubTab('budget')}>
-          <span className="btn-emoji">💰</span>
-          <span>Bütçe</span>
-        </button>
+        {!isGuest && (
+          <button className={`sub-tab-btn-cute ${activeSubTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveSubTab('budget')}>
+            <span className="btn-emoji">💰</span>
+            <span>Bütçe</span>
+          </button>
+        )}
       </div>
 
       <div className="detail-body">
@@ -1965,7 +1972,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
           </div>
         )}
 
-        {activeSubTab === 'budget' && (
+        {activeSubTab === 'budget' && !isGuest && (
           <BudgetSection trip={trip} onShowExpense={() => setShowExpenseModal(true)} />
         )}
       </div>
@@ -5273,6 +5280,8 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
 
 function HayalTab({ tatil, requestConfirm }) {
   const { setModuleData } = useStore();
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
   const [activeSubTab, setActiveSubTab] = useState('experiences');
   const [filter, setFilter] = useState('Hepsi');
   const wishlist = tatil.wishlist || [];
@@ -5413,7 +5422,7 @@ function HayalTab({ tatil, requestConfirm }) {
                 <div className="exp-card-footer">
                   <div className="exp-stats">
                     <div className="exp-stat"><Timer size={12} /> {item.duration}</div>
-                    <div className="exp-stat"><Wallet size={12} /> {item.budget}</div>
+                    {!isGuest && <div className="exp-stat"><Wallet size={12} /> {item.budget}</div>}
                   </div>
                   <div className="exp-season">
                     <Calendar size={12} /> {item.season}
@@ -5473,10 +5482,12 @@ function HayalTab({ tatil, requestConfirm }) {
                       <input placeholder="Ülke" value={manualDream.country} onChange={e => setManualDream({...manualDream, country: e.target.value})} />
                     </div>
                   </div>
-                  <div className="md-input-field">
-                    <label>Bütçe</label>
-                    <input placeholder="Tahmini Bütçe (örn: €1.500)" value={manualDream.budget} onChange={e => setManualDream({...manualDream, budget: e.target.value})} />
-                  </div>
+                  {!isGuest && (
+                    <div className="md-input-field">
+                      <label>Bütçe</label>
+                      <input placeholder="Tahmini Bütçe (örn: €1.500)" value={manualDream.budget} onChange={e => setManualDream({...manualDream, budget: e.target.value})} />
+                    </div>
+                  )}
                   <div className="md-input-field">
                     <label>Notlarımız</label>
                     <textarea placeholder="Neden gitmek istiyoruz?" value={manualDream.notes} onChange={e => setManualDream({...manualDream, notes: e.target.value})} />
@@ -5521,7 +5532,7 @@ function HayalTab({ tatil, requestConfirm }) {
                     </button>
                   </div>
                   <div className="wc-content">
-                    {displayBudget && <div className="wc-budget"><DollarSign size={12} /> {displayBudget}</div>}
+                    {displayBudget && !isGuest && <div className="wc-budget"><DollarSign size={12} /> {displayBudget}</div>}
                     {displayNotes && <p className="wc-notes">“{displayNotes}”</p>}
                   </div>
                 </div>
@@ -5814,6 +5825,8 @@ function DiscoveryGuideContent({ item }) {
   const [wiki, setWiki] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
 
   useEffect(() => {
     let active = true;
@@ -5857,10 +5870,12 @@ function DiscoveryGuideContent({ item }) {
 
       {/* Stats Row */}
       <div className="dg-stats-row">
-        <div className="dg-stat-pill">
-          <Wallet size={14} />
-          <span>{item.budget}</span>
-        </div>
+        {!isGuest && (
+          <div className="dg-stat-pill">
+            <Wallet size={14} />
+            <span>{item.budget}</span>
+          </div>
+        )}
         <div className="dg-stat-pill">
           <Timer size={14} />
           <span>{item.duration}</span>

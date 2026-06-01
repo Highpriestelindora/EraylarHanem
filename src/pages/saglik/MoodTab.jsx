@@ -24,12 +24,14 @@ const KATEGORILER = [
 
 export default function MoodTab() {
   const { saglik, addMood, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const [selectedMood, setSelectedMood] = useState(null);
   const [selectedKat, setSelectedKat] = useState('Genel');
   const [note, setNote] = useState('');
   const [visibleDays, setVisibleDays] = useState(5);
 
   const handleShare = () => {
+    if (isGuest) return;
     if (!selectedMood) {
       toast.error('Önce bir ruh hali seçmelisin! ✨');
       return;
@@ -71,56 +73,64 @@ export default function MoodTab() {
 
   return (
     <div className="mood-tab animate-fadeIn">
-      <div className="mood-input-card glass" style={{ padding: '16px', borderRadius: '24px' }}>
-        <div className="section-header" style={{ marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#1e293b' }}>🎭 Wellness Paylaş</h3>
-        </div>
+      {!isGuest ? (
+        <div className="mood-input-card glass" style={{ padding: '16px', borderRadius: '24px' }}>
+          <div className="section-header" style={{ marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#1e293b' }}>🎭 Wellness Paylaş</h3>
+          </div>
 
-        <div className="mood-grid-premium">
-          {MOODS.map(m => (
-            <motion.button 
-              key={m.id} 
-              whileTap={{ scale: 0.9 }}
-              className={`mood-btn-v2 ${selectedMood?.id === m.id ? 'active' : ''}`}
-              onClick={() => setSelectedMood(m)}
-              style={{ '--mood-bg': m.color }}
-            >
-              <span className="m-emoji">{m.emoji}</span>
-              <span className="m-label">{m.label}</span>
-            </motion.button>
-          ))}
-        </div>
-
-        <div className="reason-section" style={{ marginTop: '20px' }}>
-          <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6, marginBottom: '8px', display: 'block' }}>Neden?</label>
-          <div className="reason-scroll-row">
-            {KATEGORILER.map(k => (
-              <button 
-                key={k.id} 
-                className={`reason-tag-mini ${selectedKat === k.id ? 'active' : ''}`}
-                onClick={() => setSelectedKat(k.id)}
+          <div className="mood-grid-premium">
+            {MOODS.map(m => (
+              <motion.button 
+                key={m.id} 
+                whileTap={{ scale: 0.9 }}
+                className={`mood-btn-v2 ${selectedMood?.id === m.id ? 'active' : ''}`}
+                onClick={() => setSelectedMood(m)}
+                style={{ '--mood-bg': m.color }}
               >
-                {k.id}
-              </button>
+                <span className="m-emoji">{m.emoji}</span>
+                <span className="m-label">{m.label}</span>
+              </motion.button>
             ))}
           </div>
-        </div>
 
-        <div className="form-group" style={{ marginTop: '20px' }}>
-          <textarea 
-            placeholder="Bir şeyler eklemek ister misin? (opsiyonel)" 
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            rows={2}
-            className="premium-input"
-            style={{ minHeight: '80px' }}
-          />
-        </div>
+          <div className="reason-section" style={{ marginTop: '20px' }}>
+            <label style={{ fontSize: '12px', fontWeight: '800', opacity: 0.6, marginBottom: '8px', display: 'block' }}>Neden?</label>
+            <div className="reason-scroll-row">
+              {KATEGORILER.map(k => (
+                <button 
+                  key={k.id} 
+                  className={`reason-tag-mini ${selectedKat === k.id ? 'active' : ''}`}
+                  onClick={() => setSelectedKat(k.id)}
+                >
+                  {k.id}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <button className="submit-btn-premium wellness" onClick={handleShare}>
-          <Send size={18} /> Paylaş
-        </button>
-      </div>
+          <div className="form-group" style={{ marginTop: '20px' }}>
+            <textarea 
+              placeholder="Bir şeyler eklemek ister misin? (opsiyonel)" 
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              rows={2}
+              className="premium-input"
+              style={{ minHeight: '80px' }}
+            />
+          </div>
+
+          <button className="submit-btn-premium wellness" onClick={handleShare}>
+            <Send size={18} /> Paylaş
+          </button>
+        </div>
+      ) : (
+        <div className="mood-input-card glass" style={{ padding: '24px', borderRadius: '24px', textAlign: 'center', opacity: 0.8 }}>
+          <span style={{ fontSize: '32px' }}>🎭</span>
+          <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#1e293b', marginTop: '10px' }}>Wellness Modülü</h3>
+          <p style={{ fontSize: '12px', opacity: 0.6, marginTop: '5px' }}>Misafir kullanıcı wellness paylaşımı yapamaz.</p>
+        </div>
+      )}
 
       <div className="mood-history-premium mt-20">
         <div className="section-title-premium">

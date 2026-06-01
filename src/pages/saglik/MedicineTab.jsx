@@ -12,8 +12,9 @@ const MedicineTab = () => {
   const { 
     saglik, setModuleData, takeMedicine, 
     addMedicine, updateMedicine, archiveMedicine,
-    fetchGroup2Data 
+    fetchGroup2Data, currentUser
   } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -251,9 +252,11 @@ const MedicineTab = () => {
 
       <div className="section-header-premium" style={{ marginBottom: '20px' }}>
          <h3 style={{ fontSize: '15px', fontWeight: '900', color: '#1e293b' }}>💊 Aktif İlaçlar</h3>
-         <button className="add-pill-btn" onClick={() => { setIsEditing(false); setForm({ kisi: 'Görkem', ad: '', dozaj: '', sıklık: 'Günde 1', stok: 30, minStok: 5, morning: 1, afternoon: 0, evening: 0 }); setModalOpen(true); }}>
-            <Plus size={16} /> Ekle
-         </button>
+         {!isGuest && (
+            <button className="add-pill-btn" onClick={() => { setIsEditing(false); setForm({ kisi: 'Görkem', ad: '', dozaj: '', sıklık: 'Günde 1', stok: 30, minStok: 5, morning: 1, afternoon: 0, evening: 0 }); setModalOpen(true); }}>
+               <Plus size={16} /> Ekle
+            </button>
+         )}
       </div>
 
       <div className="meds-list-premium">
@@ -297,7 +300,12 @@ const MedicineTab = () => {
                             <div 
                               key={slot.key} 
                               className={`dose-dot ${status}`}
+                              style={{ cursor: isGuest ? 'default' : 'pointer' }}
                               onClick={() => {
+                                if (isGuest) {
+                                  toast.error('Misafir kullanıcısı ilaç içildi kaydı giremez. 🕵️');
+                                  return;
+                                }
                                 if (status !== 'taken') {
                                   takeMedicine(i.id, slot.key);
                                   toast.success(`${slot.key === 'morning' ? 'Sabah' : slot.key === 'afternoon' ? 'Öğle' : 'Akşam'} dozu kaydedildi! ✅`);
@@ -317,13 +325,15 @@ const MedicineTab = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="hcv-actions">
-                    <button className="btn-take-premium" onClick={() => handleQuickTake(i)}>İÇİLDİ</button>
-                    <div className="hcv-action-row-mini">
-                      <button className="btn-edit-mini" onClick={() => handleEdit(i)}><Edit2 size={16} /></button>
-                      <button className="btn-del-mini" onClick={() => handleDelete(i.id)}><Trash2 size={16} /></button>
+                  {!isGuest && (
+                    <div className="hcv-actions">
+                      <button className="btn-take-premium" onClick={() => handleQuickTake(i)}>İÇİLDİ</button>
+                      <div className="hcv-action-row-mini">
+                        <button className="btn-edit-mini" onClick={() => handleEdit(i)}><Edit2 size={16} /></button>
+                        <button className="btn-del-mini" onClick={() => handleDelete(i.id)}><Trash2 size={16} /></button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </motion.div>
             ))}

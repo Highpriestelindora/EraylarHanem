@@ -102,13 +102,15 @@ export default function AppLayout() {
           </div>
         </div>
         <div className="header-actions">
-          <button 
-            className="header-action-btn" 
-            onClick={() => navigate('/analiz')}
-            title="İstatistikler"
-          >
-            <BarChart2 size={20} />
-          </button>
+          {currentUser?.name !== 'Misafir' && (
+            <button 
+              className="header-action-btn" 
+              onClick={() => navigate('/analiz')}
+              title="İstatistikler"
+            >
+              <BarChart2 size={20} />
+            </button>
+          )}
           <button 
             className="header-action-btn" 
             onClick={() => navigate('/ayarlar')}

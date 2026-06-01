@@ -187,6 +187,13 @@ export default function Ev() {
       scrollContainerRef.current?.scrollTo(0, 0);
     }, [activeTab]);
 
+    // ActiveTab guard for Misafir user
+    useEffect(() => {
+      if (currentUser?.name === 'Misafir' && (activeTab === 'abonelik' || activeTab === 'fatura')) {
+        setActiveTab('yasam');
+      }
+    }, [activeTab, currentUser]);
+
 
   const requestConfirm = (message, onConfirm) => {
     setShowConfirm({ open: true, message, onConfirm });
@@ -283,13 +290,20 @@ export default function Ev() {
   const [currentAdviceIdx, setCurrentAdviceIdx] = useState(0);
   const activeAdvice = coachAdvices[currentAdviceIdx % coachAdvices.length];
 
-  const tabs = [
-    { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
-    { id: 'bakim', label: 'Bakım', emoji: '🔧' },
-    { id: 'abonelik', label: 'Abone', emoji: '💳' },
-    { id: 'fatura', label: 'Fatura', emoji: '🧾' },
-    { id: 'guvenlik', label: 'Güvenlik', emoji: '🛡️' }
-  ];
+  const tabs = useMemo(() => {
+    const list = [
+      { id: 'yasam', label: 'Yaşam', emoji: '🪴' },
+      { id: 'bakim', label: 'Bakım', emoji: '🔧' },
+      { id: 'guvenlik', label: 'Güvenlik', emoji: '🛡️' }
+    ];
+    if (currentUser?.name !== 'Misafir') {
+      list.splice(2, 0, 
+        { id: 'abonelik', label: 'Abone', emoji: '💳' },
+        { id: 'fatura', label: 'Fatura', emoji: '🧾' }
+      );
+    }
+    return list;
+  }, [currentUser]);
 
   const handleAddFatura = (e) => {
     e.preventDefault();
@@ -508,82 +522,84 @@ export default function Ev() {
                  <p>Bu sistem; tatil rotalarınızı, ev/iş konumlarınızdaki sürenizi ve günlük rutinlerinizi yapay zeka ile sentezleyerek yaşam dengenizi takip eder.</p>
                </div>
                
-                <div className="tracking-setup mt-32 pt-24 mb-24 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <button 
-                      className={`btn-pill-v2 ${ev.tracking?.[userKey]?.home?.lat ? 'fixed' : ''}`} 
-                      style={{ width: '100%', justifyContent: 'center' }}
-                      onClick={() => {
-                        const update = () => {
-                          toast.loading("Konum alınıyor...", { id: 'loc' });
-                          navigator.geolocation.getCurrentPosition(p => {
-                            updateLocationSettings('home', { 
-                              lat: p.coords.latitude, 
-                              lng: p.coords.longitude, 
-                              label: 'Evim', 
-                              address: 'Otomatik Konum' 
+                {currentUser?.name !== 'Misafir' && (
+                  <div className="tracking-setup mt-32 pt-24 mb-24 border-t" style={{ borderTop: '1px solid var(--brd)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <button 
+                        className={`btn-pill-v2 ${ev.tracking?.[userKey]?.home?.lat ? 'fixed' : ''}`} 
+                        style={{ width: '100%', justifyContent: 'center' }}
+                        onClick={() => {
+                          const update = () => {
+                            toast.loading("Konum alınıyor...", { id: 'loc' });
+                            navigator.geolocation.getCurrentPosition(p => {
+                              updateLocationSettings('home', { 
+                                lat: p.coords.latitude, 
+                                lng: p.coords.longitude, 
+                                label: 'Evim', 
+                                address: 'Otomatik Konum' 
+                              });
+                              toast.success("Ev konumu güncellendi! 📍", { id: 'loc' });
+                            }, (err) => {
+                              console.error(err);
+                              toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
                             });
-                            toast.success("Ev konumu güncellendi! 📍", { id: 'loc' });
-                          }, (err) => {
-                            console.error(err);
-                            toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
-                          });
-                        };
+                          };
 
-                        if (ev.tracking?.[userKey]?.home?.lat) {
-                          requestConfirm("Mevcut konumunu 'Evim' olarak güncellemek istiyor musun?", update);
-                        } else {
-                          update();
-                        }
-                      }}
-                    >
-                      <Home size={14} />
-                      <span>{ev.tracking?.[userKey]?.home?.lat ? 'Evi Güncelle' : 'Evi Set Et'}</span>
-                      {ev.tracking?.[userKey]?.home?.lat && <div className="dot-active"></div>}
-                    </button>
+                          if (ev.tracking?.[userKey]?.home?.lat) {
+                            requestConfirm("Mevcut konumunu 'Evim' olarak güncellemek istiyor musun?", update);
+                          } else {
+                            update();
+                          }
+                        }}
+                      >
+                        <Home size={14} />
+                        <span>{ev.tracking?.[userKey]?.home?.lat ? 'Evi Güncelle' : 'Evi Set Et'}</span>
+                        {ev.tracking?.[userKey]?.home?.lat && <div className="dot-active"></div>}
+                      </button>
+
+                      <button 
+                        className={`btn-pill-v2 ${ev.tracking?.[userKey]?.work?.lat ? 'fixed' : ''}`} 
+                        style={{ width: '100%', justifyContent: 'center' }}
+                        onClick={() => {
+                          const update = () => {
+                            toast.loading("Konum alınıyor...", { id: 'loc' });
+                            navigator.geolocation.getCurrentPosition(p => {
+                              updateLocationSettings('work', { 
+                                lat: p.coords.latitude, 
+                                lng: p.coords.longitude, 
+                                label: 'İşyerim', 
+                                address: 'Otomatik Konum' 
+                              });
+                              toast.success("İş konumu güncellendi! 📍", { id: 'loc' });
+                            }, (err) => {
+                              console.error(err);
+                              toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
+                            });
+                          };
+
+                          if (ev.tracking?.[userKey]?.work?.lat) {
+                            requestConfirm("Mevcut konumunu 'İşyerim' olarak güncellemek istiyor musun?", update);
+                          } else {
+                            update();
+                          }
+                        }}
+                      >
+                        <Building size={14} />
+                        <span>{ev.tracking?.[userKey]?.work?.lat ? 'İşi Güncelle' : 'İşi Set Et'}</span>
+                        {ev.tracking?.[userKey]?.work?.lat && <div className="dot-active"></div>}
+                      </button>
+                    </div>
 
                     <button 
-                      className={`btn-pill-v2 ${ev.tracking?.[userKey]?.work?.lat ? 'fixed' : ''}`} 
-                      style={{ width: '100%', justifyContent: 'center' }}
-                      onClick={() => {
-                        const update = () => {
-                          toast.loading("Konum alınıyor...", { id: 'loc' });
-                          navigator.geolocation.getCurrentPosition(p => {
-                            updateLocationSettings('work', { 
-                              lat: p.coords.latitude, 
-                              lng: p.coords.longitude, 
-                              label: 'İşyerim', 
-                              address: 'Otomatik Konum' 
-                            });
-                            toast.success("İş konumu güncellendi! 📍", { id: 'loc' });
-                          }, (err) => {
-                            console.error(err);
-                            toast.error("Konum alınamadı. İzinleri kontrol edin.", { id: 'loc' });
-                          });
-                        };
-
-                        if (ev.tracking?.[userKey]?.work?.lat) {
-                          requestConfirm("Mevcut konumunu 'İşyerim' olarak güncellemek istiyor musun?", update);
-                        } else {
-                          update();
-                        }
-                      }}
+                      className="btn-pill-v2 prominent" 
+                      onClick={() => setShowLocationSettings(true)}
+                      style={{ background: 'var(--social)', color: 'white', border: 'none', width: '100%', justifyContent: 'center', padding: '14px' }}
                     >
-                      <Building size={14} />
-                      <span>{ev.tracking?.[userKey]?.work?.lat ? 'İşi Güncelle' : 'İşi Set Et'}</span>
-                      {ev.tracking?.[userKey]?.work?.lat && <div className="dot-active"></div>}
+                      <MapIcon size={16} />
+                      <span>Gelişmiş Konum Yönetimi</span>
                     </button>
                   </div>
-
-                  <button 
-                    className="btn-pill-v2 prominent" 
-                    onClick={() => setShowLocationSettings(true)}
-                    style={{ background: 'var(--social)', color: 'white', border: 'none', width: '100%', justifyContent: 'center', padding: '14px' }}
-                  >
-                    <MapIcon size={16} />
-                    <span>Gelişmiş Konum Yönetimi</span>
-                  </button>
-                </div>
+                )}
 
                 <div className="ai-interpretation mt-32">
                   <Sparkles size={14} color="#10b981" />
@@ -598,9 +614,11 @@ export default function Ev() {
             {/* Periodic Maintenance Hub */}
             <div className="section-header-v2">
               <h3>🔄 Periyodik Bakımlar</h3>
-              <button className="add-btn-mini" onClick={() => setEditingPeriodic({ name: '', intervalDays: 30, icon: '🔧' })}>
-                <Plus size={14} />
-              </button>
+              {currentUser?.name !== 'Misafir' && (
+                <button className="add-btn-mini" onClick={() => setEditingPeriodic({ name: '', intervalDays: 30, icon: '🔧' })}>
+                  <Plus size={14} />
+                </button>
+              )}
             </div>
             
             <div className="mini-bakim-row mt-12 mb-24 centered">
@@ -611,9 +629,11 @@ export default function Ev() {
                   <div 
                     key={b.id} 
                     className="mini-m-card glass" 
-                    onClick={() => setEditingPeriodicDetails(b)}
+                    onClick={() => currentUser?.name !== 'Misafir' && setEditingPeriodicDetails(b)}
+                    style={{ cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }}
                     onContextMenu={(e) => {
                       e.preventDefault();
+                      if (currentUser?.name === 'Misafir') return;
                       requestConfirm('Bu periyodik bakımı silmek istiyor musunuz?', () => {
                         deletePeriodicBakim(b.id);
                       });
@@ -624,13 +644,14 @@ export default function Ev() {
                       style={{ borderColor: perc > 80 ? '#ef4444' : '#22c55e' }}
                       onClick={(e) => {
                         e.stopPropagation();
+                        if (currentUser?.name === 'Misafir') return;
                         requestConfirm(`${b.name} bakımını bugün yaptınız mı? Sayaç sıfırlanacak.`, () => {
                           resetPeriodicBakim(b.id);
                         });
                       }}
                     >
                       {b.icon}
-                      <div className="mm-reset-hint">Sıfırla</div>
+                      {currentUser?.name !== 'Misafir' && <div className="mm-reset-hint">Sıfırla</div>}
                     </div>
                     <div className="mm-info">
                       <strong>{b.name}</strong>
@@ -648,26 +669,28 @@ export default function Ev() {
                    <h3>🔨 Bakım & Onarım Listesi</h3>
                    <small style={{ opacity: 0.5 }}>{(onarimListesi || []).filter(i => !i.isArchived).length} Aktif Görev</small>
                  </div>
-                 <div style={{ display: 'flex', gap: '8px' }}>
-                   {(onarimListesi || []).some(i => i.status === 'Completed' && !i.isArchived) && (
+                 {currentUser?.name !== 'Misafir' && (
+                   <div style={{ display: 'flex', gap: '8px' }}>
+                     {(onarimListesi || []).some(i => i.status === 'Completed' && !i.isArchived) && (
+                       <button 
+                         className="clear-btn-mini" 
+                         title="Tamamlananları Temizle"
+                         onClick={() => {
+                           const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+                           requestConfirm('Tamamlanan görevleri listeden kaldırmak istiyor musunuz? (Kayıtlar arşivlenecektir)', () => clearCompletedOnarimItems(userKey));
+                         }}
+                       >
+                         <RotateCcw size={14} /> Temizle
+                       </button>
+                     )}
                      <button 
-                       className="clear-btn-mini" 
-                       title="Tamamlananları Temizle"
-                       onClick={() => {
-                         const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
-                         requestConfirm('Tamamlanan görevleri listeden kaldırmak istiyor musunuz? (Kayıtlar arşivlenecektir)', () => clearCompletedOnarimItems(userKey));
-                       }}
+                       className="add-btn-mini" 
+                       onClick={() => setEditingOnarim({ task: '' })}
                      >
-                       <RotateCcw size={14} /> Temizle
+                       <Plus size={14} />
                      </button>
-                   )}
-                   <button 
-                     className="add-btn-mini" 
-                     onClick={() => setEditingOnarim({ task: '' })}
-                   >
-                     <Plus size={14} />
-                   </button>
-                 </div>
+                   </div>
+                 )}
                </div>
 
                <div className="onarim-list-v2 mt-12">
@@ -681,10 +704,11 @@ export default function Ev() {
                          style={{ cursor: 'default' }}
                        >
                          <div className="tcv2-check" onClick={(e) => {
-                           e.stopPropagation();
-                           const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
-                           toggleOnarimItem(item.id, userKey);
-                         }} style={{ cursor: 'pointer' }}>
+                            if (currentUser?.name === 'Misafir') return;
+                            e.stopPropagation();
+                            const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+                            toggleOnarimItem(item.id, userKey);
+                          }} style={{ cursor: currentUser?.name === 'Misafir' ? 'not-allowed' : 'pointer' }}>
                            {item.status === 'Completed' ? <CheckCircle2 size={18} color="#22c55e" /> : <div className="circle-check-v2" />}
                          </div>
                          <div className="tcv2-info">
@@ -714,30 +738,32 @@ export default function Ev() {
                               )}
                             </div>
                          </div>
-                         <div className="tcv2-actions" style={{ display: 'flex', gap: '6px', alignSelf: 'center', marginLeft: 'auto' }}>
-                            <button 
-                              className="icon-btn-mini" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingOnarim(item);
-                              }}
-                              style={{ border: 'none', background: '#f1f5f9', color: '#64748b', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
-                              title="Düzenle"
-                            >
-                              <Edit2 size={12} />
-                            </button>
-                            <button 
-                              className="icon-btn-mini del" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                requestConfirm('Bu görevi listeden tamamen silmek istediğinize emin misiniz?', () => deleteOnarimItem(item.id));
-                              }}
-                              style={{ border: 'none', background: '#fee2e2', color: '#ef4444', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
-                              title="Sil"
-                            >
-                              <Trash2 size={12} />
-                            </button>
-                         </div>
+                         {currentUser?.name !== 'Misafir' && (
+                            <div className="tcv2-actions" style={{ display: 'flex', gap: '6px', alignSelf: 'center', marginLeft: 'auto' }}>
+                               <button 
+                                 className="icon-btn-mini" 
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   setEditingOnarim(item);
+                                 }}
+                                 style={{ border: 'none', background: '#f1f5f9', color: '#64748b', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                                 title="Düzenle"
+                               >
+                                 <Edit2 size={12} />
+                               </button>
+                               <button 
+                                 className="icon-btn-mini del" 
+                                 onClick={(e) => {
+                                   e.stopPropagation();
+                                   requestConfirm('Bu görevi listeden tamamen silmek istediğinize emin misiniz?', () => deleteOnarimItem(item.id));
+                                 }}
+                                 style={{ border: 'none', background: '#fee2e2', color: '#ef4444', padding: '6px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                                 title="Sil"
+                               >
+                                 <Trash2 size={12} />
+                               </button>
+                            </div>
+                         )}
                        </div>
                      );
                    })
@@ -933,48 +959,50 @@ export default function Ev() {
             <div className="wifi-section-container mb-24">
               
               {/* Main Wi-Fi Card (Collapsible) */}
-              <div className={`premium-wifi-card main glass animate-fadeIn ${!showWifiMain ? 'collapsed' : ''}`}>
-                <div className="wifi-card-header" onClick={() => setShowWifiMain(!showWifiMain)}>
-                  <div className="wifi-toggle-btn">
-                    {showWifiMain ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
-                  </div>
-                  <div className="wifi-title-group">
-                    <label>AĞ ADI</label>
-                    <strong>Superonline_Wi-Fi_1023</strong>
-                  </div>
-                </div>
-
-                {showWifiMain && (
-                  <div className="wifi-card-body animate-fadeIn">
-                    <div className="wifi-content-v2">
-                      <div className="wifi-info-main">
-                        <label>ŞİFRE</label>
-                        <div className="wifi-pass-container static">
-                          <Key size={14} opacity={0.5} />
-                          <span className="handwriting-pass">
-                            {showWifiPass ? 'MAUMFUFTH74L' : '••••••••••••'}
-                          </span>
-                          <button 
-                            className="wifi-peek-btn" 
-                            onClick={(e) => { e.stopPropagation(); setShowWifiPass(!showWifiPass); }}
-                            title={showWifiPass ? "Gizle" : "Göster"}
-                          >
-                            {showWifiPass ? <EyeOff size={14} /> : <Eye size={14} />}
-                          </button>
-                        </div>
-                      </div>
-                      <span className="wifi-badge main side">ANA HAT</span>
-                      <div className="wifi-qr-placeholder">
-                         <img 
-                           src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('WIFI:S:Superonline_Wi-Fi_1023;T:WPA;P:MAUMFUFTH74L;;')}`} 
-                           alt="QR Code" 
-                           className="real-qr-img"
-                         />
-                      </div>
+              {currentUser?.name !== 'Misafir' && (
+                <div className={`premium-wifi-card main glass animate-fadeIn ${!showWifiMain ? 'collapsed' : ''}`}>
+                  <div className="wifi-card-header" onClick={() => setShowWifiMain(!showWifiMain)}>
+                    <div className="wifi-toggle-btn">
+                      {showWifiMain ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                    </div>
+                    <div className="wifi-title-group">
+                      <label>AĞ ADI</label>
+                      <strong>Superonline_Wi-Fi_1023</strong>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {showWifiMain && (
+                    <div className="wifi-card-body animate-fadeIn">
+                      <div className="wifi-content-v2">
+                        <div className="wifi-info-main">
+                          <label>ŞİFRE</label>
+                          <div className="wifi-pass-container static">
+                            <Key size={14} opacity={0.5} />
+                            <span className="handwriting-pass">
+                              {showWifiPass ? 'MAUMFUFTH74L' : '••••••••••••'}
+                            </span>
+                            <button 
+                              className="wifi-peek-btn" 
+                              onClick={(e) => { e.stopPropagation(); setShowWifiPass(!showWifiPass); }}
+                              title={showWifiPass ? "Gizle" : "Göster"}
+                            >
+                              {showWifiPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                          </div>
+                        </div>
+                        <span className="wifi-badge main side">ANA HAT</span>
+                        <div className="wifi-qr-placeholder">
+                           <img 
+                             src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('WIFI:S:Superonline_Wi-Fi_1023;T:WPA;P:MAUMFUFTH74L;;')}`} 
+                             alt="QR Code" 
+                             className="real-qr-img"
+                           />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Guest Wi-Fi Card (Always visible) */}
               <div className="premium-wifi-card guest glass animate-fadeIn" style={{ marginTop: '16px' }}>
@@ -1009,197 +1037,199 @@ export default function Ev() {
             </div>
 
             {/* Encrypted Safe (Şifreli Defter) - Vintage Edition */}
-            <div className="vintage-safe-container glass">
-                <div className="vs-header">
-                  <div className="vs-title">
-                    <Book size={20} color="#10b981" />
-                    <h3>Kişisel Şifreli Defter</h3>
+            {currentUser?.name !== 'Misafir' && (
+              <div className="vintage-safe-container glass">
+                  <div className="vs-header">
+                    <div className="vs-title">
+                      <Book size={20} color="#10b981" />
+                      <h3>Kişisel Şifreli Defter</h3>
+                    </div>
+                    {!ev.guvenlik?.safePassword ? (
+                      <button className="vs-action-btn setup" onClick={() => navigate('/profil')}>
+                        <AlertCircle size={16} /> Şifre Belirle
+                      </button>
+                    ) : ev.personalSafe?.locked ? (
+                      <button className="vs-action-btn unlock" onClick={() => {
+                        if (unlockSafe(safeInput)) {
+                          toast.success('Defter açıldı! 🖋️');
+                          setSafeInput('');
+                        } else {
+                          setSafeError(true);
+                          toast.error('Hatalı şifre! 🔒');
+                          setTimeout(() => setSafeError(false), 500);
+                        }
+                      }}>
+                        <Lock size={16} /> Kilidi Aç
+                      </button>
+                    ) : (
+                      <button className="vs-action-btn lock" onClick={lockSafe}>
+                        <Unlock size={16} /> Defteri Kapat
+                      </button>
+                    )}
                   </div>
-                  {!ev.guvenlik?.safePassword ? (
-                    <button className="vs-action-btn setup" onClick={() => navigate('/profil')}>
-                      <AlertCircle size={16} /> Şifre Belirle
-                    </button>
-                  ) : ev.personalSafe?.locked ? (
-                    <button className="vs-action-btn unlock" onClick={() => {
-                      if (unlockSafe(safeInput)) {
-                        toast.success('Defter açıldı! 🖋️');
-                        setSafeInput('');
-                      } else {
-                        setSafeError(true);
-                        toast.error('Hatalı şifre! 🔒');
-                        setTimeout(() => setSafeError(false), 500);
-                      }
-                    }}>
-                      <Lock size={16} /> Kilidi Aç
-                    </button>
-                  ) : (
-                    <button className="vs-action-btn lock" onClick={lockSafe}>
-                      <Unlock size={16} /> Defteri Kapat
-                    </button>
-                  )}
-                </div>
 
-                <div className="vs-body">
-                  {!ev.guvenlik?.safePassword ? (
-                    <div className="vs-setup-hint">
-                      <p>Özel notlarınızı saklamak için profilinizden bir şifre belirleyin.</p>
-                      <button className="btn-setup-safe" onClick={() => navigate('/profil')}>Ayarlara Git</button>
-                    </div>
-                  ) : ev.personalSafe?.locked ? (
-                    <div className="vs-lock-overlay">
-                      <div className="vs-lock-box">
-                        <Lock size={40} className={safeError ? 'shake' : ''} />
-                        <input 
-                          type="password" 
-                          className={`vs-pin-input ${safeError ? 'error' : ''}`}
-                          placeholder="••••"
-                          value={safeInput}
-                          onChange={(e) => setSafeInput(e.target.value)}
-                          maxLength={10}
-                        />
-                        <p>Erişim kodunu giriniz</p>
+                  <div className="vs-body">
+                    {!ev.guvenlik?.safePassword ? (
+                      <div className="vs-setup-hint">
+                        <p>Özel notlarınızı saklamak için profilinizden bir şifre belirleyin.</p>
+                        <button className="btn-setup-safe" onClick={() => navigate('/profil')}>Ayarlara Git</button>
                       </div>
-                    </div>
-                  ) : (() => {
-                    const safe = ev.personalSafe || {};
-                    const activeIdx = safe.activePageIndex || 0;
-                    const pages = Array.isArray(safe.pages) ? safe.pages : [];
-                    const activePage = pages[activeIdx] || { notes: '', stamps: [] };
-                    
-                    return (
-                    <div 
-                      ref={notebookRef}
-                      className={`vs-notebook-paper animate-fadeIn ${isStamping ? 'stamping-mode' : ''}`}
-                      onMouseMove={(e) => {
-                        if (!isStamping || !notebookRef.current) return;
-                        const rect = notebookRef.current.getBoundingClientRect();
-                        setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-                      }}
-                      onClick={(e) => {
-                        if (!isStamping || !notebookRef.current) return;
-                        const rect = notebookRef.current.getBoundingClientRect();
-                        const x = e.clientX - rect.left;
-                        const y = e.clientY - rect.top;
-                        
-                        const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
-                        const userSeal = users[userKey]?.seal || { icon: 'E', color: '#10b981' };
-                        
-                        addPersonalSafeStamp({ x, y, ...userSeal });
-                        setIsStamping(false);
-                        toast.success('Mühür vuruldu! 🖋️');
-                      }}
-                    >
-                      {/* Stamp Home Base */}
-                      <div 
-                        className={`stamp-home-base ${isStamping ? 'empty' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsStamping(true);
-                        }}
-                        title="Mührü Al"
-                      >
-                        {!isStamping && (
-                          <div className="vintage-stamp-handle" style={{ transform: 'scale(0.8)' }}>
-                            <div className="handle-top" />
-                            <div className="handle-body" />
-                            <div className="handle-base" />
-                          </div>
-                        )}
-                        <div className="base-shadow" />
+                    ) : ev.personalSafe?.locked ? (
+                      <div className="vs-lock-overlay">
+                        <div className="vs-lock-box">
+                          <Lock size={40} className={safeError ? 'shake' : ''} />
+                          <input 
+                            type="password" 
+                            className={`vs-pin-input ${safeError ? 'error' : ''}`}
+                            placeholder="••••"
+                            value={safeInput}
+                            onChange={(e) => setSafeInput(e.target.value)}
+                            maxLength={10}
+                          />
+                          <p>Erişim kodunu giriniz</p>
+                        </div>
                       </div>
-
-                      <div className="notebook-header" style={{ display: 'flex', justifyContent: 'center', position: 'relative', marginBottom: '10px' }}>
-                         <div className="notebook-pagination">
-                            <button onClick={(e) => { e.stopPropagation(); if(activeIdx > 0) setPersonalSafePage(activeIdx - 1); }} disabled={activeIdx === 0}>‹</button>
-                            <span>Sayfa {activeIdx + 1} / 5</span>
-                            <button onClick={(e) => { e.stopPropagation(); if(activeIdx < 4) setPersonalSafePage(activeIdx + 1); }} disabled={activeIdx === 4}>›</button>
-                         </div>
-                         
-                         <button 
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             requestConfirm('Bu sayfanın mühürlerini temizlemek istediğinize emin misiniz?', clearPersonalSafeStamps);
-                           }}
-                           className="notebook-clear-btn"
-                         >Temizle</button>
-
-                         <span className="notebook-date-v2">{new Date().toLocaleDateString('tr-TR')}</span>
-                      </div>
+                    ) : (() => {
+                      const safe = ev.personalSafe || {};
+                      const activeIdx = safe.activePageIndex || 0;
+                      const pages = Array.isArray(safe.pages) ? safe.pages : [];
+                      const activePage = pages[activeIdx] || { notes: '', stamps: [] };
                       
-                      <textarea 
-                        className="notebook-textarea"
-                        placeholder="Yazmaya başlayın..."
-                        value={activePage.notes || ''}
-                        onChange={(e) => updatePersonalSafeNote(e.target.value)}
-                        spellCheck="false"
-                      />
+                      return (
+                      <div 
+                        ref={notebookRef}
+                        className={`vs-notebook-paper animate-fadeIn ${isStamping ? 'stamping-mode' : ''}`}
+                        onMouseMove={(e) => {
+                          if (!isStamping || !notebookRef.current) return;
+                          const rect = notebookRef.current.getBoundingClientRect();
+                          setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                        }}
+                        onClick={(e) => {
+                          if (!isStamping || !notebookRef.current) return;
+                          const rect = notebookRef.current.getBoundingClientRect();
+                          const x = e.clientX - rect.left;
+                          const y = e.clientY - rect.top;
+                          
+                          const userKey = currentUser?.name?.toLowerCase().includes('görkem') ? 'gorkem' : 'esra';
+                          const userSeal = users[userKey]?.seal || { icon: 'E', color: '#10b981' };
+                          
+                          addPersonalSafeStamp({ x, y, ...userSeal });
+                          setIsStamping(false);
+                          toast.success('Mühür vuruldu! 🖋️');
+                        }}
+                      >
+                        {/* Stamp Home Base */}
+                        <div 
+                          className={`stamp-home-base ${isStamping ? 'empty' : ''}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsStamping(true);
+                          }}
+                          title="Mührü Al"
+                        >
+                          {!isStamping && (
+                            <div className="vintage-stamp-handle" style={{ transform: 'scale(0.8)' }}>
+                              <div className="handle-top" />
+                              <div className="handle-body" />
+                              <div className="handle-base" />
+                            </div>
+                          )}
+                          <div className="base-shadow" />
+                        </div>
 
-                      {/* Render Placed Stamps */}
-                      {(activePage.stamps || []).map((s, idx) => {
-                        const isEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(s.icon);
-                        return (
+                        <div className="notebook-header" style={{ display: 'flex', justifyContent: 'center', position: 'relative', marginBottom: '10px' }}>
+                           <div className="notebook-pagination">
+                              <button onClick={(e) => { e.stopPropagation(); if(activeIdx > 0) setPersonalSafePage(activeIdx - 1); }} disabled={activeIdx === 0}>‹</button>
+                              <span>Sayfa {activeIdx + 1} / 5</span>
+                              <button onClick={(e) => { e.stopPropagation(); if(activeIdx < 4) setPersonalSafePage(activeIdx + 1); }} disabled={activeIdx === 4}>›</button>
+                           </div>
+                           
+                           <button 
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               requestConfirm('Bu sayfanın mühürlerini temizlemek istediğinize emin misiniz?', clearPersonalSafeStamps);
+                             }}
+                             className="notebook-clear-btn"
+                           >Temizle</button>
+
+                           <span className="notebook-date-v2">{new Date().toLocaleDateString('tr-TR')}</span>
+                        </div>
+                        
+                        <textarea 
+                          className="notebook-textarea"
+                          placeholder="Yazmaya başlayın..."
+                          value={activePage.notes || ''}
+                          onChange={(e) => updatePersonalSafeNote(e.target.value)}
+                          spellCheck="false"
+                        />
+
+                        {/* Render Placed Stamps */}
+                        {(activePage.stamps || []).map((s, idx) => {
+                          const isEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(s.icon);
+                          return (
+                            <div 
+                              key={idx} 
+                              className="placed-seal-stamp animate-popIn"
+                              style={{ 
+                                position: 'absolute', 
+                                left: s.x, 
+                                top: s.y, 
+                                transform: 'translate(-50%, -50%) rotate(-15deg)',
+                                color: s.color,
+                                pointerEvents: 'none',
+                                opacity: 0.8
+                              }}
+                            >
+                              <div style={{ 
+                                width: '60px', 
+                                height: '60px', 
+                                borderRadius: '50%', 
+                                border: `2px double ${s.color}`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: `${s.color}08`
+                              }}>
+                                <span style={{ 
+                                  fontFamily: isEmoji ? 'inherit' : '"Great Vibes", cursive', 
+                                  fontSize: isEmoji ? '24px' : (s.icon.length > 3 ? '14px' : '28px'),
+                                  fontWeight: 'bold'
+                                }}>
+                                  {s.icon}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {/* Floating Stamping Tool */}
+                        {isStamping && (
                           <div 
-                            key={idx} 
-                            className="placed-seal-stamp animate-popIn"
+                            className="floating-stamp-tool"
                             style={{ 
                               position: 'absolute', 
-                              left: s.x, 
-                              top: s.y, 
-                              transform: 'translate(-50%, -50%) rotate(-15deg)',
-                              color: s.color,
+                              left: mousePos.x, 
+                              top: mousePos.y, 
+                              transform: 'translate(-50%, -100%)',
                               pointerEvents: 'none',
-                              opacity: 0.8
+                              zIndex: 100
                             }}
                           >
-                            <div style={{ 
-                              width: '60px', 
-                              height: '60px', 
-                              borderRadius: '50%', 
-                              border: `2px double ${s.color}`,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              background: `${s.color}08`
-                            }}>
-                              <span style={{ 
-                                fontFamily: isEmoji ? 'inherit' : '"Great Vibes", cursive', 
-                                fontSize: isEmoji ? '24px' : (s.icon.length > 3 ? '14px' : '28px'),
-                                fontWeight: 'bold'
-                              }}>
-                                {s.icon}
-                              </span>
+                            <div className="vintage-stamp-handle">
+                              <div className="handle-top" />
+                              <div className="handle-body" />
+                              <div className="handle-base" />
                             </div>
                           </div>
-                        );
-                      })}
-
-                      {/* Floating Stamping Tool */}
-                      {isStamping && (
-                        <div 
-                          className="floating-stamp-tool"
-                          style={{ 
-                            position: 'absolute', 
-                            left: mousePos.x, 
-                            top: mousePos.y, 
-                            transform: 'translate(-50%, -100%)',
-                            pointerEvents: 'none',
-                            zIndex: 100
-                          }}
-                        >
-                          <div className="vintage-stamp-handle">
-                            <div className="handle-top" />
-                            <div className="handle-body" />
-                            <div className="handle-base" />
-                          </div>
-                        </div>
-                      )}
+                        )}
 
 
-                    </div>
-                    );
-                  })()}
+                      </div>
+                      );
+                    })()}
+                  </div>
                 </div>
-              </div>
+            )}
             </div>
           )}
 
@@ -1697,11 +1727,13 @@ function EmergencyKitModal({ type, items, onClose, requestConfirm }) {
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
-        <button className="pill-btn-ev" onClick={() => setShowAdd(!showAdd)}>
-          <Plus size={18} /> {showAdd ? 'Girişi İptal Et' : 'Yeni Manuel Kayıt'}
-        </button>
-      </div>
+      {currentUser?.name !== 'Misafir' && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+          <button className="pill-btn-ev" onClick={() => setShowAdd(!showAdd)}>
+            <Plus size={18} /> {showAdd ? 'Girişi İptal Et' : 'Yeni Manuel Kayıt'}
+          </button>
+        </div>
+      )}
 
       {featuredRec ? (
         <div className="recommendation-ghost glass animate-pulse-slow mb-24">
@@ -1720,14 +1752,16 @@ function EmergencyKitModal({ type, items, onClose, requestConfirm }) {
               <strong>{featuredRec.item}</strong>
               <span>{type === 'deprem' ? 'Deprem çantanızdaki bu eksiği tamamlamayı unutmayın.' : 'İlk yardım setinizdeki bu eksiği tamamlamayı unutmayın.'}</span>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="rg-shop-btn" onClick={() => addEmergencyToShopping(featuredRec)} title="Alışverişe Ekle">
-                <ShoppingBag size={18} />
-              </button>
-              <button className="rg-add" onClick={() => addEmergencyItem(type, { item: featuredRec.item, icon: featuredRec.icon }, currentUser?.name)} title="Çantaya Ekle">
-                <Plus size={18} />
-              </button>
-            </div>
+            {currentUser?.name !== 'Misafir' && (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="rg-shop-btn" onClick={() => addEmergencyToShopping(featuredRec)} title="Alışverişe Ekle">
+                  <ShoppingBag size={18} />
+                </button>
+                <button className="rg-add" onClick={() => addEmergencyItem(type, { item: featuredRec.item, icon: featuredRec.icon }, currentUser?.name)} title="Çantaya Ekle">
+                  <Plus size={18} />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ) : (
@@ -1793,16 +1827,18 @@ function EmergencyKitModal({ type, items, onClose, requestConfirm }) {
             <div className="ek-col-user">
                <span className="user-badge-mini" title={item.addedBy}>{getUserEmoji(item.addedBy)}</span>
             </div>
-            <div className="ek-col-actions">
-              <button className="ek-delete-btn-v2" onClick={() => {
-                requestConfirm(`"${item.item}" ürününü çantadan çıkarmak istediğinize emin misiniz?`, () => {
-                  deleteEmergencyItem(type, item.id);
-                  toast.success('Ürün çıkarıldı.');
-                });
-              }}>
-                <Trash2 size={14} />
-              </button>
-            </div>
+            {currentUser?.name !== 'Misafir' && (
+              <div className="ek-col-actions">
+                <button className="ek-delete-btn-v2" onClick={() => {
+                  requestConfirm(`"${item.item}" ürününü çantadan çıkarmak istediğinize emin misiniz?`, () => {
+                    deleteEmergencyItem(type, item.id);
+                    toast.success('Ürün çıkarıldı.');
+                  });
+                }}>
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            )}
           </div>
         )) : (
           <div className="empty-state-v2">
@@ -1904,26 +1940,30 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, addDepoItem, clearDepo
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <small className="stat-badge">{filteredDepo.length} Ürün</small>
           
-          <button className="icon-btn-mini" onClick={() => {
-            setEditingItem({ id: 'new' });
-            setEditName('');
-            setEditCategory('Genel');
-            setEditQty(1);
-            setEditOwner('ortak');
-            setEditEmoji('');
-            setEditBrand('');
-            setEditSize('');
-            setEditNotes('');
-          }} title="Yeni Ekle" style={{ background: 'var(--ev)', color: 'white', border: 'none', borderRadius: '6px', padding: '6px' }}>
-            <Plus size={14} />
-          </button>
+          {currentUser?.name !== 'Misafir' && (
+            <>
+              <button className="icon-btn-mini" onClick={() => {
+                setEditingItem({ id: 'new' });
+                setEditName('');
+                setEditCategory('Genel');
+                setEditQty(1);
+                setEditOwner('ortak');
+                setEditEmoji('');
+                setEditBrand('');
+                setEditSize('');
+                setEditNotes('');
+              }} title="Yeni Ekle" style={{ background: 'var(--ev)', color: 'white', border: 'none', borderRadius: '6px', padding: '6px' }}>
+                <Plus size={14} />
+              </button>
 
-          {depo?.length > 0 && (
-            <button className="icon-btn-mini" onClick={() => { 
-              requestConfirm('Tüm depoyu sıfırlamak istediğinize emin misiniz?', () => clearDepo());
-            }} title="Depoyu Sıfırla">
-              <RotateCcw size={12} />
-            </button>
+              {depo?.length > 0 && (
+                <button className="icon-btn-mini" onClick={() => { 
+                  requestConfirm('Tüm depoyu sıfırlamak istediğinize emin misiniz?', () => clearDepo());
+                }} title="Depoyu Sıfırla">
+                  <RotateCcw size={12} />
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -2015,15 +2055,19 @@ function DepoView({ depo, deleteDepoItem, updateDepoItem, addDepoItem, clearDepo
                   </div>
                 </div>
                 <div className="dmc-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <button className="dmc-edit-btn" onClick={(e) => startEdit(item, e)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}>
-                    <Edit2 size={14} />
-                  </button>
-                  <button className="dmc-del-btn" onClick={(e) => { 
-                    e.stopPropagation(); 
-                    requestConfirm('Tüm ürün kaydı silinsin mi?', () => deleteDepoItem(item.id));
-                  }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}>
-                    <Trash2 size={14} />
-                  </button>
+                  {currentUser?.name !== 'Misafir' && (
+                    <>
+                      <button className="dmc-edit-btn" onClick={(e) => startEdit(item, e)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}>
+                        <Edit2 size={14} />
+                      </button>
+                      <button className="dmc-del-btn" onClick={(e) => { 
+                        e.stopPropagation(); 
+                        requestConfirm('Tüm ürün kaydı silinsin mi?', () => deleteDepoItem(item.id));
+                      }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '6px', borderRadius: '6px' }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
                   <ChevronRight size={16} className={`dmc-chevron ${expandedItem === item.id ? 'rotated' : ''}`} style={{ transition: 'transform 0.2s', color: '#94a3b8' }} />
                 </div>
               </div>

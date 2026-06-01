@@ -5,7 +5,8 @@ import toast from 'react-hot-toast';
 import ActionSheet from '../../components/ActionSheet';
 
 const AppointmentTab = () => {
-  const { saglik, setModuleData } = useStore();
+  const { saglik, setModuleData, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const [modalOpen, setModalOpenLocal] = useState(false);
   const [editingRandevu, setEditingRandevu] = useState(null);
   const [form, setForm] = useState({ kisi: 'Görkem', doktor: '', tarih: '', saat: '', not: '', rekurans: 'yok' });
@@ -15,6 +16,7 @@ const AppointmentTab = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
+    if (isGuest) return;
     if (!form.doktor || !form.tarih) {
       toast.error('Doktor ve tarih alanları zorunludur!');
       return;
@@ -40,19 +42,22 @@ const AppointmentTab = () => {
   };
 
   const handleDelete = (id) => {
+    if (isGuest) return;
     useStore.getState().deleteAppointment(id);
     toast.success('Randevu silindi.');
   };
 
   return (
     <div className="tab-view">
-      <button 
-        className="btn-action" 
-        onPointerDown={() => setModalOpenLocal(true)}
-        onClick={() => setModalOpenLocal(true)}
-      >
-        <Plus size={18} /> Yeni Randevu Ekle
-      </button>
+      {!isGuest && (
+        <button 
+          className="btn-action" 
+          onPointerDown={() => setModalOpenLocal(true)}
+          onClick={() => setModalOpenLocal(true)}
+        >
+          <Plus size={18} /> Yeni Randevu Ekle
+        </button>
+      )}
 
       <div className="appointments-list">
         {appointments.length === 0 ? (
@@ -67,17 +72,21 @@ const AppointmentTab = () => {
               className="health-card" 
               role="button"
               tabIndex="0"
+              style={{ cursor: isGuest ? 'default' : 'pointer' }}
               onPointerDown={() => {
+                if (isGuest) return;
                 setEditingRandevu(r);
                 setForm(r);
                 setModalOpenLocal(true);
               }}
               onClick={() => {
+                if (isGuest) return;
                 setEditingRandevu(r);
                 setForm(r);
                 setModalOpenLocal(true);
               }}
               onKeyDown={(e) => {
+                if (isGuest) return;
                 if (e.key === 'Enter' || e.key === ' ') {
                   setEditingRandevu(r);
                   setForm(r);
@@ -102,7 +111,7 @@ const AppointmentTab = () => {
                   </div>
                 </div>
               </div>
-              <button className="btn-del" onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}><Trash2 size={16} /></button>
+              {!isGuest && <button className="btn-del" onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}><Trash2 size={16} /></button>}
             </div>
           ))
         )}

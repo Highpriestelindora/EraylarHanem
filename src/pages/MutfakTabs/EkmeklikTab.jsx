@@ -20,7 +20,7 @@ const SHELF_LIFE = {
 };
 
 export default function EkmeklikTab() {
-  const { mutfak, updateBreadStock, addMissingToShopping } = useStore();
+  const { mutfak, updateBreadStock, addMissingToShopping, currentUser } = useStore();
   const ekmeklik = mutfak.ekmeklik || [];
   const [showShopModal, setShowShopModal] = useState(false);
   const [shopType, setShopType] = useState('Somun');
@@ -87,32 +87,36 @@ export default function EkmeklikTab() {
     <div className="ekmeklik-tab animate-fadeIn">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
         <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 900, color: 'var(--mutfak)' }}>🥖 Stok Yönetimi</h3>
-        <button 
-          onClick={() => setShowShopModal(true)}
-          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '14px', background: 'var(--mutfak)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(236, 72, 153, 0.2)' }}
-        >
-          <ShoppingCart size={18} /> Alışverişe Ekle
-        </button>
+        {currentUser?.name !== 'Misafir' && (
+          <button 
+            onClick={() => setShowShopModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', borderRadius: '14px', background: 'var(--mutfak)', color: 'white', border: 'none', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(236, 72, 153, 0.2)' }}
+          >
+            <ShoppingCart size={18} /> Alışverişe Ekle
+          </button>
+        )}
       </div>
 
-      <div className="quick-bread-section">
-        <div className="quick-header">
-           <span>⚡ Hızlı Stok</span>
-           <small>(Aldıklarını İşle)</small>
+      {currentUser?.name !== 'Misafir' && (
+        <div className="quick-bread-section">
+          <div className="quick-header">
+             <span>⚡ Hızlı Stok</span>
+             <small>(Aldıklarını İşle)</small>
+          </div>
+          <div className="bread-grid-compact">
+            {Object.keys(SHELF_LIFE).map(type => (
+              <button 
+                key={type} 
+                className="bread-quick-btn"
+                onClick={() => handleAdd(type)}
+              >
+                <span style={{ fontSize: '18px' }}>{BREAD_ICONS[type] || '🍞'}</span>
+                <span>{type}</span>
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="bread-grid-compact">
-          {Object.keys(SHELF_LIFE).map(type => (
-            <button 
-              key={type} 
-              className="bread-quick-btn"
-              onClick={() => handleAdd(type)}
-            >
-              <span style={{ fontSize: '18px' }}>{BREAD_ICONS[type] || '🍞'}</span>
-              <span>{type}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
 
       <ActionSheet
         isOpen={showShopModal}
@@ -206,31 +210,35 @@ export default function EkmeklikTab() {
                   {freshness > 0 ? `%${Math.round(freshness)} Taze` : 'BAYAT / TÜKENDİ'}
                 </div>
               </div>
-              <div className="ekmek-actions" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                   <button className="small-btn" onClick={() => handleQtyChange(bread.id, -1)}>−</button>
-                   <button className="small-btn" onClick={() => handleQtyChange(bread.id, 1)}>+</button>
+              {currentUser?.name !== 'Misafir' && (
+                <div className="ekmek-actions" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto' }}>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                     <button className="small-btn" onClick={() => handleQtyChange(bread.id, -1)}>−</button>
+                     <button className="small-btn" onClick={() => handleQtyChange(bread.id, 1)}>+</button>
+                  </div>
+                  <button className="del-btn" onClick={() => handleRemove(bread.id)}>
+                     <Trash2 size={14} />
+                  </button>
                 </div>
-                <button className="del-btn" onClick={() => handleRemove(bread.id)}>
-                   <Trash2 size={14} />
-                </button>
-              </div>
+              )}
             </div>
           );
         })}
         {ekmeklik.length === 0 && (
           <div className="empty-state" style={{ gridColumn: '1/-1', padding: '40px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
             <p style={{ opacity: 0.6, fontSize: '14px', fontWeight: 600 }}>Ekmeklik şu an boş. 🥖</p>
-            <button 
-              className="btn-add-shopping" 
-              onClick={() => {
-                useStore.getState().addMissingToShopping(['Ekmek']);
-                toast.success('Ekmek alışveriş listesine eklendi! 🛒');
-              }}
-              style={{ padding: '12px 20px', borderRadius: '14px', background: 'var(--mutfak-light)', color: 'var(--mutfak)', border: '1px solid var(--mutfak)', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              Alışveriş Listesine Ekle
-            </button>
+            {currentUser?.name !== 'Misafir' && (
+              <button 
+                className="btn-add-shopping" 
+                onClick={() => {
+                  useStore.getState().addMissingToShopping(['Ekmek']);
+                  toast.success('Ekmek alışveriş listesine eklendi! 🛒');
+                }}
+                style={{ padding: '12px 20px', borderRadius: '14px', background: 'var(--mutfak-light)', color: 'var(--mutfak)', border: '1px solid var(--mutfak)', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                Alışveriş Listesine Ekle
+              </button>
+            )}
           </div>
         )}
       </div>

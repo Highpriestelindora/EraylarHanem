@@ -8,6 +8,7 @@ import './SleepTab.css';
 const SleepTab = () => {
   const { saglik, setModuleData, currentUser } = useStore();
   const activeName = currentUser?.name || 'Görkem';
+  const isGuest = currentUser?.name === 'Misafir';
 
   const [modalOpen, setModalOpen] = useState(false);
   const [goalModalOpen, setGoalModalOpen] = useState(false);
@@ -141,9 +142,11 @@ const SleepTab = () => {
 
   return (
     <div className="tab-view sleep-tab animate-fadeIn">
-      <button className="btn-action sleep" onClick={() => setModalOpen(true)} style={{ background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: 'white' }}>
-        <Plus size={18} /> Uyku Verisi Ekle
-      </button>
+      {!isGuest && (
+        <button className="btn-action sleep" onClick={() => setModalOpen(true)} style={{ background: 'linear-gradient(135deg, #6366f1, #818cf8)', color: 'white' }}>
+          <Plus size={18} /> Uyku Verisi Ekle
+        </button>
+      )}
 
       {/* Smart Dashboard */}
       {currentStats && (
@@ -156,7 +159,7 @@ const SleepTab = () => {
               </strong>
               <div className="sd-goal-box">
                 <small>Hedef: {sleepGoals[form.kisi.toLowerCase()]}s</small>
-                <button className="btn-edit-small" onClick={() => setGoalModalOpen(true)}>⚙️</button>
+                {!isGuest && <button className="btn-edit-small" onClick={() => setGoalModalOpen(true)}>⚙️</button>}
               </div>
             </div>
             <div className="sd-card glass">
@@ -217,7 +220,7 @@ const SleepTab = () => {
                   {s.not && <p className="sleep-note" style={{ fontSize: '12px', fontStyle: 'italic', marginTop: '8px', opacity: 0.8 }}>"{s.not}"</p>}
                 </div>
               </div>
-              <button className="btn-del" onClick={() => handleDelete(s.id)} style={{ padding: '8px', borderRadius: '8px', border: 'none', background: 'none', color: '#94a3b8' }}><Trash2 size={16} /></button>
+              {!isGuest && <button className="btn-del" onClick={() => handleDelete(s.id)} style={{ padding: '8px', borderRadius: '8px', border: 'none', background: 'none', color: '#94a3b8' }}><Trash2 size={16} /></button>}
             </div>
           ))
         )}

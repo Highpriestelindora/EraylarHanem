@@ -12,8 +12,10 @@ const TedarikTab = () => {
     modaring, 
     addModaringTedarik, updateModaringTedarik, deleteModaringTedarik,
     addModaringSiparis, updateModaringSiparis, deleteModaringSiparis,
-    addModaringKasaItem
+    addModaringKasaItem,
+    currentUser
   } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const suppliers = modaring?.tedarik || [];
   const orders = modaring?.siparisler || [];
   const bankalar = modaring?.bankalar || [];
@@ -106,9 +108,11 @@ const TedarikTab = () => {
             <h3>{selectedSupplier.name}</h3>
             <small>{selectedSupplier.category}</small>
           </div>
-          <button className="icon-btn-small" onClick={() => { setEditingSupplier(selectedSupplier); setShowSupplierModal(true); }}>
-            <FileText size={18} />
-          </button>
+          {!isGuest && (
+            <button className="icon-btn-small" onClick={() => { setEditingSupplier(selectedSupplier); setShowSupplierModal(true); }}>
+              <FileText size={18} />
+            </button>
+          )}
         </div>
 
         <div className="debt-card glass mt-12 animate-pop">
@@ -123,9 +127,11 @@ const TedarikTab = () => {
 
         <div className="section-header-v2 mt-20">
           <h3>📦 Sipariş & Ödeme Geçmişi</h3>
-          <button className="pill-btn-primary" onClick={() => setShowOrderModal(true)}>
-            <Plus size={14} /> <span>Yeni Sipariş</span>
-          </button>
+          {!isGuest && (
+            <button className="pill-btn-primary" onClick={() => setShowOrderModal(true)}>
+              <Plus size={14} /> <span>Yeni Sipariş</span>
+            </button>
+          )}
         </div>
 
         <div className="orders-list pb-80">
@@ -171,8 +177,9 @@ const TedarikTab = () => {
                         <button 
                           key={s.label}
                           className={`qs-btn ${order.status === s.label ? 'active' : ''}`}
-                          style={{ '--active-bg': s.color }}
+                          style={{ '--active-bg': s.color, cursor: isGuest ? 'default' : 'pointer' }}
                           onClick={() => {
+                            if (isGuest) return;
                             updateModaringSiparis(order.id, { status: s.label });
                             toast.success(`Durum: ${s.label}`);
                           }}
@@ -183,11 +190,13 @@ const TedarikTab = () => {
                       ))}
                     </div>
                   </div>
-                  <div className="oi-actions">
-                    <button className="oi-action-btn delete" onClick={() => handleDeleteOrder(order.id)}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  {!isGuest && (
+                    <div className="oi-actions">
+                      <button className="oi-action-btn delete" onClick={() => handleDeleteOrder(order.id)}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })
@@ -212,9 +221,11 @@ const TedarikTab = () => {
         <>
           <div className="section-header-v2">
             <h3>📦 Tedarikçiler & Toptan</h3>
-            <button className="pill-btn-primary" onClick={() => { setEditingSupplier(null); setShowSupplierModal(true); }}>
-              <Plus size={14} /> <span>Tedarikçi Ekle</span>
-            </button>
+            {!isGuest && (
+              <button className="pill-btn-primary" onClick={() => { setEditingSupplier(null); setShowSupplierModal(true); }}>
+                <Plus size={14} /> <span>Tedarikçi Ekle</span>
+              </button>
+            )}
           </div>
 
           <div className="search-bar-premium mt-12 mb-16">

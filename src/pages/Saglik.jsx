@@ -18,7 +18,8 @@ export default function Saglik() {
   const [activeTab, setActiveTab] = useState('randevu');
   const [isPending, startTransition] = useTransition();
   const [showAddExpense, setShowAddExpense] = useState(false);
-  const { saglik, addExpense } = useStore();
+  const { saglik, addExpense, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
 
   const navigate = useNavigate();
 
@@ -42,9 +43,11 @@ export default function Saglik() {
             </div>
           </div>
           <div className="header-actions">
-            <button className="icon-btn" onClick={() => setShowAddExpense(true)} title="Harcama Ekle">
-              <Plus size={20} />
-            </button>
+            {!isGuest && (
+              <button className="icon-btn" onClick={() => setShowAddExpense(true)} title="Harcama Ekle">
+                <Plus size={20} />
+              </button>
+            )}
             <button className="icon-btn" onClick={() => navigate('/')} title="Ana Menüye Dön">
               <ArrowLeft size={20} />
             </button>

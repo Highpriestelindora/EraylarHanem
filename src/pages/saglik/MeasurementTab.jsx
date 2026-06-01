@@ -6,7 +6,8 @@ import ActionSheet from '../../components/ActionSheet';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const MeasurementTab = () => {
-  const { saglik, setModuleData, addMeasurement } = useStore();
+  const { saglik, setModuleData, addMeasurement, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const [modalOpen, setModalOpen] = useState(false);
   const [form, setForm] = useState({ kisi: 'Görkem', tur: 'Kilo', deger: '', tarih: new Date().toISOString().split('T')[0] });
 
@@ -15,6 +16,7 @@ const MeasurementTab = () => {
   }, [saglik.olcumler]);
 
   const handleAdd = () => {
+    if (isGuest) return;
     if (!form.deger) {
       toast.error('Değer girilmelidir!');
       return;
@@ -26,6 +28,7 @@ const MeasurementTab = () => {
   };
 
   const handleDelete = (id) => {
+    if (isGuest) return;
     useStore.getState().deleteMeasurement(id);
     toast.success('Ölçüm silindi.');
   };
@@ -43,9 +46,11 @@ const MeasurementTab = () => {
     <div className="tab-view animate-fadeIn">
       <div className="section-header-premium" style={{ marginBottom: '20px' }}>
          <h3 style={{ fontSize: '18px', fontWeight: '900' }}>🌡️ Sağlık Ölçümleri</h3>
-         <button className="add-measure-btn" onClick={() => setModalOpen(true)}>
-            <Plus size={18} /> Yeni
-         </button>
+         {!isGuest && (
+            <button className="add-measure-btn" onClick={() => setModalOpen(true)}>
+               <Plus size={18} /> Yeni
+            </button>
+         )}
       </div>
 
       <div className="measurements-list-premium">
@@ -80,7 +85,7 @@ const MeasurementTab = () => {
                         <span className="hcv-sub" style={{ fontSize: '11px', opacity: 0.6 }}>{new Date(m.tarih).toLocaleDateString('tr-TR')}</span>
                       </div>
                    </div>
-                   <button className="btn-del-mini" onClick={() => handleDelete(m.id)}><Trash2 size={16} /></button>
+                   {!isGuest && <button className="btn-del-mini" onClick={() => handleDelete(m.id)}><Trash2 size={16} /></button>}
                 </div>
               </motion.div>
             ))}

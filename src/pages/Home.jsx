@@ -645,12 +645,16 @@ const Home = () => {
 
     // Always keep at least 2 cards
     const sorted = [...cards].sort((a, b) => b.priority - a.priority);
-    if (sorted.length < 2) {
+    // Guest filters out financial details
+    const filtered = currentUser?.name === 'Misafir'
+      ? sorted.filter(c => c.module !== '/finans' && c.module !== '/kasa' && c.module !== '/hedefler')
+      : sorted;
+    if (filtered.length < 2) {
       const shuffled = funCards.sort(() => Math.random() - 0.5);
-      sorted.push(...shuffled.slice(0, 3 - sorted.length));
+      filtered.push(...shuffled.slice(0, 3 - filtered.length));
     }
 
-    return sorted.slice(0, 8); // Max 8 cards
+    return filtered.slice(0, 8); // Max 8 cards
   };
 
   // Initial AI analysis
@@ -742,9 +746,14 @@ const Home = () => {
       { id: 'health', name: 'Eraylar Sağlık', sub: 'İlaç & Ölçüm', icon: '🏥', color: 'linear-gradient(180deg, #EF4444 0%, #DC2626 100%)', path: '/saglik' },
       { id: 'ev', name: 'Eraylar Ev', sub: 'Home Hub', icon: '🏠', color: 'linear-gradient(180deg, #10B981 0%, #059669 100%)', path: '/ev' },
       { id: 'aracim', name: 'Eraylar Garajım', sub: activeVehicle?.model || 'Garaj Yönetimi', icon: '🏢', color: 'linear-gradient(180deg, #334155 0%, #0F172A 100%)', path: '/aracim' },
-      { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '🏦', color: 'linear-gradient(180deg, #7C3AED 0%, #6D28D9 100%)', path: '/kasa' },
-      { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(180deg, #064e3b 0%, #059669 100%)', path: '/finans' },
     ];
+
+    if (currentUser?.name !== 'Misafir') {
+      baseModules.push(
+        { id: 'kasa', name: 'Eraylar Kasa', sub: 'Wealth Vault', icon: '🏦', color: 'linear-gradient(180deg, #7C3AED 0%, #6D28D9 100%)', path: '/kasa' },
+        { id: 'finans', name: 'Eraylar Finans', sub: 'Wealth Hub', icon: '💰', color: 'linear-gradient(180deg, #064e3b 0%, #059669 100%)', path: '/finans' }
+      );
+    }
 
     if (currentUser?.name === 'Esra') {
       baseModules.push(modaringModule);
@@ -755,7 +764,9 @@ const Home = () => {
     }
     
     // 12. Modül: Hedefler (Her zaman sağda kalsın diye en sona ekliyoruz)
-    baseModules.push({ id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏆', color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)', path: '/hedefler' });
+    if (currentUser?.name !== 'Misafir') {
+      baseModules.push({ id: 'hedefler', name: 'Eraylar Hedefler', sub: 'Vision Hub', icon: '🏆', color: 'linear-gradient(180deg, #FBBF24 0%, #D97706 100%)', path: '/hedefler' });
+    }
 
     return baseModules;
   }, [activeVehicle, currentUser]);

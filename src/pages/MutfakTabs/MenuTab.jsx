@@ -205,7 +205,7 @@ export default function MenuTab() {
               <div className="day-cell">
                 <span className="d-name">{day.dayName}</span>
                 <span className="d-num">{day.dayNum}</span>
-                {(k.main || a.main || k.side || a.side || k.dis || a.dis || k.sp || a.sp) && (
+                {currentUser?.name !== 'Misafir' && (k.main || a.main || k.side || a.side || k.dis || a.dis || k.sp || a.sp) && (
                   <button 
                     type="button"
                     className="clear-day-btn" 
@@ -223,14 +223,14 @@ export default function MenuTab() {
 
               <div className={`meal-cell-container ${k.dis ? 'dis' : ''} ${k.sp ? 'sp' : ''}`}>
                 <div className="meal-content-split">
-                  <div className={`dish-zone ana ${k.main ? 'filled' : 'empty'}`} style={{ position: 'relative' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'ana' }); setSelectedCategory('kahvalti'); }}>
+                  <div className={`dish-zone ana ${k.main ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }} onClick={() => { if(currentUser?.name === 'Misafir') return; setShowPicker({ dt: day.iso, ml: 'k', type: 'ana' }); setSelectedCategory('kahvalti'); }}>
                     {getRecipeStatus(k.main) === 'missing' && <div className="missing-dot" />}
                     {k.dis ? <div className="status-label out">Dışarıda</div> : k.sp ? <div className="status-label del">Sipariş</div> : (
                       k.main ? <span className="dish-name" style={{ color: getRecipeStatusColor(k.main) }}>{k.main}</span> : <div className="dish-placeholder"><Plus size={12}/> Ana</div>
                     )}
                   </div>
                   {!k.dis && !k.sp && (
-                    <div className={`dish-zone yan ${k.side ? 'filled' : 'empty'}`} style={{ position: 'relative' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'yan' }); setSelectedCategory('kahvalti'); }}>
+                    <div className={`dish-zone yan ${k.side ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }} onClick={() => { if(currentUser?.name === 'Misafir') return; setShowPicker({ dt: day.iso, ml: 'k', type: 'yan' }); setSelectedCategory('kahvalti'); }}>
                       {getRecipeStatus(k.side) === 'missing' && <div className="missing-dot" />}
                       {k.side ? <small className="dish-name-side" style={{ color: getRecipeStatusColor(k.side) }}>{k.side}</small> : <div className="dish-placeholder-side"><Plus size={10}/> Yan</div>}
                     </div>
@@ -240,14 +240,14 @@ export default function MenuTab() {
 
               <div className={`meal-cell-container ${a.dis ? 'dis' : ''} ${a.sp ? 'sp' : ''}`}>
                 <div className="meal-content-split">
-                  <div className={`dish-zone ana ${a.main ? 'filled' : 'empty'}`} style={{ position: 'relative' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'ana' }); setSelectedCategory('hepsi'); }}>
+                  <div className={`dish-zone ana ${a.main ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }} onClick={() => { if(currentUser?.name === 'Misafir') return; setShowPicker({ dt: day.iso, ml: 'a', type: 'ana' }); setSelectedCategory('hepsi'); }}>
                     {getRecipeStatus(a.main) === 'missing' && <div className="missing-dot" />}
                     {a.dis ? <div className="status-label out">Dışarıda</div> : a.sp ? <div className="status-label del">Sipariş</div> : (
                       a.main ? <span className="dish-name" style={{ color: getRecipeStatusColor(a.main) }}>{a.main}</span> : <div className="dish-placeholder"><Plus size={12}/> Ana</div>
                     )}
                   </div>
                   {!a.dis && !a.sp && (
-                    <div className={`dish-zone yan ${a.side ? 'filled' : 'empty'}`} style={{ position: 'relative' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'yan' }); setSelectedCategory('hepsi'); }}>
+                    <div className={`dish-zone yan ${a.side ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }} onClick={() => { if(currentUser?.name === 'Misafir') return; setShowPicker({ dt: day.iso, ml: 'a', type: 'yan' }); setSelectedCategory('hepsi'); }}>
                       {getRecipeStatus(a.side) === 'missing' && <div className="missing-dot" />}
                       {a.side ? <small className="dish-name-side" style={{ color: getRecipeStatusColor(a.side) }}>{a.side}</small> : <div className="dish-placeholder-side"><Plus size={10}/> Yan</div>}
                     </div>
@@ -259,7 +259,7 @@ export default function MenuTab() {
         })}
       </div>
 
-      <div className="smart-menu-actions" style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+      <div className="smart-menu-actions" style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: currentUser?.name === 'Misafir' ? '1fr' : 'repeat(3, 1fr)', gap: '10px' }}>
          {(() => {
            let planned = 0;
            currentDays.forEach(d => {
@@ -269,20 +269,24 @@ export default function MenuTab() {
            });
            const isComplete = planned >= 14;
            return (
-             <div className={`smart-pill ${isComplete ? 'complete' : ''}`}>
+             <div className={`smart-pill ${isComplete ? 'complete' : ''}`} style={{ width: '100%' }}>
                 <span style={{ fontSize: '24px', pointerEvents: 'none' }}>{isComplete ? '✅' : '📊'}</span>
                 <span style={{ pointerEvents: 'none' }}>{planned}/14 Dolu</span>
              </div>
            );
          })()}
-         <button className="smart-btn lucky" onClick={handleLuckyFill}>
-            <span style={{ fontSize: '24px', pointerEvents: 'none' }}>🎲</span>
-            <span style={{ pointerEvents: 'none' }}>Şanslı Hisset</span>
-         </button>
-         <button className="smart-btn shop" onClick={() => setShowQuickShop(true)}>
-            <span style={{ fontSize: '24px', pointerEvents: 'none' }}>🛒</span>
-            <span style={{ pointerEvents: 'none' }}>Hızlı Market</span>
-         </button>
+         {currentUser?.name !== 'Misafir' && (
+           <>
+             <button className="smart-btn lucky" onClick={handleLuckyFill}>
+                <span style={{ fontSize: '24px', pointerEvents: 'none' }}>🎲</span>
+                <span style={{ pointerEvents: 'none' }}>Şanslı Hisset</span>
+             </button>
+             <button className="smart-btn shop" onClick={() => setShowQuickShop(true)}>
+                <span style={{ fontSize: '24px', pointerEvents: 'none' }}>🛒</span>
+                <span style={{ pointerEvents: 'none' }}>Hızlı Market</span>
+             </button>
+           </>
+         )}
       </div>
 
       <ActionSheet

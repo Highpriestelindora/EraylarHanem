@@ -15,7 +15,8 @@ export default function SuTakipTab() {
     setWaterDailyRate, 
     processDailyWaterDeduction,
     setWaterEditing,
-    saveWaterSettings
+    saveWaterSettings,
+    currentUser
   } = useStore();
   
   const water = mutfak.su || {};
@@ -122,13 +123,15 @@ export default function SuTakipTab() {
             <Info size={14} />
             <span><strong>Mutfak:</strong> Açık. <strong>Yedek:</strong> Stok.</span>
           </div>
-          <button 
-            className={`su-edit-toggle ${isEditing ? 'active-save' : ''}`}
-            onClick={() => isEditing ? handleSave() : setWaterEditing(true)}
-          >
-            {isEditing ? <RefreshCw size={16} className="animate-spin-slow" /> : <Droplets size={16} />}
-            <span>{isEditing ? 'KAYDET VE BAŞLAT' : 'DÜZENLE'}</span>
-          </button>
+          {currentUser?.name !== 'Misafir' && (
+            <button 
+              className={`su-edit-toggle ${isEditing ? 'active-save' : ''}`}
+              onClick={() => isEditing ? handleSave() : setWaterEditing(true)}
+            >
+              {isEditing ? <RefreshCw size={16} className="animate-spin-slow" /> : <Droplets size={16} />}
+              <span>{isEditing ? 'KAYDET VE BAŞLAT' : 'DÜZENLE'}</span>
+            </button>
+          )}
         </div>
 
         <div className="su-stats">
@@ -149,18 +152,22 @@ export default function SuTakipTab() {
               label="Mutfak" 
               level={level1} 
               isEditing={isEditing}
+              isGuest={currentUser?.name === 'Misafir'}
               onLevelChange={(v) => setTempLevels(prev => ({ ...prev, level1: v }))} 
             />
             
-            <button className={`swap-btn-premium ${isEditing ? 'disabled' : ''}`} onClick={handleSwap} title="Yedekle Değiştir">
-              <RefreshCw size={20} />
-              <small>Değiştir</small>
-            </button>
+            {currentUser?.name !== 'Misafir' && (
+              <button className={`swap-btn-premium ${isEditing ? 'disabled' : ''}`} onClick={handleSwap} title="Yedekle Değiştir">
+                <RefreshCw size={20} />
+                <small>Değiştir</small>
+              </button>
+            )}
 
             <WaterTank 
               label="Yedek" 
               level={level2} 
               isEditing={isEditing}
+              isGuest={currentUser?.name === 'Misafir'}
               onLevelChange={(v) => setTempLevels(prev => ({ ...prev, level2: v }))} 
             />
           </div>
@@ -186,22 +193,24 @@ export default function SuTakipTab() {
           </div>
         </div>
         
-        {available && (
+        {currentUser?.name !== 'Misafir' && available && (
           <div className="mt-20">
             <PaymentSelector value={paymentMethod} onChange={setPaymentMethod} />
           </div>
         )}
         
-        <div className="su-actions" style={{ marginTop: '20px' }}>
-          <button 
-            className={`order-btn ${!available || isEditing ? 'disabled' : ''}`} 
-            onClick={handleOrder}
-            disabled={!available || isEditing}
-          >
-            <Droplets size={20} />
-            <span>{available ? '2 Damacana Söyle (📞)' : 'Sipariş Saatleri Dışında'}</span>
-          </button>
-        </div>
+        {currentUser?.name !== 'Misafir' && (
+          <div className="su-actions" style={{ marginTop: '20px' }}>
+            <button 
+              className={`order-btn ${!available || isEditing ? 'disabled' : ''}`} 
+              onClick={handleOrder}
+              disabled={!available || isEditing}
+            >
+              <Droplets size={20} />
+              <span>{available ? '2 Damacana Söyle (📞)' : 'Sipariş Saatleri Dışında'}</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="history-section">
@@ -221,13 +230,15 @@ export default function SuTakipTab() {
                   <strong>{h.q} Damacana</strong>
                 </div>
               </div>
-              <button 
-                className="h-delete-btn" 
-                onClick={() => setDeleteModal({ open: true, index: i })} 
-                title="Sil"
-              >
-                <Trash2 size={18} />
-              </button>
+              {currentUser?.name !== 'Misafir' && (
+                <button 
+                  className="h-delete-btn" 
+                  onClick={() => setDeleteModal({ open: true, index: i })} 
+                  title="Sil"
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
             </div>
           ))}
           {history.length === 0 && <div className="empty-history">Henüz sipariş kaydı yok.</div>}
@@ -249,7 +260,7 @@ export default function SuTakipTab() {
 }
 
 
-function WaterTank({ label, level, isEditing, onLevelChange }) {
+function WaterTank({ label, level, isEditing, isGuest, onLevelChange }) {
   return (
     <div className={`tank-container ${isEditing ? 'editing-focus' : ''}`}>
       <div className="tank-visual">
@@ -257,16 +268,18 @@ function WaterTank({ label, level, isEditing, onLevelChange }) {
         <span className="level-text">%{level}</span>
       </div>
       <span className="tank-label">{label}</span>
-      <div className="tank-ctrl">
-        <button 
-          className={!isEditing ? 'disabled' : ''}
-          onClick={() => isEditing && onLevelChange(Math.max(0, level - 5))}
-        ><Minus size={14} /></button>
-        <button 
-          className={!isEditing ? 'disabled' : ''}
-          onClick={() => isEditing && onLevelChange(Math.min(100, level + 5))}
-        ><Plus size={14} /></button>
-      </div>
+      {!isGuest && (
+        <div className="tank-ctrl">
+          <button 
+            className={!isEditing ? 'disabled' : ''}
+            onClick={() => isEditing && onLevelChange(Math.max(0, level - 5))}
+          ><Minus size={14} /></button>
+          <button 
+            className={!isEditing ? 'disabled' : ''}
+            onClick={() => isEditing && onLevelChange(Math.min(100, level + 5))}
+          ><Plus size={14} /></button>
+        </div>
+      )}
     </div>
   );
 }

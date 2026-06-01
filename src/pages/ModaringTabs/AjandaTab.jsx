@@ -111,13 +111,17 @@ const AjandaTab = () => {
     }
   };
 
+  const isGuest = currentUser?.name === 'Misafir';
+
   return (
     <div className="tab-view-content animate-fadeIn">
       <div className="section-header-v2">
         <h3>📅 Dükkan Ajandası</h3>
-        <button className="pill-btn-primary" onClick={() => { setEditingItem(null); setShowModal(true); }}>
-          <Plus size={14} /> <span>Yeni Not</span>
-        </button>
+        {!isGuest && (
+          <button className="pill-btn-primary" onClick={() => { setEditingItem(null); setShowModal(true); }}>
+            <Plus size={14} /> <span>Yeni Not</span>
+          </button>
+        )}
       </div>
 
       <div className="ajanda-summary glass mt-12 animate-pop">
@@ -150,10 +154,10 @@ const AjandaTab = () => {
             <div 
               key={item.id} 
               className={`ajanda-item-v2 glass animate-slideUp ${item.status === 'done' ? 'done' : ''} ${item.status === 'deleted' ? 'deleted-soft' : ''}`}
-              style={{ animationDelay: `${idx * 0.05}s` }}
-              onClick={() => { setEditingItem(item); setShowModal(true); }}
+              style={{ animationDelay: `${idx * 0.05}s`, cursor: isGuest ? 'default' : 'pointer' }}
+              onClick={() => { if (!isGuest) { setEditingItem(item); setShowModal(true); } }}
             >
-              <div className="ai-status-btn" onClick={(e) => { e.stopPropagation(); handleToggleStatus(item.id); }}>
+              <div className="ai-status-btn" style={{ cursor: isGuest ? 'default' : 'pointer' }} onClick={(e) => { e.stopPropagation(); if (!isGuest) handleToggleStatus(item.id); }}>
                 {item.status === 'done' ? <CheckCircle2 size={22} color="#10b981" /> : 
                  item.status === 'deleted' ? <Trash2 size={20} color="#ef4444" /> :
                  <Clock size={22} color="#f59e0b" />}
@@ -169,9 +173,11 @@ const AjandaTab = () => {
                   {item.status === 'deleted' && <span className="soft-del-badge">SİLİNDİ</span>}
                 </div>
               </div>
-              <div className="ai-arrow">
-                <ChevronRight size={18} />
-              </div>
+              {!isGuest && (
+                <div className="ai-arrow">
+                  <ChevronRight size={18} />
+                </div>
+              )}
             </div>
           ))
         )}
