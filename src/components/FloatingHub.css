@@ -18,10 +18,11 @@
 .hub-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  z-index: -1;
-  animation: fadeIn 0.3s ease;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1050;
+  animation: fadeIn 0.25s ease;
 }
 
 /* Options */
@@ -489,37 +490,72 @@
 
 .hub-modal {
   position: fixed;
-  bottom: 120px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90vw;
-  max-width: 400px;
-  background: white;
-  border-radius: 32px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: calc(100% - 32px);
+  max-width: 380px;
+  background: #ffffff;
+  border-radius: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   z-index: 1100;
+  animation: hubModalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes hubModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .hub-modal-header {
-  padding: 20px;
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--brd);
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
 }
 
 .hub-modal-header h4 {
   margin: 0;
   font-size: 16px;
   font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.hub-modal-header button {
-  background: none;
+.hub-modal-close {
+  background: #f1f5f9;
   border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: var(--txt-light);
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.hub-modal-close:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.hub-modal-close:active {
+  transform: scale(0.9);
 }
 
 /* Chat Style */
@@ -606,97 +642,179 @@
 
 /* Expense Style */
 .hub-expense-body {
-  padding: 20px;
+  padding: 18px 20px 22px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
+  background: #ffffff;
 }
 
-.hub-input {
+.hub-amount-wrapper {
+  position: relative;
   width: 100%;
-  border: none;
-  border-bottom: 2px solid var(--brd);
-  padding: 10px;
-  font-weight: 700;
-  outline: none;
-  transition: 0.3s;
-}
-
-.hub-input:focus {
-  border-color: var(--finans);
+  display: flex;
+  align-items: center;
 }
 
 .hub-input.amount {
-  font-size: 32px;
+  width: 100%;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 12px 36px 12px 16px;
+  font-size: 28px;
+  font-weight: 800;
+  color: #059669;
   text-align: center;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.hub-input.amount:focus {
+  border-color: #10b981;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.hub-currency-symbol {
+  position: absolute;
+  right: 18px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #10b981;
+  pointer-events: none;
+}
+
+.hub-input.title {
+  width: 100%;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.hub-input.title:focus {
+  border-color: #10b981;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 .hub-category-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: 6px;
+  width: 100%;
 }
 
 .hub-cat-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  gap: 4px;
   background: #f8fafc;
-  border: 1px solid var(--brd);
-  padding: 10px 5px;
+  border: 1.5px solid #e2e8f0;
+  padding: 8px 4px;
   border-radius: 14px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s;
+  min-height: 56px;
+}
+
+.hub-cat-btn:hover {
+  background: #f1f5f9;
 }
 
 .hub-cat-btn.active {
   background: #ecfdf5;
   border-color: #10b981;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
 }
 
 .hub-cat-btn .cat-icon {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .hub-cat-btn .cat-label {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
-  color: var(--txt-light);
+  color: #64748b;
+}
+
+.hub-cat-btn.active .cat-label {
+  color: #047857;
+  font-weight: 800;
 }
 
 .hub-payer-select {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  width: 100%;
 }
 
-.hub-payer-select button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid var(--brd);
-  background: #f8fafc;
-  font-weight: 700;
+.hub-payer-select .form-group-v2 {
+  margin: 0;
+  width: 100%;
+}
+
+.hub-payer-select label {
   font-size: 12px;
-  cursor: pointer;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+  display: block;
 }
 
-.hub-payer-select button.active {
-  background: var(--txt);
-  color: white;
-  border-color: var(--txt);
+.hub-payer-select select {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 14px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.hub-payer-select select:focus {
+  border-color: #10b981;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 .hub-submit-btn {
-  background: var(--finans);
-  color: white;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
   border: none;
-  padding: 16px;
-  border-radius: 18px;
-  font-weight: 900;
-  font-size: 16px;
+  padding: 13px 20px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+  transition: all 0.2s;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.hub-submit-btn:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 10px 24px rgba(16, 185, 129, 0.35);
 }
 
 .hub-submit-btn:active {

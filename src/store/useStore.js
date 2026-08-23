@@ -609,7 +609,7 @@ async function fetchGecmisAyFromSupabase(ay, familyId = DEFAULT_FID) {
   }
 }
 
-async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 12) {
+async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 24) {
   try {
     const { data, error } = await supabase
       .from('finans_arsiv')
@@ -618,7 +618,26 @@ async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 12) {
       .order('ay', { ascending: false })
       .limit(limit);
     if (error) throw error;
-    return data || [];
+
+    const parsedArsiv = (data || []).map(item => {
+      const total = Number(item.toplam ?? item.total_amount ?? item.ozet?.total ?? 0);
+      const card = Number(item.ozet?.kart ?? item.card_total ?? 0);
+      const cash = Number(item.ozet?.nakit ?? item.cash_total ?? 0);
+      const bank = Number(item.ozet?.havale ?? item.bank_total ?? 0);
+      const count = Number(item.ozet?.count ?? item.count ?? 0);
+
+      return {
+        ...item,
+        toplam: total,
+        total_amount: total,
+        card_total: card,
+        cash_total: cash,
+        bank_total: bank,
+        count
+      };
+    });
+
+    return parsedArsiv;
   } catch (err) {
     console.error('❌ fetchArsiv error:', err);
     return [];
@@ -4942,32 +4961,49 @@ const useStore = create(
 
         if (harcamalar.length === 0) {
           if (!isAuto) toast.error('Bu ay için harcama kaydı bulunamadı.');
-          // Otomatik kapanışta sürekli tetiklenmemesi için 0 kayıtlı bir arşiv atıyoruz
-          await upsertArsiv(hedefAy, {}, state.family_id);
+          await upsertArsiv(hedefAy, { toplam: 0, ozet: { total: 0, kart: 0, nakit: 0, havale: 0, count: 0 } }, state.family_id);
           return;
         }
 
-        const toplamHarcama = harcamalar.reduce((s, h) => s + Number(h.tutar), 0);
-        const toplamKart = harcamalar.filter(h => h.odenme_turu === 'kart').reduce((s, h) => s + Number(h.tutar), 0);
-        const toplamNakit = harcamalar.filter(h => h.odenme_turu === 'nakit').reduce((s, h) => s + Number(h.tutar), 0);
+        const toplamHarcama = harcamalar.reduce((s, h) => s + Number(h.tutar || 0), 0);
+        const toplamKart = harcamalar.filter(h => h.odenme_turu === 'kart' || (h.kart_id && h.odenme_turu !== 'nakit' && h.odenme_turu !== 'havale')).reduce((s, h) => s + Number(h.tutar || 0), 0);
+        const toplamHavale = harcamalar.filter(h => h.odenme_turu === 'havale' || h.banka_id).reduce((s, h) => s + Number(h.tutar || 0), 0);
+        const toplamNakit = harcamalar.filter(h => h.odenme_turu === 'nakit' || (!h.kart_id && !h.banka_id && h.odenme_turu !== 'kart' && h.odenme_turu !== 'havale')).reduce((s, h) => s + Number(h.tutar || 0), 0);
 
         // Kategori dağılımı
         const kategoriOzet = {};
         harcamalar.forEach(h => {
-          kategoriOzet[h.kategori] = (kategoriOzet[h.kategori] || 0) + Number(h.tutar);
+          if (h.kategori) {
+            kategoriOzet[h.kategori] = (kategoriOzet[h.kategori] || 0) + Number(h.tutar || 0);
+          }
         });
 
         // Kart dağılımı
         const kartOzet = {};
         harcamalar.forEach(h => {
           if (h.kart_id) {
-            kartOzet[h.kart_id] = (kartOzet[h.kart_id] || 0) + Number(h.tutar);
+            kartOzet[h.kart_id] = (kartOzet[h.kart_id] || 0) + Number(h.tutar || 0);
           }
         });
 
-        await upsertArsiv(hedefAy, {}, state.family_id);
+        const payload = {
+          toplam: toplamHarcama,
+          ozet: {
+            total: toplamHarcama,
+            kart: toplamKart,
+            nakit: toplamNakit,
+            havale: toplamHavale,
+            categories: kategoriOzet,
+            cards: kartOzet,
+            count: harcamalar.length
+          }
+        };
 
-        toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);
+        await upsertArsiv(hedefAy, payload, state.family_id);
+
+        if (!isAuto) {
+          toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);
+        }
       },
 
       // Otomatik ay kapanışı kontrolü (App.jsx tarafından çağrılır)

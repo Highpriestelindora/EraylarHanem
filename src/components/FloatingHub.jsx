@@ -245,32 +245,41 @@ function FloatingHub() {
       )}
 
       {activeModal === 'expense' && (
-        <div className="hub-modal expense-modal animate-slideUp">
+        <div className="hub-modal expense-modal">
           <div className="hub-modal-header">
             <h4>💸 Hızlı Harcama</h4>
-            <button onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <button className="hub-modal-close" onClick={() => setActiveModal(null)} aria-label="Kapat">
+              <X size={20} />
+            </button>
           </div>
           <div className="hub-expense-body">
-            <input 
-              className="hub-input amount" 
-              type="number" 
-              step="any"
-              placeholder="0.00₺" 
-              value={expAmount}
-              onChange={e => setExpAmount(e.target.value)}
-              autoFocus
-            />
+            <div className="hub-amount-wrapper">
+              <input 
+                className="hub-input amount" 
+                type="number" 
+                step="any"
+                placeholder="0.00" 
+                value={expAmount}
+                onChange={e => setExpAmount(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddExpense()}
+                autoFocus
+              />
+              <span className="hub-currency-symbol">₺</span>
+            </div>
+
             <input 
               className="hub-input title" 
               placeholder="Ne harcaması? (Opsiyonel)" 
               value={expTitle}
               onChange={e => setExpTitle(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAddExpense()}
             />
             
             <div className="hub-category-grid">
               {categories.map(c => (
                 <button 
                   key={c.id} 
+                  type="button"
                   className={`hub-cat-btn ${expCategory === c.label ? 'active' : ''}`}
                   onClick={() => setExpCategory(c.label)}
                 >
@@ -281,11 +290,13 @@ function FloatingHub() {
             </div>
 
             <div className="hub-payer-select">
-              <label style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>Ödeme Yöntemi</label>
-              <PaymentSelector value={expPaymentMethod} onChange={setExpPaymentMethod} />
+              <PaymentSelector value={expPaymentMethod} onChange={setExpPaymentMethod} label="💳 Ödeme Yöntemi" />
             </div>
 
-            <button className="hub-submit-btn" onClick={handleAddExpense}>Sisteme İşle</button>
+            <button className="hub-submit-btn" onClick={handleAddExpense}>
+              <span>Sisteme İşle</span>
+              <span style={{ fontSize: '18px' }}>🚀</span>
+            </button>
           </div>
         </div>
       )}
