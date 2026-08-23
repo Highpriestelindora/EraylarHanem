@@ -38,11 +38,54 @@ export default function AppLayout() {
   const headerBg = moduleColors[location.pathname] || 'var(--card)';
   const isColored = !!moduleColors[location.pathname];
 
+  React.useEffect(() => {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) return;
+
+    if (location.pathname === '/') {
+      metaThemeColor.setAttribute('content', '#ffffff');
+    } else {
+      const varName = moduleColors[location.pathname];
+      if (varName) {
+        const style = getComputedStyle(document.documentElement);
+        const cleanVarName = varName.replace('var(', '').replace(')', '').trim();
+        const hexColor = style.getPropertyValue(cleanVarName).trim();
+        if (hexColor) {
+          metaThemeColor.setAttribute('content', hexColor);
+        } else {
+          const fallbacks = {
+            '/mutfak': '#7c3aed',
+            '/sosyal': '#db2777',
+            '/alisveris': '#0891b2',
+            '/tatil': '#0d9488',
+            '/pet': '#d97706',
+            '/saglik': '#e11d48',
+            '/ev': '#2563eb',
+            '/aracim': '#4b5563',
+            '/kasa': '#059669',
+            '/finans': '#0284c7',
+            '/modaring': '#4f46e5',
+            '/muhendislik': '#0f172a',
+            '/hedefler': '#ea580c',
+            '/basarilar': '#ca8a04',
+            '/guvenlik': '#dc2626',
+            '/profil': '#7c3aed',
+            '/ayarlar': '#7c3aed',
+            '/analiz': '#7c3aed',
+          };
+          metaThemeColor.setAttribute('content', fallbacks[location.pathname] || '#ffffff');
+        }
+      } else {
+        metaThemeColor.setAttribute('content', '#ffffff');
+      }
+    }
+  }, [location.pathname]);
+
   return (
     <div className="app-container">
       {/* Header - Shown only on Home if needed, but Home has its own. 
           Hiding on modules to allow immersive module headers. */}
-      <header className={`app-header glass ${isColored ? 'colored-header' : ''}`} style={{ background: isColored ? headerBg : 'rgba(255, 255, 255, 0.8)' }}>
+      <header className={`app-header glass ${isColored ? 'colored-header' : ''}`} style={{ background: isColored ? headerBg : '#ffffff' }}>
         <div className="header-left">
           <div className="header-title-row" onClick={() => navigate('/')}>
             <img src={logo} alt="Logo" className="header-logo-mini" />
@@ -59,13 +102,15 @@ export default function AppLayout() {
           </div>
         </div>
         <div className="header-actions">
-          <button 
-            className="header-action-btn" 
-            onClick={() => navigate('/analiz')}
-            title="İstatistikler"
-          >
-            <BarChart2 size={20} />
-          </button>
+          {currentUser?.name !== 'Misafir' && (
+            <button 
+              className="header-action-btn" 
+              onClick={() => navigate('/analiz')}
+              title="İstatistikler"
+            >
+              <BarChart2 size={20} />
+            </button>
+          )}
           <button 
             className="header-action-btn" 
             onClick={() => navigate('/ayarlar')}

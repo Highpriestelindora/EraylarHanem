@@ -113,6 +113,7 @@ export default function Alisveris() {
   const [activeQuickCat, setActiveQuickCat] = useState(null);
   const [quickProductName, setQuickProductName] = useState('');
   const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const requestConfirm = (message, onConfirm) => {
     setShowConfirm({ open: true, message, onConfirm });
@@ -127,8 +128,21 @@ export default function Alisveris() {
   
   const { 
     mutfak, alisveris, confirmShoppingItem, deleteShoppingItem, addShoppingItem, 
-    setModuleData, addExpense, addDepoItem 
+    setModuleData, addExpense, addDepoItem, currentUser 
   } = useStore();
+
+  const getPriorityWeight = (oncelik) => {
+    switch (oncelik) {
+      case 'Hemen':
+      case 'Yüksek': return 4;
+      case 'Lazım':
+      case 'Orta': return 3;
+      case 'Olsa Tatlı Olur': return 2;
+      case 'Acelesi Yok':
+      case 'Düşük': return 1;
+      default: return 3;
+    }
+  };
 
   // Filtered List based on Active Tab
   const filteredList = useMemo(() => {
@@ -144,7 +158,22 @@ export default function Alisveris() {
       list = (mutfak?.alisveris || []).map(i => ({ ...i, origin: 'mutfak', cat: 'Mutfak' }));
     }
     
-    return list.filter(i => i && i.nm && !i.dn && i.nm.toLowerCase().includes(searchQuery.toLowerCase()));
+    let res = list.filter(i => i && i.nm && !i.dn && i.nm.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    // Sort by priority (Hemen > Lazım > Olsa Tatlı Olur > Acelesi Yok) for Görkem, Esra, Ev
+    if (activeTab !== 'market') {
+      res.sort((a, b) => {
+        const wA = getPriorityWeight(a.oncelik);
+        const wB = getPriorityWeight(b.oncelik);
+        if (wB !== wA) return wB - wA;
+        // Secondary sort: chronological (newer first)
+        const dateA = new Date(a.dt || 0).getTime();
+        const dateB = new Date(b.dt || 0).getTime();
+        return dateB - dateA;
+      });
+    }
+
+    return res;
   }, [mutfak?.alisveris, alisveris, searchQuery, activeTab]);
 
   const tabs = [
@@ -236,64 +265,57 @@ export default function Alisveris() {
               key={tab.id}
               className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
               onClick={() => setActiveTab(tab.id)}
-              style={{ flex: 1 }}
             >
-              <span style={{ fontSize: '16px', marginBottom: '2px' }}>{tab.emoji}</span>
-              <span style={{ fontSize: '9px', fontWeight: '500', opacity: 0.8 }}>{tab.label}</span>
-
+              <span style={{ fontSize: '18px', marginBottom: '2px' }}>{tab.emoji}</span>
+              <span style={{ fontSize: '10px' }}>{tab.label}</span>
             </button>
           ))}
         </nav>
       </header>
 
         <div className="shopping-content-premium">
-        {activeTab !== 'market' && (
+        {activeTab !== 'market' && currentUser?.name !== 'Misafir' && (
           <>
-            {(activeTab === 'ev') && (
-              <div className="quick-add-section">
-                <div className="qas-header">
-                  <Package size={14} /> <span>Ev Demirbaşları</span>
-                  <button className="refresh-mini" onClick={refreshCategories}><RotateCcw size={12} /></button>
-                </div>
-                <div className="quick-add-bar-compact">
-                  {displayHome.map(cat => (
-                    <button 
-                      key={cat.cat} 
-                      className="quick-item-btn-compact" 
-                      onClick={() => {
-                        setActiveQuickCat(cat);
-                        setQuickProductName('');
-                      }}
-                    >
-                      <span>{cat.ic}</span> <span>{cat.cat.split(' / ')[0]}</span>
+            <div className="suggestions-toggle-container">
+              <button 
+                className={`suggestions-toggle-btn ${showSuggestions ? 'active' : ''}`}
+                onClick={() => setShowSuggestions(!showSuggestions)}
+              >
+                <Sparkles size={15} />
+                <span>{activeTab === 'ev' ? 'Ev Demirbaş Önerileri' : 'Hızlı Kategori Önerileri'}</span>
+                <ChevronRight size={14} className="arrow-icon" style={{ transform: showSuggestions ? 'rotate(90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+              </button>
+            </div>
+
+            <AnimatePresence>
+              {showSuggestions && (
+                <motion.div 
+                  className="suggestions-scroll-wrapper"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="quick-suggestions-row">
+                    {(activeTab === 'gorkem' ? displayGorkem : activeTab === 'esra' ? displayEsra : displayHome).map(cat => (
+                      <button 
+                        key={cat.nm || cat.cat} 
+                        className="quick-suggestion-pill glass" 
+                        onClick={() => {
+                          setActiveQuickCat(cat);
+                          setQuickProductName('');
+                        }}
+                      >
+                        <span>{cat.ic}</span> <span>{cat.nm || cat.cat.split(' / ')[0]}</span>
+                      </button>
+                    ))}
+                    <button className="refresh-pill glass" onClick={refreshCategories} title="Yenile">
+                      <RotateCcw size={11} />
                     </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {(activeTab === 'gorkem' || activeTab === 'esra') && (
-              <div className="quick-add-section">
-                <div className="qas-header">
-                  <Sparkles size={14} /> <span>{activeTab === 'gorkem' ? 'Görkem için Öneriler' : 'Esra için Öneriler'}</span>
-                  <button className="refresh-mini" onClick={refreshCategories}><RotateCcw size={12} /></button>
-                </div>
-                <div className="quick-add-bar-compact">
-                  {(activeTab === 'gorkem' ? displayGorkem : displayEsra).map(cat => (
-                    <button 
-                      key={cat.nm} 
-                      className="quick-item-btn-compact" 
-                      onClick={() => {
-                        setActiveQuickCat(cat);
-                        setQuickProductName('');
-                      }}
-                    >
-                      <span>{cat.ic}</span> <span>{cat.nm}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="search-box-premium glass">
               <Search size={18} opacity={0.5} />
@@ -316,7 +338,11 @@ export default function Alisveris() {
                   {filteredList.map((item, idx) => (
                     <motion.div 
                       key={item.id} 
-                      className="shopping-item-v2 glass"
+                      className={`shopping-item-v2 glass priority-${
+                        item.oncelik === 'Hemen' || item.oncelik === 'Yüksek' ? 'hemen' : 
+                        item.oncelik === 'Lazım' || item.oncelik === 'Orta' ? 'lazim' : 
+                        item.oncelik === 'Olsa Tatlı Olur' ? 'olabilir' : 'acelesiyok'
+                      }`}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 50, scale: 0.9 }}
@@ -330,21 +356,34 @@ export default function Alisveris() {
                             <span className="si-tag">{item.cat}</span>
                             {item.mk && <span className="si-market">{item.mk}</span>}
                             {item.qt && <span className="si-qty">{item.qt}</span>}
+                            {item.oncelik && (
+                              <span className={`priority-badge ${
+                                item.oncelik === 'Hemen' || item.oncelik === 'Yüksek' ? 'hemen' : 
+                                item.oncelik === 'Lazım' || item.oncelik === 'Orta' ? 'lazim' : 
+                                item.oncelik === 'Olsa Tatlı Olur' ? 'olabilir' : 'acelesiyok'
+                              }`}>
+                                {item.oncelik === 'Hemen' || item.oncelik === 'Yüksek' ? '🚨 Hemen!' : 
+                                 item.oncelik === 'Lazım' || item.oncelik === 'Orta' ? '🧺 Lazım' : 
+                                 item.oncelik === 'Olsa Tatlı Olur' ? '✨ Tatlı' : '☁️ Keyfi'}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
                       
-                      <div className="si-right">
-                        <button className="icon-btn-small" onClick={() => setEditingItem({ ...item, owner: activeTab })}>
-                          <Edit size={16} color="var(--txt-light)" />
-                        </button>
-                        <button className="icon-btn-small" onClick={() => handleDelete(activeTab, item.id)}>
-                          <Trash2 size={16} color="#ef4444" />
-                        </button>
-                        <button className="confirm-btn-apple" onClick={() => setConfirmingItem({ ...item, owner: activeTab })}>
-                          <CheckCircle2 size={28} />
-                        </button>
-                      </div>
+                      {currentUser?.name !== 'Misafir' && (
+                        <div className="si-right">
+                          <button className="icon-btn-small" onClick={() => setEditingItem({ ...item, owner: activeTab })}>
+                            <Edit size={16} color="var(--txt-light)" />
+                          </button>
+                          <button className="icon-btn-small" onClick={() => handleDelete(activeTab, item.id)}>
+                            <Trash2 size={16} color="#ef4444" />
+                          </button>
+                          <button className="confirm-btn-apple" onClick={() => setConfirmingItem({ ...item, owner: activeTab })}>
+                            <CheckCircle2 size={28} />
+                          </button>
+                        </div>
+                      )}
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -358,20 +397,9 @@ export default function Alisveris() {
             <AlisverisTab />
           </div>
         )}
-
-        {/* Wishlist and Extras only for personal tabs? 
-            Or keep them at the bottom of Market but above/below AlisverisTab? 
-            User said "Market tabı mutfaktaki alışveriş listesinin birebir aynısı olacak". 
-            So I'll hide extras for now to keep it clean, or show them below.
-        */}
-        {(activeTab === 'market' && false) && (
-          <div className="market-extras animate-fadeIn mt-24">
-            {/* ... */}
-          </div>
-        )}
       </div>
 
-      {activeTab !== 'market' && (
+      {currentUser?.name !== 'Misafir' && activeTab !== 'market' && (
         <button 
           className="fab-add-shopping animate-pop" 
           onClick={() => setShowAddModal(true)}
@@ -532,7 +560,25 @@ function ConfirmPurchaseModal({ item, onClose, onConfirm }) {
 }
 
 function AddItemModal({ onClose, onAdd, initialOwner, initialData }) {
-  const [form, setForm] = useState(initialData ? { ...initialData, owner: initialOwner } : { nm: '', mk: 'Market', loc: initialOwner === 'market' ? 'buz' : 'depo', pr: '', qt: '1 adet', isWish: false, owner: initialOwner || 'ev' });
+  const [form, setForm] = useState(() => {
+    if (initialData) {
+      return { 
+        ...initialData, 
+        owner: initialOwner, 
+        oncelik: initialData.oncelik || 'Lazım' 
+      };
+    }
+    return { 
+      nm: '', 
+      mk: 'Market', 
+      loc: initialOwner === 'market' ? 'buz' : 'depo', 
+      pr: '', 
+      qt: '1 adet', 
+      isWish: false, 
+      owner: initialOwner || 'ev', 
+      oncelik: 'Lazım' 
+    };
+  });
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { alisveris, setModuleData } = useStore();
 
@@ -555,7 +601,14 @@ function AddItemModal({ onClose, onAdd, initialOwner, initialData }) {
       setModuleData('alisveris', { ...alisveris, wishlist: newWish });
       toast.success('İstek listesine eklendi! ✨');
     } else {
-      onAdd(targetOwner, { nm: form.nm, mk: form.mk, qt: form.qt, loc: form.loc, pr: Number(form.pr) || 0 });
+      onAdd(targetOwner, { 
+        nm: form.nm, 
+        mk: form.mk, 
+        qt: form.qt, 
+        loc: form.loc, 
+        pr: Number(form.pr) || 0,
+        oncelik: form.oncelik || 'Lazım'
+      });
       toast.success('Listeye eklendi! ✨');
     }
     onClose();
@@ -593,6 +646,42 @@ function AddItemModal({ onClose, onAdd, initialOwner, initialData }) {
                 <button type="button" className={`toggle-btn ${form.isWish ? 'active' : ''}`} onClick={() => setForm({...form, isWish: true})} style={{ flex: 1, padding: '12px', borderRadius: '16px', border: '1px solid var(--brd)', background: form.isWish ? '#eab308' : 'white', color: form.isWish ? 'white' : 'var(--txt)', fontWeight: '800', fontSize: '13px' }}>İSTEK</button>
              </div>
           </div>
+
+          {form.owner !== 'market' && !form.isWish && (
+            <div className="form-group">
+              <label>Aciliyet Durumu</label>
+              <div className="priority-select-grid">
+                <button 
+                  type="button" 
+                  className={`priority-select-btn hemen ${form.oncelik === 'Hemen' ? 'active' : ''}`}
+                  onClick={() => setForm({ ...form, oncelik: 'Hemen' })}
+                >
+                  🚨 Hemen!
+                </button>
+                <button 
+                  type="button" 
+                  className={`priority-select-btn lazim ${form.oncelik === 'Lazım' || !form.oncelik ? 'active' : ''}`}
+                  onClick={() => setForm({ ...form, oncelik: 'Lazım' })}
+                >
+                  🧺 Lazım
+                </button>
+                <button 
+                  type="button" 
+                  className={`priority-select-btn olabilir ${form.oncelik === 'Olsa Tatlı Olur' ? 'active' : ''}`}
+                  onClick={() => setForm({ ...form, oncelik: 'Olsa Tatlı Olur' })}
+                >
+                  ✨ Tatlı
+                </button>
+                <button 
+                  type="button" 
+                  className={`priority-select-btn acelesiyok ${form.oncelik === 'Acelesi Yok' ? 'active' : ''}`}
+                  onClick={() => setForm({ ...form, oncelik: 'Acelesi Yok' })}
+                >
+                  ☁️ Keyfi
+                </button>
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'center', margin: '5px 0' }}>
             <button 

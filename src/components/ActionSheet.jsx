@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { X } from 'lucide-react';
 import Portal from './Portal';
 
@@ -12,6 +12,8 @@ export default function ActionSheet({
   maxHeight = '85vh',
   fullHeight = false 
 }) {
+  const dragControls = useDragControls();
+
   // Prevent scrolling on body when open
   useEffect(() => {
     if (isOpen) {
@@ -52,6 +54,8 @@ export default function ActionSheet({
               exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               drag="y"
+              dragControls={dragControls}
+              dragListener={false}
               dragConstraints={{ top: 0 }}
               dragElastic={0.2}
               onDragEnd={(e, info) => {
@@ -80,7 +84,17 @@ export default function ActionSheet({
               }}
             >
               {/* Drag Handle */}
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px', cursor: 'grab', flexShrink: 0 }}>
+              <div 
+                onPointerDown={(e) => dragControls.start(e)}
+                style={{ 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  padding: '12px 0 8px', 
+                  cursor: 'grab', 
+                  flexShrink: 0,
+                  touchAction: 'none'
+                }}
+              >
                 <div style={{ width: '40px', height: '5px', background: 'var(--brd)', borderRadius: '10px' }} />
               </div>
 

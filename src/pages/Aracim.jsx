@@ -30,8 +30,11 @@ export default function Aracim() {
     addVehicle, updateVehicle, deleteVehicle,
     addWashRecord, startParking, finishParking,
     deleteServiceRecord, deleteDocument, addDocument, updateDocument,
-    updatePartMaintenance, deleteFuelLog, updateSupportContacts, updateFuelLog
+    updatePartMaintenance, deleteFuelLog, updateSupportContacts, updateFuelLog,
+    currentUser
   } = useStore();
+  
+  const isGuest = currentUser?.name === 'Misafir';
   
   const vehicle = useMemo(() => 
     garaj.find(v => v.id === selectedVehicleId) || garaj[0], 
@@ -124,11 +127,13 @@ export default function Aracim() {
               </div>
               <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {vehicle.model}
-                <Settings size={14} className="opacity-50" onClick={(e) => {
-                  e.stopPropagation();
-                  setEditingVehicle(vehicle);
-                  setShowVehicleForm(true);
-                }} />
+                {!isGuest && (
+                  <Settings size={14} className="opacity-50" onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingVehicle(vehicle);
+                    setShowVehicleForm(true);
+                  }} />
+                )}
               </h1>
             </div>
           </div>
@@ -167,7 +172,7 @@ export default function Aracim() {
         {activeTab === 'panel' && (
           <div className="panel-view animate-fadeIn">
             {/* KM Widget */}
-            <div className="km-widget-premium glass" onClick={() => setShowUpdateKM(true)} style={{ marginTop: '0', padding: '16px 20px' }}>
+            <div className="km-widget-premium glass" onClick={() => !isGuest && setShowUpdateKM(true)} style={{ marginTop: '0', padding: '16px 20px', cursor: isGuest ? 'default' : 'pointer' }}>
               <div className="kmw-main">
                 <Gauge size={32} className="kmw-icon" />
                 <div className="kmw-text">
@@ -175,7 +180,7 @@ export default function Aracim() {
                   <h2 style={{ fontSize: '24px' }}>{km?.toLocaleString('tr-TR')} <span>KM</span></h2>
                 </div>
               </div>
-              <ArrowUpRight size={18} className="kmw-arrow" />
+              {!isGuest && <ArrowUpRight size={18} className="kmw-arrow" />}
             </div>
 
             {/* Analog-Style Gauges Grid */}
@@ -186,7 +191,7 @@ export default function Aracim() {
                 const color = perc > 85 ? '#f87171' : perc > 60 ? '#f59e0b' : '#10b981';
                 
                 return (
-                  <div key={part.id} className="gauge-card glass animate-fadeIn" onClick={() => { setSelectedPart(part); setShowPartForm(true); }} style={{ cursor: 'pointer' }}>
+                  <div key={part.id} className="gauge-card glass animate-fadeIn" onClick={() => { if (isGuest) return; setSelectedPart(part); setShowPartForm(true); }} style={{ cursor: isGuest ? 'default' : 'pointer' }}>
                     <div className="gauge-box">
                        <svg viewBox="0 0 36 36" className="circular-chart">
                          <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
@@ -205,22 +210,24 @@ export default function Aracim() {
             </div>
 
             {/* Quick Actions */}
-            <div className="arac-quick-actions mt-24">
-              <button className="aq-card" onClick={() => setShowAddFuel(true)}>
-                <div className="aq-icon fuel"><Fuel size={24} /></div>
-                <span>Yakıt Al</span>
-              </button>
-              <button className="aq-card" onClick={() => setShowWashModal(true)}>
-                <div className="aq-icon clean"><Droplets size={24} /></div>
-                <span>Yıkama</span>
-              </button>
-              <button className="aq-card" onClick={() => setShowParkModal(true)}>
-                <div className="aq-icon park">
-                  <MapPin size={24} className={parkLocation?.active ? 'animate-park-pulse' : ''} />
-                </div>
-                <span>{parkLocation?.active ? 'Park Yeri (Aktif)' : 'Park Yeri'}</span>
-              </button>
-            </div>
+            {!isGuest && (
+              <div className="arac-quick-actions mt-24">
+                <button className="aq-card" onClick={() => setShowAddFuel(true)}>
+                  <div className="aq-icon fuel"><Fuel size={24} /></div>
+                  <span>Yakıt Al</span>
+                </button>
+                <button className="aq-card" onClick={() => setShowWashModal(true)}>
+                  <div className="aq-icon clean"><Droplets size={24} /></div>
+                  <span>Yıkama</span>
+                </button>
+                <button className="aq-card" onClick={() => setShowParkModal(true)}>
+                  <div className="aq-icon park">
+                    <MapPin size={24} className={parkLocation?.active ? 'animate-park-pulse' : ''} />
+                  </div>
+                  <span>{parkLocation?.active ? 'Park Yeri (Aktif)' : 'Park Yeri'}</span>
+                </button>
+              </div>
+            )}
 
             {/* Emergency Support */}
             <div className="emergency-support">
@@ -229,19 +236,21 @@ export default function Aracim() {
                   <AlertCircle size={16} color="#b91c1c" />
                   <span style={{ fontSize: '10px', fontWeight: '900' }}>ACİL DESTEK HATTI</span>
                 </div>
-                <button 
-                  className="icon-btn-small" 
-                  onClick={() => setShowSupportModal(true)}
-                  style={{ 
-                    padding: '12px', 
-                    margin: '-8px -8px -8px 0',
-                    background: 'transparent', 
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <Edit3 size={18} color="#fca5a5" />
-                </button>
+                {!isGuest && (
+                  <button 
+                    className="icon-btn-small" 
+                    onClick={() => setShowSupportModal(true)}
+                    style={{ 
+                      padding: '12px', 
+                      margin: '-8px -8px -8px 0',
+                      background: 'transparent', 
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Edit3 size={18} color="#fca5a5" />
+                  </button>
+                )}
               </div>
               <div className="es-buttons" style={{ gap: '8px' }}>
                 <a href={`tel:${vehicle.supportContacts?.yolYardim?.phone || '08503999999'}`} className="es-btn" style={{ padding: '8px', fontSize: '11px' }}>
@@ -259,7 +268,7 @@ export default function Aracim() {
           <div className="servis-view animate-fadeIn">
             <div className="section-header-v2">
               <h3>🛠️ Servis Defteri</h3>
-              <button className="add-btn-mini" onClick={() => setShowServiceForm(true)}><Plus size={14} /></button>
+              {!isGuest && <button className="add-btn-mini" onClick={() => setShowServiceForm(true)}><Plus size={14} /></button>}
             </div>
             <div className="service-timeline-premium">
               {services.map(s => (
@@ -275,11 +284,13 @@ export default function Aracim() {
                     </div>
                     <div className="sti-actions">
                       <div className="sti-cost">{formatMoney(s.cost)}</div>
-                      <button className="delete-btn-mini" onClick={() => { 
-                        requestConfirm('Bu servis kaydını silmek istediğinize emin misiniz?', () => {
-                          useStore.getState().deleteServiceRecord(vehicle.id, s.id);
-                        });
-                      }}><Trash2 size={12} /></button>
+                      {!isGuest && (
+                        <button className="delete-btn-mini" onClick={() => { 
+                          requestConfirm('Bu servis kaydını silmek istediğinize emin misiniz?', () => {
+                            useStore.getState().deleteServiceRecord(vehicle.id, s.id);
+                          });
+                        }}><Trash2 size={12} /></button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -292,7 +303,7 @@ export default function Aracim() {
           <div className="glovebox-view animate-fadeIn">
             <div className="section-header-v2">
               <h3>📂 Dijital Torpido</h3>
-              <button className="add-btn-mini" onClick={() => { setEditingDoc(null); setShowDocForm(true); }}><Plus size={14} /></button>
+              {!isGuest && <button className="add-btn-mini" onClick={() => { setEditingDoc(null); setShowDocForm(true); }}><Plus size={14} /></button>}
             </div>
             <div className="docs-list">
               {documents.map(doc => {
@@ -301,8 +312,8 @@ export default function Aracim() {
                   <div 
                     key={doc.id} 
                     className="doc-card-premium glass"
-                    onClick={() => setActiveDocAction(doc)}
-                    style={{ cursor: 'pointer' }}
+                    onClick={() => { if (isGuest) return; setActiveDocAction(doc); }}
+                    style={{ cursor: isGuest ? 'default' : 'pointer' }}
                   >
                     <div className="dcp-left">
                       <div className="dcp-icon">{doc.icon}</div>
@@ -316,7 +327,7 @@ export default function Aracim() {
                       <div className={`dcp-status ${diff < 7 ? 'critical' : diff < 30 ? 'warn' : 'ok'}`}>
                         {diff} Gün
                       </div>
-                      <ChevronRight size={18} opacity={0.3} />
+                      {!isGuest && <ChevronRight size={18} opacity={0.3} />}
                     </div>
                   </div>
                 );
@@ -331,7 +342,7 @@ export default function Aracim() {
             <div className="section-header-v2">
               <h3>💰 Finansal Değer</h3>
             </div>
-            <div className="km-widget-premium glass mb-24" onClick={() => { setEditingVehicle(vehicle); setShowVehicleForm(true); }} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', cursor: 'pointer' }}>
+            <div className="km-widget-premium glass mb-24" onClick={() => { if (isGuest) return; setEditingVehicle(vehicle); setShowVehicleForm(true); }} style={{ background: 'linear-gradient(135deg, #059669, #10b981)', color: 'white', cursor: isGuest ? 'default' : 'pointer' }}>
               <div className="kmw-main">
                 <Landmark size={32} className="kmw-icon" />
                 <div className="kmw-text">
@@ -339,7 +350,7 @@ export default function Aracim() {
                   <h2 style={{ fontSize: '24px', color: 'white' }}>{formatMoney(vehicle.marketValue)}</h2>
                 </div>
               </div>
-              <Edit3 size={18} className="kmw-arrow" />
+              {!isGuest && <Edit3 size={18} className="kmw-arrow" />}
             </div>
 
             <div className="section-header-v2">
@@ -384,17 +395,19 @@ export default function Aracim() {
                         {formatMoney(l.tutar || l.totalPrice || ((l.amount || 0) * (l.price || 0)))}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button className="delete-btn-mini" style={{ background: 'rgba(255,255,255,0.08)', color: '#60a5fa' }} onClick={() => { 
-                        setEditingFuelLog(l);
-                        setShowAddFuel(true);
-                      }}><Edit3 size={12} /></button>
-                      <button className="delete-btn-mini" onClick={() => { 
-                        requestConfirm('Bu yakıt kaydını silmek istediğinize emin misiniz?', () => {
-                          deleteFuelLog(vehicle.id, l.id);
-                        });
-                      }}><Trash2 size={12} /></button>
-                    </div>
+                    {!isGuest && (
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button className="delete-btn-mini" style={{ background: 'rgba(255,255,255,0.08)', color: '#60a5fa' }} onClick={() => { 
+                          setEditingFuelLog(l);
+                          setShowAddFuel(true);
+                        }}><Edit3 size={12} /></button>
+                        <button className="delete-btn-mini" onClick={() => { 
+                          requestConfirm('Bu yakıt kaydını silmek istediğinize emin misiniz?', () => {
+                            deleteFuelLog(vehicle.id, l.id);
+                          });
+                        }}><Trash2 size={12} /></button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

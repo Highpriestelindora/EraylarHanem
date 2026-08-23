@@ -11,8 +11,10 @@ const KasaTab = () => {
   const { 
     modaring, 
     addModaringKasaItem, updateModaringKasaItem, deleteModaringKasaItem,
-    addModaringBank, updateModaringBank, deleteModaringBank 
+    addModaringBank, updateModaringBank, deleteModaringBank,
+    currentUser
   } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const kasa = modaring?.kasa || [];
   const bankalar = modaring?.bankalar || [];
 
@@ -131,7 +133,7 @@ const KasaTab = () => {
             key={bank.id} 
             className={`account-mini-card glass ${selectedBankId === bank.id ? 'active' : ''}`}
             onClick={() => setSelectedBankId(selectedBankId === bank.id ? null : bank.id)}
-            onContextMenu={(e) => { e.preventDefault(); setEditingBank(bank); setShowBankModal(true); }}
+            onContextMenu={(e) => { e.preventDefault(); if (!isGuest) { setEditingBank(bank); setShowBankModal(true); } }}
           >
             <div className="amc-icon" style={{ background: `${bank.color}20`, color: bank.color }}>
               {bank.type === 'Kredi Kartı' ? <CreditCard size={16} /> : <ArrowUpRight size={16} />}
@@ -147,11 +149,13 @@ const KasaTab = () => {
       </div>
 
       {/* Account Management Pill Buttons */}
-      <div className="account-actions-pills mt-8">
-        <button className="pill-btn-premium" onClick={() => setShowBankModal(true)}>
-          <Plus size={14} /> <span>Banka / Kart Ekle</span>
-        </button>
-      </div>
+      {!isGuest && (
+        <div className="account-actions-pills mt-8">
+          <button className="pill-btn-premium" onClick={() => setShowBankModal(true)}>
+            <Plus size={14} /> <span>Banka / Kart Ekle</span>
+          </button>
+        </div>
+      )}
 
       <div className="cash-flow-summary glass mt-16 p-16 animate-fadeIn">
         <div className="cf-item">
@@ -174,9 +178,11 @@ const KasaTab = () => {
       <div className="section-header-v2 mt-24">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <h3>📊 {selectedBankId ? (selectedBankId === 'nakit' ? 'Nakit Hareketleri' : bankalar.find(b => b.id === selectedBankId)?.name + ' Hareketleri') : 'Son İşlemler'}</h3>
-          <button className="pill-btn-primary animate-pop" onClick={() => setShowModal(true)}>
-            <Plus size={16} /> <span>Yeni İşlem</span>
-          </button>
+          {!isGuest && (
+            <button className="pill-btn-primary animate-pop" onClick={() => setShowModal(true)}>
+              <Plus size={16} /> <span>Yeni İşlem</span>
+            </button>
+          )}
         </div>
       </div>
       {selectedBankId && <div className="mt-4"><button className="text-btn-small" onClick={() => setSelectedBankId(null)}>Tümünü Gör</button></div>}
@@ -196,8 +202,8 @@ const KasaTab = () => {
             <div
               key={item.id}
               className="kasa-item-v2 glass animate-slideUp"
-              style={{ animationDelay: `${idx * 0.05}s` }}
-              onClick={() => { setEditingItem(item); setShowModal(true); }}
+              style={{ animationDelay: `${idx * 0.05}s`, cursor: isGuest ? 'default' : 'pointer' }}
+              onClick={() => { if (!isGuest) { setEditingItem(item); setShowModal(true); } }}
             >
               <div className={`ki-type-indicator ${item.type === 'in' ? 'in' : 'out'}`}>
                 {item.type === 'in' ? <ArrowUpRight size={18} /> : <ArrowDownLeft size={18} />}
@@ -214,9 +220,11 @@ const KasaTab = () => {
                   <span className="ki-tag"><Tag size={10} /> {item.bankId ? bankalar.find(b => b.id === item.bankId)?.name : item.method}</span>
                 </div>
               </div>
-              <div className="ki-edit-indicator">
-                <ChevronRight size={18} />
-              </div>
+              {!isGuest && (
+                <div className="ki-edit-indicator">
+                  <ChevronRight size={18} />
+                </div>
+              )}
             </div>
           ))}
         </div>

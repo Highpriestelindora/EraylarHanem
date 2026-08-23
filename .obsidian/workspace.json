@@ -37,7 +37,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -177,5 +179,44 @@
     }
   },
   "active": "7d9f18a2de085a70",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "scratch/check_finans_arsiv.js",
+    "node_modules/lucide-react/dist/esm/icons/zoom-out.js",
+    "node_modules/lucide-react/dist/esm/icons/youtube.js",
+    "node_modules/lucide-react/dist/esm/icons/x.js",
+    "node_modules/lucide-react/dist/esm/icons/x-square.js",
+    "node_modules/lucide-react/dist/esm/icons/x-octagon.js",
+    "node_modules/lucide-react/dist/esm/icons/x-circle.js",
+    "node_modules/lucide-react/dist/esm/icons/wrench.js",
+    "node_modules/lucide-react/dist/esm/icons/wrap-text.js.map",
+    "node_modules/lucide-react/dist/esm/icons/wrap-text.js",
+    "node_modules/lucide-react/dist/esm/icons/worm.js.map",
+    "node_modules/@babel/generator/README.md",
+    "node_modules/@babel/helper-compilation-targets/README.md",
+    "node_modules/@babel/helper-define-polyfill-provider/README.md",
+    "node_modules/@babel/helper-globals/README.md",
+    "node_modules/@babel/helper-plugin-utils/README.md",
+    "node_modules/@babel/helper-remap-async-to-generator/README.md",
+    "node_modules/@babel/helper-replace-supers/README.md",
+    "node_modules/@babel/plugin-transform-optional-catch-binding/README.md",
+    "node_modules/@babel/plugin-transform-react-jsx-source/README.md",
+    "node_modules/@babel/plugin-transform-unicode-escapes/README.md",
+    "node_modules/@babel/plugin-transform-typeof-symbol/README.md",
+    "node_modules/@babel/types/README.md",
+    "node_modules/@babel/helper-create-class-features-plugin/README.md",
+    "node_modules/@humanfs/core/README.md",
+    "node_modules/@eslint/plugin-kit/README.md",
+    "node_modules/acorn-jsx/README.md",
+    "node_modules/babel-plugin-polyfill-corejs2/README.md",
+    "node_modules/@rollup/rollup-win32-x64-gnu/README.md",
+    "node_modules/@types/babel__generator/README.md",
+    "node_modules/browserslist-to-esbuild/README.md",
+    "node_modules/@types/estree/README.md",
+    "node_modules/@types/node/README.md",
+    "node_modules/@types/react-dom/README.md",
+    "node_modules/commander/CHANGELOG.md",
+    "node_modules/convert-source-map/README.md",
+    "node_modules/@supabase/phoenix/priv/static/phoenix.png",
+    "node_modules/@supabase/phoenix/priv/static/phoenix-orange.png"
+  ]
 }

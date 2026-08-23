@@ -166,6 +166,8 @@ export default function Sosyal() {
 }
 
 function IstTab({ onAdd }) {
+  const currentUser = useStore(s => s.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
   const [filter, setFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -257,9 +259,11 @@ function IstTab({ onAdd }) {
                   <span>{new Date(e.date).toLocaleDateString('tr-TR')}</span>
                 </div>
               </div>
-              <button className="e-add-btn" onClick={() => planEvent(e)} title="Plana Ekle">
-                <Plus size={20} />
-              </button>
+              {!isGuest && (
+                <button className="e-add-btn" onClick={() => planEvent(e)} title="Plana Ekle">
+                  <Plus size={20} />
+                </button>
+              )}
             </div>
           ))
         )}
@@ -278,7 +282,8 @@ function IstTab({ onAdd }) {
 }
 
 function HaftaTab({ sosyal, onAdd }) {
-  const { saglik, pet, tatil, aracim: vehicle, cancelSocialActivity, addSocialActivity } = useStore();
+  const { saglik, pet, tatil, aracim: vehicle, cancelSocialActivity, addSocialActivity, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const [completeModal, setCompleteModal] = useState(null); 
   const [editingActivity, setEditingActivity] = useState(null);
   const [viewDate, setViewDate] = useState(new Date());
@@ -505,10 +510,12 @@ function HaftaTab({ sosyal, onAdd }) {
           <h3 style={{ fontSize: '16px', fontWeight: '900', color: 'var(--txt)', minWidth: '140px', textAlign: 'center' }}>{monthName.toUpperCase()}</h3>
           <button className="nav-arrow" onClick={() => changeMonth(1)}><ArrowRight size={20} /></button>
         </div>
-        <button className="add-btn-main" onClick={() => onAdd()}>
-          <Plus size={18} />
-          <span>Aktivite</span>
-        </button>
+        {!isGuest && (
+          <button className="add-btn-main" onClick={() => onAdd()}>
+            <Plus size={18} />
+            <span>Aktivite</span>
+          </button>
+        )}
       </div>
 
       <div className="calendar-wrapper glass">
@@ -588,9 +595,11 @@ function HaftaTab({ sosyal, onAdd }) {
                       <strong>{recommendedIdea.baslik}</strong>
                       <span>{recommendedIdea.type === 'system' ? 'Akıllı Aile Asistanı Hatırlatması' : 'Sık tercih ettiğiniz veya havuzdaki bir fikir'}</span>
                     </div>
-                    <button className="rg-add" onClick={() => onAdd(null, recommendedIdea)} title="Bu Ay İçin Planla">
-                      <Plus size={16} />
-                    </button>
+                    {!isGuest && (
+                      <button className="rg-add" onClick={() => onAdd(null, recommendedIdea)} title="Bu Ay İçin Planla">
+                        <Plus size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -634,14 +643,22 @@ function HaftaTab({ sosyal, onAdd }) {
                           <div className="tl-actions">
                             <button 
                               className={`tl-btn done ${a.originalItem.tamamlandi ? 'reviewed' : 'prominent'}`} 
-                              onClick={() => setCompleteModal(a.originalItem)}
+                              onClick={() => {
+                                if (isGuest) {
+                                  toast.error('Misafir kullanıcısı aktivite tamamlayamaz veya puanlayamaz. 🕵️');
+                                  return;
+                                }
+                                setCompleteModal(a.originalItem);
+                              }}
                               title={a.originalItem.tamamlandi ? "Değerlendirmeyi Gör/Güncelle" : "Tamamla & Değerlendir"}
                             >
                               {a.originalItem.tamamlandi ? <Star size={18} fill="#f59e0b" color="#f59e0b" /> : <CheckCircle2 size={18} />}
                             </button>
-                            <button className="tl-btn cancel" onClick={() => setDeletingId(a.originalItem.id)}>
-                              <Trash2 size={16} />
-                            </button>
+                            {!isGuest && (
+                              <button className="tl-btn cancel" onClick={() => setDeletingId(a.originalItem.id)}>
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -667,9 +684,11 @@ function HaftaTab({ sosyal, onAdd }) {
                              <span className="gcc-date" style={{ marginLeft: '5px' }}>{new Date(n.date).toLocaleDateString('tr-TR')}</span>
                           </div>
                         </div>
-                        <button className="tl-btn cancel" onClick={() => setDeletingId(n.originalItem.id)} style={{ width: '24px', height: '24px' }}>
-                          <Trash2 size={12} />
-                        </button>
+                        {!isGuest && (
+                          <button className="tl-btn cancel" onClick={() => setDeletingId(n.originalItem.id)} style={{ width: '24px', height: '24px' }}>
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -735,7 +754,13 @@ function HaftaTab({ sosyal, onAdd }) {
                         <div className="ni-actions" style={{ display: 'flex', gap: '8px' }}>
                           <button 
                             className="ni-done-btn" 
-                            onClick={() => setCompleteModal(e.originalItem)} 
+                            onClick={() => {
+                              if (isGuest) {
+                                toast.error('Misafir kullanıcısı aktivite tamamlayamaz veya puanlayamaz. 🕵️');
+                                  return;
+                              }
+                              setCompleteModal(e.originalItem);
+                            }} 
                             style={{ 
                               background: e.originalItem.tamamlandi ? '#fef3c7' : '#f0fdf4', 
                               color: e.originalItem.tamamlandi ? '#d97706' : '#16a34a', 
@@ -746,9 +771,11 @@ function HaftaTab({ sosyal, onAdd }) {
                           >
                             {e.originalItem.tamamlandi ? <Star size={16} fill="currentColor" /> : <CheckCircle2 size={18} />}
                           </button>
-                          <button className="ni-cancel-btn" onClick={() => setDeletingId(e.originalItem.id)} style={{ background: '#fff5f5', color: '#dc2626', border: '1px solid #fecaca', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Trash2 size={16} />
-                          </button>
+                          {!isGuest && (
+                            <button className="ni-cancel-btn" onClick={() => setDeletingId(e.originalItem.id)} style={{ background: '#fff5f5', color: '#dc2626', border: '1px solid #fecaca', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -763,22 +790,24 @@ function HaftaTab({ sosyal, onAdd }) {
               </div>
             </div>
 
-            <div className="form-row" style={{ marginTop: '20px', paddingBottom: '20px' }}>
-              <button 
-                className="leaf-action-btn note-btn" 
-                onClick={() => setShowAddNote(true)}
-                style={{ padding: '16px', borderRadius: '16px', background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--txt)', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <Plus size={18} /> Not Ekle
-              </button>
-              <button 
-                className="leaf-action-btn activity-btn" 
-                onClick={() => { onAdd(selectedDay.date); setSelectedDay(null); }}
-                style={{ padding: '16px', borderRadius: '16px', background: 'var(--social)', color: 'white', border: 'none', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-              >
-                <Plus size={18} /> Planla
-              </button>
-            </div>
+            {!isGuest && (
+              <div className="form-row" style={{ marginTop: '20px', paddingBottom: '20px' }}>
+                <button 
+                  className="leaf-action-btn note-btn" 
+                  onClick={() => setShowAddNote(true)}
+                  style={{ padding: '16px', borderRadius: '16px', background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--txt)', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <Plus size={18} /> Not Ekle
+                </button>
+                <button 
+                  className="leaf-action-btn activity-btn" 
+                  onClick={() => { onAdd(selectedDay.date); setSelectedDay(null); }}
+                  style={{ padding: '16px', borderRadius: '16px', background: 'var(--social)', color: 'white', border: 'none', fontWeight: '800', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                  <Plus size={18} /> Planla
+                </button>
+              </div>
+            )}
             
             {showAddNote && (
               <div className="embedded-note-form glass animate-fadeIn" style={{ marginTop: '0', padding: '20px', borderRadius: '24px', border: '1px solid var(--brd)', marginBottom: '40px' }}>
@@ -1403,22 +1432,24 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
                       )}
                       {a.yorum && !a.yorum_gorkem && !a.yorum_esra && <div className="gcc-comment-box"><p>"{a.yorum}"</p></div>}
                       
-                      <div className="gcc-actions" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                        <button 
-                          className="tl-btn edit" 
-                          onClick={(e) => { e.stopPropagation(); onEdit(a); }}
-                          style={{ flex: 1, height: '30px', borderRadius: '10px', background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--social)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}
-                        >
-                          <Activity size={12} /> Düzenle
-                        </button>
-                        <button 
-                          className="tl-btn delete" 
-                          onClick={(e) => { e.stopPropagation(); onDelete(a.id); }}
-                          style={{ flex: 1, height: '30px', borderRadius: '10px', background: '#fff5f5', border: '1px solid #fed7d7', color: '#c53030', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}
-                        >
-                          <Trash2 size={12} /> Sil
-                        </button>
-                      </div>
+                      {!isGuest && (
+                        <div className="gcc-actions" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                          <button 
+                            className="tl-btn edit" 
+                            onClick={(e) => { e.stopPropagation(); onEdit(a); }}
+                            style={{ flex: 1, height: '30px', borderRadius: '10px', background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--social)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}
+                          >
+                            <Activity size={12} /> Düzenle
+                          </button>
+                          <button 
+                            className="tl-btn delete" 
+                            onClick={(e) => { e.stopPropagation(); onDelete(a.id); }}
+                            style={{ flex: 1, height: '30px', borderRadius: '10px', background: '#fff5f5', border: '1px solid #fed7d7', color: '#c53030', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}
+                          >
+                            <Trash2 size={12} /> Sil
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -1437,7 +1468,8 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
 
 function RutinTab({ sosyal, onAdd }) {
   const routines = sosyal.routinePackages || [];
-  const { applySocialRoutine, addSocialRoutinePackage, updateSocialRoutinePackage, deleteSocialRoutinePackage } = useStore();
+  const { applySocialRoutine, addSocialRoutinePackage, updateSocialRoutinePackage, deleteSocialRoutinePackage, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [managingPkg, setManagingPkg] = useState(null); // { mode: 'add' | 'edit', pkg: null | object }
   const [applyingRoutine, setApplyingRoutine] = useState(null); // the routine object being applied
@@ -1480,12 +1512,14 @@ function RutinTab({ sosyal, onAdd }) {
           <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--txt)', margin: 0 }}>🔁 Hazır Rutinler</h3>
           <p style={{ fontSize: '12px', opacity: 0.6, margin: 0 }}>Gün boyu sürecek hazır aktivite paketleri.</p>
         </div>
-        <button 
-          onClick={() => setManagingPkg({ mode: 'add', pkg: null })}
-          style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '5px' }}
-        >
-          <Plus size={14} /> YENİ
-        </button>
+        {!isGuest && (
+          <button 
+            onClick={() => setManagingPkg({ mode: 'add', pkg: null })}
+            style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            <Plus size={14} /> YENİ
+          </button>
+        )}
       </div>
 
 
@@ -1500,22 +1534,24 @@ function RutinTab({ sosyal, onAdd }) {
                   <span style={{ fontSize: '12px', color: 'var(--social)', fontWeight: '800' }}>💰 {r.cost}</span>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button 
-                  onClick={() => setManagingPkg({ mode: 'edit', pkg: r })}
-                  style={{ background: 'var(--bg)', color: 'var(--txt-light)', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Düzenle"
-                >
-                  <Edit3 size={16} />
-                </button>
-                <button 
-                  onClick={(e) => handleDeletePkg(e, r.id)}
-                  style={{ background: '#fff5f5', color: '#f87171', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  title="Sil"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              {!isGuest && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    onClick={() => setManagingPkg({ mode: 'edit', pkg: r })}
+                    style={{ background: 'var(--bg)', color: 'var(--txt-light)', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Düzenle"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                  <button 
+                    onClick={(e) => handleDeletePkg(e, r.id)}
+                    style={{ background: '#fff5f5', color: '#f87171', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title="Sil"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              )}
             </div>
             
             <div className="rc-items" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
@@ -1527,18 +1563,20 @@ function RutinTab({ sosyal, onAdd }) {
               ))}
             </div>
 
-            <button 
-              className="apply-routine-btn-v2"
-              onClick={() => setApplyingRoutine(r)}
-              style={{ 
-                width: '100%', padding: '12px', borderRadius: '16px', border: 'none', 
-                background: 'var(--social)', color: 'white', fontSize: '13px', fontWeight: '900',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                boxShadow: '0 4px 12px rgba(197, 28, 108, 0.2)'
-              }}
-            >
-              UYGULA
-            </button>
+            {!isGuest && (
+              <button 
+                className="apply-routine-btn-v2"
+                onClick={() => setApplyingRoutine(r)}
+                style={{ 
+                  width: '100%', padding: '12px', borderRadius: '16px', border: 'none', 
+                  background: 'var(--social)', color: 'white', fontSize: '13px', fontWeight: '900',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  boxShadow: '0 4px 12px rgba(197, 28, 108, 0.2)'
+                }}
+              >
+                UYGULA
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -1623,7 +1661,8 @@ function RutinTab({ sosyal, onAdd }) {
 
 function HavuzTab({ sosyal, onAdd }) {
   const pool = [...(sosyal.poolItems || []), ...(sosyal.havuz || [])];
-  const { deleteSocialPoolItem, addSocialPoolItem, updateSocialPoolItem } = useStore();
+  const { deleteSocialPoolItem, addSocialPoolItem, updateSocialPoolItem, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const [planningIdea, setPlanningIdea] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('Hepsi');
   const [managingItem, setManagingItem] = useState(null); // { mode: 'add' | 'edit', item: null | object }
@@ -1684,13 +1723,15 @@ function HavuzTab({ sosyal, onAdd }) {
     <div className="tab-pane animate-fadeIn">
       <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', marginBottom: '15px' }}>
         <p style={{ fontSize: '12px', opacity: 0.6, margin: 0 }}>Fikir havuzundan seçim yap veya yeni ekle.</p>
-        <button 
-          onClick={() => setManagingItem({ mode: 'add', item: null })}
-          className="cute-mini-btn"
-          style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(197, 28, 108, 0.2)' }}
-        >
-          <Sparkles size={10} /> <Plus size={10} /> YENİ
-        </button>
+        {!isGuest && (
+          <button 
+            onClick={() => setManagingItem({ mode: 'add', item: null })}
+            className="cute-mini-btn"
+            style={{ background: 'var(--social)', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 10px rgba(197, 28, 108, 0.2)' }}
+          >
+            <Sparkles size={10} /> <Plus size={10} /> YENİ
+          </button>
+        )}
       </div>
 
       <div className="category-filter-scroll" style={{ padding: '0 20px', marginBottom: '20px', display: 'flex', gap: '10px', overflowX: 'auto', whiteSpace: 'nowrap' }}>
@@ -1729,24 +1770,28 @@ function HavuzTab({ sosyal, onAdd }) {
             </div>
 
             <div className="pcl-actions" style={{ display: 'flex', gap: '6px' }}>
-              <button 
-                onClick={() => setManagingItem({ mode: 'edit', item })}
-                style={{ background: '#F1F5F9', color: '#64748B', border: 'none', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Edit3 size={14} />
-              </button>
-              <button 
-                onClick={(e) => handleDeleteItem(e, item.id)}
-                style={{ background: '#FFF1F2', color: '#F43F5E', border: 'none', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >
-                <Trash2 size={14} />
-              </button>
-              <button 
-                onClick={() => startPlanning(item)}
-                style={{ background: 'var(--social)', color: 'white', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(197, 28, 108, 0.2)' }}
-              >
-                <Plus size={18} />
-              </button>
+              {!isGuest && (
+                <>
+                  <button 
+                    onClick={() => setManagingItem({ mode: 'edit', item })}
+                    style={{ background: '#F1F5F9', color: '#64748B', border: 'none', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Edit3 size={14} />
+                  </button>
+                  <button 
+                    onClick={(e) => handleDeleteItem(e, item.id)}
+                    style={{ background: '#FFF1F2', color: '#F43F5E', border: 'none', width: '28px', height: '28px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                  <button 
+                    onClick={() => startPlanning(item)}
+                    style={{ background: 'var(--social)', color: 'white', border: 'none', width: '32px', height: '32px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(197, 28, 108, 0.2)' }}
+                  >
+                    <Plus size={18} />
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ))}

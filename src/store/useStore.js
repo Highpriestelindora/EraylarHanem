@@ -609,7 +609,7 @@ async function fetchGecmisAyFromSupabase(ay, familyId = DEFAULT_FID) {
   }
 }
 
-async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 12) {
+async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 24) {
   try {
     const { data, error } = await supabase
       .from('finans_arsiv')
@@ -618,7 +618,26 @@ async function fetchArsivFromSupabase(familyId = DEFAULT_FID, limit = 12) {
       .order('ay', { ascending: false })
       .limit(limit);
     if (error) throw error;
-    return data || [];
+
+    const parsedArsiv = (data || []).map(item => {
+      const total = Number(item.toplam ?? item.total_amount ?? item.ozet?.total ?? 0);
+      const card = Number(item.ozet?.kart ?? item.card_total ?? 0);
+      const cash = Number(item.ozet?.nakit ?? item.cash_total ?? 0);
+      const bank = Number(item.ozet?.havale ?? item.bank_total ?? 0);
+      const count = Number(item.ozet?.count ?? item.count ?? 0);
+
+      return {
+        ...item,
+        toplam: total,
+        total_amount: total,
+        card_total: card,
+        cash_total: cash,
+        bank_total: bank,
+        count
+      };
+    });
+
+    return parsedArsiv;
   } catch (err) {
     console.error('❌ fetchArsiv error:', err);
     return [];
@@ -836,7 +855,8 @@ async function pushAlisverisToSupabase(item, kime) {
       alindi: !!item.done,
       tamamlanma_tarihi: item.doneDate || null,
       liste_tipi: listeTipi,
-      ekleyen: item.doneBy || 'Sistem'
+      ekleyen: item.doneBy || 'Sistem',
+      oncelik: item.oncelik || 'Lazım'
     };
     const { error } = await supabase.from('alisveris_listesi').upsert(payload);
     if (error) throw error;
@@ -1097,16 +1117,26 @@ async function deleteFinansKrediFromSupabase(id) {
 
 async function syncFinansOnayHavuzu(pool) {
   try {
-    const payloads = pool.map(p => ({
-      id: String(p.id),
-      baslik: p.title || p.baslik,
-      tutar: Number(p.amount || p.tutar),
-      kaynak: p.source || p.kaynak,
-      kayit_eden: p.payer || p.kayit_eden,
-      tarih: p.dt || p.tarih || null,
-      default_pay: p.defaultPay || null
-    }));
-    if(payloads.length > 0) await supabase.from('finans_onay_havuzu').upsert(payloads);
+    const payloads = pool.map(p => {
+      const baslik = p.title ?? p.baslik ?? 'İsimsiz Harcama';
+      let tutar = Number(p.amount ?? p.tutar ?? 0);
+      if (isNaN(tutar)) tutar = 0;
+
+      return {
+        id: String(p.id),
+        baslik: baslik || 'İsimsiz Harcama',
+        tutar: tutar,
+        kaynak: p.source ?? p.kaynak ?? null,
+        kayit_eden: p.payer ?? p.kayit_eden ?? null,
+        tarih: p.dt ?? p.tarih ?? null,
+        default_pay: p.defaultPay ?? p.default_pay ?? null
+      };
+    });
+    if(payloads.length > 0) {
+      const res = await supabase.from('finans_onay_havuzu').upsert(payloads);
+      if(res.error) console.error('❌ Onay Havuzu Sync Error:', res.error);
+      else console.log('✅ Onay Havuzu Sync Success');
+    }
   } catch(e) { console.warn('Supabase Onay Havuzu upsert hatası:', e); }
 }
 // -----------------------------------------------------------------
@@ -2928,6 +2958,13 @@ const useStore = create(
         if (moduleName === 'mutfak' && isObject && data.alisveris) {
           data.alisveris.forEach(item => pushAlisverisToSupabase(item, 'mutfak'));
         }
+        if (moduleName === 'alisveris' && isObject) {
+          ['gorkem', 'esra', 'ev', 'wishlist'].forEach(listKey => {
+            if (data[listKey]) {
+              data[listKey].forEach(item => pushAlisverisToSupabase(item, listKey));
+            }
+          });
+        }
         if (moduleName === 'ev' && isObject) {
           if (data.bakimlar) data.bakimlar.forEach(b => pushEvBakimToSupabase(b));
           if (data.demirbaslar) data.demirbaslar.forEach(d => pushEvDemirbasToSupabase(d));
@@ -3230,6 +3267,13 @@ const useStore = create(
           // Client ID'yi sabitle
           const cid = localStorage.getItem('eraylar_client_id') || Math.random().toString(36).substring(2);
           localStorage.setItem('eraylar_client_id', cid);
+
+          // Force logout for auth v2 transition
+          const authVersion = localStorage.getItem('eraylar_auth_version');
+          if (authVersion !== 'v2') {
+            set({ currentUser: null });
+            localStorage.setItem('eraylar_auth_version', 'v2');
+          }
 
           set({ syncing: true });
           await get().loadFromSupabase();
@@ -4023,7 +4067,8 @@ const useStore = create(
                 pr: Number(x.fiyat || 0), 
                 dt: x.tarih || x.created_at, 
                 done: !!x.alindi, 
-                doneDate: x.tamamlanma_tarihi 
+                doneDate: x.tamamlanma_tarihi,
+                oncelik: x.oncelik || 'Lazım'
               }));
               
               a.gorkem = mapAl(alisveris.data.filter(x => x.liste_tipi === 'genel_gorkem' || x.liste_tipi === 'gorkem'));
@@ -4916,32 +4961,49 @@ const useStore = create(
 
         if (harcamalar.length === 0) {
           if (!isAuto) toast.error('Bu ay için harcama kaydı bulunamadı.');
-          // Otomatik kapanışta sürekli tetiklenmemesi için 0 kayıtlı bir arşiv atıyoruz
-          await upsertArsiv(hedefAy, {}, state.family_id);
+          await upsertArsiv(hedefAy, { toplam: 0, ozet: { total: 0, kart: 0, nakit: 0, havale: 0, count: 0 } }, state.family_id);
           return;
         }
 
-        const toplamHarcama = harcamalar.reduce((s, h) => s + Number(h.tutar), 0);
-        const toplamKart = harcamalar.filter(h => h.odenme_turu === 'kart').reduce((s, h) => s + Number(h.tutar), 0);
-        const toplamNakit = harcamalar.filter(h => h.odenme_turu === 'nakit').reduce((s, h) => s + Number(h.tutar), 0);
+        const toplamHarcama = harcamalar.reduce((s, h) => s + Number(h.tutar || 0), 0);
+        const toplamKart = harcamalar.filter(h => h.odenme_turu === 'kart' || (h.kart_id && h.odenme_turu !== 'nakit' && h.odenme_turu !== 'havale')).reduce((s, h) => s + Number(h.tutar || 0), 0);
+        const toplamHavale = harcamalar.filter(h => h.odenme_turu === 'havale' || h.banka_id).reduce((s, h) => s + Number(h.tutar || 0), 0);
+        const toplamNakit = harcamalar.filter(h => h.odenme_turu === 'nakit' || (!h.kart_id && !h.banka_id && h.odenme_turu !== 'kart' && h.odenme_turu !== 'havale')).reduce((s, h) => s + Number(h.tutar || 0), 0);
 
         // Kategori dağılımı
         const kategoriOzet = {};
         harcamalar.forEach(h => {
-          kategoriOzet[h.kategori] = (kategoriOzet[h.kategori] || 0) + Number(h.tutar);
+          if (h.kategori) {
+            kategoriOzet[h.kategori] = (kategoriOzet[h.kategori] || 0) + Number(h.tutar || 0);
+          }
         });
 
         // Kart dağılımı
         const kartOzet = {};
         harcamalar.forEach(h => {
           if (h.kart_id) {
-            kartOzet[h.kart_id] = (kartOzet[h.kart_id] || 0) + Number(h.tutar);
+            kartOzet[h.kart_id] = (kartOzet[h.kart_id] || 0) + Number(h.tutar || 0);
           }
         });
 
-        await upsertArsiv(hedefAy, {}, state.family_id);
+        const payload = {
+          toplam: toplamHarcama,
+          ozet: {
+            total: toplamHarcama,
+            kart: toplamKart,
+            nakit: toplamNakit,
+            havale: toplamHavale,
+            categories: kategoriOzet,
+            cards: kartOzet,
+            count: harcamalar.length
+          }
+        };
 
-        toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);
+        await upsertArsiv(hedefAy, payload, state.family_id);
+
+        if (!isAuto) {
+          toast.success(`${hedefAy} ayı başarıyla kapatıldı! 📦`);
+        }
       },
 
       // Otomatik ay kapanışı kontrolü (App.jsx tarafından çağrılır)
@@ -5853,7 +5915,8 @@ const useStore = create(
           pr: Number(item.pr) || 0,
           dt: new Date().toISOString(),
           done: false,
-          doneDate: null
+          doneDate: null,
+          oncelik: item.oncelik || 'Lazım'
         };
 
         if (targetOwner === 'mutfak') {
@@ -5949,13 +6012,7 @@ const useStore = create(
       addTrip: async (trip) => {
         const state = get();
         const title = trip.title || 'Yeni Seyahat';
-        const isDuplicate = (state.tatil.trips || []).some(
-          t => t.title?.toLowerCase().trim() === title.toLowerCase().trim()
-        );
-        if (isDuplicate) {
-          toast.error(`"${title}" isimli bir tatil zaten mevcut! ⚠️`);
-          return null;
-        }
+        // Duplicate check removed to allow adding same-titled trips
         const locationType = trip.locationType || 'yurtdisi';
         const city = (trip.city || '').toLowerCase().trim();
         const tripTitle = (trip.title || '').toLowerCase().trim();
@@ -9547,6 +9604,16 @@ const useStore = create(
 
       setCurrentUser: (user) => {
         set({ currentUser: user });
+      },
+
+      verifyPassword: (userName, password) => {
+        const pinMap = {
+          'görkem': '536188',
+          'gorkem': '536188',
+          'esra': '536189'
+        };
+        const key = (userName || '').toLowerCase().trim();
+        return pinMap[key] === password;
       },
 
       updateExchangeRates: async () => {

@@ -1472,6 +1472,8 @@ function TripCard({ trip, onClick, onEdit }) {
 
 function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
   const { addTrip, updateTrip, deleteTrip, tatil } = useStore();
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(initialData || {
     title: '',
@@ -1499,25 +1501,11 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
         }
       }
 
-      // Duplicate city check (only for new/old, or if city changed in edit)
-      const isCityChanged = initialData ? normalizeText(formData.city) !== normalizeText(initialData.city) : true;
-      
-      if (mode !== 'edit' || isCityChanged) {
-        const isDuplicate = tatil.trips.some(t => {
-          // Compare normalized city names
-          const cityMatch = normalizeText(t.city) === normalizeText(formData.city);
-          // Only count as duplicate if it's NOT the trip we are currently editing
-          const isDifferentTrip = initialData ? String(t.id) !== String(initialData.id) : true;
-          return cityMatch && isDifferentTrip;
-        });
-
-        if (isDuplicate) {
-          return toast.error('Bu şehir zaten kayıtlı! Lütfen farklı bir isim kullanın.');
-        }
-      }
+      // Duplicate city check removed to allow traveling to the same city multiple times
     }
 
-    if (step < 4) setStep(step + 1);
+    const maxStep = isGuest ? 3 : 4;
+    if (step < maxStep) setStep(step + 1);
     else handleFinish();
   };
 
@@ -1535,7 +1523,7 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
   return (
     <div className="wizard-container-cute">
       <div className="wizard-steps-indicator">
-        {[1, 2, 3, 4].map(s => <div key={s} className={`step-dot ${step >= s ? 'active' : ''}`} />)}
+        {(isGuest ? [1, 2, 3] : [1, 2, 3, 4]).map(s => <div key={s} className={`step-dot ${step >= s ? 'active' : ''}`} />)}
       </div>
 
       <div className="wizard-step-content animate-fadeIn">
@@ -1675,7 +1663,7 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
           </div>
         )}
 
-        {step === 4 && (
+        {step === 4 && !isGuest && (
           <div className="w-step">
             <h4>💰 Bütçe Planı</h4>
             <input type="number" placeholder="Tahmini Bütçe (₺)" value={formData.budget} onChange={e => setFormData({...formData, budget: e.target.value})} />
@@ -1726,7 +1714,7 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
         )}
         {step > 1 && <button className="w-back-btn" onClick={() => setStep(step - 1)}>Geri</button>}
         <button className="w-next-btn" onClick={handleNext}>
-          {step === 4 ? (mode === 'edit' ? 'Değişiklikleri Kaydet 💾' : 'Macerayı Başlat ✨') : 'Devam Et'}
+          {step === (isGuest ? 3 : 4) ? (mode === 'edit' ? 'Değişiklikleri Kaydet 💾' : 'Macerayı Başlat ✨') : 'Devam Et'}
         </button>
       </div>
     </div>
@@ -1735,6 +1723,8 @@ function AddTripWizard({ mode, initialData, onClose, requestConfirm }) {
 
 function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, requestConfirm, onViewPdf }) {
   const { addExpense, tatil, setModuleData, deleteTrip } = useStore();
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
   const [weatherForecast, setWeatherForecast] = useState([]);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showReview, setShowReview] = useState(false);
@@ -1920,10 +1910,18 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
           <span className="btn-emoji">📑</span>
           <span>{isCompleted ? 'Anı Detayı' : 'Detaylar'}</span>
         </button>
-        <button className={`sub-tab-btn-cute ${activeSubTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveSubTab('budget')}>
-          <span className="btn-emoji">💰</span>
-          <span>Bütçe</span>
-        </button>
+        {!isCompleted && (
+          <button className={`sub-tab-btn-cute ${activeSubTab === 'todo' ? 'active' : ''}`} onClick={() => setActiveSubTab('todo')}>
+            <span className="btn-emoji">📋</span>
+            <span>To Do</span>
+          </button>
+        )}
+        {!isGuest && (
+          <button className={`sub-tab-btn-cute ${activeSubTab === 'budget' ? 'active' : ''}`} onClick={() => setActiveSubTab('budget')}>
+            <span className="btn-emoji">💰</span>
+            <span>Bütçe</span>
+          </button>
+        )}
       </div>
 
       <div className="detail-body">
@@ -1938,12 +1936,13 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
         {activeSubTab === 'details' && (
           <div className="docs-view animate-fadeIn">
             {isCompleted ? (
-               <MemoryDetailView 
+             <MemoryDetailView 
                  trip={trip} 
                  onEditEval={(user) => {
                     setReviewUser(user);
                     setShowReview(true);
                  }} 
+                 onUpdateTrip={handleUpdateTrip}
                />
             ) : (
               <>
@@ -1959,17 +1958,21 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
                   <CurrencyConverter targetCurrency={trip.locationType === 'yurtdisi' ? 'EUR' : 'TRY'} />
                   <WeatherWidget city={trip.city} country={trip.country} startDate={trip.startDate} endDate={trip.endDate} />
                 </div>
-
-                <TravelChecklist 
-                  notes={trip.notes} 
-                  onChange={(val) => handleUpdateTrip({ notes: val })} 
-                />
               </>
             )}
           </div>
         )}
 
-        {activeSubTab === 'budget' && (
+        {activeSubTab === 'todo' && (
+          <div className="docs-view animate-fadeIn">
+            <TravelChecklist 
+              notes={trip.notes} 
+              onChange={(val) => handleUpdateTrip({ notes: val })} 
+            />
+          </div>
+        )}
+
+        {activeSubTab === 'budget' && !isGuest && (
           <BudgetSection trip={trip} onShowExpense={() => setShowExpenseModal(true)} />
         )}
       </div>
@@ -3782,7 +3785,7 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
   );
 }
 
-function MemoryDetailView({ trip, onEditEval }) {
+function MemoryDetailView({ trip, onEditEval, onUpdateTrip }) {
   const { currentUser } = useStore();
   const gEval = trip.evaluations?.gorkem;
   const eEval = trip.evaluations?.esra;
@@ -3878,6 +3881,140 @@ function MemoryDetailView({ trip, onEditEval }) {
           </div>
         </div>
       </div>
+
+      {/* Yapılanlar Bölümü */}
+      <TripTodoMemory trip={trip} onUpdateTrip={onUpdateTrip} />
+    </div>
+  );
+}
+
+// ─── Tatil Anısı – Yapılanlar Bölümü ───────────────────────────────────────
+function TripTodoMemory({ trip, onUpdateTrip }) {
+  const parseTodos = (notes) => {
+    if (!notes) return [];
+    try {
+      if (notes.trim().startsWith('[')) return JSON.parse(notes);
+    } catch (e) {}
+    return notes.split('\n').filter(l => l.trim()).map(l => ({ text: l.trim(), done: false }));
+  };
+
+  const [todos, setTodos] = useState(() => parseTodos(trip.notes));
+  const [editing, setEditing] = useState(false);
+  const [newText, setNewText] = useState('');
+  const [editingIdx, setEditingIdx] = useState(null);
+  const [editText, setEditText] = useState('');
+
+  const saveTodos = (list) => {
+    setTodos(list);
+    if (onUpdateTrip) onUpdateTrip({ notes: JSON.stringify(list) });
+  };
+
+  const handleToggle = (idx) => saveTodos(todos.map((t, i) => i === idx ? { ...t, done: !t.done } : t));
+  const handleDelete = (idx) => saveTodos(todos.filter((_, i) => i !== idx));
+  const handleAdd = () => {
+    if (!newText.trim()) return;
+    saveTodos([...todos, { text: newText.trim(), done: false }]);
+    setNewText('');
+  };
+  const handleSaveEdit = (idx) => {
+    if (!editText.trim()) return;
+    saveTodos(todos.map((t, i) => i === idx ? { ...t, text: editText.trim() } : t));
+    setEditingIdx(null);
+  };
+
+  const done = todos.filter(t => t.done);
+  const notDone = todos.filter(t => !t.done);
+
+  if (todos.length === 0 && !editing) return null;
+
+  return (
+    <div className="trip-todo-memory mt-20">
+      <div className="ttm-header">
+        <div className="ttm-title">
+          <span>📋</span>
+          <h3>Yapılanlar</h3>
+        </div>
+        <button className="ttm-edit-btn" onClick={() => setEditing(e => !e)} title={editing ? 'Kapat' : 'Düzenle'}>
+          {editing ? <X size={16} /> : <Edit3 size={16} color="#8B5CF6" />}
+        </button>
+      </div>
+
+      {/* Done */}
+      {done.length > 0 && (
+        <div className="ttm-group">
+          <div className="ttm-group-label done">✅ Yapıldı ({done.length})</div>
+          {todos.map((t, idx) => !t.done ? null : (
+            <div key={idx} className="ttm-item done">
+              <span className="ttm-check">✅</span>
+              {editing && editingIdx === idx ? (
+                <div className="ttm-edit-row">
+                  <input value={editText} onChange={e => setEditText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveEdit(idx)}
+                    className="ttm-edit-input" autoFocus />
+                  <button onClick={() => handleSaveEdit(idx)} className="ttm-save-btn"><Check size={12}/></button>
+                  <button onClick={() => setEditingIdx(null)} className="ttm-cancel-btn"><X size={12}/></button>
+                </div>
+              ) : (
+                <span className="ttm-text" onClick={editing ? () => { setEditingIdx(idx); setEditText(t.text); } : undefined}>{t.text}</span>
+              )}
+              {editing && editingIdx !== idx && (
+                <div className="ttm-actions">
+                  <button onClick={() => handleToggle(idx)} className="ttm-toggle-btn" title="Geri al">↩️</button>
+                  <button onClick={() => handleDelete(idx)} className="ttm-del-btn"><Trash2 size={11}/></button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Not Done */}
+      {notDone.length > 0 && (
+        <div className="ttm-group">
+          <div className="ttm-group-label notdone">❌ Yapılamadı ({notDone.length})</div>
+          {todos.map((t, idx) => t.done ? null : (
+            <div key={idx} className="ttm-item notdone">
+              <span className="ttm-check">❌</span>
+              {editing && editingIdx === idx ? (
+                <div className="ttm-edit-row">
+                  <input value={editText} onChange={e => setEditText(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleSaveEdit(idx)}
+                    className="ttm-edit-input" autoFocus />
+                  <button onClick={() => handleSaveEdit(idx)} className="ttm-save-btn"><Check size={12}/></button>
+                  <button onClick={() => setEditingIdx(null)} className="ttm-cancel-btn"><X size={12}/></button>
+                </div>
+              ) : (
+                <span className="ttm-text" onClick={editing ? () => { setEditingIdx(idx); setEditText(t.text); } : undefined}>{t.text}</span>
+              )}
+              {editing && editingIdx !== idx && (
+                <div className="ttm-actions">
+                  <button onClick={() => handleToggle(idx)} className="ttm-toggle-btn" title="Yapıldı olarak işaretle">✅</button>
+                  <button onClick={() => handleDelete(idx)} className="ttm-del-btn"><Trash2 size={11}/></button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Yeni Ekle (edit modunda) */}
+      {editing && (
+        <div className="ttm-add-row">
+          <input
+            type="text"
+            value={newText}
+            onChange={e => setNewText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+            placeholder="Yeni madde ekle..."
+            className="ttm-add-input"
+          />
+          <button onClick={handleAdd} className="ttm-add-btn"><Plus size={14}/></button>
+        </div>
+      )}
+
+      {todos.length === 0 && editing && (
+        <div className="ttm-empty">Henüz madde yok. Yukarıdan ekleyebilirsiniz. 📝</div>
+      )}
     </div>
   );
 }
@@ -5074,17 +5211,17 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
         <h4 className="section-title-cute" style={{ marginBottom: '15px' }}>Tüm Seyahatleriniz (Anılar)</h4>
         
         <div className="premium-filters-container mb-15">
-          <select className="premium-filter-select" style={{ minWidth: '110px' }} value={filterYear} onChange={e => setFilterYear(e.target.value)}>
-            <option value="Hepsi">Tüm Yıllar</option>
+          <select className="premium-filter-select" style={{ minWidth: '85px' }} value={filterYear} onChange={e => setFilterYear(e.target.value)}>
+            <option value="Hepsi">Yıl</option>
             {availableYears.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
-          <select className="premium-filter-select" style={{ minWidth: '130px' }} value={filterLocation} onChange={e => setFilterLocation(e.target.value)}>
-            <option value="Hepsi">Tümü (İç/Dış)</option>
+          <select className="premium-filter-select" style={{ minWidth: '95px' }} value={filterLocation} onChange={e => setFilterLocation(e.target.value)}>
+            <option value="Hepsi">Tümü</option>
             <option value="yurtici">Yurt İçi</option>
             <option value="yurtdisi">Yurt Dışı</option>
           </select>
-          <select className="premium-filter-select" style={{ minWidth: '110px' }} value={filterTraveler} onChange={e => setFilterTraveler(e.target.value)}>
-            <option value="Hepsi">Tüm Kişiler</option>
+          <select className="premium-filter-select" style={{ minWidth: '90px' }} value={filterTraveler} onChange={e => setFilterTraveler(e.target.value)}>
+            <option value="Hepsi">Kişi</option>
             <option value="gorkem">Görkem</option>
             <option value="esra">Esra</option>
             <option value="ikimiz">İkimiz</option>
@@ -5143,6 +5280,8 @@ function HaritaTab({ tatil, onTabChange, deleteTrip, requestConfirm }) {
 
 function HayalTab({ tatil, requestConfirm }) {
   const { setModuleData } = useStore();
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
   const [activeSubTab, setActiveSubTab] = useState('experiences');
   const [filter, setFilter] = useState('Hepsi');
   const wishlist = tatil.wishlist || [];
@@ -5283,7 +5422,7 @@ function HayalTab({ tatil, requestConfirm }) {
                 <div className="exp-card-footer">
                   <div className="exp-stats">
                     <div className="exp-stat"><Timer size={12} /> {item.duration}</div>
-                    <div className="exp-stat"><Wallet size={12} /> {item.budget}</div>
+                    {!isGuest && <div className="exp-stat"><Wallet size={12} /> {item.budget}</div>}
                   </div>
                   <div className="exp-season">
                     <Calendar size={12} /> {item.season}
@@ -5343,10 +5482,12 @@ function HayalTab({ tatil, requestConfirm }) {
                       <input placeholder="Ülke" value={manualDream.country} onChange={e => setManualDream({...manualDream, country: e.target.value})} />
                     </div>
                   </div>
-                  <div className="md-input-field">
-                    <label>Bütçe</label>
-                    <input placeholder="Tahmini Bütçe (örn: €1.500)" value={manualDream.budget} onChange={e => setManualDream({...manualDream, budget: e.target.value})} />
-                  </div>
+                  {!isGuest && (
+                    <div className="md-input-field">
+                      <label>Bütçe</label>
+                      <input placeholder="Tahmini Bütçe (örn: €1.500)" value={manualDream.budget} onChange={e => setManualDream({...manualDream, budget: e.target.value})} />
+                    </div>
+                  )}
                   <div className="md-input-field">
                     <label>Notlarımız</label>
                     <textarea placeholder="Neden gitmek istiyoruz?" value={manualDream.notes} onChange={e => setManualDream({...manualDream, notes: e.target.value})} />
@@ -5391,7 +5532,7 @@ function HayalTab({ tatil, requestConfirm }) {
                     </button>
                   </div>
                   <div className="wc-content">
-                    {displayBudget && <div className="wc-budget"><DollarSign size={12} /> {displayBudget}</div>}
+                    {displayBudget && !isGuest && <div className="wc-budget"><DollarSign size={12} /> {displayBudget}</div>}
                     {displayNotes && <p className="wc-notes">“{displayNotes}”</p>}
                   </div>
                 </div>
@@ -5684,6 +5825,8 @@ function DiscoveryGuideContent({ item }) {
   const [wiki, setWiki] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
 
   useEffect(() => {
     let active = true;
@@ -5727,10 +5870,12 @@ function DiscoveryGuideContent({ item }) {
 
       {/* Stats Row */}
       <div className="dg-stats-row">
-        <div className="dg-stat-pill">
-          <Wallet size={14} />
-          <span>{item.budget}</span>
-        </div>
+        {!isGuest && (
+          <div className="dg-stat-pill">
+            <Wallet size={14} />
+            <span>{item.budget}</span>
+          </div>
+        )}
         <div className="dg-stat-pill">
           <Timer size={14} />
           <span>{item.duration}</span>

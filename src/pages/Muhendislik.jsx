@@ -85,6 +85,8 @@ const ZIHNI_CRITERIA = [
 const QuickCalc = ({ pinnedIds = [], onTogglePin }) => {
   const [inputs, setInputs] = useState({});
   const [showAll, setShowAll] = useState(false);
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
 
   // Fallback for pinnedIds if they are not provided or invalid
   const activePinnedIds = useMemo(() => {
@@ -112,9 +114,11 @@ const QuickCalc = ({ pinnedIds = [], onTogglePin }) => {
           <ArrowRightLeft size={18} color="#6366f1" />
           <h3>Hızlı Hesap & Çevrim</h3>
         </div>
-        <button className="manage-btn-tech" onClick={() => setShowAll(true)}>
-          <Settings size={14} /> Birim Yönetimi
-        </button>
+        {!isGuest && (
+          <button className="manage-btn-tech" onClick={() => setShowAll(true)}>
+            <Settings size={14} /> Birim Yönetimi
+          </button>
+        )}
       </div>
 
       <div className="conversion-grid mt-16">
@@ -152,7 +156,7 @@ const QuickCalc = ({ pinnedIds = [], onTogglePin }) => {
               <div 
                 key={conv.id} 
                 className={`unit-item-card ${isPinned ? 'pinned' : ''}`}
-                onClick={() => onTogglePin(conv.id)}
+                onClick={() => { if (!isGuest) onTogglePin(conv.id); }}
               >
                 <div className="uic-info">
                   <strong>{conv.label}</strong>
@@ -434,6 +438,8 @@ const ProblemBank = ({ problems, onAdd, onUpdate, onDelete }) => {
   const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [newProb, setNewProb] = useState({ title: '', definition: '', solution: '', alternatives: '' });
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
 
   const filteredProblems = useMemo(() => {
     if (!searchTerm.trim()) return problems;
@@ -494,9 +500,11 @@ const ProblemBank = ({ problems, onAdd, onUpdate, onDelete }) => {
             <span style={{ fontSize: '18px' }}>⚠️</span>
             <h3>Teknik Problem Bankası</h3>
           </div>
-          <button className="add-tech-pill" onClick={() => { setEditingId(null); setNewProb({ title: '', definition: '', solution: '', alternatives: '' }); setShowAdd(true); }}>
-            ➕ YENİ KAYIT
-          </button>
+          {!isGuest && (
+            <button className="add-tech-pill" onClick={() => { setEditingId(null); setNewProb({ title: '', definition: '', solution: '', alternatives: '' }); setShowAdd(true); }}>
+              ➕ YENİ KAYIT
+            </button>
+          )}
         </div>
         
         <div className="tech-search-bar">
@@ -529,10 +537,12 @@ const ProblemBank = ({ problems, onAdd, onUpdate, onDelete }) => {
                   <span style={{ fontSize: '14px' }}>📟</span>
                   <strong>{p.title}</strong>
                 </div>
-                <div className="pc-actions">
-                  <button className="edit-btn-tiny" onClick={() => handleEdit(p)}>📝</button>
-                  <button className="delete-btn-tiny" onClick={() => onDelete(p.id)}>🗑️</button>
-                </div>
+                {!isGuest && (
+                  <div className="pc-actions">
+                    <button className="edit-btn-tiny" onClick={() => handleEdit(p)}>📝</button>
+                    <button className="delete-btn-tiny" onClick={() => onDelete(p.id)}>🗑️</button>
+                  </div>
+                )}
               </div>
               <div className="pc-content">
                 <div className="pc-item">
@@ -595,6 +605,8 @@ const DecisionLog = ({ decisions, onAdd, onUpdate, onDelete }) => {
     title: '', rationale: '', data: '', outcome: '', lesson: '', 
     criticality: 'medium', tags: '' 
   });
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
 
   const filteredDecisions = useMemo(() => {
     if (!searchTerm.trim()) return decisions;
@@ -636,9 +648,11 @@ const DecisionLog = ({ decisions, onAdd, onUpdate, onDelete }) => {
             <h3>🧠 Karar Günlüğü</h3>
             <p className="am-sub">Önemli kararlar, veriler ve kazanılan dersler</p>
           </div>
-          <button className="add-tech-pill" onClick={() => { setEditingId(null); setNewDec({ title: '', rationale: '', data: '', outcome: '', lesson: '', criticality: 'medium', tags: '' }); setShowAdd(true); }}>
-            ➕ YENİ KARAR
-          </button>
+          {!isGuest && (
+            <button className="add-tech-pill" onClick={() => { setEditingId(null); setNewDec({ title: '', rationale: '', data: '', outcome: '', lesson: '', criticality: 'medium', tags: '' }); setShowAdd(true); }}>
+              ➕ YENİ KARAR
+            </button>
+          )}
         </div>
 
         <div className="tech-search-bar">
@@ -670,10 +684,12 @@ const DecisionLog = ({ decisions, onAdd, onUpdate, onDelete }) => {
                     <span className="dc-tag">{CRITICALITY_LEVELS[d.criticality].label}</span>
                     <span className="dc-date">{new Date(d.createdAt || d.date).toLocaleDateString('tr-TR')}</span>
                   </div>
-                  <div className="dc-actions" style={{ display: 'flex', gap: '8px' }}>
-                    <button className="edit-btn-tiny" onClick={() => handleEdit(d)}>📝</button>
-                    <button className="delete-btn-tiny" onClick={() => onDelete(d.id)}>🗑️</button>
-                  </div>
+                  {!isGuest && (
+                    <div className="dc-actions" style={{ display: 'flex', gap: '8px' }}>
+                      <button className="edit-btn-tiny" onClick={() => handleEdit(d)}>📝</button>
+                      <button className="delete-btn-tiny" onClick={() => onDelete(d.id)}>🗑️</button>
+                    </div>
+                  )}
                 </div>
                 <h4>{d.title}</h4>
                 
@@ -798,6 +814,8 @@ const CRMView = ({ crm, onAddCustomer, onUpdateCustomer, onDeleteCustomer, onAdd
   const [showAddDeal, setShowAddDeal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [editingDeal, setEditingDeal] = useState(null);
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
   
   const [custSearch, setCustSearch] = useState('');
   const [dealSearch, setDealSearch] = useState('');
@@ -908,9 +926,11 @@ const CRMView = ({ crm, onAddCustomer, onUpdateCustomer, onDeleteCustomer, onAdd
       <div className="section-header-v2" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <h3>👥 Müşteri Portföyü</h3>
-          <button className="add-tech-pill" onClick={() => { setEditingCustomer(null); setNewCust({ name: '', company: '', phone: '', status: 'lead', notes: '', priority: 'medium' }); setShowAddCustomer(true); }}>
-            ➕ YENİ MÜŞTERİ
-          </button>
+          {!isGuest && (
+            <button className="add-tech-pill" onClick={() => { setEditingCustomer(null); setNewCust({ name: '', company: '', phone: '', status: 'lead', notes: '', priority: 'medium' }); setShowAddCustomer(true); }}>
+              ➕ YENİ MÜŞTERİ
+            </button>
+          )}
         </div>
         
         <div className="crm-filter-row">
@@ -940,10 +960,12 @@ const CRMView = ({ crm, onAddCustomer, onUpdateCustomer, onDeleteCustomer, onAdd
                 </div>
                 <p>{c.company || 'Bireysel'} · {c.phone || '-'}</p>
               </div>
-              <div className="pc-actions">
-                <button className="edit-btn-tiny" onClick={() => handleEditCustomer(c)}>📝</button>
-                <button className="delete-btn-tiny" onClick={() => onDeleteCustomer(c.id)}>🗑️</button>
-              </div>
+              {!isGuest && (
+                <div className="pc-actions">
+                  <button className="edit-btn-tiny" onClick={() => handleEditCustomer(c)}>📝</button>
+                  <button className="delete-btn-tiny" onClick={() => onDeleteCustomer(c.id)}>🗑️</button>
+                </div>
+              )}
             </div>
           ))
         )}
@@ -953,9 +975,11 @@ const CRMView = ({ crm, onAddCustomer, onUpdateCustomer, onDeleteCustomer, onAdd
       <div className="section-header-v2" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
           <h3>📄 Teklifler & Projeler</h3>
-          <button className="add-tech-pill" onClick={() => { setEditingDeal(null); setNewDeal({ customerId: '', title: '', amount: '', status: 'proposal', priority: 'medium' }); setShowAddDeal(true); }}>
-            ➕ YENİ TEKLİF
-          </button>
+          {!isGuest && (
+            <button className="add-tech-pill" onClick={() => { setEditingDeal(null); setNewDeal({ customerId: '', title: '', amount: '', status: 'proposal', priority: 'medium' }); setShowAddDeal(true); }}>
+              ➕ YENİ TEKLİF
+            </button>
+          )}
         </div>
 
         <div className="crm-filter-row">
@@ -995,10 +1019,12 @@ const CRMView = ({ crm, onAddCustomer, onUpdateCustomer, onDeleteCustomer, onAdd
                   <div className="d-amount">{d.amount ? `${parseFloat(d.amount).toLocaleString('tr-TR')} ₺` : 'Fiyat Bekliyor'}</div>
                   <span className={`deal-status ${d.status}`}>{d.status.toUpperCase()}</span>
                 </div>
-                <div className="pc-actions">
-                  <button className="edit-btn-tiny" onClick={() => handleEditDeal(d)}>📝</button>
-                  <button className="delete-btn-tiny" onClick={() => onDeleteDeal(d.id)}>🗑️</button>
-                </div>
+                {!isGuest && (
+                  <div className="pc-actions">
+                    <button className="edit-btn-tiny" onClick={() => handleEditDeal(d)}>📝</button>
+                    <button className="delete-btn-tiny" onClick={() => onDeleteDeal(d.id)}>🗑️</button>
+                  </div>
+                )}
               </div>
             );
           })
@@ -1121,6 +1147,8 @@ const ZihniView = ({ proceler = [], onAddProce, onUpdateProce, onDeleteProce, on
   const [sortBy, setSortBy] = useState('newest'); // newest, oldest, high-score, low-score, completed
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ title: '', desc: '' });
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
 
   const startEvaluation = () => {
     if (!currentProce.title) return toast.error('Önce procene bir isim ver evladım!');
@@ -1214,9 +1242,11 @@ const ZihniView = ({ proceler = [], onAddProce, onUpdateProce, onDeleteProce, on
           <h2 className="sketch-title">Porof. Zihni Sinir Çizim Masası</h2>
           <p className="sketch-subtitle">Hayalleri teknik resme, çılgınlığı mekaniğe döküyoruz evladım!</p>
           <div className="sketch-actions-v4">
-            <button className="zihni-btn-premium main" onClick={() => setStep('input')}>
-              <Zap size={22} /> <span>YENİ PAFTA AÇ</span>
-            </button>
+            {!isGuest && (
+              <button className="zihni-btn-premium main" onClick={() => setStep('input')}>
+                <Zap size={22} /> <span>YENİ PAFTA AÇ</span>
+              </button>
+            )}
             <button className="zihni-btn-premium alt" onClick={() => setStep('list')}>
               <Library size={20} /> <span>PROCE ARŞİVİ ({proceler.length})</span>
             </button>
@@ -1355,7 +1385,7 @@ const ZihniView = ({ proceler = [], onAddProce, onUpdateProce, onDeleteProce, on
                   </div>
 
                     <div className="p-card-footer-v3">
-                      <button className={`zihni-status-btn ${p.completed ? 'completed' : 'pending'}`} onClick={() => onToggleStatus(p.id)}>
+                      <button className={`zihni-status-btn ${p.completed ? 'completed' : 'pending'}`} style={{ cursor: isGuest ? 'default' : 'pointer' }} onClick={() => { if (!isGuest) onToggleStatus(p.id); }}>
                         {p.completed ? '✅ TAMAMLANDI' : '⏳ TAMAMLA'}
                       </button>
                       {editingId === p.id ? (
@@ -1364,10 +1394,12 @@ const ZihniView = ({ proceler = [], onAddProce, onUpdateProce, onDeleteProce, on
                           <button className="zihni-btn-premium mini cancel" onClick={() => setEditingId(null)}>İPTAL</button>
                         </div>
                       ) : (
-                        <div className="p-actions-right-v3">
-                          <button className="zihni-tool-btn" title="Düzenle" onClick={() => startEdit(p)}><Edit3 size={16} /></button>
-                          <button className="zihni-tool-btn delete" title="Sil" onClick={() => onDeleteProce(p.id)}><Trash2 size={16} /></button>
-                        </div>
+                        !isGuest && (
+                          <div className="p-actions-right-v3">
+                            <button className="zihni-tool-btn" title="Düzenle" onClick={() => startEdit(p)}><Edit3 size={16} /></button>
+                            <button className="zihni-tool-btn delete" title="Sil" onClick={() => onDeleteProce(p.id)}><Trash2 size={16} /></button>
+                          </div>
+                        )
                       )}
                     </div>
                 </div>
@@ -1394,6 +1426,8 @@ const FocusView = ({ life, onAddSession, onDeleteSession, onAddActivity, onDelet
   // Daily Activity Form
   const [newAct, setNewAct] = useState({ title: '', category: 'teknik', startTime: '', endTime: '', note: '' });
   const [showAddAct, setShowAddAct] = useState(false);
+  const currentUser = useStore(state => state.currentUser);
+  const isGuest = currentUser?.name === 'Misafir';
 
   const sessions = life?.focusSessions || [];
   const activities = life?.dailyActivities || [];
@@ -1617,7 +1651,11 @@ const FocusView = ({ life, onAddSession, onDeleteSession, onAddActivity, onDelet
                     </button>
                   ))}
                 </div>
-                <button className="zihni-btn-premium main full glow" onClick={() => setIsActive(true)}><Zap size={20} /> ODAĞI BAŞLAT</button>
+                {!isGuest ? (
+                  <button className="zihni-btn-premium main full glow" onClick={() => setIsActive(true)}><Zap size={20} /> ODAĞI BAŞLAT</button>
+                ) : (
+                  <p className="hint-text" style={{ textAlign: 'center' }}>* Kronometre misafirler için devre dışıdır.</p>
+                )}
               </div>
             ) : (
               <div className="timer-active-actions">
@@ -1657,7 +1695,7 @@ const FocusView = ({ life, onAddSession, onDeleteSession, onAddActivity, onDelet
                 {period === 'gun' && <span className="perc">%{Math.round((filteredStats.totalMins / 1440) * 100)}</span>}
               </div>
             </div>
-            <button className="add-act-btn-mini" onClick={() => setShowAddAct(true)}><Plus size={18} /></button>
+            {!isGuest && <button className="add-act-btn-mini" onClick={() => setShowAddAct(true)}><Plus size={18} /></button>}
           </div>
 
           <div className="period-visual-container glass mb-24">
@@ -1731,9 +1769,11 @@ const FocusView = ({ life, onAddSession, onDeleteSession, onAddActivity, onDelet
                           </div>
                           {item.note && <p className="tc-note">{item.note}</p>}
                         </div>
-                        <button className="tc-delete" onClick={() => item.startTime ? onDeleteActivity(item.id) : onDeleteSession(item.id)}>
-                          <Trash2 size={14} />
-                        </button>
+                        {!isGuest && (
+                          <button className="tc-delete" onClick={() => item.startTime ? onDeleteActivity(item.id) : onDeleteSession(item.id)}>
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     )
                   ))}

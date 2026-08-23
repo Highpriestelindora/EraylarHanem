@@ -1104,8 +1104,14 @@ const GecmisTab = React.memo(({ prv }) => {
   const [detayLoading, setDetayLoading] = useState(false);
   const [showGecenAyForm, setShowGecenAyForm] = useState(false);
 
+  const loadArsiv = async () => {
+    const data = await getFinansArsiv(24);
+    setArsiv(data);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    getFinansArsiv(24).then(data => { setArsiv(data); setLoading(false); });
+    loadArsiv();
   }, []);
 
   const handleAySecim = async (ay) => {
@@ -1123,11 +1129,16 @@ const GecmisTab = React.memo(({ prv }) => {
     return d.toISOString().slice(0, 7);
   };
 
+  const handleAyKapat = async () => {
+    await ayKapat();
+    await loadArsiv();
+  };
+
   return (
     <div className="f-tab-content animate-fadeIn">
       <div className="gecmis-header-row">
         <div className="ozet-section-title">📦 Geçmiş Aylar</div>
-        <button className="gecmis-kapat-btn" onClick={() => ayKapat()}>
+        <button className="gecmis-kapat-btn" onClick={handleAyKapat}>
           <RotateCcw size={14} /> Ayı Kapat
         </button>
       </div>
@@ -1141,35 +1152,62 @@ const GecmisTab = React.memo(({ prv }) => {
           <small>Ay sonu "Ayı Kapat" ile arşivle.</small>
         </div>
       ) : (
-        arsiv.map(a => (
-          <div key={a.ay} className="gecmis-ay-card glass">
-            <div className="gac-header" onClick={() => handleAySecim(a.ay)}>
-              <div>
-                <strong>{a.ay}</strong>
-                <small>{fmt(a.total_amount, prv)} · Kart: {fmt(a.card_total, prv)} · Nakit: {fmt(a.cash_total, prv)}</small>
-              </div>
-              {selected === a.ay ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </div>
-            {selected === a.ay && (
-              <div className="gac-detay">
-                {detayLoading ? <div className="spinner-mini" /> : detay.map(h => (
-                  <div key={h.id} className="gac-row">
-                    <span>{h.baslik}</span>
-                    <span>{fmt(h.tutar, prv)}</span>
+        arsiv.map(a => {
+          const totalVal = Number(a.total_amount || a.toplam || 0);
+          const cardVal = Number(a.card_total || a.ozet?.kart || 0);
+          const cashVal = Number(a.cash_total || a.ozet?.nakit || 0);
+          const bankVal = Number(a.bank_total || a.ozet?.havale || 0);
+          const countVal = a.count || (a.ozet?.count) || null;
+
+          return (
+            <div key={a.ay} className="gecmis-ay-card glass">
+              <div className="gac-header" onClick={() => handleAySecim(a.ay)}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <strong>{a.ay}</strong>
+                    {countVal ? <span style={{ fontSize: '10px', background: 'rgba(124, 58, 237, 0.1)', color: '#7c3aed', padding: '2px 8px', borderRadius: '100px', fontWeight: '700' }}>{countVal} kayıt</span> : null}
                   </div>
-                ))}
-                {!detayLoading && detay.length === 0 && <small>Kayıt bulunamadı.</small>}
+                  <small style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: 'var(--txt-light)' }}>
+                    <strong style={{ color: 'var(--txt)', fontSize: '12px' }}>{fmt(totalVal, prv)}</strong>
+                    {' · '}💳 {fmt(cardVal, prv)}
+                    {' · '}💵 {fmt(cashVal, prv)}
+                    {bankVal > 0 ? ` · 🏦 ${fmt(bankVal, prv)}` : ''}
+                  </small>
+                </div>
+                {selected === a.ay ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </div>
-            )}
-          </div>
-        ))
+              {selected === a.ay && (
+                <div className="gac-detay">
+                  {detayLoading ? <div className="spinner-mini" /> : detay.map(h => (
+                    <div key={h.id} className="gac-row">
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span>{h.baslik}</span>
+                        <small style={{ fontSize: '10px', opacity: 0.6 }}>{h.tarih} · {h.odenme_turu === 'kart' ? '💳 Kart' : (h.odenme_turu === 'havale' ? '🏦 Havale' : '💵 Nakit')}</small>
+                      </div>
+                      <strong style={{ fontWeight: '700' }}>{fmt(h.tutar, prv)}</strong>
+                    </div>
+                  ))}
+                  {!detayLoading && detay.length === 0 && <small>Kayıt bulunamadı.</small>}
+                </div>
+              )}
+            </div>
+          );
+        })
       )}
 
       <div className="gecen-ay-section">
         <button className="gecen-ay-btn glass" onClick={() => setShowGecenAyForm(!showGecenAyForm)}>
           <Plus size={14} /> Geçen Aya Harcama Ekle
         </button>
-        {showGecenAyForm && <GecenAyForm oncekiAy={oncekiAy()} onClose={() => setShowGecenAyForm(false)} />}
+        {showGecenAyForm && (
+          <GecenAyForm 
+            oncekiAy={oncekiAy()} 
+            onClose={() => {
+              setShowGecenAyForm(false);
+              loadArsiv();
+            }} 
+          />
+        )}
       </div>
     </div>
   );

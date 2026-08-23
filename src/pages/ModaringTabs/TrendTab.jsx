@@ -9,7 +9,8 @@ import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 const TrendTab = () => {
-  const { modaring, addModaringRefika, deleteModaringRefika } = useStore();
+  const { modaring, addModaringRefika, deleteModaringRefika, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const savedIdeas = modaring?.refikaFikirleri || [];
   
   const [generating, setGenerating] = useState(false);
@@ -260,27 +261,37 @@ const TrendTab = () => {
 
       {/* 🎯 Single Action Zone */}
       <div className="refika-consult-zone mt-32">
-        <div className="refika-btn-wrapper">
-          <div className="refika-btn-glow"></div>
-          <button 
-            className={`refika-main-btn-v2 ${generating ? 'loading' : ''}`} 
-            onClick={handleGenerate} 
-            disabled={generating}
-          >
-            <div className="btn-icon-stack">
-              {generating ? <RefreshCw className="animate-spin" size={28} /> : <Sparkles size={28} className="sparkle-icon" />}
+        {!isGuest ? (
+          <>
+            <div className="refika-btn-wrapper">
+              <div className="refika-btn-glow"></div>
+              <button 
+                className={`refika-main-btn-v2 ${generating ? 'loading' : ''}`} 
+                onClick={handleGenerate} 
+                disabled={generating}
+              >
+                <div className="btn-icon-stack">
+                  {generating ? <RefreshCw className="animate-spin" size={28} /> : <Sparkles size={28} className="sparkle-icon" />}
+                </div>
+                <div className="btn-text-stack">
+                  <span className="btn-main-text">{generating ? 'Zeka Motoru Analiz Ediyor...' : 'Refika\'nın Zekasına Sor'}</span>
+                  <span className="btn-sub-text">Maksimum Katmanlı Pazar Analizi</span>
+                </div>
+              </button>
             </div>
-            <div className="btn-text-stack">
-              <span className="btn-main-text">{generating ? 'Zeka Motoru Analiz Ediyor...' : 'Refika\'nın Zekasına Sor'}</span>
-              <span className="btn-sub-text">Maksimum Katmanlı Pazar Analizi</span>
-            </div>
-          </button>
-        </div>
 
-        <p className="consult-note-v2">
-          <Zap size={14} className="zap-icon" /> 
-          <span>Refika; Maltepe AVM trafiğini, global trendleri ve dükkanın o anki ruhunu süzerek benzersiz bir reçete hazırlar.</span>
-        </p>
+            <p className="consult-note-v2">
+              <Zap size={14} className="zap-icon" /> 
+              <span>Refika; Maltepe AVM trafiğini, global trendleri ve dükkanın o anki ruhunu süzerek benzersiz bir reçete hazırlar.</span>
+            </p>
+          </>
+        ) : (
+          <div className="empty-state-card glass p-24" style={{ textAlign: 'center' }}>
+            <Sparkles size={40} color="#fb7185" style={{ opacity: 0.5, margin: '0 auto 12px' }} />
+            <h4>Zeka Motoru Kilitli</h4>
+            <p style={{ color: 'var(--txt-light)', fontSize: '14px' }}>Refika'nın zeka motoru ve anlık reçete üretimi sadece Görkem ve Esra tarafından kullanılabilir.</p>
+          </div>
+        )}
 
         {result && (
           <div className="refika-result-container animate-slideUp">
@@ -314,10 +325,12 @@ const TrendTab = () => {
               <p>"{result.sassy}" — Refika</p>
             </div>
 
-            <button className="save-idea-btn-v2 mt-20" onClick={saveIdea}>
-              <Gem size={18} />
-              <span>Bu Fikri Arşive Kilitle</span>
-            </button>
+            {!isGuest && (
+              <button className="save-idea-btn-v2 mt-20" onClick={saveIdea}>
+                <Gem size={18} />
+                <span>Bu Fikri Arşive Kilitle</span>
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -348,9 +361,11 @@ const TrendTab = () => {
                 <div className="vc-footer">
                   <div className="vc-price">{idea.price}</div>
                   <div className="vc-date">{idea.date}</div>
-                  <button className="vc-delete" onClick={(e) => deleteIdea(e, idea.id)}>
-                    <X size={14} />
-                  </button>
+                  {!isGuest && (
+                    <button className="vc-delete" onClick={(e) => deleteIdea(e, idea.id)}>
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

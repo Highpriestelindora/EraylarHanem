@@ -12,8 +12,10 @@ const VardiyaTab = () => {
   const { 
     modaring, 
     addModaringPersonel, updateModaringPersonel, deleteModaringPersonel,
-    addModaringVardiya, updateModaringVardiya, deleteModaringVardiya 
+    addModaringVardiya, updateModaringVardiya, deleteModaringVardiya,
+    currentUser
   } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const personel = modaring?.personel || [];
   const shifts = modaring?.vardiya || [];
   
@@ -188,8 +190,23 @@ const VardiyaTab = () => {
         {personel.map(p => {
           const shift = shifts.find(s => s?.personelId === p.id && s?.date === formattedDateStr);
           return (
-            <div key={p.id} className="cg-row" onClick={() => setEditingShift({ id: shift?.id || null, personelId: p.id, date: formattedDateStr, startTime: shift?.startTime || "10", endTime: shift?.endTime || "22", note: shift?.note || "" })}>
-              <div className="cg-user-col" onClick={(e) => { e.stopPropagation(); setSelectedPersonDetail(p); }}>
+            <div 
+              key={p.id} 
+              className="cg-row" 
+              style={{ cursor: isGuest ? 'default' : 'pointer' }}
+              onClick={() => {
+                if (isGuest) return;
+                setEditingShift({ id: shift?.id || null, personelId: p.id, date: formattedDateStr, startTime: shift?.startTime || "10", endTime: shift?.endTime || "22", note: shift?.note || "" });
+              }}
+            >
+              <div 
+                className="cg-user-col" 
+                style={{ cursor: isGuest ? 'default' : 'pointer' }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (!isGuest) setSelectedPersonDetail(p); 
+                }}
+              >
                 <span className="gt-avatar" style={{ background: p.color }}>{p.emoji}</span>
                 <strong>{p.name?.split(' ')[0]}</strong>
               </div>
@@ -299,7 +316,7 @@ const VardiyaTab = () => {
           <button className={viewMode === 'monthly' ? 'active' : ''} onClick={() => setViewMode('monthly')}><CalendarDays size={16} /></button>
           <button className={viewMode === 'yearly' ? 'active' : ''} onClick={() => setViewMode('yearly')}><TrendingUp size={16} /></button>
         </div>
-        {viewMode === 'weekly' && (
+        {viewMode === 'weekly' && !isGuest && (
           <button className="whatsapp-copy-btn glass animate-pop" onClick={copyWeeklyToWhatsApp}>
             <MessageCircle size={18} />
           </button>
@@ -324,13 +341,15 @@ const VardiyaTab = () => {
           <button className="ss-action-btn-eye mr-12" onClick={() => setHideEarnings(!hideEarnings)}>{hideEarnings ? <EyeOff size={24} /> : <Eye size={24} />}</button>
           <div className="ss-text"><small>{hideEarnings ? 'Toplam Mesai' : 'Dönem Gideri'}</small><strong>{hideEarnings ? totalHours+' saat' : currentViewStats.reduce((acc,s)=>acc+s.earned,0).toLocaleString('tr-TR')+' TL'}</strong></div>
         </div>
-        <div className="ss-actions">
-           <button className="ss-action-btn-danger" onClick={handleClear} title={viewMode === 'weekly' ? 'Haftayı Temizle' : 'Günü Temizle'}><Eraser size={20} /></button>
-           <button className="ss-action-btn-cute" onClick={() => setShowAddStaffModal(true)} title="Yeni Personel Ekle">
-              <Sparkles size={16} />
-              <span>Personel</span>
-           </button>
-        </div>
+        {!isGuest && (
+          <div className="ss-actions">
+             <button className="ss-action-btn-danger" onClick={handleClear} title={viewMode === 'weekly' ? 'Haftayı Temizle' : 'Günü Temizle'}><Eraser size={20} /></button>
+             <button className="ss-action-btn-cute" onClick={() => setShowAddStaffModal(true)} title="Yeni Personel Ekle">
+                <Sparkles size={16} />
+                <span>Personel</span>
+             </button>
+          </div>
+        )}
       </div>
 
       {viewMode === 'daily' && renderDaily()}
@@ -341,7 +360,14 @@ const VardiyaTab = () => {
       <div className="section-header-v2 mt-20"><h3>👥 Çalışanlar Listesi</h3></div>
       <div className="stats-list pb-80">
          {currentViewStats.map(s => (
-           <div key={s.id} className="stat-card-visual glass animate-pop" onClick={() => setSelectedPersonDetail(s)}>
+            <div 
+              key={s.id} 
+              className="stat-card-visual glass animate-pop" 
+              style={{ cursor: isGuest ? 'default' : 'pointer' }}
+              onClick={() => {
+                if (!isGuest) setSelectedPersonDetail(s);
+              }}
+            >
               <div className="scv-header">
                  <div className="scv-user">
                     <span className="scv-emoji" style={{ background: s.color }}>{s.emoji}</span>

@@ -185,7 +185,9 @@ function FloatingHub() {
                       <p className="note-text-premium" style={{ fontSize: isFocused ? '18px' : '15px' }}>{note.t}</p>
                       <div className="note-footer-premium">
                         <span className="writer-tag">{note.w}</span>
-                        <button className="delete-btn-mini" onClick={(e) => { e.stopPropagation(); archiveNote(note.id); }} title="Arşivle"><Archive size={14} /></button>
+                        {currentUser?.name !== 'Misafir' && (
+                          <button className="delete-btn-mini" onClick={(e) => { e.stopPropagation(); archiveNote(note.id); }} title="Arşivle"><Archive size={14} /></button>
+                        )}
                       </div>
                     </motion.div>
                   );
@@ -220,49 +222,64 @@ function FloatingHub() {
             )}
 
             <div className="immersive-input-wrap">
-              <div className="input-glass-premium">
-                <input 
-                  value={noteText} 
-                  onChange={e => setNoteText(e.target.value)} 
-                  placeholder="Mıknatıslı bir not yapıştır..."
-                  onKeyPress={e => e.key === 'Enter' && handleAddNote()}
-                />
-                <button onClick={handleAddNote} className="immersive-send-btn">
-                  <Send size={20} />
-                </button>
-              </div>
+              {currentUser?.name !== 'Misafir' ? (
+                <div className="input-glass-premium">
+                  <input 
+                    value={noteText} 
+                    onChange={e => setNoteText(e.target.value)} 
+                    placeholder="Mıknatıslı bir not yapıştır..."
+                    onKeyPress={e => e.key === 'Enter' && handleAddNote()}
+                  />
+                  <button onClick={handleAddNote} className="immersive-send-btn">
+                    <Send size={20} />
+                  </button>
+                </div>
+              ) : (
+                <div className="input-glass-premium" style={{ opacity: 0.6, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--txt-light)', padding: '12px', fontWeight: 600 }}>Misafir modunda buzdolabına not yapıştırılamaz 🔒</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {activeModal === 'expense' && (
-        <div className="hub-modal expense-modal animate-slideUp">
+        <div className="hub-modal expense-modal">
           <div className="hub-modal-header">
             <h4>💸 Hızlı Harcama</h4>
-            <button onClick={() => setActiveModal(null)}><X size={20} /></button>
+            <button className="hub-modal-close" onClick={() => setActiveModal(null)} aria-label="Kapat">
+              <X size={20} />
+            </button>
           </div>
           <div className="hub-expense-body">
-            <input 
-              className="hub-input amount" 
-              type="number" 
-              step="any"
-              placeholder="0.00₺" 
-              value={expAmount}
-              onChange={e => setExpAmount(e.target.value)}
-              autoFocus
-            />
+            <div className="hub-amount-wrapper">
+              <input 
+                className="hub-input amount" 
+                type="number" 
+                step="any"
+                placeholder="0.00" 
+                value={expAmount}
+                onChange={e => setExpAmount(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddExpense()}
+                autoFocus
+              />
+              <span className="hub-currency-symbol">₺</span>
+            </div>
+
             <input 
               className="hub-input title" 
               placeholder="Ne harcaması? (Opsiyonel)" 
               value={expTitle}
               onChange={e => setExpTitle(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleAddExpense()}
             />
             
             <div className="hub-category-grid">
               {categories.map(c => (
                 <button 
                   key={c.id} 
+                  type="button"
                   className={`hub-cat-btn ${expCategory === c.label ? 'active' : ''}`}
                   onClick={() => setExpCategory(c.label)}
                 >
@@ -273,11 +290,13 @@ function FloatingHub() {
             </div>
 
             <div className="hub-payer-select">
-              <label style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '8px', display: 'block' }}>Ödeme Yöntemi</label>
-              <PaymentSelector value={expPaymentMethod} onChange={setExpPaymentMethod} />
+              <PaymentSelector value={expPaymentMethod} onChange={setExpPaymentMethod} label="💳 Ödeme Yöntemi" />
             </div>
 
-            <button className="hub-submit-btn" onClick={handleAddExpense}>Sisteme İşle</button>
+            <button className="hub-submit-btn" onClick={handleAddExpense}>
+              <span>Sisteme İşle</span>
+              <span style={{ fontSize: '18px' }}>🚀</span>
+            </button>
           </div>
         </div>
       )}
@@ -288,10 +307,12 @@ function FloatingHub() {
             <Refrigerator size={26} color="#3b82f6" />
             <span className="tiny-label" style={{ color: '#3b82f6', fontWeight: 'bold' }}>Buzdolabı<br/>Sohbeti</span>
           </button>
-          <button className="hub-option-btn expense" onClick={() => { setActiveModal('expense'); setIsOpen(false); }}>
-            <BadgeDollarSign size={26} color="#10b981" />
-            <span className="tiny-label" style={{ color: '#10b981', fontWeight: 'bold' }}>Hızlı<br/>Harcama</span>
-          </button>
+          {currentUser?.name !== 'Misafir' && (
+            <button className="hub-option-btn expense" onClick={() => { setActiveModal('expense'); setIsOpen(false); }}>
+              <BadgeDollarSign size={26} color="#10b981" />
+              <span className="tiny-label" style={{ color: '#10b981', fontWeight: 'bold' }}>Hızlı<br/>Harcama</span>
+            </button>
+          )}
         </div>
 
         {/* Original Arch Design Hub */}

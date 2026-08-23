@@ -11,7 +11,7 @@ const StokTab = () => {
     mutfak, transferStock, setItemFinished, 
     updateStockQty, addMissingToShopping,
     addMutfakStokItem, updateMutfakStokItem, deleteMutfakStokItem,
-    bulkFinishItems, getAvailableRecipes
+    bulkFinishItems, getAvailableRecipes, currentUser
   } = useStore();
 
   const [subTab, setSubTab] = useState('buzdolabi'); // buzdolabi, kiler, dondurucu
@@ -194,9 +194,11 @@ const StokTab = () => {
           <button className="add-item-btn glass" onClick={() => setShowNeYap(true)} title="Ne Yapabilirim?" style={{ color: 'var(--primary)', borderColor: 'rgba(59, 130, 246, 0.2)' }}>
             <ChefHat size={20} />
           </button>
-          <button className="add-item-btn glass" onClick={() => setEditingItem({ isNew: true, item: {} })}>
-            <Plus size={20} />
-          </button>
+          {currentUser?.name !== 'Misafir' && (
+            <button className="add-item-btn glass" onClick={() => setEditingItem({ isNew: true, item: {} })}>
+              <Plus size={20} />
+            </button>
+          )}
         </div>
 
         <div className="items-list">
@@ -209,7 +211,7 @@ const StokTab = () => {
                 </h3>
                 <div className="category-items">
                   {grouped[cat].map(item => (
-                    <div key={item.n} className="stock-card glass" onClick={() => setEditingItem({ isNew: false, item })}>
+                    <div key={item.n} className="stock-card glass" onClick={() => currentUser?.name !== 'Misafir' && setEditingItem({ isNew: false, item })}>
                       {item.cr <= item.mn && item.cr > 0 && (
                         <div className="critical-warning">
                           <AlertCircle size={10} /> KRİTİK
@@ -229,42 +231,46 @@ const StokTab = () => {
                       
                       <div className="stock-right" onClick={e => e.stopPropagation()}>
                         <div className="qty-controls">
-                           <button className="qty-btn minus" onClick={() => updateStockQty(subTab, item.n, -1)}>-</button>
+                           {currentUser?.name !== 'Misafir' && <button className="qty-btn minus" onClick={() => updateStockQty(subTab, item.n, -1)}>-</button>}
                            <div className="amount-container">
                              <span className="current-amount" style={{ color: getStatusColor(item) }}>
                                {item.cr}
                              </span>
                              <span className="unit-label">{item.u}</span>
                            </div>
-                           <button className="qty-btn plus" onClick={() => updateStockQty(subTab, item.n, 1)}>+</button>
+                           {currentUser?.name !== 'Misafir' && <button className="qty-btn plus" onClick={() => updateStockQty(subTab, item.n, 1)}>+</button>}
                         </div>
 
-                        <div className="stock-actions-column">
-                          <button 
-                            className={`finish-action-btn ${item.cr <= 0 ? 'disabled' : ''}`}
-                            onClick={() => item.cr > 0 && handleFinish(item.n)}
-                            disabled={item.cr <= 0}
-                            title="Bitti Olarak İşaretle"
-                          >
-                            BİTTİ
-                          </button>
-                          <button 
-                            className="shopping-action-btn"
-                            onClick={() => handleManualAddShopping(item)}
-                            title="Alışverişe Ekle"
-                          >
-                            <ShoppingCart size={14} />
-                          </button>
-                        </div>
+                        {currentUser?.name !== 'Misafir' && (
+                          <>
+                            <div className="stock-actions-column">
+                              <button 
+                                className={`finish-action-btn ${item.cr <= 0 ? 'disabled' : ''}`}
+                                onClick={() => item.cr > 0 && handleFinish(item.n)}
+                                disabled={item.cr <= 0}
+                                title="Bitti Olarak İşaretle"
+                              >
+                                BİTTİ
+                              </button>
+                              <button 
+                                className="shopping-action-btn"
+                                onClick={() => handleManualAddShopping(item)}
+                                title="Alışverişe Ekle"
+                              >
+                                <ShoppingCart size={14} />
+                              </button>
+                            </div>
 
-                        {(subTab === 'buzdolabi' || subTab === 'dondurucu') && item.cr > 0 && (
-                          <button 
-                            className="transfer-btn-mini" 
-                            onClick={() => handleTransfer(item.n, subTab, 1)}
-                            title={subTab === 'buzdolabi' ? 'Dondur' : 'Çöz'}
-                          >
-                            {subTab === 'buzdolabi' ? <Snowflake size={12} color="#3b82f6" /> : <Sun size={12} color="#f59e0b" />}
-                          </button>
+                            {(subTab === 'buzdolabi' || subTab === 'dondurucu') && item.cr > 0 && (
+                              <button 
+                                className="transfer-btn-mini" 
+                                onClick={() => handleTransfer(item.n, subTab, 1)}
+                                title={subTab === 'buzdolabi' ? 'Dondur' : 'Çöz'}
+                              >
+                                {subTab === 'buzdolabi' ? <Snowflake size={12} color="#3b82f6" /> : <Sun size={12} color="#f59e0b" />}
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -277,9 +283,11 @@ const StokTab = () => {
             <div className="empty-results glass" style={{ padding: '60px', borderRadius: '32px', textAlign: 'center' }}>
               <Search size={48} opacity={0.1} style={{ marginBottom: '16px' }} />
               <p style={{ fontWeight: '800', opacity: 0.5 }}>Burada hiç malzeme yok...</p>
-              <button className="submit-btn" onClick={() => setEditingItem({ isNew: true, item: {} })} style={{ margin: '20px auto 0', padding: '12px 24px' }}>
-                 <Plus size={18} /> Yeni Malzeme Ekle
-              </button>
+              {currentUser?.name !== 'Misafir' && (
+                <button className="submit-btn" onClick={() => setEditingItem({ isNew: true, item: {} })} style={{ margin: '20px auto 0', padding: '12px 24px' }}>
+                   <Plus size={18} /> Yeni Malzeme Ekle
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -483,16 +491,18 @@ const StokTab = () => {
                     <h5 style={{ fontSize: '15px', fontWeight: '900', margin: 0, color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <AlertCircle size={18} /> 1-2 Eksikli ({partialCookable.length})
                     </h5>
-                    <button 
-                      onClick={() => {
-                        const allMissing = [...new Set(partialCookable.flatMap(r => r.missing))];
-                        useStore.getState().addMissingToShopping(allMissing);
-                        toast.success('Eksik malzemeler alışveriş listesine eklendi! 🛒');
-                      }}
-                      style={{ fontSize: '11px', background: 'var(--mutfak-light)', color: 'var(--mutfak)', border: '1px solid var(--mutfak)', padding: '6px 12px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                       Tümünü Listeye Ekle
-                    </button>
+                    {currentUser?.name !== 'Misafir' && (
+                      <button 
+                        onClick={() => {
+                          const allMissing = [...new Set(partialCookable.flatMap(r => r.missing))];
+                          useStore.getState().addMissingToShopping(allMissing);
+                          toast.success('Eksik malzemeler alışveriş listesine eklendi! 🛒');
+                        }}
+                        style={{ fontSize: '11px', background: 'var(--mutfak-light)', color: 'var(--mutfak)', border: '1px solid var(--mutfak)', padding: '6px 12px', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                         Tümünü Listeye Ekle
+                      </button>
+                    )}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {partialCookable.slice(0, 5).map(r => (
@@ -504,15 +514,17 @@ const StokTab = () => {
                             <span style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>Eksik: {r.missing.join(', ')}</span>
                           </div>
                         </div>
-                        <button 
-                          onClick={() => {
-                            useStore.getState().addMissingToShopping(r.missing);
-                            toast.success(`${r.n} için eksikler eklendi!`);
-                          }}
-                          style={{ background: 'white', border: '1px solid var(--brd)', borderRadius: '12px', padding: '8px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}
-                        >
-                          <Plus size={18} color="var(--mutfak)" />
-                        </button>
+                        {currentUser?.name !== 'Misafir' && (
+                          <button 
+                            onClick={() => {
+                              useStore.getState().addMissingToShopping(r.missing);
+                              toast.success(`${r.n} için eksikler eklendi!`);
+                            }}
+                            style={{ background: 'white', border: '1px solid var(--brd)', borderRadius: '12px', padding: '8px', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.05)' }}
+                          >
+                            <Plus size={18} color="var(--mutfak)" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -41,7 +41,8 @@ ChartJS.register(
 );
 
 export default function Pet() {
-  const { pet, setModuleData, deletePetLog, updatePetLog, completePetVaccine, deletePetVaccine, addPetVaccine, addPetWeight } = useStore();
+  const { pet, setModuleData, deletePetLog, updatePetLog, completePetVaccine, deletePetVaccine, addPetVaccine, addPetWeight, currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
   const [activePet, setActivePet] = useState('waffle');
   const [showAddLog, setShowAddLog] = useState(false);
   const [editingLog, setEditingLog] = useState(null);
@@ -85,6 +86,10 @@ export default function Pet() {
   };
 
   const updatePetSupply = (pId, type, val) => {
+    if (isGuest) {
+      toast.error('Misafir kullanıcısı stok durumunu değiştiremez. 🕵️');
+      return;
+    }
     const updatedSupplies = { 
       ...pet.supplies, 
       [pId]: { ...(pet.supplies?.[pId] || { mama: 'var', kum: 'var' }), [type]: val } 
@@ -152,6 +157,7 @@ export default function Pet() {
               </div>
             </div>
             <button 
+              disabled={isGuest}
               className={`si-toggle ${pet.supplies?.[activePet]?.mama === 'var' ? 'ok' : 'low'}`}
               onClick={() => updatePetSupply(activePet, 'mama', pet.supplies?.[activePet]?.mama === 'var' ? 'azaldi' : 'var')}
             >
@@ -168,6 +174,7 @@ export default function Pet() {
                 </div>
               </div>
               <button 
+                disabled={isGuest}
                 className={`si-toggle ${pet.supplies?.[activePet]?.kum === 'var' ? 'ok' : 'low'}`}
                 onClick={() => updatePetSupply(activePet, 'kum', pet.supplies?.[activePet]?.kum === 'var' ? 'azaldi' : 'var')}
               >
@@ -198,7 +205,7 @@ export default function Pet() {
           <div className="pet-card-v2 glass">
             <div className="pc-header-v2">
               <div className="pch-left"><Scale size={18} /> <strong>Kilo Takibi</strong></div>
-              <button className="add-btn-mini" onClick={() => setShowAddWeight(true)}><Plus size={14} /></button>
+              {!isGuest && <button className="add-btn-mini" onClick={() => setShowAddWeight(true)}><Plus size={14} /></button>}
             </div>
             <div className="pc-body-v2 weight-box">
                <div className="w-main-val">
@@ -262,7 +269,7 @@ export default function Pet() {
           <div className="pet-card-v2 glass">
             <div className="pc-header-v2">
               <div className="pch-left"><Activity size={18} /> <strong>Aşı Takvimi</strong></div>
-              <button className="add-btn-mini" onClick={() => setShowAddVaccine(true)}><Plus size={14} /></button>
+              {!isGuest && <button className="add-btn-mini" onClick={() => setShowAddVaccine(true)}><Plus size={14} /></button>}
             </div>
             <div className="pc-body-v2">
               {petVaccines.slice(0, 3).map((v, i) => {
@@ -277,12 +284,16 @@ export default function Pet() {
                       <div className="vr-badge" style={{ background: st.color + '20', color: st.color, fontSize: '10px', fontWeight: 900, padding: '4px 8px', borderRadius: '8px' }}>
                         {st.label === 'GECİKMİŞ' ? `-${st.days} g.` : `${st.days} g.`}
                       </div>
-                      <button className="done-btn-mini" onClick={() => { setEditingVaccine(v); setShowAddVaccine(true); }} title="Düzenle">
-                        <Edit2 size={14} />
-                      </button>
-                      <button className="done-btn-mini" onClick={() => setCompletingVaccine(v)} title="Yapıldı Olarak İşaretle">
-                        <Check size={14} />
-                      </button>
+                      {!isGuest && (
+                        <>
+                          <button className="done-btn-mini" onClick={() => { setEditingVaccine(v); setShowAddVaccine(true); }} title="Düzenle">
+                            <Edit2 size={14} />
+                          </button>
+                          <button className="done-btn-mini" onClick={() => setCompletingVaccine(v)} title="Yapıldı Olarak İşaretle">
+                            <Check size={14} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
@@ -342,10 +353,12 @@ export default function Pet() {
         </section>
 
         {/* Quick Actions Moved to Bottom */}
-        <div className="pet-quick-actions mt-24 mb-40">
-          <button className="ps-btn finance" onClick={() => setShowAddExpense(true)}><Heart size={14} /> Harcama</button>
-          <button className="ps-btn" onClick={() => { setEditingLog(null); setShowAddLog(true); }}><Plus size={14} /> Not</button>
-        </div>
+        {!isGuest && (
+          <div className="pet-quick-actions mt-24 mb-40">
+            <button className="ps-btn finance" onClick={() => setShowAddExpense(true)}><Heart size={14} /> Harcama</button>
+            <button className="ps-btn" onClick={() => { setEditingLog(null); setShowAddLog(true); }}><Plus size={14} /> Not</button>
+          </div>
+        )}
       </div>
 
       <ActionSheet isOpen={showAddLog} onClose={() => { setShowAddLog(false); setEditingLog(null); }} title={editingLog ? "📝 Kaydı Düzenle" : "📝 Günlüğe Ekle"}>
