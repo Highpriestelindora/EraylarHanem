@@ -7,6 +7,7 @@ import { PET_QUOTES } from '../constants/petQuotes';
 import toast from 'react-hot-toast';
 import './FloatingHub.css';
 import PaymentSelector from './PaymentSelector';
+import Portal from './Portal';
 
 function FloatingHub() {
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ function FloatingHub() {
   };
 
   return (
-    <>
+    <Portal>
       {(isOpen || activeModal) && (
         <div 
           className="hub-overlay" 
@@ -347,7 +348,7 @@ function FloatingHub() {
           </div>
         </div>
       </div>
-    </>
+    </Portal>
   );
 }
 

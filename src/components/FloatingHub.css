@@ -3,7 +3,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 1100;
+  z-index: 99995;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -24,7 +24,7 @@
   background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  z-index: 1050;
+  z-index: 99990;
   animation: fadeIn 0.25s ease;
   -webkit-transform: translate3d(0, 0, 0);
   transform: translate3d(0, 0, 0);
@@ -519,7 +519,7 @@
   border-radius: 28px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  z-index: 1200;
+  z-index: 100000;
   animation: hubModalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   isolation: isolate;
   -webkit-transform: translate3d(0, 0, 0);
