@@ -1348,9 +1348,12 @@ async function pushPetAsiToSupabase(petId, vaccine) {
 async function pushPetAgirlikToSupabase(petId, entry) {
   try {
     await supabase.from('pet_agirlik').upsert({
-      id: String(entry.id || `${petId}-${entry.dt || entry.date || Date.now()}`), pet_id: petId,
+      id: String(entry.id || `${petId}-${entry.dt || entry.date || Date.now()}`), 
+      pet_id: petId,
       tarih: entry.dt || entry.date || entry.tarih || new Date().toISOString(),
-      kilo: Number(entry.w || entry.weight || entry.kilo || 0), notlar: entry.notes || null
+      kilo: Number(entry.w || entry.weight || entry.kilo || 0), 
+      notlar: entry.notes || null,
+      family_id: DEFAULT_FID
     });
   } catch(e) { console.warn('Pet Ağırlık Hatası:', e); }
 }
@@ -2243,10 +2246,10 @@ const useStore = create(
             supabase.from('garaj_servis').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('garaj_belgeler').select('*').eq('family_id', DEFAULT_FID),
             supabase.from('garaj_parts').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('pet_asilar').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('pet_agirlik').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('pet_supplies').select('*').eq('family_id', DEFAULT_FID),
-            supabase.from('pet_logs').select('*').eq('family_id', DEFAULT_FID),
+            supabase.from('pet_asilar').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.is.null,family_id.eq.ERAYLAR`),
+            supabase.from('pet_agirlik').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.is.null,family_id.eq.ERAYLAR`),
+            supabase.from('pet_supplies').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.is.null,family_id.eq.ERAYLAR`),
+            supabase.from('pet_logs').select('*').or(`family_id.eq.${DEFAULT_FID},family_id.is.null,family_id.eq.ERAYLAR`),
             supabase.from('saglik_randevular').select('*'),
             supabase.from('saglik_ilaclar').select('*'),
             supabase.from('saglik_olcumler').select('*'),
@@ -2558,32 +2561,44 @@ const useStore = create(
               });
             }
             if (agirliklar.data) {
-              const parseTurkishDate = (str) => {
+              const parsePetDate = (str) => {
                 if (!str) return 0;
-                const datePart = str.split(' ')[0];
-                const parts = datePart.split('.');
-                if (parts.length < 3) return 0;
-                const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                return isNaN(d.getTime()) ? 0 : d.getTime();
+                if (typeof str === 'number') return str;
+                const s = String(str).trim();
+                if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+                  const [y, m, d] = s.split('T')[0].split('-').map(Number);
+                  return new Date(y, m - 1, d).getTime();
+                }
+                if (/^\d{1,2}\.\d{1,2}\.\d{4}/.test(s)) {
+                  const datePart = s.split(' ')[0];
+                  const [d, m, y] = datePart.split('.').map(Number);
+                  return new Date(y, m - 1, d).getTime();
+                }
+                const t = new Date(s).getTime();
+                return isNaN(t) ? 0 : t;
               };
 
               agirliklar.data.forEach(w => {
                 const pId = w.pet_id || w.pet_name;
                 if (!pId) return;
                 if (!pet.weights[pId]) pet.weights[pId] = [];
-                if (!pet.weights[pId].some(lw => lw.id === w.id)) {
-                  pet.weights[pId].push({
-                    id: w.id,
-                    dt: w.tarih,
-                    w: Number(w.kilo || 0),
-                    notes: w.notlar
-                  });
+                const existingIdx = pet.weights[pId].findIndex(lw => String(lw.id) === String(w.id));
+                const item = {
+                  id: w.id,
+                  dt: w.tarih,
+                  w: Number(w.kilo || 0),
+                  notes: w.notlar
+                };
+                if (existingIdx !== -1) {
+                  pet.weights[pId][existingIdx] = item;
+                } else {
+                  pet.weights[pId].push(item);
                 }
               });
 
               // Sort all weight arrays descending (newest first)
               Object.keys(pet.weights).forEach(pId => {
-                pet.weights[pId].sort((a, b) => parseTurkishDate(b.dt) - parseTurkishDate(a.dt));
+                pet.weights[pId].sort((a, b) => parsePetDate(b.dt) - parsePetDate(a.dt));
               });
             }
             if (supplies.data) {
@@ -2595,13 +2610,21 @@ const useStore = create(
               });
             }
             if (petLogs.data) {
-              const parseTurkishDate = (str) => {
+              const parsePetDate = (str) => {
                 if (!str) return 0;
-                const datePart = str.split(' ')[0];
-                const parts = datePart.split('.');
-                if (parts.length < 3) return 0;
-                const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                return isNaN(d.getTime()) ? 0 : d.getTime();
+                if (typeof str === 'number') return str;
+                const s = String(str).trim();
+                if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+                  const [y, m, d] = s.split('T')[0].split('-').map(Number);
+                  return new Date(y, m - 1, d).getTime();
+                }
+                if (/^\d{1,2}\.\d{1,2}\.\d{4}/.test(s)) {
+                  const datePart = s.split(' ')[0];
+                  const [d, m, y] = datePart.split('.').map(Number);
+                  return new Date(y, m - 1, d).getTime();
+                }
+                const t = new Date(s).getTime();
+                return isNaN(t) ? 0 : t;
               };
 
               const mappedLogs = petLogs.data.map(l => {
@@ -2614,7 +2637,7 @@ const useStore = create(
                   type: actionText.includes('Kilo') ? 'weight' : 'note'
                 };
               });
-              pet.history = [...mappedLogs].sort((a,b) => parseTurkishDate(b.dt) - parseTurkishDate(a.dt)).slice(0, 100);
+              pet.history = [...mappedLogs].sort((a,b) => parsePetDate(b.dt) - parsePetDate(a.dt)).slice(0, 100);
             }
 
             const saglik = { ...state.saglik };
