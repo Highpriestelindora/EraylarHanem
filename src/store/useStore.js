@@ -885,9 +885,17 @@ async function removeAlisverisFromSupabase(id) {
 
 async function pushSosyalEtkinlikToSupabase(activity) {
   try {
-    const familyId = 'eraylar-family-shared-id';
+    const familyId = DEFAULT_FID;
+    let cleanId = String(activity.id || `act-${Date.now()}`);
+    if (!cleanId.includes(`-${familyId}`)) {
+      cleanId = `${cleanId}-${familyId}`;
+    }
+    while (cleanId.includes(`-${familyId}-${familyId}`)) {
+      cleanId = cleanId.replace(`-${familyId}-${familyId}`, `-${familyId}`);
+    }
+
     const payload = {
-      id: `${activity.id}-${familyId}`,
+      id: cleanId,
       baslik: activity.baslik || activity.title || 'İsimsiz',
       tarih: (activity.tarih && activity.tarih !== '') ? activity.tarih : ((activity.date && activity.date !== '') ? activity.date : null),
       saat: activity.saat || activity.time || null,
@@ -910,10 +918,13 @@ async function pushSosyalEtkinlikToSupabase(activity) {
 
 async function removeSosyalEtkinlikFromSupabase(id) {
   try {
-    const familyId = 'eraylar-family-shared-id';
+    const familyId = DEFAULT_FID;
+    const sId = String(id);
+    const withSuffix = sId.includes(`-${familyId}`) ? sId : `${sId}-${familyId}`;
+    const withoutSuffix = sId.replace(`-${familyId}`, '');
     await supabase.from('sosyal_etkinlikler')
       .delete()
-      .eq('id', String(id))
+      .or(`id.eq.${withSuffix},id.eq.${withoutSuffix}`)
       .eq('family_id', familyId);
   } catch(e) { console.warn('Supabase Sosyal delete hatası:', e); }
 }

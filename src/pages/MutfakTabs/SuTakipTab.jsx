@@ -19,6 +19,7 @@ export default function SuTakipTab() {
     currentUser
   } = useStore();
   
+  const isGuest = currentUser?.name === 'Misafir';
   const water = mutfak.su || {};
   const isEditing = water.isEditing || false;
   

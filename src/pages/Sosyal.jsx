@@ -7,7 +7,7 @@ import {
   CheckCircle2, Plus, Trash2, Star, 
   MapPin, Home as HomeIcon, Clock, ArrowRight,
   Layers, CreditCard, Smile, ArrowLeft, X, Sparkles,
-  RotateCcw, Edit3
+  RotateCcw, Edit3, Trophy, Heart, Award, ChevronDown, ChevronUp, Search, Filter
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { INITIAL_SOCIAL_POOL, SOCIAL_ROUTINES } from '../constants/data';
@@ -1326,139 +1326,442 @@ function EditHistoryModal({ activity, onClose }) {
 }
 
 function GecmisTab({ sosyal, onEdit, onDelete }) {
-  // Hem tamamlandi true olanlar hem de durumu tamamlandi olanları al (robustness)
-  const done = (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : [])
-    .filter(a => a.tamamlandi || a.durum === 'tamamlandi');
-  const totalHarcama = done.reduce((sum, a) => sum + (a.harcama || 0), 0);
+  const { currentUser } = useStore();
+  const isGuest = currentUser?.name === 'Misafir';
+
+  const [expandedId, setExpandedId] = useState(null);
+  const [filterMode, setFilterMode] = useState('all'); // all, top, paid, disari, evde
+  const [sortMode, setSortMode] = useState('date_desc'); // date_desc, score_desc, cost_desc
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Sadece tamamlanmış aktiviteler
+  const done = useMemo(() => {
+    return (Array.isArray(sosyal.aktiviteler) ? sosyal.aktiviteler : [])
+      .filter(a => a.tamamlandi || a.durum === 'tamamlandi');
+  }, [sosyal.aktiviteler]);
+
+  const totalHarcama = done.reduce((sum, a) => sum + (Number(a.harcama) || 0), 0);
   const avgPuan = done.length > 0 
     ? (done.reduce((sum, a) => sum + Number(a.puan_gorkem || 0) + Number(a.puan_esra || 0), 0) / (done.length * 2)).toFixed(1)
     : 0;
 
-  const [expandedId, setExpandedId] = useState(null);
+  // En yüksek puanlı unutulmazlar (8.5+)
+  const topMemories = useMemo(() => {
+    return [...done]
+      .map(a => ({
+        ...a,
+        combinedScore: (Number(a.puan_gorkem || 0) + Number(a.puan_esra || 0)) / 2
+      }))
+      .filter(a => a.combinedScore >= 7.5)
+      .sort((a, b) => b.combinedScore - a.combinedScore)
+      .slice(0, 5);
+  }, [done]);
 
-  // Group activities by Month/Year
-  const grouped = done.reduce((acc, act) => {
-    const d = new Date(act.doneDate || act.tarih);
-    const key = d.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(act);
-    return acc;
-  }, {});
+  // Kategori dağılımı
+  const categoryStats = useMemo(() => {
+    return done.reduce((acc, a) => {
+      const cat = a.masterCategory || (a.tur === 'evde' ? 'Evde' : 'Dışarı');
+      acc[cat] = (acc[cat] || 0) + 1;
+      return acc;
+    }, {});
+  }, [done]);
 
-  const groupKeys = Object.keys(grouped).sort((a, b) => {
-    const dateA = new Date(grouped[a][0].doneDate || grouped[a][0].tarih);
-    const dateB = new Date(grouped[b][0].doneDate || grouped[b][0].tarih);
-    return dateB - dateA; // Newest months first
-  });
+  const topCategory = useMemo(() => {
+    const entries = Object.entries(categoryStats);
+    if (entries.length === 0) return 'Henüz yok';
+    return entries.sort((a, b) => b[1] - a[1])[0][0];
+  }, [categoryStats]);
 
-  const categoryStats = done.reduce((acc, a) => {
-    const cat = a.masterCategory || 'Genel';
-    acc[cat] = (acc[cat] || 0) + 1;
-    return acc;
-  }, {});
+  // Filtreleme ve Sıralama
+  const filteredActivities = useMemo(() => {
+    let list = [...done];
+
+    // Arama filtresi
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(a => 
+        (a.baslik || a.title || '').toLowerCase().includes(q) ||
+        (a.mekan || '').toLowerCase().includes(q) ||
+        (a.detaylar || '').toLowerCase().includes(q) ||
+        (a.yorum_gorkem || '').toLowerCase().includes(q) ||
+        (a.yorum_esra || '').toLowerCase().includes(q)
+      );
+    }
+
+    // Kategori/Mod filtresi
+    if (filterMode === 'top') {
+      list = list.filter(a => ((Number(a.puan_gorkem || 0) + Number(a.puan_esra || 0)) / 2) >= 8.0);
+    } else if (filterMode === 'paid') {
+      list = list.filter(a => Number(a.harcama) > 0);
+    } else if (filterMode === 'disari') {
+      list = list.filter(a => a.tur === 'disari');
+    } else if (filterMode === 'evde') {
+      list = list.filter(a => a.tur === 'evde');
+    }
+
+    // Sıralama
+    list.sort((a, b) => {
+      const dateA = new Date(a.doneDate || a.tarih || 0).getTime();
+      const dateB = new Date(b.doneDate || b.tarih || 0).getTime();
+      const scoreA = (Number(a.puan_gorkem || 0) + Number(a.puan_esra || 0)) / 2;
+      const scoreB = (Number(b.puan_gorkem || 0) + Number(b.puan_esra || 0)) / 2;
+      const costA = Number(a.harcama || 0);
+      const costB = Number(b.harcama || 0);
+
+      if (sortMode === 'score_desc') return scoreB - scoreA || dateB - dateA;
+      if (sortMode === 'cost_desc') return costB - costA || dateB - dateA;
+      return dateB - dateA; // date_desc
+    });
+
+    return list;
+  }, [done, filterMode, sortMode, searchQuery]);
+
+  // Aylara göre gruplama
+  const grouped = useMemo(() => {
+    return filteredActivities.reduce((acc, act) => {
+      const d = new Date(act.doneDate || act.tarih);
+      const key = isNaN(d.getTime()) ? 'Diğer Tarihler' : d.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(act);
+      return acc;
+    }, {});
+  }, [filteredActivities]);
+
+  const groupKeys = Object.keys(grouped);
 
   return (
-    <div className="tab-pane animate-fadeIn">
-      <div className="stats-grid compact">
-        <div className="stat-card glass">
-          <span className="s-val">{done.length}</span>
-          <span className="s-lbl">Aktivite</span>
+    <div className="tab-pane animate-fadeIn gecmis-tab-premium">
+      {/* 1. Hero Memory Album Header */}
+      <div className="gecmis-hero-card glass">
+        <div className="ghc-sparkle-badge">
+          <Sparkles size={14} color="#f59e0b" />
+          <span>Sosyal Anı Defteri</span>
         </div>
-        <div className="stat-card glass">
-          <span className="s-val">₺{totalHarcama > 1000 ? (totalHarcama/1000).toFixed(1) + 'K' : totalHarcama}</span>
-          <span className="s-lbl">Harcama</span>
-        </div>
-        <div className="stat-card glass">
-          <span className="s-val">⭐ {avgPuan}</span>
-          <span className="s-lbl">Puan</span>
-        </div>
-      </div>
+        <h2 className="ghc-title">Birlikte Biriktirilen Güzel Anılar 👫✨</h2>
+        <p className="ghc-subtitle">Gerçekleştirdiğiniz tüm aktiviteler, değerlendirmeleriniz ve ortak anılarınız</p>
 
-      <div className="category-stats-bar glass" style={{ margin: '0 16px 20px', padding: '15px', borderRadius: '20px', border: '1px solid var(--brd)' }}>
-        <h4 style={{ fontSize: '12px', fontWeight: '900', marginBottom: '10px', opacity: 0.7 }}>📊 Kategori Dağılımı</h4>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {Object.entries(categoryStats).map(([cat, count]) => (
-            <div key={cat} className="cat-stat-pill" style={{ background: 'var(--bg)', padding: '6px 12px', borderRadius: '10px', fontSize: '11px', border: '1px solid var(--brd)' }}>
-              <strong>{cat}:</strong> {count}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="history-archive-container" style={{ padding: '0 16px', paddingBottom: '100px' }}>
-        {groupKeys.length > 0 ? groupKeys.map(key => (
-          <div key={key} className="history-group">
-            <h4 className="history-month-header">
-              <span>{key.split(' ')[0]}</span>
-              <small>{key.split(' ')[1]}</small>
-            </h4>
-            <div className="history-list">
-              {grouped[key].sort((a,b) => new Date(b.doneDate || b.tarih) - new Date(a.doneDate || a.tarih)).map(a => (
-                <div 
-                  key={a.id} 
-                  className={`gecmis-card-compact glass ${expandedId === a.id ? 'expanded' : ''}`}
-                  onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}
-                >
-                  <div className="gcc-main">
-                    <span className="gcc-emoji">{a.emoji || '🎭'}</span>
-                    <div className="gcc-info">
-                      <span className="gcc-title">{a.baslik || a.title || 'İsimsiz Aktivite'}</span>
-                      <div className="gcc-sub-row">
-                        <span className="gcc-date">{new Date(a.doneDate || a.tarih).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })}</span>
-                        <span className="gcc-cost-tag">₺{a.harcama || 0}</span>
-                      </div>
-                    </div>
-                    <div className="gcc-ratings">
-                      <div className="gcc-rate-chip gorkem">👨 {a.puan_gorkem}</div>
-                      <div className="gcc-rate-chip esra">👩 {a.puan_esra}</div>
-                    </div>
-                  </div>
-
-                  {expandedId === a.id && (
-                    <div className="gcc-expanded animate-fadeIn">
-                      <div className="gcc-meta-grid">
-                        <div className="gcc-meta-item"><MapPin size={10} /> {a.mekan || 'Evde'}</div>
-                        {a.detaylar && <div className="gcc-detay-text">{a.detaylar}</div>}
-                      </div>
-                      {a.yorum_gorkem && (
-                        <div className="gcc-comment-box gorkem" style={{ borderLeft: '3px solid #3b82f6', background: 'rgba(59, 130, 246, 0.05)', marginBottom: '8px' }}>
-                          <p><span style={{ fontWeight: 900, color: '#3b82f6', fontSize: '10px' }}>👨 GÖRKEM:</span> "{a.yorum_gorkem}"</p>
-                        </div>
-                      )}
-                      {a.yorum_esra && (
-                        <div className="gcc-comment-box esra" style={{ borderLeft: '3px solid #ec4899', background: 'rgba(236, 72, 153, 0.05)' }}>
-                          <p><span style={{ fontWeight: 900, color: '#ec4899', fontSize: '10px' }}>👩 ESRA:</span> "{a.yorum_esra}"</p>
-                        </div>
-                      )}
-                      {a.yorum && !a.yorum_gorkem && !a.yorum_esra && <div className="gcc-comment-box"><p>"{a.yorum}"</p></div>}
-                      
-                      {!isGuest && (
-                        <div className="gcc-actions" style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                          <button 
-                            className="tl-btn edit" 
-                            onClick={(e) => { e.stopPropagation(); onEdit(a); }}
-                            style={{ flex: 1, height: '30px', borderRadius: '10px', background: 'var(--bg)', border: '1px solid var(--brd)', color: 'var(--social)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}
-                          >
-                            <Activity size={12} /> Düzenle
-                          </button>
-                          <button 
-                            className="tl-btn delete" 
-                            onClick={(e) => { e.stopPropagation(); onDelete(a.id); }}
-                            style={{ flex: 1, height: '30px', borderRadius: '10px', background: '#fff5f5', border: '1px solid #fed7d7', color: '#c53030', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '11px', fontWeight: '800' }}
-                          >
-                            <Trash2 size={12} /> Sil
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+        {/* 4 Stat Cards */}
+        <div className="gecmis-stats-row">
+          <div className="g-stat-box glass">
+            <div className="gs-icon-wrap" style={{ background: '#fdf2f8', color: '#db2777' }}>📸</div>
+            <div className="gs-info">
+              <span className="gs-num">{done.length}</span>
+              <span className="gs-label">Tamamlanan Anı</span>
             </div>
           </div>
-        )) : (
-          <div style={{ textAlign: 'center', padding: '40px', opacity: 0.5 }}>
-            <p>Henüz tamamlanmış aktivite yok.</p>
+
+          <div className="g-stat-box glass">
+            <div className="gs-icon-wrap" style={{ background: '#ecfdf5', color: '#059669' }}>💸</div>
+            <div className="gs-info">
+              <span className="gs-num">₺{totalHarcama > 1000 ? (totalHarcama / 1000).toFixed(1) + 'K' : totalHarcama}</span>
+              <span className="gs-label">Toplam Harcama</span>
+            </div>
+          </div>
+
+          <div className="g-stat-box glass">
+            <div className="gs-icon-wrap" style={{ background: '#fffbeb', color: '#d97706' }}>⭐</div>
+            <div className="gs-info">
+              <span className="gs-num">{avgPuan} / 10</span>
+              <span className="gs-label">Çift Ortalaması</span>
+            </div>
+          </div>
+
+          <div className="g-stat-box glass">
+            <div className="gs-icon-wrap" style={{ background: '#eff6ff', color: '#2563eb' }}>🏆</div>
+            <div className="gs-info">
+              <span className="gs-num" style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80px' }}>{topCategory}</span>
+              <span className="gs-label">Gözde Kategori</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Top Hall of Fame (Unutulmaz Anılar Carousel/Cards) */}
+      {topMemories.length > 0 && filterMode === 'all' && !searchQuery && (
+        <div className="hall-of-fame-section mt-20">
+          <div className="hof-header">
+            <div className="hof-title-wrap">
+              <Trophy size={16} color="#d97706" />
+              <h3>🏆 Unutulmaz Anılar (Hall of Fame)</h3>
+            </div>
+            <span className="hof-badge">Zirve Puanlar</span>
+          </div>
+
+          <div className="hof-cards-scroll">
+            {topMemories.map((act) => (
+              <div 
+                key={act.id} 
+                className="hof-memory-card glass"
+                onClick={() => setExpandedId(expandedId === act.id ? null : act.id)}
+              >
+                <div className="hof-top-badge">
+                  <span>⭐ {act.combinedScore.toFixed(1)}</span>
+                </div>
+                <div className="hof-emoji-avatar">{act.emoji || '✨'}</div>
+                <strong className="hof-card-title">{act.baslik || act.title}</strong>
+                <span className="hof-card-date">{new Date(act.doneDate || act.tarih).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}</span>
+                
+                <div className="hof-couple-scores">
+                  <span className="hcs-pill gorkem">👨 {act.puan_gorkem || 0}</span>
+                  <span className="hcs-pill esra">👩 {act.puan_esra || 0}</span>
+                </div>
+                {act.harcama > 0 && <span className="hof-cost-chip">₺{act.harcama}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 3. Search & Filter Bar */}
+      <div className="gecmis-controls-bar glass mt-20">
+        <div className="gecmis-search-box">
+          <Search size={16} color="#94a3b8" />
+          <input 
+            type="text" 
+            placeholder="Anılarda, mekanlarda veya yorumlarda ara..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="gecmis-filter-scroll">
+          <button 
+            className={`g-filter-chip ${filterMode === 'all' ? 'active' : ''}`}
+            onClick={() => setFilterMode('all')}
+          >
+            ✨ Tümü ({done.length})
+          </button>
+          <button 
+            className={`g-filter-chip ${filterMode === 'top' ? 'active' : ''}`}
+            onClick={() => setFilterMode('top')}
+          >
+            🌟 Zirve (8+ Puan)
+          </button>
+          <button 
+            className={`g-filter-chip ${filterMode === 'paid' ? 'active' : ''}`}
+            onClick={() => setFilterMode('paid')}
+          >
+            💸 Harcamalı
+          </button>
+          <button 
+            className={`g-filter-chip ${filterMode === 'disari' ? 'active' : ''}`}
+            onClick={() => setFilterMode('disari')}
+          >
+            🎭 Dışarı
+          </button>
+          <button 
+            className={`g-filter-chip ${filterMode === 'evde' ? 'active' : ''}`}
+            onClick={() => setFilterMode('evde')}
+          >
+            🏠 Evde
+          </button>
+        </div>
+
+        <div className="gecmis-sort-row">
+          <span className="sort-label">Sırala:</span>
+          <div className="sort-buttons">
+            <button 
+              className={`sort-btn ${sortMode === 'date_desc' ? 'active' : ''}`}
+              onClick={() => setSortMode('date_desc')}
+            >
+              📅 En Yeni
+            </button>
+            <button 
+              className={`sort-btn ${sortMode === 'score_desc' ? 'active' : ''}`}
+              onClick={() => setSortMode('score_desc')}
+            >
+              ⭐ En Yüksek Puan
+            </button>
+            <button 
+              className={`sort-btn ${sortMode === 'cost_desc' ? 'active' : ''}`}
+              onClick={() => setSortMode('cost_desc')}
+            >
+              💰 En Yüksek Harcama
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Grouped Memories Timeline */}
+      <div className="gecmis-timeline-container mt-20">
+        {groupKeys.length > 0 ? (
+          groupKeys.map(key => {
+            const items = grouped[key];
+            const groupSpent = items.reduce((sum, it) => sum + (Number(it.harcama) || 0), 0);
+            const groupAvgScore = items.length > 0
+              ? (items.reduce((sum, it) => sum + Number(it.puan_gorkem || 0) + Number(it.puan_esra || 0), 0) / (items.length * 2)).toFixed(1)
+              : 0;
+
+            return (
+              <div key={key} className="gecmis-month-group mb-24">
+                <div className="gecmis-month-header glass">
+                  <div className="gmh-left">
+                    <Calendar size={15} color="var(--social)" />
+                    <span className="gmh-title">{key}</span>
+                  </div>
+                  <div className="gmh-badges">
+                    <span className="gmh-badge count">{items.length} Anı</span>
+                    {groupSpent > 0 && <span className="gmh-badge cost">₺{groupSpent.toLocaleString('tr-TR')}</span>}
+                    <span className="gmh-badge score">⭐ {groupAvgScore}</span>
+                  </div>
+                </div>
+
+                <div className="gecmis-cards-list">
+                  {items.map(a => {
+                    const isExpanded = expandedId === a.id;
+                    const combinedScore = ((Number(a.puan_gorkem || 0) + Number(a.puan_esra || 0)) / 2).toFixed(1);
+                    const formattedDate = new Date(a.doneDate || a.tarih).toLocaleDateString('tr-TR', {
+                      day: 'numeric',
+                      month: 'long',
+                      weekday: 'short'
+                    });
+
+                    return (
+                      <div 
+                        key={a.id} 
+                        className={`memory-card-v3 glass ${isExpanded ? 'expanded' : ''} ${Number(combinedScore) >= 9 ? 'highlight-gold' : ''}`}
+                        onClick={() => setExpandedId(isExpanded ? null : a.id)}
+                      >
+                        {/* Card Main Row */}
+                        <div className="mcv3-main-row">
+                          <div className="mcv3-avatar-wrap">
+                            <span className="mcv3-avatar">{a.emoji || '🎭'}</span>
+                            {Number(combinedScore) >= 9 && <span className="mcv3-trophy-dot">🏆</span>}
+                          </div>
+
+                          <div className="mcv3-content">
+                            <div className="mcv3-title-row">
+                              <h4 className="mcv3-title">{a.baslik || a.title || 'İsimsiz Aktivite'}</h4>
+                              {a.harcama > 0 ? (
+                                <span className="mcv3-cost-badge">₺{Number(a.harcama).toLocaleString('tr-TR')}</span>
+                              ) : (
+                                <span className="mcv3-free-badge">Ücretsiz</span>
+                              )}
+                            </div>
+
+                            <div className="mcv3-meta-row">
+                              <span className="mcv3-date">🗓️ {formattedDate}</span>
+                              {a.saat && <span className="mcv3-time">⏰ {a.saat}</span>}
+                              {a.mekan && (
+                                <span className="mcv3-location">
+                                  <MapPin size={11} /> {a.mekan}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Dual Rating Badges */}
+                            <div className="mcv3-rating-badges">
+                              <div className="mcv3-rate-pill gorkem">
+                                <span className="avatar-mini">👨</span>
+                                <span className="rate-name">Görkem</span>
+                                <strong className="rate-val">{a.puan_gorkem || 0}★</strong>
+                              </div>
+                              <div className="mcv3-rate-pill esra">
+                                <span className="avatar-mini">👩</span>
+                                <span className="rate-name">Esra</span>
+                                <strong className="rate-val">{a.puan_esra || 0}★</strong>
+                              </div>
+                              <div className="mcv3-rate-pill avg">
+                                <span className="rate-name">Ortalama</span>
+                                <strong className="rate-val">⭐ {combinedScore}</strong>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mcv3-expand-icon">
+                            {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                          </div>
+                        </div>
+
+                        {/* Expanded Details & Quote Bubbles */}
+                        {isExpanded && (
+                          <div className="mcv3-expanded-body animate-fadeIn" onClick={e => e.stopPropagation()}>
+                            {a.detaylar && (
+                              <div className="mcv3-notes-box">
+                                <span className="notes-icon">📝</span>
+                                <p>{a.detaylar}</p>
+                              </div>
+                            )}
+
+                            {/* Görkem & Esra Comments in Visual Speech Bubbles */}
+                            <div className="mcv3-quotes-grid">
+                              {a.yorum_gorkem && (
+                                <div className="couple-quote-bubble gorkem glass">
+                                  <div className="cqb-header">
+                                    <span className="cqb-avatar">👨</span>
+                                    <strong>Görkem'in Değerlendirmesi</strong>
+                                    <span className="cqb-score">{a.puan_gorkem} / 10 ★</span>
+                                  </div>
+                                  <p className="cqb-text">"{a.yorum_gorkem}"</p>
+                                </div>
+                              )}
+
+                              {a.yorum_esra && (
+                                <div className="couple-quote-bubble esra glass">
+                                  <div className="cqb-header">
+                                    <span className="cqb-avatar">👩</span>
+                                    <strong>Esra'nın Değerlendirmesi</strong>
+                                    <span className="cqb-score">{a.puan_esra} / 10 ★</span>
+                                  </div>
+                                  <p className="cqb-text">"{a.yorum_esra}"</p>
+                                </div>
+                              )}
+
+                              {a.yorum && !a.yorum_gorkem && !a.yorum_esra && (
+                                <div className="couple-quote-bubble neutral glass">
+                                  <p className="cqb-text">"{a.yorum}"</p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Actions (Guarded with !isGuest) */}
+                            {!isGuest && (
+                              <div className="mcv3-actions-row">
+                                <button 
+                                  className="mcv3-action-btn edit"
+                                  onClick={() => onEdit(a)}
+                                >
+                                  <Edit3 size={13} /> Değerlendirmeyi Düzenle
+                                </button>
+                                <button 
+                                  className="mcv3-action-btn delete"
+                                  onClick={() => {
+                                    if (window.confirm(`"${a.baslik || a.title}" anısını silmek istediğinize emin misiniz?`)) {
+                                      onDelete(a.id);
+                                    }
+                                  }}
+                                >
+                                  <Trash2 size={13} /> Anıyı Sil
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="gecmis-empty-state glass">
+            <div className="ges-icon">🌟</div>
+            <h3>Filtrelere Uygun Anı Bulunamadı</h3>
+            <p>Seçili arama veya filtre kriterlerine uygun tamamlanmış aktivite kaydı yok.</p>
+            {(searchQuery || filterMode !== 'all') && (
+              <button 
+                className="ges-reset-btn"
+                onClick={() => { setSearchQuery(''); setFilterMode('all'); }}
+              >
+                Filtreleri Sıfırla
+              </button>
+            )}
           </div>
         )}
       </div>
