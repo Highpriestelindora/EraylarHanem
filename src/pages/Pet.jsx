@@ -40,8 +40,25 @@ ChartJS.register(
   Filler
 );
 
+export const parsePetDate = (str) => {
+  if (!str) return 0;
+  if (typeof str === 'number') return str;
+  const s = String(str).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const [y, m, d] = s.split('T')[0].split('-').map(Number);
+    return new Date(y, m - 1, d).getTime();
+  }
+  if (/^\d{1,2}\.\d{1,2}\.\d{4}/.test(s)) {
+    const datePart = s.split(' ')[0];
+    const [d, m, y] = datePart.split('.').map(Number);
+    return new Date(y, m - 1, d).getTime();
+  }
+  const t = new Date(s).getTime();
+  return isNaN(t) ? 0 : t;
+};
+
 export default function Pet() {
-  const { pet, setModuleData, deletePetLog, updatePetLog, completePetVaccine, deletePetVaccine, addPetVaccine, addPetWeight, currentUser } = useStore();
+  const { pet, setModuleData, deletePetLog, updatePetLog, completePetVaccine, deletePetVaccine, addPetVaccine, addPetWeight, deletePetWeight, updatePetWeight, currentUser } = useStore();
   const isGuest = currentUser?.name === 'Misafir';
   const [activePet, setActivePet] = useState('waffle');
   const [showAddLog, setShowAddLog] = useState(false);
@@ -50,6 +67,7 @@ export default function Pet() {
   const [showAddVaccine, setShowAddVaccine] = useState(false);
   const [editingVaccine, setEditingVaccine] = useState(null);
   const [showAddWeight, setShowAddWeight] = useState(false);
+  const [editingWeight, setEditingWeight] = useState(null);
   const [showAddExpense, setShowAddExpense] = useState(false);
 
   const { meta, vaccines, history, weights } = pet || { meta: {}, vaccines: {}, history: [], weights: {} };
@@ -58,6 +76,26 @@ export default function Pet() {
   const petVaccines = vaccines[activePet] || [];
   const petWeights = weights[activePet] || [];
   const navigate = useNavigate();
+
+  const sortedWeights = [...petWeights].sort((a, b) => parsePetDate(b.dt) - parsePetDate(a.dt));
+  const latestWeight = sortedWeights[0];
+  const prevWeight = sortedWeights[1];
+  const diff = (latestWeight && prevWeight) ? (Number(latestWeight.w) - Number(prevWeight.w)) : null;
+
+  const chartWeights = [...sortedWeights].reverse();
+  const chartLabels = chartWeights.map(w => {
+    const d = new Date(parsePetDate(w.dt));
+    if (isNaN(d.getTime())) return w.dt;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = String(d.getFullYear()).slice(-2);
+    return `${day}.${month}.${year}`;
+  });
+  const chartValues = chartWeights.map(w => Number(w.w));
+  const minVal = chartValues.length > 0 ? Math.min(...chartValues) : 0;
+  const maxVal = chartValues.length > 0 ? Math.max(...chartValues) : 20;
+  const yMin = Math.max(0, Math.floor(minVal - 1));
+  const yMax = Math.ceil(maxVal + 1);
 
   const handlePetClick = (petId) => {
     const quotes = PET_QUOTES[petId === 'waffle' ? 'waffle' : 'mayis'];
@@ -205,58 +243,84 @@ export default function Pet() {
           <div className="pet-card-v2 glass">
             <div className="pc-header-v2">
               <div className="pch-left"><Scale size={18} /> <strong>Kilo Takibi</strong></div>
-              {!isGuest && <button className="add-btn-mini" onClick={() => setShowAddWeight(true)}><Plus size={14} /></button>}
+              {!isGuest && (
+                <button className="add-btn-mini" onClick={() => { setEditingWeight(null); setShowAddWeight(true); }}>
+                  <Plus size={14} />
+                </button>
+              )}
             </div>
             <div className="pc-body-v2 weight-box">
                <div className="w-main-val">
-                  <strong>{petWeights[0]?.w || '--'}</strong>
+                  <strong>{latestWeight ? latestWeight.w : '--'}</strong>
                   <small>KG</small>
                </div>
-               {petWeights.length > 0 && (
+               {latestWeight && (
                  <div className="w-sub-info">
-                   <span className="w-date">{petWeights[0].dt}</span>
-                   {petWeights[1] && (
-                     <div className={`w-diff ${petWeights[0].w >= petWeights[1].w ? 'up' : 'down'}`}>
-                       {petWeights[0].w >= petWeights[1].w ? '▲' : '▼'} {(petWeights[0].w - petWeights[1].w).toFixed(1)}
+                   <span className="w-date">{latestWeight.dt}</span>
+                   {diff !== null && (
+                     <div className={`w-diff ${diff > 0 ? 'up' : (diff < 0 ? 'down' : 'neutral')}`}>
+                       <span>{diff > 0 ? '▲ +' : (diff < 0 ? '▼ -' : '— ')}{Math.abs(diff).toFixed(1)} kg</span>
+                       <span className="w-diff-lbl">(Son ölçüme göre)</span>
                      </div>
                    )}
                  </div>
                )}
                
-               {petWeights.length > 1 && (
+               {sortedWeights.length > 1 && (
                  <div className="weight-chart-container mt-20">
                    <Bar 
                      data={{
-                       labels: [...petWeights].sort((a, b) => {
-                          const da = a.dt.split(' ')[0].split('.').reverse().join('');
-                          const db = b.dt.split(' ')[0].split('.').reverse().join('');
-                          return da.localeCompare(db);
-                        }).map(w => {
-                          const p = w.dt.split(' ')[0].split('.');
-                          return `${p[0]}.${p[1]}${p[2] !== '2026' ? '/' + p[2].slice(-2) : ''}`;
-                        }),
+                       labels: chartLabels,
                        datasets: [{
-                         label: 'Kilo',
-                         data: [...petWeights].sort((a, b) => {
-                          const da = a.dt.split(' ')[0].split('.').reverse().join('');
-                          const db = b.dt.split(' ')[0].split('.').reverse().join('');
-                          return da.localeCompare(db);
-                        }).map(w => w.w),
+                         label: 'Kilo (kg)',
+                         data: chartValues,
                          backgroundColor: activePet === 'waffle' ? '#F97316' : '#FB923C',
-                         borderRadius: 6,
-                         barThickness: 20
+                         borderRadius: 8,
+                         barThickness: 24,
+                         maxBarThickness: 32
                        }]
                      }}
                      options={{
                        responsive: true,
                        maintainAspectRatio: false,
-                       plugins: { legend: { display: false } },
+                       plugins: {
+                         legend: { display: false },
+                         tooltip: {
+                           backgroundColor: '#1e293b',
+                           titleFont: { size: 11, weight: 'bold' },
+                           bodyFont: { size: 12, weight: 'bold' },
+                           padding: 8,
+                           cornerRadius: 10,
+                           callbacks: {
+                             title: (items) => {
+                               const idx = items[0]?.dataIndex;
+                               return chartWeights[idx]?.dt || items[0]?.label;
+                             },
+                             label: (item) => ` ⚖️ ${item.raw} kg`
+                           }
+                         }
+                       },
                        scales: {
-                         x: { grid: { display: false }, ticks: { font: { size: 9, weight: 'bold' } } },
-                         y: { display: false }
+                         x: {
+                           grid: { display: false },
+                           ticks: {
+                             font: { size: 10, weight: 'bold' },
+                             color: '#64748b'
+                           }
+                         },
+                         y: {
+                           min: yMin,
+                           max: yMax,
+                           grid: { color: 'rgba(0,0,0,0.04)' },
+                           ticks: {
+                             font: { size: 9, weight: '600' },
+                             color: '#94a3b8',
+                             callback: (v) => `${v} kg`
+                           }
+                         }
                        }
                      }}
-                     height={100}
+                     height={120}
                    />
                  </div>
                )}
@@ -330,23 +394,58 @@ export default function Pet() {
         {/* Kilo Geçmişi */}
         <section className="pet-section mt-24">
           <div className="ps-header">
-            <h3>⚖️ Kilo Geçmişi</h3>
+            <h3>⚖️ Kilo Geçmişi ({sortedWeights.length})</h3>
+            {!isGuest && (
+              <button className="ps-btn" onClick={() => { setEditingWeight(null); setShowAddWeight(true); }}>
+                <Plus size={14} /> Yeni Ölçüm
+              </button>
+            )}
           </div>
           <div className="history-timeline-premium">
-            {(history || []).filter(h => h.pet === activePet && h.type === 'weight').map((h) => (
-              <div key={h.id} className="history-card-v2 glass">
-                <div className="hc-icon">⚖️</div>
-                <div className="hc-info">
-                  <p>{h.action}</p>
-                  <span className="hc-time">{h.dt}</span>
+            {sortedWeights.map((w, idx) => {
+              const prev = sortedWeights[idx + 1];
+              const itemDiff = prev ? (Number(w.w) - Number(prev.w)) : null;
+              return (
+                <div key={w.id || idx} className="history-card-v2 glass">
+                  <div className="hc-icon" style={{ background: '#FEF3C7', color: '#D97706' }}>⚖️</div>
+                  <div className="hc-info">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <strong style={{ fontSize: '15px', color: '#1e293b' }}>{w.w} kg</strong>
+                      {itemDiff !== null && (
+                        <span style={{ 
+                          fontSize: '11px', 
+                          fontWeight: 800, 
+                          color: itemDiff > 0 ? '#ea580c' : (itemDiff < 0 ? '#059669' : '#64748b'),
+                          background: itemDiff > 0 ? '#fff7ed' : (itemDiff < 0 ? '#ecfdf5' : '#f1f5f9'),
+                          padding: '2px 8px',
+                          borderRadius: '6px'
+                        }}>
+                          {itemDiff > 0 ? '▲ +' : (itemDiff < 0 ? '▼ -' : '— ')}{Math.abs(itemDiff).toFixed(1)} kg
+                        </span>
+                      )}
+                    </div>
+                    <span className="hc-time">{w.dt}</span>
+                    {w.notes && <small style={{ display: 'block', color: '#64748b', marginTop: '2px' }}>{w.notes}</small>}
+                  </div>
+                  {!isGuest && (
+                    <div className="hc-actions">
+                      <button className="hc-edit" onClick={() => { setEditingWeight(w); setShowAddWeight(true); }} title="Düzenle">
+                        <Edit2 size={14} />
+                      </button>
+                      <button className="hc-del" onClick={() => {
+                        if (window.confirm(`${w.dt} tarihli ${w.w} kg kilo kaydını silmek istediğinize emin misiniz?`)) {
+                          deletePetWeight(activePet, w.id);
+                          toast.success('Kilo kaydı silindi.');
+                        }
+                      }} title="Sil">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="hc-actions">
-                  <button className="hc-edit" onClick={() => { setEditingLog(h); setShowAddLog(true); }}><Edit2 size={14} /></button>
-                  <button className="hc-del" onClick={() => deletePetLog(h.id)}><Trash2 size={14} /></button>
-                </div>
-              </div>
-            ))}
-            {!(history || []).some(h => h.pet === activePet && h.type === 'weight') && (
+              );
+            })}
+            {sortedWeights.length === 0 && (
               <div className="gallery-empty" style={{ padding: '20px', fontSize: '11px' }}>Kayıtlı kilo verisi yok.</div>
             )}
           </div>
@@ -373,8 +472,8 @@ export default function Pet() {
         <ManageVaccineContent petId={activePet} onClose={() => { setShowAddVaccine(false); setEditingVaccine(null); }} editingVaccine={editingVaccine} />
       </ActionSheet>
 
-      <ActionSheet isOpen={showAddWeight} onClose={() => setShowAddWeight(false)} title="⚖️ Kilo Ölçümü">
-        <AddWeightContent petId={activePet} onClose={() => setShowAddWeight(false)} />
+      <ActionSheet isOpen={showAddWeight} onClose={() => { setShowAddWeight(false); setEditingWeight(null); }} title={editingWeight ? "⚖️ Kilo Ölçümünü Düzenle" : "⚖️ Kilo Ölçümü Ekle"}>
+        <AddWeightContent petId={activePet} onClose={() => { setShowAddWeight(false); setEditingWeight(null); }} editingWeight={editingWeight} />
       </ActionSheet>
 
       <ActionSheet isOpen={showAddExpense} onClose={() => setShowAddExpense(false)} title="💸 Harcama Ekle">
@@ -423,19 +522,32 @@ function AddPetExpenseContent({ petId, onClose }) {
   );
 }
 
-function AddWeightContent({ petId, onClose }) {
-  const { addPetWeight } = useStore();
+function AddWeightContent({ petId, onClose, editingWeight }) {
+  const { addPetWeight, updatePetWeight } = useStore();
+
+  const getInitialDateInput = () => {
+    if (!editingWeight?.dt) return new Date().toISOString().split('T')[0];
+    const parsedTime = parsePetDate(editingWeight.dt);
+    const d = new Date(parsedTime);
+    if (isNaN(d.getTime())) return new Date().toISOString().split('T')[0];
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
   const [formData, setFormData] = useState({ 
-    w: '', 
-    dt: new Date().toISOString().split('T')[0] // Default to YYYY-MM-DD for input type="date"
+    w: editingWeight ? editingWeight.w : '', 
+    dt: getInitialDateInput(),
+    notes: editingWeight?.notes || ''
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.w) return;
     
-    // Format date to "DD.MM.YYYY dddd"
-    const dateObj = new Date(formData.dt);
+    const [y, m, d] = formData.dt.split('-').map(Number);
+    const dateObj = new Date(y, m - 1, d);
     const formattedDate = dateObj.toLocaleDateString('tr-TR', {
       day: '2-digit',
       month: '2-digit',
@@ -443,22 +555,59 @@ function AddWeightContent({ petId, onClose }) {
       weekday: 'long'
     });
 
-    addPetWeight(petId, { w: Number(formData.w), dt: formattedDate });
+    if (editingWeight) {
+      updatePetWeight(petId, editingWeight.id, { 
+        w: Number(formData.w), 
+        dt: formattedDate,
+        notes: formData.notes 
+      });
+      toast.success('Kilo kaydı güncellendi! ✨');
+    } else {
+      addPetWeight(petId, { 
+        w: Number(formData.w), 
+        dt: formattedDate,
+        notes: formData.notes 
+      });
+      toast.success('Kilo kaydedildi! ⚖️');
+    }
     onClose();
-    toast.success('Kilo kaydedildi! ⚖️');
   };
 
   return (
     <form className="modal-form" onSubmit={handleSubmit}>
       <div className="form-group">
         <label>Ağırlık (kg)</label>
-        <input type="number" step="0.1" value={formData.w} onChange={e => setFormData({...formData, w: e.target.value})} placeholder="10.5" required autoFocus />
+        <input 
+          type="number" 
+          step="0.1" 
+          value={formData.w} 
+          onChange={e => setFormData({...formData, w: e.target.value})} 
+          placeholder="10.5" 
+          required 
+          autoFocus 
+        />
       </div>
       <div className="form-group">
-        <label>Tarih</label>
-        <input type="date" value={formData.dt} onChange={e => setFormData({...formData, dt: e.target.value})} required />
+        <label>Ölçüm Tarihi</label>
+        <input 
+          type="date" 
+          value={formData.dt} 
+          onChange={e => setFormData({...formData, dt: e.target.value})} 
+          required 
+        />
       </div>
-      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>Kaydet</button>
+      <div className="form-group">
+        <label>Not (Opsiyonel)</label>
+        <input 
+          type="text" 
+          value={formData.notes} 
+          onChange={e => setFormData({...formData, notes: e.target.value})} 
+          placeholder="ör: Veteriner tartısı, aşı kontrolü..." 
+        />
+      </div>
+      <button type="submit" className="submit-btn" style={{ background: '#d97706', color: 'white' }}>
+        {editingWeight ? 'Güncellemeyi Kaydet' : 'Kaydet'}
+      </button>
     </form>
   );
 }
