@@ -3,12 +3,15 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 1060;
+  z-index: 1100;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
   pointer-events: none;
+  isolation: isolate;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
 }
 
 .floating-hub-container * {
@@ -23,6 +26,8 @@
   -webkit-backdrop-filter: blur(8px);
   z-index: 1050;
   animation: fadeIn 0.25s ease;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
 }
 
 /* Options */
@@ -30,15 +35,19 @@
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
-  transform: translateY(20px);
+  transform: translateY(20px) translateZ(0);
+  -webkit-transform: translateY(20px) translateZ(0);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  z-index: 10;
 }
 
 .hub-options.show {
-  transform: translateY(0);
+  transform: translateY(0) translateZ(0);
+  -webkit-transform: translateY(0) translateZ(0);
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -58,6 +67,11 @@
   cursor: pointer;
   justify-content: center;
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  z-index: 11;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .hub-option-btn:hover {
@@ -507,6 +521,10 @@
   overflow: hidden;
   z-index: 1200;
   animation: hubModalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  isolation: isolate;
+  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
+  pointer-events: auto;
 }
 
 @keyframes hubModalSlideUp {
