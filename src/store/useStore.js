@@ -8627,23 +8627,30 @@ const useStore = create(
         const currentWeights = state.pet.weights[petId] || [];
         const newId = Date.now();
         
-        const parseTurkishDate = (str) => {
+        const parsePetDate = (str) => {
           if (!str) return 0;
-          // Handle "14.05.2026 Perşembe" or "14.05.2026"
-          const datePart = str.split(' ')[0];
-          const parts = datePart.split('.');
-          if (parts.length < 3) return 0;
-          const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-          return isNaN(d.getTime()) ? 0 : d.getTime();
+          if (typeof str === 'number') return str;
+          const s = String(str).trim();
+          if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+            const [y, m, d] = s.split('T')[0].split('-').map(Number);
+            return new Date(y, m - 1, d).getTime();
+          }
+          if (/^\d{1,2}\.\d{1,2}\.\d{4}/.test(s)) {
+            const datePart = s.split(' ')[0];
+            const [d, m, y] = datePart.split('.').map(Number);
+            return new Date(y, m - 1, d).getTime();
+          }
+          const t = new Date(s).getTime();
+          return isNaN(t) ? 0 : t;
         };
 
         const yeniWeights = [{ id: newId, ...weightData }, ...currentWeights]
-          .sort((a, b) => parseTurkishDate(b.dt) - parseTurkishDate(a.dt));
+          .sort((a, b) => parsePetDate(b.dt) - parsePetDate(a.dt));
           
         const log = { id: newId, pet: petId, action: `Kilo güncellendi: ${weightData.w} kg`, dt: weightData.dt, type: 'weight' };
         
         const yeniHistory = [log, ...(state.pet.history || [])]
-          .sort((a, b) => parseTurkishDate(b.dt) - parseTurkishDate(a.dt));
+          .sort((a, b) => parsePetDate(b.dt) - parsePetDate(a.dt));
 
         set({
           pet: {
@@ -8657,12 +8664,54 @@ const useStore = create(
         pushPetLogToSupabase(log);
       },
 
+      updatePetWeight: (petId, id, updatedData) => {
+        const state = get();
+        const currentWeights = state.pet.weights[petId] || [];
+        const parsePetDate = (str) => {
+          if (!str) return 0;
+          if (typeof str === 'number') return str;
+          const s = String(str).trim();
+          if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+            const [y, m, d] = s.split('T')[0].split('-').map(Number);
+            return new Date(y, m - 1, d).getTime();
+          }
+          if (/^\d{1,2}\.\d{1,2}\.\d{4}/.test(s)) {
+            const datePart = s.split(' ')[0];
+            const [d, m, y] = datePart.split('.').map(Number);
+            return new Date(y, m - 1, d).getTime();
+          }
+          const t = new Date(s).getTime();
+          return isNaN(t) ? 0 : t;
+        };
+
+        const yeniWeights = currentWeights.map(w => 
+          String(w.id) === String(id) ? { ...w, ...updatedData } : w
+        ).sort((a, b) => parsePetDate(b.dt) - parsePetDate(a.dt));
+
+        set({
+          pet: {
+            ...state.pet,
+            weights: { ...state.pet.weights, [petId]: yeniWeights }
+          }
+        });
+
+        pushPetAgirlikToSupabase(petId, { id, ...updatedData });
+      },
+
       deletePetWeight: (petId, id) => {
         const state = get();
-        const yeniWeights = (state.pet.weights[petId] || []).filter(w => w.id !== id);
-        set({ pet: { ...state.pet, weights: { ...state.pet.weights, [petId]: yeniWeights } } });
+        const yeniWeights = (state.pet.weights[petId] || []).filter(w => String(w.id) !== String(id));
+        const yeniHistory = (state.pet.history || []).filter(h => String(h.id) !== String(id));
+        set({ 
+          pet: { 
+            ...state.pet, 
+            weights: { ...state.pet.weights, [petId]: yeniWeights },
+            history: yeniHistory
+          } 
+        });
 
         deletePetAgirlikFromSupabase(id);
+        deletePetLogFromSupabase(id);
       },
 
       deletePetLog: (id) => {
