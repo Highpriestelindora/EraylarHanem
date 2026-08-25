@@ -14,10 +14,84 @@
   margin: 0;
 }
 
+.ayarlar-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.supabase-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #ede9fe 100%);
+  background-size: 200% 200%;
+  animation: badgeGradientShimmer 4s ease infinite alternate, badgePulseGlow 2.5s infinite alternate;
+  border: 1.5px solid #10b981;
+  color: #047857;
+  letter-spacing: 0.2px;
+  user-select: none;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.2);
+}
+
+.supabase-live-badge.offline {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #b91c1c;
+  animation: none;
+}
+
+.live-dot-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-green 1.8s infinite;
+}
+
+.live-dot-pulse.offline {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulse-red 1.8s infinite;
+}
+
+@keyframes badgeGradientShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes badgePulseGlow {
+  0% {
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.45);
+    border-color: #059669;
+  }
+  100% {
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+  }
+}
+
 .ayarlar-header p {
   font-size: 13px;
   color: #64748b;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .settings-group {

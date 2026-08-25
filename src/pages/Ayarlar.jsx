@@ -89,10 +89,18 @@ export default function Ayarlar() {
     toast.success('Oturum kapatıldı.');
   };
 
+  const isOnline = useStore(state => state.isOnline !== false);
+
   return (
     <AnimatedPage className="ayarlar-container">
       <div className="ayarlar-header">
-        <h2>Ayarlar ⚙️</h2>
+        <div className="ayarlar-title-row">
+          <h2>Ayarlar ⚙️</h2>
+          <div className={`supabase-live-badge ${isOnline ? 'online' : 'offline'}`}>
+            <span className={`live-dot-pulse ${isOnline ? 'online' : 'offline'}`}></span>
+            <span>{isOnline ? 'Supabase Canlı ⚡' : 'Çevrimdışı ⚠️'}</span>
+          </div>
+        </div>
         <p>Uygulama tercihleri ve sistem durumu</p>
       </div>
 
@@ -112,26 +120,6 @@ export default function Ayarlar() {
             <input type="checkbox" checked={darkMode} onChange={handleToggleDarkMode} />
             <span className="slider"></span>
           </label>
-        </div>
-      </div>
-
-      {/* Bulut & Veri Durumu */}
-      <div className="settings-group">
-        <h4>Veri & Bulut Durumu</h4>
-
-        <div className="setting-item">
-          <div className="setting-icon" style={{ background: '#ecfdf5', color: '#10b981' }}>
-            <Database size={20} />
-          </div>
-          <div className="setting-content">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span className="setting-title">Supabase Canlı Bulut</span>
-              <span style={{ fontSize: '10px', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '100px', fontWeight: 800 }}>
-                CANLI & SENKRON
-              </span>
-            </div>
-            <span className="setting-desc">Tüm veriler SQL veritabanında anında güvenle depolanır</span>
-          </div>
         </div>
       </div>
 
