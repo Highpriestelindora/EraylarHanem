@@ -12,50 +12,55 @@
 /* Premium Rounded Header Banner - Sleek Compact Version */
 .premium-header-banner {
   background: linear-gradient(180deg, #2E1065 0%, #4C1D95 100%);
-  padding: max(16px, env(safe-area-inset-top)) 20px 12px;
-  border-radius: 0 0 40px 40px;
+  padding: max(12px, env(safe-area-inset-top)) 14px 12px;
+  border-radius: 0 0 36px 36px;
   color: white;
   position: relative;
   box-shadow: 0 10px 25px rgba(46, 16, 101, 0.12);
   margin-bottom: -10px;
   z-index: 10;
+  box-sizing: border-box;
 }
 
 .phb-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 5px;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .phb-user-area {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
 }
 
 .phb-avatar {
-  width: 50px;
-  height: 50px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
   background: #fff;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 24px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   position: relative;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .supabase-status-dot {
   position: absolute;
   top: -2px;
   right: -2px;
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border: 2px solid white;
   border-radius: 50%;
 }
@@ -87,21 +92,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
-  font-size: 22px;
+  padding: 4px 2px;
+  font-size: 19px;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
+  line-height: 1;
 }
 
 .pet-link:hover {
   transform: scale(1.2);
 }
 
-
 .phb-logo-img {
-  height: 32px;
+  height: 24px;
   width: auto;
   filter: brightness(0) invert(1);
+  flex-shrink: 0;
 }
 
 .phb-brand {
@@ -110,32 +116,39 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  gap: 4px;
+  min-width: 0;
 }
 
 .phb-brand-main {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .phb-brand-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .phb-brand h2 {
   color: #fff;
   margin: 0;
-  font-size: 17px;
+  font-size: 15px;
   font-family: 'Fraunces', serif;
   white-space: nowrap;
+  letter-spacing: -0.2px;
 }
 
 .phb-header-pets {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 .phb-text {
@@ -156,17 +169,24 @@
 
 .phb-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .phb-icon-btn {
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 8px;
-  border-radius: 12px;
+  padding: 6px;
+  border-radius: 10px;
   color: #fff;
   cursor: pointer;
   backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 /* AI Assistant Section */
