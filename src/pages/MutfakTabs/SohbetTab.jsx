@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { Send, Trash2, X, StickyNote } from 'lucide-react';
 import useStore from '../../store/useStore';
+import toast from 'react-hot-toast';
 
 export default function SohbetTab() {
   const { mutfak, addKitchenNote, removeNote, currentUser } = useStore();
   const [noteText, setNoteText] = useState('');
+  const [noteWriter, setNoteWriter] = useState(currentUser?.name || 'Görkem');
   const [zoomedNote, setZoomedNote] = useState(null);
   
   const notes = mutfak?.sohbet || [];
@@ -12,14 +14,16 @@ export default function SohbetTab() {
   // Stable positions using useMemo to avoid re-renders or state loops
   const positions = useMemo(() => {
     const posMap = {};
-    notes.forEach(n => {
-      // Use id as seed for "random" but stable position
+    notes.forEach((n, idx) => {
+      const author = n.w || n.kisi || 'Görkem';
+      const isEsra = author.toLowerCase().includes('esra');
       const seed = typeof n.id === 'number' ? n.id : (n.id || "").length;
       posMap[n.id] = {
-        top: ((seed % 70) + 10) + "%",
-        left: (((seed * 13) % 70) + 10) + "%",
-        rotate: ((seed % 12) - 6) + "deg",
-        color: (seed % 3 === 0) ? '#fff9c4' : (seed % 3 === 1 ? '#e3f2fd' : '#fce7f3')
+        top: ((seed % 65) + 12) + "%",
+        left: (((seed * 13) % 65) + 12) + "%",
+        rotate: ((seed % 10) - 5) + "deg",
+        color: isEsra ? '#FFF1F2' : ((idx % 2 === 0) ? '#FEFCE8' : '#F5F3FF'),
+        magnetColor: isEsra ? 'radial-gradient(circle at 30% 30%, #F43F5E, #9F1239)' : 'radial-gradient(circle at 30% 30%, #8B5CF6, #5B21B6)'
       };
     });
     return posMap;
@@ -27,8 +31,9 @@ export default function SohbetTab() {
 
   const handleAddNote = () => {
     if (!noteText.trim()) return;
-    addKitchenNote(noteText, currentUser?.name || 'Görkem');
+    addKitchenNote(noteText, noteWriter);
     setNoteText('');
+    toast.success('Not buzdolabına yapıştırıldı! 📌');
   };
 
   return (
@@ -40,7 +45,11 @@ export default function SohbetTab() {
           
           <div className="notes-container">
             {notes.map(note => {
-              const pos = positions[note.id] || { top: '20%', left: '20%', rotate: '0deg', color: '#fff9c4' };
+              const pos = positions[note.id] || { top: '20%', left: '20%', rotate: '0deg', color: '#fff9c4', magnetColor: 'radial-gradient(circle at 30% 30%, #ef4444, #991b1b)' };
+              const text = note.t || note.mesaj || '';
+              const writer = note.w || note.kisi || 'Görkem';
+              const isEsra = writer.toLowerCase().includes('esra');
+
               return (
                 <div 
                   key={note.id} 
@@ -53,10 +62,13 @@ export default function SohbetTab() {
                   onClick={() => setZoomedNote(note)}
                 >
                   <div className="note-paper" style={{ backgroundColor: pos.color }}>
-                    <div className="magnet-cap" />
-                    <p className="note-text-mini">{note.t}</p>
+                    <div className="magnet-cap" style={{ background: pos.magnetColor }} />
+                    <div style={{ fontSize: '10px', fontWeight: 800, color: isEsra ? '#BE123C' : '#6D28D9', marginBottom: '2px' }}>
+                      {isEsra ? '👩‍🍳 Esra' : '👨‍💻 Görkem'}
+                    </div>
+                    <p className="note-text-mini">{text}</p>
                     <div className="note-footer-mini">
-                       <span>{note.w}</span>
+                       <span>{note.d || note.tarih ? new Date(note.d || note.tarih).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
                     </div>
                   </div>
                 </div>
@@ -66,7 +78,7 @@ export default function SohbetTab() {
             {notes.length === 0 && (
               <div className="empty-fridge-msg">
                  <StickyNote size={48} opacity={0.2} />
-                 <p>Buzdolabı boş, bir not bırakmak ister misin?</p>
+                 <p>Buzdolabı boş, birbirinize bir not bırakmak ister misiniz?</p>
               </div>
             )}
           </div>
@@ -75,9 +87,15 @@ export default function SohbetTab() {
         {/* Input Area */}
         <div className="fridge-controls glass">
           <textarea 
-            placeholder="Mıknatıslı bir not yapıştır..." 
+            placeholder={`${(currentUser?.name || 'Görkem').toLowerCase().includes('esra') ? "Görkem'e" : "Esra'ya"} mıknatıslı bir not yapıştır...`} 
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleAddNote();
+              }
+            }}
           />
           <button className="post-it-btn" onClick={handleAddNote}>
             <Send size={20} />
@@ -91,17 +109,17 @@ export default function SohbetTab() {
           <div className="zoomed-paper animate-pop" 
                style={{ backgroundColor: positions[zoomedNote.id]?.color || '#fff9c4' }}
                onClick={e => e.stopPropagation()}>
-            <div className="magnet-cap-lg" />
+            <div className="magnet-cap-lg" style={{ background: positions[zoomedNote.id]?.magnetColor || 'radial-gradient(circle at 30% 30%, #ef4444, #991b1b)' }} />
             <button className="close-paper" onClick={() => setZoomedNote(null)}><X size={20} /></button>
             
             <div className="paper-body">
-              <p>{zoomedNote.t}</p>
+              <p>{zoomedNote.t || zoomedNote.mesaj}</p>
               <div className="paper-footer">
                 <div className="writer-info">
-                  <strong>{zoomedNote.w}</strong>
-                  <span>{zoomedNote.d ? new Date(zoomedNote.d).toLocaleDateString('tr-TR') : ''}</span>
+                  <strong>{zoomedNote.w || zoomedNote.kisi}</strong>
+                  <span>{zoomedNote.d || zoomedNote.tarih ? new Date(zoomedNote.d || zoomedNote.tarih).toLocaleString('tr-TR') : ''}</span>
                 </div>
-                <button className="trash-btn" onClick={() => { removeNote(zoomedNote.id); setZoomedNote(null); }}>
+                <button className="trash-btn" onClick={() => { removeNote(zoomedNote.id); setZoomedNote(null); toast.success('Not silindi.'); }}>
                   <Trash2 size={18} />
                 </button>
               </div>

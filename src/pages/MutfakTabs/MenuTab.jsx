@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { 
   ArrowRight, AlertCircle, Search, Plus, Trash2, 
   UtensilsCrossed, Truck, Star, Clock, ChevronLeft, 
-  ChevronRight, Calendar, CheckCircle2, Dices, Eye, X, ShoppingCart, RotateCcw
+  ChevronRight, Calendar, CheckCircle2, Dices, Eye, X, ShoppingCart, RotateCcw,
+  FastForward
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
@@ -10,11 +11,13 @@ import ActionSheet from '../../components/ActionSheet';
 import PaymentSelector from '../../components/PaymentSelector';
 
 export default function MenuTab() {
-  const { mutfak, updateMenuDetail, setEatOut, setDelivery, addRecipe, getAvailableRecipes, currentUser, luckyFill } = useStore();
+  const { mutfak, updateMenuDetail, setEatOut, setDelivery, setSkipMeal, removeSkipMeal, addRecipe, getAvailableRecipes, currentUser, luckyFill } = useStore();
   const [weekOffset, setWeekOffset] = useState(0);
   const [showPicker, setShowPicker] = useState(null); // { dt, ml, type }
   const [showDelivery, setShowDelivery] = useState(null); // { dt, ml }
   const [showEatOut, setShowEatOut] = useState(null); // { dt, ml }
+  const [showSkipMeal, setShowSkipMeal] = useState(null); // { dt, ml }
+  const [showSkipHistory, setShowSkipHistory] = useState(false);
   const [showAddRecipe, setShowAddRecipe] = useState(false);
   const [viewRecipe, setViewRecipe] = useState(null); // recipe object to view details
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,8 +38,8 @@ export default function MenuTab() {
   const handleClearDay = (dateIso) => {
     try {
       updateMenuDetail(dateIso, { 
-        k: '', k2: '', kdis: false, ksp: false,
-        a: '', a2: '', adis: false, asp: false 
+        k: '', k2: '', kdis: false, ksp: false, katla: false, kreason: null,
+        a: '', a2: '', adis: false, asp: false, aatla: false, areason: null
       });
       toast.success('Gün temizlendi!');
     } catch (err) {
@@ -95,11 +98,17 @@ export default function MenuTab() {
 
   const getMealData = (dateIso, mealKey) => {
     const dayData = mutfak.menu[dateIso] || {};
+    const isDis = dayData[mealKey + 'dis'] === true || dayData[mealKey + 'dis'] === 'true';
+    const isSp = dayData[mealKey + 'sp'] === true || dayData[mealKey + 'sp'] === 'true';
+    const isAtla = dayData[mealKey + 'atla'] === true || dayData[mealKey + 'atla'] === 'true';
+
     return {
       main: dayData[mealKey] || '',
       side: dayData[mealKey + '2'] || '',
-      dis: dayData[mealKey + 'dis'] || false,
-      sp: dayData[mealKey + 'sp'] || false,
+      dis: isDis,
+      sp: isSp,
+      atla: isAtla,
+      reason: dayData[mealKey + 'reason'] || '',
       dt: dayData[mealKey + 'dt'] || null
     };
   };
@@ -122,7 +131,13 @@ export default function MenuTab() {
 
     const random = pool[Math.floor(Math.random() * pool.length)];
     const field = type === 'yan' ? showPicker.ml + '2' : showPicker.ml;
-    updateMenuDetail(showPicker.dt, { [field]: random.n, [showPicker.ml + 'dis']: false, [showPicker.ml + 'sp']: false });
+    updateMenuDetail(showPicker.dt, { 
+      [field]: random.n, 
+      [showPicker.ml + 'dis']: false, 
+      [showPicker.ml + 'sp']: false,
+      [showPicker.ml + 'atla']: false,
+      [showPicker.ml + 'reason']: null
+    });
     setShowPicker(null);
     toast.success(`${random.n} seçildi! 🎲`);
   };
@@ -205,7 +220,7 @@ export default function MenuTab() {
               <div className="day-cell">
                 <span className="d-name">{day.dayName}</span>
                 <span className="d-num">{day.dayNum}</span>
-                {currentUser?.name !== 'Misafir' && (k.main || a.main || k.side || a.side || k.dis || a.dis || k.sp || a.sp) && (
+                {(k.main || a.main || k.side || a.side || k.dis || a.dis || k.sp || a.sp || k.atla || a.atla) && (
                   <button 
                     type="button"
                     className="clear-day-btn" 
@@ -221,16 +236,18 @@ export default function MenuTab() {
                 )}
               </div>
 
-              <div className={`meal-cell-container ${k.dis ? 'dis' : ''} ${k.sp ? 'sp' : ''}`}>
+              <div className={`meal-cell-container ${k.dis ? 'dis' : ''} ${k.sp ? 'sp' : ''} ${k.atla ? 'atla' : ''}`}>
                 <div className="meal-content-split">
-                  <div className={`dish-zone ana ${k.main ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }} onClick={() => { if(currentUser?.name === 'Misafir') return; setShowPicker({ dt: day.iso, ml: 'k', type: 'ana' }); setSelectedCategory('kahvalti'); }}>
+                  <div className={`dish-zone ana ${k.main || k.atla ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'ana' }); setSelectedCategory('kahvalti'); }}>
                     {getRecipeStatus(k.main) === 'missing' && <div className="missing-dot" />}
-                    {k.dis ? <div className="status-label out">Dışarıda</div> : k.sp ? <div className="status-label del">Sipariş</div> : (
+                    {k.dis ? <div className="status-label out">Dışarıda</div> : 
+                     k.sp ? <div className="status-label del">Sipariş</div> : 
+                     k.atla ? <div className="status-label skip" title={k.reason ? `Atlandı: ${k.reason}` : 'Öğün Atlandı'}>⏭️ Atlandı {k.reason ? `• ${k.reason}` : ''}</div> : (
                       k.main ? <span className="dish-name" style={{ color: getRecipeStatusColor(k.main) }}>{k.main}</span> : <div className="dish-placeholder"><Plus size={12}/> Ana</div>
                     )}
                   </div>
-                  {!k.dis && !k.sp && (
-                    <div className={`dish-zone yan ${k.side ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }} onClick={() => { if(currentUser?.name === 'Misafir') return; setShowPicker({ dt: day.iso, ml: 'k', type: 'yan' }); setSelectedCategory('kahvalti'); }}>
+                  {!k.dis && !k.sp && !k.atla && (
+                    <div className={`dish-zone yan ${k.side ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'k', type: 'yan' }); setSelectedCategory('kahvalti'); }}>
                       {getRecipeStatus(k.side) === 'missing' && <div className="missing-dot" />}
                       {k.side ? <small className="dish-name-side" style={{ color: getRecipeStatusColor(k.side) }}>{k.side}</small> : <div className="dish-placeholder-side"><Plus size={10}/> Yan</div>}
                     </div>
@@ -238,16 +255,18 @@ export default function MenuTab() {
                 </div>
               </div>
 
-              <div className={`meal-cell-container ${a.dis ? 'dis' : ''} ${a.sp ? 'sp' : ''}`}>
+              <div className={`meal-cell-container ${a.dis ? 'dis' : ''} ${a.sp ? 'sp' : ''} ${a.atla ? 'atla' : ''}`}>
                 <div className="meal-content-split">
-                  <div className={`dish-zone ana ${a.main ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }} onClick={() => { if(currentUser?.name === 'Misafir') return; setShowPicker({ dt: day.iso, ml: 'a', type: 'ana' }); setSelectedCategory('hepsi'); }}>
+                  <div className={`dish-zone ana ${a.main || a.atla ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'ana' }); setSelectedCategory('hepsi'); }}>
                     {getRecipeStatus(a.main) === 'missing' && <div className="missing-dot" />}
-                    {a.dis ? <div className="status-label out">Dışarıda</div> : a.sp ? <div className="status-label del">Sipariş</div> : (
+                    {a.dis ? <div className="status-label out">Dışarıda</div> : 
+                     a.sp ? <div className="status-label del">Sipariş</div> : 
+                     a.atla ? <div className="status-label skip" title={a.reason ? `Atlandı: ${a.reason}` : 'Öğün Atlandı'}>⏭️ Atlandı {a.reason ? `• ${a.reason}` : ''}</div> : (
                       a.main ? <span className="dish-name" style={{ color: getRecipeStatusColor(a.main) }}>{a.main}</span> : <div className="dish-placeholder"><Plus size={12}/> Ana</div>
                     )}
                   </div>
-                  {!a.dis && !a.sp && (
-                    <div className={`dish-zone yan ${a.side ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: currentUser?.name === 'Misafir' ? 'default' : 'pointer' }} onClick={() => { if(currentUser?.name === 'Misafir') return; setShowPicker({ dt: day.iso, ml: 'a', type: 'yan' }); setSelectedCategory('hepsi'); }}>
+                  {!a.dis && !a.sp && !a.atla && (
+                    <div className={`dish-zone yan ${a.side ? 'filled' : 'empty'}`} style={{ position: 'relative', cursor: 'pointer' }} onClick={() => { setShowPicker({ dt: day.iso, ml: 'a', type: 'yan' }); setSelectedCategory('hepsi'); }}>
                       {getRecipeStatus(a.side) === 'missing' && <div className="missing-dot" />}
                       {a.side ? <small className="dish-name-side" style={{ color: getRecipeStatusColor(a.side) }}>{a.side}</small> : <div className="dish-placeholder-side"><Plus size={10}/> Yan</div>}
                     </div>
@@ -259,34 +278,34 @@ export default function MenuTab() {
         })}
       </div>
 
-      <div className="smart-menu-actions" style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: currentUser?.name === 'Misafir' ? '1fr' : 'repeat(3, 1fr)', gap: '10px' }}>
+      <div className="smart-menu-actions" style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
          {(() => {
            let planned = 0;
            currentDays.forEach(d => {
              const data = mutfak.menu[d.iso] || {};
-             if (data.k || data.kdis || data.ksp) planned++;
-             if (data.a || data.adis || data.asp) planned++;
+             if (data.k || data.kdis || data.ksp || data.katla) planned++;
+             if (data.a || data.adis || data.asp || data.aatla) planned++;
            });
            const isComplete = planned >= 14;
            return (
              <div className={`smart-pill ${isComplete ? 'complete' : ''}`} style={{ width: '100%' }}>
-                <span style={{ fontSize: '24px', pointerEvents: 'none' }}>{isComplete ? '✅' : '📊'}</span>
+                <span style={{ fontSize: '20px', pointerEvents: 'none' }}>{isComplete ? '✅' : '📊'}</span>
                 <span style={{ pointerEvents: 'none' }}>{planned}/14 Dolu</span>
              </div>
            );
          })()}
-         {currentUser?.name !== 'Misafir' && (
-           <>
-             <button className="smart-btn lucky" onClick={handleLuckyFill}>
-                <span style={{ fontSize: '24px', pointerEvents: 'none' }}>🎲</span>
-                <span style={{ pointerEvents: 'none' }}>Şanslı Hisset</span>
-             </button>
-             <button className="smart-btn shop" onClick={() => setShowQuickShop(true)}>
-                <span style={{ fontSize: '24px', pointerEvents: 'none' }}>🛒</span>
-                <span style={{ pointerEvents: 'none' }}>Hızlı Market</span>
-             </button>
-           </>
-         )}
+         <button className="smart-btn lucky" onClick={handleLuckyFill}>
+            <span style={{ fontSize: '20px', pointerEvents: 'none' }}>🎲</span>
+            <span style={{ pointerEvents: 'none' }}>Şanslı Hisset</span>
+         </button>
+         <button className="smart-btn shop" onClick={() => setShowQuickShop(true)}>
+            <span style={{ fontSize: '20px', pointerEvents: 'none' }}>🛒</span>
+            <span style={{ pointerEvents: 'none' }}>Hızlı Market</span>
+         </button>
+         <button className="smart-btn skip-history" onClick={() => setShowSkipHistory(true)}>
+            <span style={{ fontSize: '20px', pointerEvents: 'none' }}>⏭️</span>
+            <span style={{ pointerEvents: 'none' }}>Atlanan ({mutfak.atlananOgunler?.length || 0})</span>
+         </button>
       </div>
 
       <ActionSheet
@@ -339,6 +358,43 @@ export default function MenuTab() {
       </ActionSheet>
 
       <ActionSheet
+        isOpen={!!showSkipMeal}
+        onClose={() => setShowSkipMeal(null)}
+        title={showSkipMeal?.ml === 'k' ? '⏭️ Kahvaltıyı Atla' : '⏭️ Akşam Yemeğini Atla'}
+      >
+        {showSkipMeal && (
+          <SkipMealForm 
+            dateIso={showSkipMeal.dt}
+            mealKey={showSkipMeal.ml}
+            onConfirm={(info) => {
+              setSkipMeal(showSkipMeal.dt, showSkipMeal.ml, info);
+              setShowSkipMeal(null);
+              toast.success('Öğün atlama kaydedildi! ⏭️');
+            }}
+            onViewHistory={() => {
+              setShowSkipMeal(null);
+              setShowSkipHistory(true);
+            }}
+          />
+        )}
+      </ActionSheet>
+
+      <ActionSheet
+        isOpen={showSkipHistory}
+        onClose={() => setShowSkipHistory(false)}
+        title="📋 Atlanan Öğünler Listesi"
+        fullHeight
+      >
+        <SkipMealHistoryModal 
+          atlananOgunler={mutfak.atlananOgunler || []}
+          onRemove={(id, dt, ml) => {
+            removeSkipMeal(id, dt, ml);
+          }}
+          onClose={() => setShowSkipHistory(false)}
+        />
+      </ActionSheet>
+
+      <ActionSheet
         isOpen={!!showPicker}
         onClose={() => { setShowPicker(null); setSearchQuery(''); }}
         title={showPicker?.ml === 'k' ? '☀️ Kahvaltı Seçimi' : '🌙 Akşam Yemeği Seçimi'}
@@ -370,8 +426,15 @@ export default function MenuTab() {
                   </div>
 
                   <div className="quick-actions-row">
-                    <button className="qa-btn del" onClick={() => { setShowDelivery(showPicker); setShowPicker(null); }}><Truck size={16}/> Sipariş</button>
-                    <button className="qa-btn out" onClick={() => { setShowEatOut(showPicker); setShowPicker(null); }}><UtensilsCrossed size={16}/> Dışarıda</button>
+                    <button className="qa-btn del" onClick={() => { setShowDelivery(showPicker); setShowPicker(null); }}>
+                      <Truck size={15}/> Sipariş
+                    </button>
+                    <button className="qa-btn out" onClick={() => { setShowEatOut(showPicker); setShowPicker(null); }}>
+                      <UtensilsCrossed size={15}/> Dışarıda
+                    </button>
+                    <button className="qa-btn skip" onClick={() => { setShowSkipMeal(showPicker); setShowPicker(null); }}>
+                      <FastForward size={15}/> Öğün Atla
+                    </button>
                   </div>
                 </>
               )}
@@ -436,12 +499,32 @@ export default function MenuTab() {
                                 <ShoppingCart size={16} color="#059669" />
                               </button>
                             )}
-                            <button className="recipe-select-btn" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml]: r.n }); setShowPicker(null); setSearchQuery(''); }}>
+                            <button className="recipe-select-btn" onClick={() => { 
+                              updateMenuDetail(showPicker.dt, { 
+                                [showPicker.ml]: r.n, 
+                                [showPicker.ml + 'atla']: false, 
+                                [showPicker.ml + 'reason']: '',
+                                [showPicker.ml + 'dis']: false, 
+                                [showPicker.ml + 'sp']: false 
+                              }); 
+                              setShowPicker(null); 
+                              setSearchQuery(''); 
+                              toast.success(`${r.n} seçildi! 🍲`);
+                            }}>
                               <span className="plus">+</span>
                               <span className="label">Ana</span>
                               <span className="sub">menü</span>
                             </button>
-                            <button className="recipe-select-btn" onClick={() => { updateMenuDetail(showPicker.dt, { [showPicker.ml + '2']: r.n }); setShowPicker(null); setSearchQuery(''); }}>
+                            <button className="recipe-select-btn" onClick={() => { 
+                              updateMenuDetail(showPicker.dt, { 
+                                [showPicker.ml + '2']: r.n, 
+                                [showPicker.ml + 'atla']: false,
+                                [showPicker.ml + 'reason']: ''
+                              }); 
+                              setShowPicker(null); 
+                              setSearchQuery(''); 
+                              toast.success(`${r.n} yan menüye eklendi! 🥗`);
+                            }}>
                               <span className="plus">+</span>
                               <span className="label">Yan</span>
                               <span className="sub">menü</span>
@@ -481,11 +564,14 @@ export default function MenuTab() {
         .menu-row { display: grid; grid-template-columns: 60px 1fr 1fr; background: var(--card); border-radius: 20px; border: 1px solid var(--brd); overflow: hidden; min-height: 80px; }
         .menu-row.today { border: 2px solid var(--mutfak); box-shadow: 0 0 15px rgba(236, 72, 153, 0.2); }
         
-        .day-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02); border-right: 1px solid var(--brd); }
+        .day-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.02); border-right: 1px solid var(--brd); position: relative; }
         .d-name { font-size: 10px; font-weight: 800; opacity: 0.6; }
         .d-num { font-size: 18px; font-weight: 900; }
+        .clear-day-btn { position: absolute; bottom: 4px; background: none; border: none; color: #ef4444; opacity: 0.6; cursor: pointer; padding: 4px; }
+        .clear-day-btn:hover { opacity: 1; }
 
-        .meal-cell-container { display: flex; align-items: center; justify-content: center; padding: 5px; border-right: 1px solid var(--brd); }
+        .meal-cell-container { display: flex; align-items: center; justify-content: center; padding: 5px; border-right: 1px solid var(--brd); transition: background-color 0.2s; }
+        .meal-cell-container.atla { background: rgba(99, 102, 241, 0.04); }
         .meal-content-split { width: 100%; display: flex; flex-direction: column; gap: 4px; }
         .dish-zone { position: relative; flex: 1; display: flex; align-items: center; justify-content: center; border-radius: 12px; min-height: 32px; transition: all 0.2s; cursor: pointer; }
         .missing-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #ef4444; border-radius: 50%; box-shadow: 0 0 6px rgba(239, 68, 68, 0.6); z-index: 2; animation: dot-pulse 2s infinite; }
@@ -497,9 +583,10 @@ export default function MenuTab() {
         .dish-placeholder { font-size: 10px; color: var(--txt-light); display: flex; align-items: center; gap: 4px; }
         .dish-placeholder-side { font-size: 9px; color: var(--txt-light); opacity: 0.5; }
 
-        .status-label { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 8px; }
+        .status-label { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 8px; text-align: center; }
         .status-label.out { background: #EBF5FB; color: #2980B9; }
         .status-label.del { background: #FEF9E7; color: #D4AC0D; }
+        .status-label.skip { background: #EEF2FF; color: #4F46E5; border: 1px dashed #C7D2FE; font-size: 9.5px; }
 
         .selection-summary { background: var(--bg); padding: 8px; border-radius: 12px; margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .selection-summary div { font-size: 11px; padding: 6px; border-radius: 8px; border: 1px solid transparent; }
@@ -531,13 +618,12 @@ export default function MenuTab() {
         
         .add-missing-btn { align-self: flex-start; margin-top: 8px; font-size: 11px; background: var(--bg); border: 1px solid var(--brd); padding: 6px 12px; border-radius: 10px; cursor: pointer; color: var(--txt-light); font-weight: 600; width: 100%; text-align: center; }
 
-        .quick-actions-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .qa-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; border-radius: 10px; border: 1px solid var(--brd); background: var(--bg); font-weight: 700; font-size: 11px; cursor: pointer; }
-        .qa-btn.del { color: #D4AC0D; }
-        .qa-btn.out { color: #2980B9; }
-
-        .search-box { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 15px; margin-bottom: 15px; }
-        .search-box input { flex: 1; border: none; background: none; outline: none; font-size: 14px; }
+        .quick-actions-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .qa-btn { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 10px 6px; border-radius: 12px; border: 1px solid var(--brd); background: var(--bg); font-weight: 700; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+        .qa-btn.del { color: #D4AC0D; border-color: #FEF9E7; }
+        .qa-btn.out { color: #2980B9; border-color: #EBF5FB; }
+        .qa-btn.skip { color: #4F46E5; background: #EEF2FF; border-color: #C7D2FE; }
+        .qa-btn:active { transform: scale(0.96); }
 
         .picker-categories { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0 15px; margin-bottom: 5px; scrollbar-width: none; }
         .picker-categories::-webkit-scrollbar { display: none; }
@@ -566,7 +652,7 @@ export default function MenuTab() {
           line-height: 1.1;
           max-height: 2.2em;
           text-align: left;
-          padding-left: 28px; /* Emoji genişliği (20px) + Gap (8px) */
+          padding-left: 28px;
         }
         .ri-btns { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
         
@@ -615,7 +701,7 @@ export default function MenuTab() {
           background: white; 
           color: var(--txt); 
           font-family: 'Fraunces', serif;
-          font-size: 11px; 
+          font-size: 10px; 
           font-weight: 800; 
           letter-spacing: -0.1px;
           cursor: pointer; 
@@ -626,7 +712,8 @@ export default function MenuTab() {
         .smart-btn:active { transform: scale(0.95); opacity: 0.8; }
         .smart-btn.lucky { border-color: rgba(139, 92, 246, 0.15); color: #7c3aed; background: linear-gradient(135deg, #ffffff, #f5f3ff); }
         .smart-btn.shop { border-color: rgba(236, 72, 153, 0.15); color: #db2777; background: linear-gradient(135deg, #ffffff, #fdf2f8); }
-        .smart-btn span[style*="font-size: 24px"] { font-size: 18px !important; margin-bottom: 2px; }
+        .smart-btn.skip-history { border-color: rgba(99, 102, 241, 0.2); color: #4f46e5; background: linear-gradient(135deg, #ffffff, #eef2ff); }
+        .smart-btn span[style*="font-size: 20px"] { margin-bottom: 2px; }
 
         .period-btn { width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--brd); background: white; font-size: 13px; font-weight: 800; color: var(--txt); cursor: pointer; transition: all 0.2s; text-align: left; }
         .period-btn:hover { background: var(--bg); border-color: var(--mutfak); color: var(--mutfak); }
@@ -635,6 +722,357 @@ export default function MenuTab() {
         .suggestion-item { padding: 10px; cursor: pointer; font-size: 13px; font-weight: 700; color: #333; }
         .suggestion-item:hover { background: var(--bg); }
       `}</style>
+    </div>
+  );
+}
+
+function SkipMealForm({ dateIso, mealKey, onConfirm, onViewHistory }) {
+  const currentUser = useStore(state => state.currentUser);
+  const [reason, setReason] = useState('Aralıklı Oruç (IF)');
+  const [customReason, setCustomReason] = useState('');
+  const [skippedBy, setSkippedBy] = useState(currentUser?.name || 'Görkem');
+  const [note, setNote] = useState('');
+
+  const quickReasons = [
+    { label: 'Aralıklı Oruç (IF)', emoji: '⏳' },
+    { label: 'Tokluk / İştahsızlık', emoji: '😌' },
+    { label: 'Diyet / Detoks', emoji: '🥗' },
+    { label: 'Sadece Kahve / Atıştırma', emoji: '☕' },
+    { label: 'Geç Kahvaltı', emoji: '🍳' },
+    { label: 'Vakit Yoktu / Yoğunluk', emoji: '⏰' },
+    { label: 'Dışarıda Atıştırdım', emoji: '🥨' },
+    { label: 'Diğer', emoji: '✍️' }
+  ];
+
+  const handleSave = () => {
+    const finalReason = reason === 'Diğer' ? (customReason.trim() || 'Özel Sebep') : reason;
+    onConfirm({
+      reason: finalReason,
+      skippedBy,
+      note: note.trim()
+    });
+  };
+
+  return (
+    <div className="modal-form">
+      <div className="form-group">
+        <label>Öğünü Kim Atlıyor?</label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '6px' }}>
+          {['Görkem', 'Esra', 'İkimiz'].map(name => (
+            <button
+              key={name}
+              type="button"
+              onClick={() => setSkippedBy(name)}
+              style={{
+                padding: '10px',
+                borderRadius: '12px',
+                border: skippedBy === name ? '2px solid #6366F1' : '1px solid var(--brd)',
+                background: skippedBy === name ? '#EEF2FF' : 'white',
+                color: skippedBy === name ? '#4F46E5' : 'var(--txt)',
+                fontWeight: 700,
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {name === 'Görkem' ? '👨‍💻 Görkem' : name === 'Esra' ? '👩‍🍳 Esra' : '👫 İkimiz'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label>Atlama Sebebi</label>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
+          {quickReasons.map(r => (
+            <button
+              key={r.label}
+              type="button"
+              onClick={() => setReason(r.label)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 12px',
+                borderRadius: '12px',
+                border: reason === r.label ? '2px solid #6366F1' : '1px solid var(--brd)',
+                background: reason === r.label ? '#EEF2FF' : 'white',
+                color: reason === r.label ? '#4F46E5' : 'var(--txt)',
+                fontWeight: 600,
+                fontSize: '12px',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <span>{r.emoji}</span>
+              <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {reason === 'Diğer' && (
+        <div className="form-group animate-fadeIn">
+          <label>Özel Sebep Belirtin</label>
+          <input
+            type="text"
+            placeholder="Örn: Mide rahatsızlığı, toplantı..."
+            value={customReason}
+            onChange={e => setCustomReason(e.target.value)}
+            autoFocus
+          />
+        </div>
+      )}
+
+      <div className="form-group">
+        <label>Ek Not (İsteğe bağlı)</label>
+        <input
+          type="text"
+          placeholder="Örn: Akşam hafif meyve yenilecek"
+          value={note}
+          onChange={e => setNote(e.target.value)}
+        />
+      </div>
+
+      <button
+        className="submit-btn"
+        onClick={handleSave}
+        style={{
+          background: 'linear-gradient(135deg, #6366F1, #4F46E5)',
+          color: 'white',
+          fontWeight: 800,
+          boxShadow: '0 4px 14px rgba(99, 102, 241, 0.3)',
+          marginTop: '10px'
+        }}
+      >
+        ⏭️ Öğünü Atla & Listeye Kaydet
+      </button>
+
+      {onViewHistory && (
+        <button
+          type="button"
+          onClick={onViewHistory}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#6366F1',
+            fontWeight: 700,
+            fontSize: '13px',
+            cursor: 'pointer',
+            padding: '10px',
+            textAlign: 'center',
+            width: '100%',
+            marginTop: '6px'
+          }}
+        >
+          📋 Tüm Atlanan Öğünler Listesini Görüntüle →
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SkipMealHistoryModal({ atlananOgunler = [], onRemove, onClose }) {
+  const [filterUser, setFilterUser] = useState('hepsi');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filtered = (atlananOgunler || []).filter(item => {
+    const matchUser = filterUser === 'hepsi' || item.skippedBy?.toLowerCase().includes(filterUser.toLowerCase());
+    const matchSearch = (item.reason || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (item.note || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (item.dt || '').includes(searchTerm);
+    return matchUser && matchSearch;
+  });
+
+  const totalBreakfast = (atlananOgunler || []).filter(x => x.ml === 'k').length;
+  const totalDinner = (atlananOgunler || []).filter(x => x.ml === 'a').length;
+
+  const formatDate = (isoStr) => {
+    if (!isoStr) return '';
+    try {
+      const parts = isoStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'short' });
+      }
+    } catch {
+      // fallback
+    }
+    return isoStr;
+  };
+
+  return (
+    <div className="skip-history-container" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {/* Stats Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: '8px'
+      }}>
+        <div className="glass" style={{ padding: '10px 8px', borderRadius: '14px', textAlign: 'center', background: '#F8FAFC' }}>
+          <small style={{ fontSize: '10px', color: '#64748B', fontWeight: 700, display: 'block' }}>TOPLAM</small>
+          <strong style={{ fontSize: '18px', color: '#1E293B' }}>{atlananOgunler.length}</strong>
+        </div>
+        <div className="glass" style={{ padding: '10px 8px', borderRadius: '14px', textAlign: 'center', background: '#FEF3C7' }}>
+          <small style={{ fontSize: '10px', color: '#D97706', fontWeight: 700, display: 'block' }}>☀️ KAHVALTI</small>
+          <strong style={{ fontSize: '18px', color: '#B45309' }}>{totalBreakfast}</strong>
+        </div>
+        <div className="glass" style={{ padding: '10px 8px', borderRadius: '14px', textAlign: 'center', background: '#EDE9FE' }}>
+          <small style={{ fontSize: '10px', color: '#7C3AED', fontWeight: 700, display: 'block' }}>🌙 AKŞAM</small>
+          <strong style={{ fontSize: '18px', color: '#6D28D9' }}>{totalDinner}</strong>
+        </div>
+      </div>
+
+      {/* User filter pills */}
+      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
+        {['hepsi', 'görkem', 'esra', 'ikimiz'].map(u => (
+          <button
+            key={u}
+            type="button"
+            onClick={() => setFilterUser(u)}
+            style={{
+              padding: '6px 14px',
+              borderRadius: '20px',
+              border: filterUser === u ? '1px solid #6366F1' : '1px solid var(--brd)',
+              background: filterUser === u ? '#6366F1' : 'white',
+              color: filterUser === u ? 'white' : 'var(--txt)',
+              fontSize: '11px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textTransform: 'capitalize',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {u === 'hepsi' ? 'Tümü' : u === 'ikimiz' ? '👫 İkimiz' : u === 'görkem' ? '👨‍💻 Görkem' : '👩‍🍳 Esra'}
+          </button>
+        ))}
+      </div>
+
+      {/* Search Filter */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: 'var(--bg)', border: '1px solid var(--brd)', borderRadius: '12px' }}>
+        <Search size={16} color="#64748B" />
+        <input 
+          type="text" 
+          placeholder="Sebep veya not ara..." 
+          value={searchTerm} 
+          onChange={e => setSearchTerm(e.target.value)}
+          style={{ flex: 1, border: 'none', background: 'none', outline: 'none', fontSize: '13px', color: 'var(--txt)' }}
+        />
+        {searchTerm && (
+          <button onClick={() => setSearchTerm('')} style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer' }}>
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      {/* List */}
+      <div style={{ maxHeight: '340px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '2px' }}>
+        {filtered.map(item => (
+          <div
+            key={item.id}
+            className="glass"
+            style={{
+              padding: '12px',
+              borderRadius: '16px',
+              border: '1px solid var(--brd)',
+              background: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                background: item.ml === 'k' ? '#FEF3C7' : '#EDE9FE',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                flexShrink: 0
+              }}>
+                {item.ml === 'k' ? '☀️' : '🌙'}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <strong style={{ fontSize: '13px', color: 'var(--txt)' }}>{formatDate(item.dt)}</strong>
+                  <span style={{
+                    fontSize: '10px',
+                    fontWeight: 800,
+                    padding: '2px 6px',
+                    borderRadius: '6px',
+                    background: '#F1F5F9',
+                    color: '#475569'
+                  }}>
+                    {item.ml === 'k' ? 'Kahvaltı' : 'Akşam'}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    color: '#6366F1',
+                    background: '#EEF2FF',
+                    padding: '2px 8px',
+                    borderRadius: '8px'
+                  }}>
+                    🏷️ {item.reason}
+                  </span>
+                  {item.skippedBy && (
+                    <span style={{ fontSize: '11px', color: '#64748B', fontWeight: 600 }}>
+                      • {item.skippedBy}
+                    </span>
+                  )}
+                </div>
+                {item.note && (
+                  <p style={{ fontSize: '11px', color: '#94A3B8', fontStyle: 'italic', margin: '2px 0 0' }}>
+                    "{item.note}"
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Bu atlama kaydını silmek ve öğünü sıfırlamak istiyor musunuz?')) {
+                  onRemove(item.id, item.dt, item.ml);
+                  toast.success('Kayıt silindi.');
+                }
+              }}
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '10px',
+                border: '1px solid #FEE2E2',
+                background: '#FEF2F2',
+                color: '#EF4444',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+              title="Kaydı Sil"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        ))}
+
+        {filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--txt-light)' }}>
+            <span style={{ fontSize: '36px', display: 'block', marginBottom: '8px' }}>🥗</span>
+            <strong style={{ fontSize: '14px', display: 'block', color: 'var(--txt)' }}>Kayıt Bulunamadı</strong>
+            <p style={{ fontSize: '12px', margin: '4px 0 0', opacity: 0.7 }}>
+              Henüz atlanan bir öğün kaydı yok veya filtrelemeye uyan sonuç bulunamadı.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
