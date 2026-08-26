@@ -80,6 +80,7 @@ const DEFAULT_STATE = {
     alisveris: [],
     tarifler: [],
     siparisler: [],    // { id, dt, fr, wh, pr, u, tm }
+    atlananOgunler: [], // { id, dt, ml, mealTitle, reason, skippedBy, note, createdAt }
     restaurantlar: [], // list of strings for auto-fill
     su: {
       level1: 80,
@@ -1610,9 +1611,15 @@ async function pushSaglikAyarlarToSupabase(sleepGoals) {
 
 async function pushMutfakSohbetToSupabase(msg) {
   try {
-    await supabase.from('mutfak_sohbet').upsert({
-      id: String(msg.id), kisi: msg.w, mesaj: msg.t, tarih: msg.d || new Date().toISOString()
-    });
+    const familyId = DEFAULT_FID;
+    const payload = {
+      id: String(msg.id),
+      kisi: msg.w || msg.kisi || 'Görkem',
+      mesaj: msg.t || msg.mesaj || '',
+      tarih: msg.d || msg.tarih || new Date().toISOString(),
+      family_id: familyId
+    };
+    await supabase.from('mutfak_sohbet').upsert(payload);
   } catch(e) { console.warn('Mutfak Sohbet Hatası:', e); }
 }
 
@@ -3841,7 +3848,25 @@ const useStore = create(
               if (sleep) s.sleepGoals = sleep;
             }
             if (dbMutfakSohbet.data) {
-              m.sohbet = dbMutfakSohbet.data.map(msg => ({ id: msg.id, kisi: msg.kisi, mesaj: msg.mesaj, tarih: msg.tarih })).reverse();
+              const mappedNotes = dbMutfakSohbet.data.map((msg, idx) => {
+                const author = msg.kisi || msg.w || 'Görkem';
+                const text = msg.mesaj || msg.t || '';
+                const date = msg.tarih || msg.d || new Date().toISOString();
+                return {
+                  id: String(msg.id || Date.now() + idx),
+                  t: text,
+                  mesaj: text,
+                  w: author,
+                  kisi: author,
+                  d: date,
+                  tarih: date,
+                  r: false,
+                  x: 10 + (idx % 3) * 28,
+                  y: 12 + (idx % 4) * 20
+                };
+              });
+              m.sohbet = mappedNotes.slice(0, 15);
+              m.history = mappedNotes;
             }
             if (dbKartlar.data && dbKartlar.data.length > 0) {
               f.kartlar = dbKartlar.data.map(k => {
@@ -4069,14 +4094,14 @@ const useStore = create(
               const newMenu = {};
               menu.data.forEach(item => {
                 if (!newMenu[item.gun]) newMenu[item.gun] = {
-                  k: '', k2: '', kdis: false, ksp: false,
-                  a: '', a2: '', adis: false, asp: false
+                  k: '', k2: '', kdis: false, ksp: false, katla: false, kreason: '',
+                  a: '', a2: '', adis: false, asp: false, aatla: false, areason: ''
                 };
                 const val = item.yemek_adi;
-                if (item.ogun.endsWith('dis') || item.ogun.endsWith('sp')) {
-                  newMenu[item.gun][item.ogun] = val === 'true';
+                if (item.ogun.endsWith('dis') || item.ogun.endsWith('sp') || item.ogun.endsWith('atla')) {
+                  newMenu[item.gun][item.ogun] = (val === 'true' || val === true);
                 } else {
-                  newMenu[item.gun][item.ogun] = val;
+                  newMenu[item.gun][item.ogun] = (val === 'null' || val === 'undefined') ? '' : val;
                 }
               });
               m.menu = newMenu;
@@ -4257,6 +4282,71 @@ const useStore = create(
               if (group3Tables.includes(table)) {
                 console.log(`🔄 [Realtime] ${table} değişti, Grup 3 verileri eşitleniyor...`);
                 get().fetchGroup3Data();
+              }
+
+              // 7. Mutfak Buzdolabı Sohbeti / Notları Güncellemesi & Bildirim
+              if (table === 'mutfak_sohbet') {
+                console.log(`💬 [Realtime] mutfak_sohbet değişti:`, payload.eventType);
+                if (payload.eventType === 'INSERT') {
+                  const newRow = payload.new;
+                  const currentUserName = state.currentUser?.name || '';
+                  const author = newRow.kisi || newRow.w || 'Aile Üyesi';
+                  const text = newRow.mesaj || newRow.t || '';
+                  const noteDate = newRow.tarih || newRow.d || new Date().toISOString();
+
+                  const mappedNote = {
+                    id: String(newRow.id),
+                    t: text,
+                    mesaj: text,
+                    w: author,
+                    kisi: author,
+                    d: noteDate,
+                    tarih: noteDate,
+                    r: false,
+                    x: Math.floor(Math.random() * 45) + 15,
+                    y: Math.floor(Math.random() * 45) + 15
+                  };
+
+                  const existingNotes = state.mutfak?.sohbet || [];
+                  if (!existingNotes.some(n => String(n.id) === String(mappedNote.id))) {
+                    set(prev => ({
+                      mutfak: {
+                        ...prev.mutfak,
+                        sohbet: [mappedNote, ...(prev.mutfak?.sohbet || [])].slice(0, 20),
+                        history: [mappedNote, ...(prev.mutfak?.history || [])].slice(0, 200)
+                      }
+                    }));
+
+                    // Karşı taraftan gelen not ise bildirim gönder
+                    if (currentUserName && author.toLowerCase().trim() !== currentUserName.toLowerCase().trim()) {
+                      try {
+                        notificationService.send('Buzdolabında Yeni Not! 📝', `${author}: "${text}"`);
+                      } catch (err) {
+                        console.warn('Web notification error:', err);
+                      }
+                      toast(`💬 ${author} buzdolabına not yapıştırdı:\n"${text}"`, {
+                        icon: author.toLowerCase().includes('esra') ? '👩‍🍳' : '👨‍💻',
+                        duration: 6000,
+                        style: {
+                          background: '#1E1B4B',
+                          color: '#FFFFFF',
+                          fontWeight: 700,
+                          borderRadius: '16px',
+                          border: '1px solid #6366F1'
+                        }
+                      });
+                    }
+                  }
+                } else if (payload.eventType === 'DELETE') {
+                  const delId = String(payload.old?.id);
+                  set(prev => ({
+                    mutfak: {
+                      ...prev.mutfak,
+                      sohbet: (prev.mutfak?.sohbet || []).filter(n => String(n.id) !== delId),
+                      history: (prev.mutfak?.history || []).filter(n => String(n.id) !== delId)
+                    }
+                  }));
+                }
               }
             }
           )
@@ -6409,18 +6499,42 @@ const useStore = create(
 
       updateMenuDetail: async (gun, details) => {
         const state = get();
+        const existingDay = state.mutfak.menu[gun] || {};
+        const mergedDay = { ...existingDay, ...details };
+
+        // Normalize booleans
+        ['katla', 'aatla', 'kdis', 'adis', 'ksp', 'asp'].forEach(k => {
+          if (details[k] !== undefined) {
+            mergedDay[k] = (details[k] === true || details[k] === 'true');
+          }
+        });
+
         const yeniMenu = {
           ...state.mutfak.menu,
-          [gun]: { ...(state.mutfak.menu[gun] || {}), ...details }
-    };
-        set({ mutfak: { ...state.mutfak, menu: yeniMenu } });
+          [gun]: mergedDay
+        };
+
+        // If atla is explicitly set to false, also remove corresponding item from atlananOgunler
+        let atlananOgunler = state.mutfak.atlananOgunler || [];
+        if (details.katla === false) {
+          atlananOgunler = atlananOgunler.filter(x => !(x.dt === gun && x.ml === 'k'));
+        }
+        if (details.aatla === false) {
+          atlananOgunler = atlananOgunler.filter(x => !(x.dt === gun && x.ml === 'a'));
+        }
+
+        set({ 
+          mutfak: { 
+            ...state.mutfak, 
+            menu: yeniMenu,
+            atlananOgunler
+          } 
+        });
         
         // GÖLGE YAZIM
         Object.entries(details).forEach(([key, value]) => {
           pushMutfakMenuToSupabase(gun, key, String(value));
         });
-        
-
       },
 
       syncRecipesFromData: () => {
@@ -6455,14 +6569,14 @@ const useStore = create(
 
           console.log(`📅 Checking ${iso}:`, dayData);
 
-          if (!dayData.k && !dayData.kdis && !dayData.ksp) {
+          if (!dayData.k && !dayData.kdis && !dayData.ksp && !dayData.katla) {
             const pool = bPool.length > 0 ? bPool : recipes;
             const chosen = pool[Math.floor(Math.random() * pool.length)];
             dayData.k = chosen.n;
             changed = true;
             console.log(`✅ Filled Breakfast for ${iso}: ${chosen.n}`);
           }
-          if (!dayData.a && !dayData.adis && !dayData.asp) {
+          if (!dayData.a && !dayData.adis && !dayData.asp && !dayData.aatla) {
             const pool = dPool.length > 0 ? dPool : recipes;
             const chosen = pool[Math.floor(Math.random() * pool.length)];
             dayData.a = chosen.n;
@@ -6511,7 +6625,9 @@ const useStore = create(
           [prefix + 'dis']: true,
           [prefix]: fr || 'Dışarıda',
           [prefix + '2']: null,
-          [prefix + 'sp']: false
+          [prefix + 'sp']: false,
+          [prefix + 'atla']: false,
+          [prefix + 'reason']: null
         };
 
         set({ mutfak: { ...state.mutfak, restaurantlar: yeniRestaurants } });
@@ -6557,7 +6673,9 @@ const useStore = create(
         const details = {
           [prefix + 'sp']: true,
           [prefix]: wh || fr,
-          [prefix + 'dis']: false
+          [prefix + 'dis']: false,
+          [prefix + 'atla']: false,
+          [prefix + 'reason']: null
         };
 
         set({ mutfak: { ...state.mutfak, siparisler: yeniSiparisler, restaurantlar: yeniRestaurants } });
@@ -6572,6 +6690,86 @@ const useStore = create(
           kim_odedi: newOrder.u,
           notlar: newOrder.tm
         });
+      },
+
+      setSkipMeal: async (dt, ml, info = {}) => {
+        const state = get();
+        const prefix = ml === 'k' ? 'k' : 'a';
+        const mealTitle = ml === 'k' ? 'Kahvaltı' : 'Akşam Yemeği';
+        const reason = info.reason || 'Belirtilmedi';
+        const skippedBy = info.skippedBy || state.currentUser?.name || 'Görkem';
+        const note = info.note || '';
+
+        const newSkipRecord = {
+          id: Date.now(),
+          dt,
+          ml,
+          mealTitle,
+          reason,
+          skippedBy,
+          note,
+          createdAt: new Date().toISOString()
+        };
+
+        const existingList = state.mutfak.atlananOgunler || [];
+        const updatedList = [newSkipRecord, ...existingList.filter(item => !(item.dt === dt && item.ml === ml))].slice(0, 200);
+
+        const details = {
+          [prefix + 'atla']: true,
+          [prefix]: 'Öğün Atlandı',
+          [prefix + '2']: null,
+          [prefix + 'dis']: false,
+          [prefix + 'sp']: false,
+          [prefix + 'reason']: reason
+        };
+
+        set({
+          mutfak: {
+            ...state.mutfak,
+            atlananOgunler: updatedList
+          }
+        });
+
+        get().updateMenuDetail(dt, details);
+
+        try {
+          pushGenericToSupabase('mutfak_atlanan_ogunler', {
+            id: String(newSkipRecord.id),
+            tarih: newSkipRecord.dt,
+            ogun: newSkipRecord.ml,
+            sebep: newSkipRecord.reason,
+            kullanici: newSkipRecord.skippedBy,
+            notlar: newSkipRecord.note
+          });
+        } catch (e) {
+          console.warn('Supabase sync skip record error:', e);
+        }
+      },
+
+      removeSkipMeal: async (skipId, dt, ml) => {
+        const state = get();
+        const updatedList = (state.mutfak.atlananOgunler || []).filter(s => s.id !== skipId);
+        set({
+          mutfak: {
+            ...state.mutfak,
+            atlananOgunler: updatedList
+          }
+        });
+
+        if (dt && ml) {
+          const prefix = ml === 'k' ? 'k' : 'a';
+          get().updateMenuDetail(dt, {
+            [prefix + 'atla']: false,
+            [prefix]: '',
+            [prefix + 'reason']: null
+          });
+        }
+
+        try {
+          await supabase.from('mutfak_atlanan_ogunler').delete().eq('id', String(skipId));
+        } catch (e) {
+          console.warn('Supabase delete skip error:', e);
+        }
       },
 
       addRecipe: async (recipe) => {
@@ -7037,17 +7235,25 @@ const useStore = create(
 
       addKitchenNote: async (text, writer) => {
         const state = get();
+        const author = writer || state.currentUser?.name || 'Görkem';
+        const cleanText = (text || '').trim();
+        if (!cleanText) return;
+
         const newNote = {
-          id: Date.now(),
-          t: text,
-          w: writer,
+          id: String(Date.now()),
+          t: cleanText,
+          mesaj: cleanText,
+          w: author,
+          kisi: author,
           d: new Date().toISOString(),
+          tarih: new Date().toISOString(),
           r: false,
-          x: Math.floor(Math.random() * 50) + 10,
-          y: Math.floor(Math.random() * 50) + 10
+          x: Math.floor(Math.random() * 45) + 15,
+          y: Math.floor(Math.random() * 45) + 15
         };
-        const yeniSohbet = [newNote, ...state.mutfak.sohbet].slice(0, 12);
-        const yeniHistory = [newNote, ...(state.mutfak.history || [])].slice(0, 100);
+
+        const yeniSohbet = [newNote, ...(state.mutfak?.sohbet || [])].slice(0, 20);
+        const yeniHistory = [newNote, ...(state.mutfak?.history || [])].slice(0, 200);
 
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, history: yeniHistory } });
         await pushMutfakSohbetToSupabase(newNote);
@@ -7055,40 +7261,43 @@ const useStore = create(
 
       updateNotePosition: (noteId, x, y) => {
         const state = get();
-        const yeniSohbet = state.mutfak.sohbet.map(n =>
-          n.id === noteId ? { ...n, x, y } : n
+        const yeniSohbet = (state.mutfak?.sohbet || []).map(n =>
+          String(n.id) === String(noteId) ? { ...n, x, y } : n
         );
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet } });
-
       },
 
       markNoteAsRead: (noteId) => {
         const state = get();
-        const yeniSohbet = state.mutfak.sohbet.map(n => n.id === noteId ? { ...n, r: true } : n);
+        const yeniSohbet = (state.mutfak?.sohbet || []).map(n => String(n.id) === String(noteId) ? { ...n, r: true } : n);
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet } });
-
       },
 
-      removeNote: (noteId) => {
+      removeNote: async (noteId) => {
         const state = get();
-        const note = state.mutfak.sohbet.find(n => n.id === noteId);
-        const yeniSohbet = state.mutfak.sohbet.filter(n => n.id !== noteId);
+        const strId = String(noteId);
+        const note = (state.mutfak?.sohbet || []).find(n => String(n.id) === strId);
+        const yeniSohbet = (state.mutfak?.sohbet || []).filter(n => String(n.id) !== strId);
+        const yeniHistory = (state.mutfak?.history || []).filter(n => String(n.id) !== strId);
+        const yeniArsiv = note ? [{ ...note, archDate: new Date().toISOString() }, ...(state.mutfak?.arsiv || [])].slice(0, 100) : (state.mutfak?.arsiv || []);
 
-        // When removed from board, move to archive just in case, but history already has it
-        const yeniArsiv = note ? [{ ...note, archDate: new Date().toISOString() }, ...state.mutfak.arsiv].slice(0, 100) : state.mutfak.arsiv;
-
-        set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
+        set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, history: yeniHistory, arsiv: yeniArsiv } });
+        try {
+          await supabase.from('mutfak_sohbet').delete().eq('id', strId);
+        } catch (e) {
+          console.warn('Delete note error:', e);
+        }
       },
 
       archiveNote: (noteId) => {
         const state = get();
-        const note = state.mutfak.sohbet.find(n => n.id === noteId);
+        const strId = String(noteId);
+        const note = (state.mutfak?.sohbet || []).find(n => String(n.id) === strId);
         if (!note) return;
-        const yeniSohbet = state.mutfak.sohbet.filter(n => n.id !== noteId);
-        const yeniArsiv = [{ ...note, archDate: new Date().toISOString() }, ...state.mutfak.arsiv].slice(0, 100);
+        const yeniSohbet = (state.mutfak?.sohbet || []).filter(n => String(n.id) !== strId);
+        const yeniArsiv = [{ ...note, archDate: new Date().toISOString() }, ...(state.mutfak?.arsiv || [])].slice(0, 100);
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
-        get().addLog('Not Arşivlendi', `${note.w} tarafından yazılan not arşive kaldırıldı.`);
-
+        get().addLog('Not Arşivlendi', `${note.w || note.kisi} tarafından yazılan not arşive kaldırıldı.`);
       },
 
       restoreNote: (noteId) => {

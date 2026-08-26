@@ -20,6 +20,7 @@ function FloatingHub() {
   
   const addKitchenNote = useStore(state => state.addKitchenNote);
   const archiveNote = useStore(state => state.archiveNote);
+  const removeNote = useStore(state => state.removeNote);
   const updateNotePosition = useStore(state => state.updateNotePosition);
   
   const [isOpen, setIsOpen] = useState(false);
@@ -36,10 +37,20 @@ function FloatingHub() {
       scrollToBottom();
     }
   }, [fridgeView, mutfak?.history]);
+
+  // Buzdolabı sohbeti bildirimlerini otomatik olarak açma
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
   
   const [focusedNote, setFocusedNote] = useState(null);
   const [noteText, setNoteText] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const notes = mutfak?.sohbet || [];
+  const currentUserName = currentUser?.name || 'Görkem';
+  const targetUserName = currentUserName.toLowerCase().includes('esra') ? 'Görkem' : 'Esra';
 
   const [expTitle, setExpTitle] = useState('');
   const [expAmount, setExpAmount] = useState('');
@@ -60,8 +71,23 @@ function FloatingHub() {
 
   const handleAddNote = () => {
     if (!noteText.trim()) return;
-    addKitchenNote(noteText, currentUser?.name || 'Görkem');
+    addKitchenNote(noteText, currentUserName);
     setNoteText('');
+    toast.success('Not buzdolabına yapıştırıldı! 📌');
+  };
+
+  const formatNoteDate = (iso) => {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const isToday = d.toDateString() === now.toDateString();
+      const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      if (isToday) return `Bugün ${time}`;
+      return `${d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} ${time}`;
+    } catch {
+      return '';
+    }
   };
 
   const handleAddExpense = async () => {
@@ -104,7 +130,7 @@ function FloatingHub() {
 
   return (
     <Portal>
-      {(isOpen || activeModal) && (
+      {(isOpen || activeModal === 'expense') && (
         <div 
           className="hub-overlay" 
           onClick={() => { setIsOpen(false); setActiveModal(null); }} 
@@ -118,7 +144,7 @@ function FloatingHub() {
             
             <header className="immersive-header">
               <div className="header-pill">
-                <Refrigerator size={18} />
+                <Refrigerator size={18} color="#2563eb" />
                 <h3>Buzdolabı Sohbeti</h3>
               </div>
               
@@ -127,13 +153,13 @@ function FloatingHub() {
                   className={fridgeView === 'board' ? 'active' : ''} 
                   onClick={() => setFridgeView('board')}
                 >
-                  📌 Kapak
+                  📌 Kapak ({notes.length})
                 </button>
                 <button 
                   className={fridgeView === 'history' ? 'active' : ''} 
                   onClick={() => setFridgeView('history')}
                 >
-                  📜 Geçmiş
+                  📜 Sohbet Geçmişi
                 </button>
               </div>
 
@@ -144,9 +170,25 @@ function FloatingHub() {
               <div className="immersive-notes-board" ref={constraintsRef}>
                 {notes.map((note, idx) => {
                   if (!note) return null;
-                  const posColor = (idx % 3 === 0) ? '#fff9c4' : (idx % 3 === 1 ? '#e3f2fd' : '#fce7f3');
+                  const text = note.t || note.mesaj || '';
+                  const writer = note.w || note.kisi || 'Görkem';
+                  const isEsra = writer.toLowerCase().includes('esra');
                   const isFocused = focusedNote === note.id;
                   
+                  const noteStyle = isEsra ? {
+                    backgroundColor: '#FFF1F2',
+                    border: '1.5px solid #FECDD3',
+                    magnetBg: 'radial-gradient(circle at 30% 30%, #F43F5E, #9F1239)',
+                    tagColor: '#BE123C',
+                    emoji: '👩‍🍳'
+                  } : {
+                    backgroundColor: (idx % 2 === 0) ? '#FEFCE8' : '#F5F3FF',
+                    border: (idx % 2 === 0) ? '1.5px solid #FEF08A' : '1.5px solid #DDD6FE',
+                    magnetBg: (idx % 2 === 0) ? 'radial-gradient(circle at 30% 30%, #EAB308, #854D0E)' : 'radial-gradient(circle at 30% 30%, #8B5CF6, #5B21B6)',
+                    tagColor: (idx % 2 === 0) ? '#854D0E' : '#6D28D9',
+                    emoji: '👨‍💻'
+                  };
+
                   return (
                     <motion.div 
                       key={note.id} 
@@ -159,7 +201,7 @@ function FloatingHub() {
                       animate={{
                         left: isFocused ? '50%' : (note.x || (10 + (idx % 3) * 30)) + '%',
                         top: isFocused ? '50%' : (note.y || (15 + (idx % 4) * 20)) + '%',
-                        scale: isFocused ? 1.4 : 1,
+                        scale: isFocused ? 1.35 : 1,
                         rotate: isFocused ? 0 : (idx % 10 - 5) * 2,
                         x: isFocused ? '-50%' : 0,
                         y: isFocused ? '-50%' : 0
@@ -167,13 +209,14 @@ function FloatingHub() {
                       className={`immersive-note-wrap ${isFocused ? 'focused' : ''}`}
                       onClick={() => setFocusedNote(isFocused ? null : note.id)}
                       style={{ 
-                        backgroundColor: posColor,
+                        backgroundColor: noteStyle.backgroundColor,
+                        border: noteStyle.border,
                         zIndex: isFocused ? 2000 : 10 + idx,
                         position: isFocused ? 'fixed' : 'absolute',
                         cursor: isFocused ? 'zoom-out' : 'grab',
-                        boxShadow: isFocused ? '0 25px 60px rgba(0,0,0,0.4)' : '3px 15px 30px rgba(0,0,0,0.15)'
+                        boxShadow: isFocused ? '0 25px 60px rgba(0,0,0,0.4)' : '3px 15px 30px rgba(0,0,0,0.12)'
                       }}
-                      whileDrag={{ scale: 1.1, zIndex: 1000, rotate: 0 }}
+                      whileDrag={{ scale: 1.08, zIndex: 1000, rotate: 0 }}
                       onDragEnd={(event, info) => {
                         if (!constraintsRef.current || isFocused) return;
                         const board = constraintsRef.current.getBoundingClientRect();
@@ -182,13 +225,45 @@ function FloatingHub() {
                         updateNotePosition(note.id, Math.max(5, Math.min(85, newX)), Math.max(5, Math.min(85, newY)));
                       }}
                     >
-                      <div className="immersive-magnet-cap" />
-                      <p className="note-text-premium" style={{ fontSize: isFocused ? '18px' : '15px' }}>{note.t}</p>
+                      <div className="immersive-magnet-cap" style={{ background: noteStyle.magnetBg }} />
+                      <div className="note-header-row">
+                        <span className="writer-tag" style={{ color: noteStyle.tagColor, fontWeight: 800 }}>
+                          {noteStyle.emoji} {writer}
+                        </span>
+                        <span className="note-time-mini">{formatNoteDate(note.d || note.tarih)}</span>
+                      </div>
+                      <p className="note-text-premium" style={{ fontSize: isFocused ? '18px' : '15px' }}>
+                        {text || 'Not içeriği'}
+                      </p>
                       <div className="note-footer-premium">
-                        <span className="writer-tag">{note.w}</span>
-                        {currentUser?.name !== 'Misafir' && (
-                          <button className="delete-btn-mini" onClick={(e) => { e.stopPropagation(); archiveNote(note.id); }} title="Arşivle"><Archive size={14} /></button>
-                        )}
+                        <span style={{ fontSize: '10px', opacity: 0.5 }}>📌 Kapağa İğneli</span>
+                        <div style={{ display: 'flex', gap: '4px', position: 'relative', zIndex: 30 }}>
+                          <button 
+                            className="delete-btn-mini" 
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              archiveNote(note.id); 
+                              toast.success('Not arşive kaldırıldı. 📦'); 
+                            }} 
+                            title="Arşivle"
+                          >
+                            <Archive size={14} />
+                          </button>
+                          <button 
+                            className="delete-btn-mini" 
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setConfirmDeleteId(note.id);
+                            }} 
+                            title="Sil"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   );
@@ -197,50 +272,105 @@ function FloatingHub() {
                 {notes.length === 0 && (
                   <div className="empty-immersive-msg">
                     <div className="empty-icon-wrap">📝</div>
-                    <p>Buzdolabı kapağı tertemiz!<br/>Bir not bırakmak ister misin?</p>
+                    <p>Buzdolabı kapağı tertemiz!<br/>Birbirinize tatlı bir not bırakın ✨</p>
                   </div>
                 )}
               </div>
             ) : (
               <div className="immersive-history-list">
                 {(mutfak.history || []).length > 0 ? (
-                  [...mutfak.history].sort((a, b) => new Date(a.d) - new Date(b.d)).map((log) => (
-                    <div key={log.id} className={`history-item ${log.w.toLowerCase()}`}>
-                      <div className="history-bubble">
-                        <p>{log.t}</p>
-                        <div className="history-meta">
-                          <span className="h-writer">{log.w}</span>
-                          <span className="h-date">{new Date(log.d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {new Date(log.d).toLocaleDateString()}</span>
+                  [...mutfak.history].sort((a, b) => new Date(a.d || a.tarih) - new Date(b.d || b.tarih)).map((log) => {
+                    const writer = log.w || log.kisi || 'Görkem';
+                    const text = log.t || log.mesaj || '';
+                    const isEsra = writer.toLowerCase().includes('esra');
+
+                    return (
+                      <div key={log.id} className={`history-item ${isEsra ? 'esra' : 'gorkem'}`}>
+                        <div className="history-bubble">
+                          <div className="history-author-header">
+                            <span className="h-avatar">{isEsra ? '👩‍🍳' : '👨‍💻'}</span>
+                            <strong>{writer}</strong>
+                          </div>
+                          <p>{text}</p>
+                          <div className="history-meta">
+                            <span className="h-date">{formatNoteDate(log.d || log.tarih)}</span>
+                            <button 
+                              className="h-delete-btn" 
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onTouchStart={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmDeleteId(log.id);
+                              }}
+                              title="Sil"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
-                  <div className="empty-history">Henüz geçmiş kaydı yok. ✨</div>
+                  <div className="empty-history">
+                    <span>💌</span>
+                    <p>Henüz geçmiş not kaydı yok. İlk notu aşağıdan yazabilirsiniz!</p>
+                  </div>
                 )}
                 <div ref={historyEndRef} />
               </div>
             )}
 
             <div className="immersive-input-wrap">
-              {currentUser?.name !== 'Misafir' ? (
-                <div className="input-glass-premium">
-                  <input 
-                    value={noteText} 
-                    onChange={e => setNoteText(e.target.value)} 
-                    placeholder="Mıknatıslı bir not yapıştır..."
-                    onKeyPress={e => e.key === 'Enter' && handleAddNote()}
-                  />
-                  <button onClick={handleAddNote} className="immersive-send-btn">
-                    <Send size={20} />
-                  </button>
-                </div>
-              ) : (
-                <div className="input-glass-premium" style={{ opacity: 0.6, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: 'var(--txt-light)', padding: '12px', fontWeight: 600 }}>Misafir modunda buzdolabına not yapıştırılamaz 🔒</span>
-                </div>
-              )}
+              <div className="input-glass-premium">
+                <input 
+                  value={noteText} 
+                  onChange={e => setNoteText(e.target.value)} 
+                  placeholder={`${targetUserName}'e mıknatıslı bir not yapıştır...`}
+                  onKeyPress={e => e.key === 'Enter' && handleAddNote()}
+                />
+                <button onClick={handleAddNote} className="immersive-send-btn" title="Notu Yapıştır">
+                  <Send size={20} />
+                </button>
+              </div>
             </div>
+
+            {/* Custom Confirmation Dialog */}
+            {confirmDeleteId && (
+              <div 
+                className="hub-confirm-overlay animate-fadeIn" 
+                onClick={() => setConfirmDeleteId(null)}
+              >
+                <div 
+                  className="hub-confirm-card" 
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="hub-confirm-icon">🗑️</div>
+                  <h4>Notu Silmek İstiyor musunuz?</h4>
+                  <p>Bu not buzdolabı kapağından ve sohbet geçmişinden kalıcı olarak silinecektir.</p>
+                  <div className="hub-confirm-actions">
+                    <button 
+                      className="hub-btn-cancel" 
+                      type="button" 
+                      onClick={() => setConfirmDeleteId(null)}
+                    >
+                      Vazgeç
+                    </button>
+                    <button 
+                      className="hub-btn-danger" 
+                      type="button"
+                      onClick={() => {
+                        removeNote(confirmDeleteId);
+                        setConfirmDeleteId(null);
+                        toast.success('Not silindi! 🗑️');
+                      }}
+                    >
+                      Evet, Sil
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

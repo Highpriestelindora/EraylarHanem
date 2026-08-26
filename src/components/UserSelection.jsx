@@ -26,26 +26,15 @@ export default function UserSelection() {
       emoji: '👩‍🍳', 
       color: '#FB7185',
       desc: 'Mutfak & Düzen'
-    },
-    { 
-      name: 'Misafir', 
-      emoji: '🕵️', 
-      color: '#10B981',
-      desc: 'Tüm Modüller'
     }
   ];
 
   const handleUserClick = (u) => {
-    if (u.name === 'Misafir') {
-      toast.success('Misafir modu ile giriş yapıldı! 🕵️');
-      setCurrentUser(u);
-    } else {
-      setSelectedUser(u);
-      setPin('');
-      setError('');
-      setFaceIdScanning(false);
-      setFaceIdSuccess(false);
-    }
+    setSelectedUser(u);
+    setPin('');
+    setError('');
+    setFaceIdScanning(false);
+    setFaceIdSuccess(false);
   };
 
   const handleKeyPress = (val) => {

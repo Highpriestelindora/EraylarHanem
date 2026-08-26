@@ -1,28 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { User as UserIcon, Bell, Shield, Moon, LogOut, Trophy, ChevronRight, History as HistoryIcon, Download, X, Save, VolumeX, BellRing, Trash2, Archive, RefreshCcw } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+  User as UserIcon, Bell, Shield, Moon, LogOut, ChevronRight, 
+  History as HistoryIcon, X, VolumeX, BellRing, Archive, Database, 
+  CheckCircle2, Sparkles, UserCheck 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import Portal from '../components/Portal';
+import ConfirmModal from '../components/ConfirmModal';
 import { notificationService } from '../lib/notificationService';
-import MassDebugTool from '../components/MassDebugTool';
 import toast from 'react-hot-toast';
 import './Ayarlar.css';
 
 export default function Ayarlar() {
   const navigate = useNavigate();
-  const { logs, settings, toggleSilentMode, runPhase1Migration, runGroup1Migration, runGroup2Migration, runGroup3Migration, syncAllHedefler } = useStore();
+  const { logs, settings, toggleSilentMode, currentUser, setCurrentUser } = useStore();
   const [darkMode, setDarkMode] = useState(false);
-  const [notifPermission, setNotifPermission] = useState(Notification.permission);
-  const [debugMode] = useState(localStorage.getItem('debug_mode') === 'true');
+  const [notifPermission, setNotifPermission] = useState(
+    'Notification' in window ? Notification.permission : 'default'
+  );
   
-  // Game State
+  // Easter egg Game State
   const [showGame, setShowGame] = useState(false);
   const [gameStep, setGameStep] = useState(3);
   const [dotPos, setDotPos] = useState({ top: '50%', left: '50%' });
 
   // Logs Modal State
   const [showLogsModal, setShowLogsModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleToggleDarkMode = (e) => {
     const checked = e.target.checked;
@@ -37,11 +43,11 @@ export default function Ayarlar() {
 
   const handleRequestPermission = async () => {
     const granted = await notificationService.requestPermission();
-    setNotifPermission(Notification.permission);
+    setNotifPermission('Notification' in window ? Notification.permission : 'default');
     if (granted) {
       toast.success('Bildirimlere izin verildi! 🔔');
     } else {
-      toast.error('Bildirim izni reddedildi.');
+      toast.error('Bildirim izni reddedildi veya tarayıcı tarafından engellendi.');
     }
   };
 
@@ -58,7 +64,6 @@ export default function Ayarlar() {
       setDarkMode(false);
       document.documentElement.removeAttribute('data-theme');
       
-      // Flaming Toast logic via custom style or separate message
       toast((t) => (
         <span className="flame-text">
           🔥 "Sen yanmazsan ben yanmazsam nasıl çıkar karanlıklar aydınlığa" 🔥
@@ -78,106 +83,70 @@ export default function Ayarlar() {
     }
   };
 
-  const handleBackup = () => {
-    const data = useStore.getState();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `eraylar_hanem_yedek_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Yedekleme başarıyla indirildi! 💾');
+  const confirmAndLogout = () => {
+    setCurrentUser(null);
+    navigate('/');
+    toast.success('Oturum kapatıldı.');
   };
+
+  const isOnline = useStore(state => state.isOnline !== false);
 
   return (
     <AnimatedPage className="ayarlar-container">
       <div className="ayarlar-header">
-        <h2>Ayarlar ⚙️</h2>
-        <p>Uygulamayı kişiselleştir ve sistem durumunu yönet</p>
+        <div className="ayarlar-title-row">
+          <h2>Ayarlar ⚙️</h2>
+          <div className={`supabase-live-badge ${isOnline ? 'online' : 'offline'}`}>
+            <span className={`live-dot-pulse ${isOnline ? 'online' : 'offline'}`}></span>
+            <span>{isOnline ? 'Supabase Canlı ⚡' : 'Çevrimdışı ⚠️'}</span>
+          </div>
+        </div>
+        <p>Uygulama tercihleri ve sistem durumu</p>
       </div>
 
+      {/* Görünüm Ayarları */}
       <div className="settings-group">
-        <h4>Genel Ayarlar</h4>
+        <h4>Görünüm</h4>
         
         <div className="setting-item">
-          <div className="setting-icon" style={{ background: '#f5f3ff', color: '#8b5cf6' }}><Moon size={20} /></div>
+          <div className="setting-icon" style={{ background: '#f5f3ff', color: '#8b5cf6' }}>
+            <Moon size={20} />
+          </div>
           <div className="setting-content">
             <span className="setting-title">Karanlık Mod</span>
-            <span className="setting-desc">Göz yormayan koyu tema</span>
+            <span className="setting-desc">Göz yormayan koyu renk teması</span>
           </div>
           <label className="toggle-switch">
             <input type="checkbox" checked={darkMode} onChange={handleToggleDarkMode} />
             <span className="slider"></span>
           </label>
         </div>
-
-        <div className="setting-item clickable" onClick={handleBackup}>
-          <div className="setting-icon" style={{ background: '#ecfdf5', color: '#10b981' }}><Download size={20} /></div>
-          <div className="setting-content">
-            <span className="setting-title">Veri Yedekleme</span>
-            <span className="setting-desc">Tüm verilerini JSON olarak indir</span>
-          </div>
-          <Download size={18} className="chevron" />
-        </div>
       </div>
 
-      <div className="settings-group">
-        <h4>Gelişmiş Veri Yönetimi</h4>
-        
-        <div className="setting-item clickable" onClick={() => {
-          if (window.confirm("Tüm grupları sırayla aktarmak istiyor musunuz?")) {
-            runPhase1Migration();
-            setTimeout(runGroup1Migration, 2000);
-            setTimeout(runGroup2Migration, 4000);
-            setTimeout(runGroup3Migration, 6000);
-          }
-        }}>
-          <div className="setting-icon" style={{ background: '#f5f3ff', color: '#7c3aed' }}><RefreshCcw size={20} /></div>
-          <div className="setting-content">
-            <span className="setting-title">SQL Veri Senkronizasyonu</span>
-            <span className="setting-desc">Tüm modülleri manuel olarak SQL'e aktarır</span>
-          </div>
-          <ChevronRight size={18} className="chevron" />
-        </div>
-
-        <div className="setting-item clickable" onClick={() => syncAllHedefler()}>
-          <div className="setting-icon" style={{ background: '#fff7ed', color: '#ea580c' }}><RefreshCcw size={20} /></div>
-          <div className="setting-content">
-            <span className="setting-title">Hedefleri SQL'e Aktar</span>
-            <span className="setting-desc">Tüm hedef ve vizyon verilerini SQL'e mühürler</span>
-          </div>
-          <ChevronRight size={18} className="chevron" />
-        </div>
-
-        <div className="setting-item clickable" onClick={() => useStore.getState().recoverFromLocalStorage()} style={{ marginTop: '10px', border: '1px dashed #ef4444' }}>
-          <div className="setting-icon" style={{ background: '#fef2f2', color: '#ef4444' }}><Shield size={20} /></div>
-          <div className="setting-content">
-            <span className="setting-title" style={{ color: '#ef4444' }}>🚨 ACİL: Tarayıcıdan Kurtar</span>
-            <span className="setting-desc">Eğer bulut yedeği silindiyse tarayıcı hafızasını tarar</span>
-          </div>
-          <ChevronRight size={18} className="chevron" />
-        </div>
-      </div>
-
+      {/* Bildirim Ayarları */}
       <div className="settings-group">
         <h4>Bildirim Ayarları</h4>
         
         <div className="setting-item clickable" onClick={handleRequestPermission}>
-          <div className="setting-icon" style={{ background: '#fffbeb', color: '#f59e0b' }}><BellRing size={20} /></div>
+          <div className="setting-icon" style={{ background: '#fffbeb', color: '#f59e0b' }}>
+            <BellRing size={20} />
+          </div>
           <div className="setting-content">
-            <span className="setting-title">Bildirimlere İzin Ver</span>
-            <span className="setting-desc">{notifPermission === 'granted' ? 'İzin Verildi ✅' : 'İzin Gerekiyor ⚠️'}</span>
+            <span className="setting-title">Sistem Bildirimleri</span>
+            <span className="setting-desc">
+              {notifPermission === 'granted' ? 'İzin Verildi (Aktif) ✅' : 'Bildirim İzni İste 🔔'}
+            </span>
           </div>
           <ChevronRight size={18} className="chevron" />
         </div>
 
         <div className="setting-item">
-          <div className="setting-icon" style={{ background: '#fef2f2', color: '#ef4444' }}><VolumeX size={20} /></div>
+          <div className="setting-icon" style={{ background: '#fef2f2', color: '#ef4444' }}>
+            <VolumeX size={20} />
+          </div>
           <div className="setting-content">
             <span className="setting-title">Sessiz Mod</span>
-            <span className="setting-desc">Telefona bildirim gönderilmesin</span>
+            <span className="setting-desc">Cihaza anlık sesli/titreşimli bildirim gönderilmesin</span>
           </div>
           <label className="toggle-switch">
             <input type="checkbox" checked={settings.silentMode} onChange={toggleSilentMode} />
@@ -186,39 +155,60 @@ export default function Ayarlar() {
         </div>
       </div>
 
+      {/* Kullanıcı & Hesap */}
       <div className="settings-group">
-        <h4>Arşiv & Geçmiş</h4>
+        <h4>Kullanıcı & Hesap</h4>
+
+        <div className="setting-item clickable" onClick={() => navigate('/profil')}>
+          <div className="setting-icon" style={{ background: '#e0f2fe', color: '#0284c7' }}>
+            <UserCheck size={20} />
+          </div>
+          <div className="setting-content">
+            <span className="setting-title">{currentUser?.name || 'Görkem'} Hesabı</span>
+            <span className="setting-desc">Profil bilgileri ve güvenlik ayarları</span>
+          </div>
+          <ChevronRight size={18} className="chevron" />
+        </div>
+
+        <div className="setting-item clickable" onClick={() => setShowLogoutConfirm(true)}>
+          <div className="setting-icon" style={{ background: '#fef2f2', color: '#ef4444' }}>
+            <LogOut size={20} />
+          </div>
+          <div className="setting-content">
+            <span className="setting-title" style={{ color: '#ef4444' }}>Kullanıcı Değiştir / Çıkış Yap</span>
+            <span className="setting-desc">PIN giriş ekranına geri döner</span>
+          </div>
+          <ChevronRight size={18} className="chevron" />
+        </div>
+      </div>
+
+      {/* Arşiv & Kayıtlar */}
+      <div className="settings-group">
+        <h4>Arşiv & Sistem Geçmişi</h4>
+        
         <button className="history-btn glass" onClick={() => navigate('/kayitlar')}>
           <Archive size={18} />
-          <span>Sistem Kayıtları</span>
+          <span>Sistem Arşivi & Silinenler</span>
+          <ChevronRight size={18} />
+        </button>
+
+        <button className="history-btn glass" onClick={() => setShowLogsModal(true)}>
+          <HistoryIcon size={20} />
+          <span>Sistem İşlem Günlüğü</span>
           <ChevronRight size={18} />
         </button>
       </div>
 
-      <div className="settings-group">
-        <h4>Sistem Geçmişi</h4>
-        <button className="history-btn glass" onClick={() => setShowLogsModal(true)}>
-          <HistoryIcon size={20} />
-          <span>İşlem Geçmişini Gör</span>
-          <ChevronRight size={18} />
-        </button>
-      </div>
-      
-      {debugMode && (
-        <div className="settings-group" style={{ border: '2px solid #ef4444', borderRadius: '25px', padding: '10px' }}>
-          <h4>🐞 Geliştirici Araçları</h4>
-          <MassDebugTool />
-        </div>
-      )}
-      
+      {/* App Version Info */}
       <div className="app-version-card glass">
         <div className="v-info">
           <strong>Eraylar Hanem v4.10.0</strong>
-          <span>Live Release Edition</span>
+          <span>Özel Aile Yönetim Sistemi</span>
         </div>
-        <div className="v-badge">GÜNCEL</div>
+        <div className="v-badge">GÜNCEL 🟢</div>
       </div>
 
+      {/* Easter Egg Game Overlay */}
       {showGame && (
         <div className="dark-game-overlay">
           <div 
@@ -233,6 +223,18 @@ export default function Ayarlar() {
             <span className="flame-count">{gameStep}</span>
           </div>
         </div>
+      )}
+
+      {/* Logout Confirmation */}
+      {showLogoutConfirm && (
+        <ConfirmModal
+          title="Çıkış Yapılsın mı?"
+          message="Giriş ekranına yönlendirileceksiniz. Devam etmek istiyor musunuz?"
+          confirmText="Çıkış Yap"
+          cancelText="Vazgeç"
+          onConfirm={confirmAndLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+        />
       )}
 
       {/* Logs Modal */}
