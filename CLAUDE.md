@@ -14,7 +14,8 @@
 ## 🛠️ Teknik Kurallar
 - **Git Komutu**: Git işlemleri için HER ZAMAN şu tam yol kullanılmalıdır: `& "C:\Users\Administrator\AppData\Local\GitHubDesktop\app-3.5.8\resources\app\git\cmd\git.exe"`
 - **Kural**: Git komutu bulunamadığında veya hata alındığında başka yer arama, direkt bu dosyadaki (`CLAUDE.md`) yolu kullan.
-- **iOS Öncelikli Tasarım**: Uygulama her zaman iPhone 14 Pro Max ve iPhone 15 baz alınarak tasarlanmalıdır. Safe area inset kurallarına DOKUNULMAZ — AppLayout.css'de doğru kurulmuş halde bırakılır.
+- **🚨 HARD KURAL: %100 PWA & iPhone Uyumluluğu**: Her ne geliştirilirse geliştirilsin, her bileşen, modal, buton, layout ve akış KESİNLİKLE iPhone ve iOS PWA (Progressive Web App - Ana Ekrana Ekle) ile %100 uyumlu olmak ZORUNDADIR. Safe area inset (`env(safe-area-inset-*)`), min 44x44px dokunma alanları, input 16px font boyutu (auto-zoom engelleme), `Portal` tabanlı modallar ve esnek mobil grid zorunludur.
+- **iOS Öncelikli Tasarım**: Uygulama her zaman iPhone 14 Pro Max, iPhone 15 ve dar ekranlı iPhone modelleri baz alınarak tasarlanmalıdır. Safe area inset kurallarına DOKUNULMAZ — AppLayout.css'de doğru kurulmuş halde bırakılır.
 - **Silme Kuralı (Deletion Rule)**: Herhangi bir veriyi silerken STANDART tarayıcı uyarısı (`window.confirm`) KESİNLİKLE kullanılmamalıdır. Bunun yerine HER ZAMAN `src/components/ConfirmModal.jsx` bileşeni kullanılmalı ve silme işlemi bir onay modalı üzerinden gerçekleştirilmelidir.
 - **State Yönetimi**: Global state için Zustand kullanılır. Karmaşık state'ler JSONB olarak Supabase'de tutulur.
 
