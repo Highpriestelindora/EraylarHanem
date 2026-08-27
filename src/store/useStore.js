@@ -7388,10 +7388,14 @@ const useStore = create(
       restoreNote: async (noteId) => {
         const state = get();
         const strId = String(noteId);
-        const note = (state.mutfak?.arsiv || []).find(n => String(n.id) === strId);
+        const note = (state.mutfak?.arsiv || []).find(n => String(n.id) === strId) ||
+                     (state.mutfak?.history || []).find(n => String(n.id) === strId);
         if (!note) return;
 
         const yeniArsiv = (state.mutfak?.arsiv || []).filter(n => String(n.id) !== strId);
+        const alreadyInSohbet = (state.mutfak?.sohbet || []).some(n => String(n.id) === strId);
+        if (alreadyInSohbet) return;
+
         const restoredNote = {
           ...note,
           d: note.tarih || note.d || new Date().toISOString(),
@@ -7402,7 +7406,7 @@ const useStore = create(
         const yeniSohbet = [restoredNote, ...(state.mutfak?.sohbet || [])].slice(0, 20);
 
         set({ mutfak: { ...state.mutfak, sohbet: yeniSohbet, arsiv: yeniArsiv } });
-        get().addLog('Not Geri Yüklendi', `Arşivden bir not geri yüklendi.`);
+        get().addLog('Not Kapağa Asıldı', `Not buzdolabı kapağına geri asıldı.`);
 
         try {
           await supabase.from('mutfak_arsiv').delete().eq('id', strId);

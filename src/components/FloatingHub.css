@@ -291,6 +291,32 @@
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
+@media (max-width: 480px) {
+  .immersive-header {
+    padding: calc(15px + env(safe-area-inset-top, 0px)) 12px 12px;
+    gap: 6px;
+  }
+  .header-pill {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .header-pill h3 {
+    font-size: 13px;
+  }
+  .fridge-view-toggle {
+    padding: 3px;
+  }
+  .fridge-view-toggle button {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+  .close-immersive {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+}
+
 .immersive-notes-board {
   position: relative;
   z-index: 50;
@@ -379,33 +405,86 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 6px;
-  gap: 12px;
-  padding-top: 4px;
-  border-top: 1px solid rgba(0,0,0,0.04);
+  margin-top: 8px;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.history-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .h-date {
-  font-size: 10px;
+  font-size: 11px;
   color: #94a3b8;
   font-weight: 600;
+}
+
+.h-pinned-badge {
+  font-size: 10px;
+  font-weight: 800;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 3px 8px;
+  border-radius: 8px;
+  border: 1px solid #a7f3d0;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.h-repin-btn {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  line-height: 1;
+}
+
+.h-repin-btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.h-repin-btn:active {
+  transform: scale(0.95);
 }
 
 .h-delete-btn {
   background: none;
   border: none;
-  color: #cbd5e1;
+  color: #94a3b8;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 4px 6px;
+  border-radius: 6px;
   transition: all 0.2s;
   display: flex;
   align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .h-delete-btn:hover {
   color: #ef4444;
   background: #fee2e2;
+}
+
+.h-delete-btn:active {
+  transform: scale(0.9);
 }
 
 .empty-history {

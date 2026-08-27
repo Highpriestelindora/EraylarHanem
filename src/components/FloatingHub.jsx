@@ -162,12 +162,6 @@ function FloatingHub() {
                 >
                   📜 Sohbet Geçmişi
                 </button>
-                <button 
-                  className={fridgeView === 'archive' ? 'active' : ''} 
-                  onClick={() => setFridgeView('archive')}
-                >
-                  📦 Arşiv ({(mutfak.arsiv || []).length})
-                </button>
               </div>
 
               <button className="close-immersive" onClick={() => setActiveModal(null)}><X size={24} /></button>
@@ -252,9 +246,9 @@ function FloatingHub() {
                             onClick={(e) => { 
                               e.stopPropagation(); 
                               archiveNote(note.id); 
-                              toast.success('Not arşive kaldırıldı. 📦'); 
+                              toast.success('Not kapağı temizlemek için kaldırıldı. 📦'); 
                             }} 
-                            title="Arşivle"
+                            title="Kapağı Temizle (Arşivle)"
                           >
                             <Archive size={14} />
                           </button>
@@ -266,7 +260,7 @@ function FloatingHub() {
                               e.stopPropagation(); 
                               setConfirmDeleteId(note.id);
                             }} 
-                            title="Sil"
+                            title="Kalıcı Sil"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -283,61 +277,6 @@ function FloatingHub() {
                   </div>
                 )}
               </div>
-            ) : fridgeView === 'archive' ? (
-              <div className="immersive-history-list">
-                {(mutfak.arsiv || []).length > 0 ? (
-                  [...mutfak.arsiv].sort((a, b) => new Date(b.tarih || b.d || 0) - new Date(a.tarih || a.d || 0)).map((item) => {
-                    const writer = item.kisi || item.w || 'Görkem';
-                    const text = item.icerik || item.mesaj || item.t || '';
-                    const isEsra = writer.toLowerCase().includes('esra');
-
-                    return (
-                      <div key={item.id} className={`history-item ${isEsra ? 'esra' : 'gorkem'}`}>
-                        <div className="history-bubble" style={{ opacity: 0.95, borderStyle: 'dashed' }}>
-                          <div className="history-author-header">
-                            <span className="h-avatar">{isEsra ? '👩‍🍳' : '👨‍💻'}</span>
-                            <strong>{writer}</strong>
-                            <span style={{ fontSize: '10px', color: '#94a3b8', marginLeft: 'auto' }}>📦 Arşivli Not</span>
-                          </div>
-                          <p>{text}</p>
-                          <div className="history-meta">
-                            <span className="h-date">{formatNoteDate(item.tarih || item.d)}</span>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <button 
-                                className="h-delete-btn" 
-                                style={{ color: '#2563eb', fontWeight: '800' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  restoreNote(item.id);
-                                  toast.success('Not buzdolabı kapağına geri asıldı! 📌');
-                                }}
-                                title="Kapağa Geri As"
-                              >
-                                📌 Kapağa As
-                              </button>
-                              <button 
-                                className="h-delete-btn" 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setConfirmDeleteId(item.id);
-                                }}
-                                title="Kalıcı Olarak Sil"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="empty-history">
-                    <span>📦</span>
-                    <p>Arşivde not bulunmuyor.<br/>Buzdolabı kapağındaki notların üzerindeki 📦 simgesine basarak arşivleyebilirsiniz.</p>
-                  </div>
-                )}
-              </div>
             ) : (
               <div className="immersive-history-list">
                 {(mutfak.history || []).length > 0 ? (
@@ -345,6 +284,7 @@ function FloatingHub() {
                     const writer = log.w || log.kisi || 'Görkem';
                     const text = log.t || log.mesaj || '';
                     const isEsra = writer.toLowerCase().includes('esra');
+                    const isPinned = notes.some(n => String(n.id) === String(log.id));
 
                     return (
                       <div key={log.id} className={`history-item ${isEsra ? 'esra' : 'gorkem'}`}>
@@ -356,18 +296,37 @@ function FloatingHub() {
                           <p>{text}</p>
                           <div className="history-meta">
                             <span className="h-date">{formatNoteDate(log.d || log.tarih)}</span>
-                            <button 
-                              className="h-delete-btn" 
-                              onPointerDown={(e) => e.stopPropagation()}
-                              onTouchStart={(e) => e.stopPropagation()}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setConfirmDeleteId(log.id);
-                              }}
-                              title="Sil"
-                            >
-                              <Trash2 size={12} />
-                            </button>
+                            <div className="history-actions-row">
+                              {isPinned ? (
+                                <span className="h-pinned-badge">📌 Kapakta</span>
+                              ) : (
+                                <button 
+                                  className="h-repin-btn"
+                                  onPointerDown={(e) => e.stopPropagation()}
+                                  onTouchStart={(e) => e.stopPropagation()}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    restoreNote(log.id);
+                                    toast.success('Not buzdolabı kapağına asıldı! 📌');
+                                  }}
+                                  title="Buzdolabı kapağına as"
+                                >
+                                  📌 Kapağa As
+                                </button>
+                              )}
+                              <button 
+                                className="h-delete-btn" 
+                                onPointerDown={(e) => e.stopPropagation()}
+                                touchStart={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDeleteId(log.id);
+                                }}
+                                title="Kalıcı Sil"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
