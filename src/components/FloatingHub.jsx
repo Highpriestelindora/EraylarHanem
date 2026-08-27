@@ -20,6 +20,7 @@ function FloatingHub() {
   
   const addKitchenNote = useStore(state => state.addKitchenNote);
   const archiveNote = useStore(state => state.archiveNote);
+  const restoreNote = useStore(state => state.restoreNote);
   const removeNote = useStore(state => state.removeNote);
   const updateNotePosition = useStore(state => state.updateNotePosition);
   
@@ -161,6 +162,12 @@ function FloatingHub() {
                 >
                   📜 Sohbet Geçmişi
                 </button>
+                <button 
+                  className={fridgeView === 'archive' ? 'active' : ''} 
+                  onClick={() => setFridgeView('archive')}
+                >
+                  📦 Arşiv ({(mutfak.arsiv || []).length})
+                </button>
               </div>
 
               <button className="close-immersive" onClick={() => setActiveModal(null)}><X size={24} /></button>
@@ -273,6 +280,61 @@ function FloatingHub() {
                   <div className="empty-immersive-msg">
                     <div className="empty-icon-wrap">📝</div>
                     <p>Buzdolabı kapağı tertemiz!<br/>Birbirinize tatlı bir not bırakın ✨</p>
+                  </div>
+                )}
+              </div>
+            ) : fridgeView === 'archive' ? (
+              <div className="immersive-history-list">
+                {(mutfak.arsiv || []).length > 0 ? (
+                  [...mutfak.arsiv].sort((a, b) => new Date(b.tarih || b.d || 0) - new Date(a.tarih || a.d || 0)).map((item) => {
+                    const writer = item.kisi || item.w || 'Görkem';
+                    const text = item.icerik || item.mesaj || item.t || '';
+                    const isEsra = writer.toLowerCase().includes('esra');
+
+                    return (
+                      <div key={item.id} className={`history-item ${isEsra ? 'esra' : 'gorkem'}`}>
+                        <div className="history-bubble" style={{ opacity: 0.95, borderStyle: 'dashed' }}>
+                          <div className="history-author-header">
+                            <span className="h-avatar">{isEsra ? '👩‍🍳' : '👨‍💻'}</span>
+                            <strong>{writer}</strong>
+                            <span style={{ fontSize: '10px', color: '#94a3b8', marginLeft: 'auto' }}>📦 Arşivli Not</span>
+                          </div>
+                          <p>{text}</p>
+                          <div className="history-meta">
+                            <span className="h-date">{formatNoteDate(item.tarih || item.d)}</span>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button 
+                                className="h-delete-btn" 
+                                style={{ color: '#2563eb', fontWeight: '800' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  restoreNote(item.id);
+                                  toast.success('Not buzdolabı kapağına geri asıldı! 📌');
+                                }}
+                                title="Kapağa Geri As"
+                              >
+                                📌 Kapağa As
+                              </button>
+                              <button 
+                                className="h-delete-btn" 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDeleteId(item.id);
+                                }}
+                                title="Kalıcı Olarak Sil"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="empty-history">
+                    <span>📦</span>
+                    <p>Arşivde not bulunmuyor.<br/>Buzdolabı kapağındaki notların üzerindeki 📦 simgesine basarak arşivleyebilirsiniz.</p>
                   </div>
                 )}
               </div>

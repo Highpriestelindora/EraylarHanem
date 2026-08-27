@@ -1481,8 +1481,8 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
         <div className="hall-of-fame-section mt-20">
           <div className="hof-header">
             <div className="hof-title-wrap">
-              <Trophy size={16} color="#d97706" />
-              <h3>🏆 Unutulmaz Anılar (Hall of Fame)</h3>
+              <Trophy size={15} color="#d97706" />
+              <h3>Unutulmaz Anılar</h3>
             </div>
             <span className="hof-badge">Zirve Puanlar</span>
           </div>
@@ -1518,12 +1518,12 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
           <Search size={16} color="#94a3b8" />
           <input 
             type="text" 
-            placeholder="Anılarda, mekanlarda veya yorumlarda ara..."
+            placeholder="Anı, mekan veya yorum ara..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
           {searchQuery && (
-            <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
+            <button className="clear-search-btn" onClick={() => setSearchQuery('')} aria-label="Aramayı temizle">
               <X size={14} />
             </button>
           )}
@@ -1540,7 +1540,7 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
             className={`g-filter-chip ${filterMode === 'top' ? 'active' : ''}`}
             onClick={() => setFilterMode('top')}
           >
-            🌟 Zirve (8+ Puan)
+            ⭐ 8+ Puan
           </button>
           <button 
             className={`g-filter-chip ${filterMode === 'paid' ? 'active' : ''}`}
@@ -1552,7 +1552,7 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
             className={`g-filter-chip ${filterMode === 'disari' ? 'active' : ''}`}
             onClick={() => setFilterMode('disari')}
           >
-            🎭 Dışarı
+            🌳 Dışarı
           </button>
           <button 
             className={`g-filter-chip ${filterMode === 'evde' ? 'active' : ''}`}
@@ -1562,26 +1562,28 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
           </button>
         </div>
 
-        <div className="gecmis-sort-row">
-          <span className="sort-label">Sırala:</span>
-          <div className="sort-buttons">
+        <div className="gecmis-sort-container">
+          <div className="gecmis-sort-header">
+            <span className="sort-label">Sıralama</span>
+          </div>
+          <div className="gecmis-sort-segmented">
             <button 
-              className={`sort-btn ${sortMode === 'date_desc' ? 'active' : ''}`}
+              className={`sort-segment-btn ${sortMode === 'date_desc' ? 'active' : ''}`}
               onClick={() => setSortMode('date_desc')}
             >
               📅 En Yeni
             </button>
             <button 
-              className={`sort-btn ${sortMode === 'score_desc' ? 'active' : ''}`}
+              className={`sort-segment-btn ${sortMode === 'score_desc' ? 'active' : ''}`}
               onClick={() => setSortMode('score_desc')}
             >
-              ⭐ En Yüksek Puan
+              ⭐ En Yüksek
             </button>
             <button 
-              className={`sort-btn ${sortMode === 'cost_desc' ? 'active' : ''}`}
+              className={`sort-segment-btn ${sortMode === 'cost_desc' ? 'active' : ''}`}
               onClick={() => setSortMode('cost_desc')}
             >
-              💰 En Yüksek Harcama
+              💰 En Çok
             </button>
           </div>
         </div>
@@ -1730,11 +1732,7 @@ function GecmisTab({ sosyal, onEdit, onDelete }) {
                                 </button>
                                 <button 
                                   className="mcv3-action-btn delete"
-                                  onClick={() => {
-                                    if (window.confirm(`"${a.baslik || a.title}" anısını silmek istediğinize emin misiniz?`)) {
-                                      onDelete(a.id);
-                                    }
-                                  }}
+                                  onClick={() => onDelete(a.id)}
                                 >
                                   <Trash2 size={13} /> Anıyı Sil
                                 </button>

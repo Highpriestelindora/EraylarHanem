@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from 'react';
-import { Send, Trash2, X, StickyNote } from 'lucide-react';
+import { Send, Trash2, X, StickyNote, Archive } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
 
 export default function SohbetTab() {
-  const { mutfak, addKitchenNote, removeNote, currentUser } = useStore();
+  const { mutfak, addKitchenNote, removeNote, archiveNote, currentUser } = useStore();
   const [noteText, setNoteText] = useState('');
   const [noteWriter, setNoteWriter] = useState(currentUser?.name || 'Görkem');
   const [zoomedNote, setZoomedNote] = useState(null);
   
-  const notes = mutfak?.sohbet || [];
+  const notes = useMemo(() => {
+    const archivedIds = new Set((mutfak?.arsiv || []).map(a => String(a.id)));
+    return (mutfak?.sohbet || []).filter(n => !archivedIds.has(String(n.id)));
+  }, [mutfak?.sohbet, mutfak?.arsiv]);
 
   // Stable positions using useMemo to avoid re-renders or state loops
   const positions = useMemo(() => {
@@ -119,9 +122,23 @@ export default function SohbetTab() {
                   <strong>{zoomedNote.w || zoomedNote.kisi}</strong>
                   <span>{zoomedNote.d || zoomedNote.tarih ? new Date(zoomedNote.d || zoomedNote.tarih).toLocaleString('tr-TR') : ''}</span>
                 </div>
-                <button className="trash-btn" onClick={() => { removeNote(zoomedNote.id); setZoomedNote(null); toast.success('Not silindi.'); }}>
-                  <Trash2 size={18} />
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button 
+                    className="trash-btn" 
+                    style={{ background: '#f1f5f9', color: '#64748b' }} 
+                    onClick={() => { archiveNote(zoomedNote.id); setZoomedNote(null); toast.success('Not arşivlendi. 📦'); }}
+                    title="Arşivle"
+                  >
+                    <Archive size={18} />
+                  </button>
+                  <button 
+                    className="trash-btn" 
+                    onClick={() => { removeNote(zoomedNote.id); setZoomedNote(null); toast.success('Not silindi.'); }}
+                    title="Kalıcı Sil"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
