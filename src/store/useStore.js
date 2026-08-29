@@ -1818,190 +1818,158 @@ async function deleteLifeProgramFromSupabase(id) {
 // --- Modaring ---
 async function pushModaringPersonelToSupabase(p) {
   try {
-    const familyId = DEFAULT_FID;
     await supabase.from('modaring_personel').upsert({
-      id: String(p.id).includes(familyId) ? String(p.id) : `${p.id}-${familyId}`,
+      id: String(p.id),
       name: p.name,
-      hourly_rate: Number(p.hourlyRate || 0),
+      hourly_rate: Number(p.hourlyRate || p.hourly_rate || 0),
       color: p.color || '#fb7185',
       emoji: p.emoji || '👤',
-      active: p.active !== false,
-      family_id: familyId
+      active: p.active !== false
     });
   } catch(e) { console.warn('Modaring Personel Hatası:', e); }
 }
 
 async function deleteModaringPersonelFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('modaring_personel').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('modaring_personel').delete().eq('id', String(id));
   } catch(e) {}
 }
 
 async function pushModaringVardiyaToSupabase(v) {
   try {
-    const familyId = DEFAULT_FID;
     await supabase.from('modaring_vardiya').upsert({
-      id: String(v.id).includes(familyId) ? String(v.id) : `${v.id}-${familyId}`,
-      personel_id: String(v.personelId),
+      id: String(v.id),
+      personel_id: String(v.personelId || v.personel_id),
       date: v.date || null,
-      start_time: v.startTime,
-      end_time: v.endTime,
-      total_pay: Number(v.totalPay || 0),
-      status: v.status || 'aktif',
-      family_id: familyId
+      start_time: String(v.startTime || v.start_time || "10"),
+      end_time: String(v.endTime || v.end_time || "18"),
+      total_pay: Number(v.totalPay || v.total_pay || 0),
+      status: v.status || 'aktif'
     });
   } catch(e) { console.warn('Modaring Vardiya Hatası:', e); }
 }
 
 async function deleteModaringVardiyaFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('modaring_vardiya').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('modaring_vardiya').delete().eq('id', String(id));
   } catch(e) {}
 }
 
 async function pushModaringKasaToSupabase(k) {
   try {
-    const familyId = DEFAULT_FID;
     await supabase.from('modaring_kasa').upsert({
-      id: String(k.id).includes(familyId) ? String(k.id) : `${k.id}-${familyId}`,
+      id: String(k.id),
       date: k.date,
       type: k.type,
       amount: Number(k.amount || 0),
       method: k.method,
       note: k.note || null,
-      bank_id: k.bankId || null,
-      family_id: familyId
+      bank_id: k.bankId || k.bank_id || null
     });
   } catch(e) { console.warn('Modaring Kasa Hatası:', e); }
 }
 
 async function deleteModaringKasaFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('modaring_kasa').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('modaring_kasa').delete().eq('id', String(id));
   } catch(e) {}
 }
 
 async function pushModaringBankaToSupabase(b) {
   try {
-    const familyId = DEFAULT_FID;
     await supabase.from('modaring_bankalar').upsert({
-      id: String(b.id).includes(familyId) ? String(b.id) : `${b.id}-${familyId}`,
+      id: String(b.id),
       name: b.name,
       type: b.type,
       balance: Number(b.balance || 0),
       color: b.color || null,
-      icon: b.icon || null,
-      family_id: familyId
+      icon: b.icon || null
     });
   } catch(e) { console.warn('Modaring Banka Hatası:', e); }
 }
 
 async function deleteModaringBankaFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('modaring_bankalar').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('modaring_bankalar').delete().eq('id', String(id));
   } catch(e) {}
 }
 
 async function pushModaringTedarikToSupabase(t) {
   try {
-    const familyId = DEFAULT_FID;
     await supabase.from('modaring_tedarik').upsert({
-      id: String(t.id).includes(familyId) ? String(t.id) : `${t.id}-${familyId}`,
+      id: String(t.id),
       name: t.name,
       link: t.link || null,
       category: t.category || null,
       contact: t.contact || null,
-      note: t.note || null,
-      family_id: familyId
+      note: t.note || null
     });
   } catch(e) { console.warn('Modaring Tedarik Hatası:', e); }
 }
 
 async function deleteModaringTedarikFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('modaring_tedarik').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('modaring_tedarik').delete().eq('id', String(id));
   } catch(e) {}
 }
 
 async function pushModaringSiparisToSupabase(s) {
   try {
-    const familyId = DEFAULT_FID;
     await supabase.from('modaring_siparisler').upsert({
-      id: String(s.id).includes(familyId) ? String(s.id) : `${s.id}-${familyId}`,
-      supplier_id: String(s.supplierId),
+      id: String(s.id),
+      supplier_id: String(s.supplierId || s.supplier_id),
       date: s.date,
       items: s.items || [],
       total: Number(s.total || 0),
       paid: !!s.paid,
       status: s.status || 'bekliyor',
-      bank_id: s.bankId || null,
-      family_id: familyId
+      bank_id: s.bankId || s.bank_id || null
     });
   } catch(e) { console.warn('Modaring Sipariş Hatası:', e); }
 }
 
 async function deleteModaringSiparisFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('modaring_siparisler').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('modaring_siparisler').delete().eq('id', String(id));
   } catch(e) {}
 }
 
 async function pushModaringAjandaToSupabase(a) {
   try {
-    const familyId = DEFAULT_FID;
     await supabase.from('modaring_ajanda').upsert({
-      id: String(a.id).includes(familyId) ? String(a.id) : `${a.id}-${familyId}`,
+      id: String(a.id),
       title: a.title,
-      due_date: a.dueDate || null,
+      due_date: a.dueDate || a.due_date || null,
       amount: Number(a.amount || 0),
-      status: a.status || 'bekliyor',
-      family_id: familyId
+      status: a.status || 'bekliyor'
     });
   } catch(e) { console.warn('Modaring Ajanda Hatası:', e); }
 }
 
 async function deleteModaringAjandaFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('modaring_ajanda').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('modaring_ajanda').delete().eq('id', String(id));
   } catch(e) {}
 }
 
 async function pushModaringRefikaToSupabase(r) {
   try {
-    const familyId = DEFAULT_FID;
     await supabase.from('modaring_refika').upsert({
-      id: String(r.id).includes(familyId) ? String(r.id) : `${r.id}-${familyId}`,
+      id: String(r.id),
       title: r.title || null,
-      description: r.desc || null,
+      description: r.desc || r.description || null,
       cost: Number(r.cost || 0),
       price: Number(r.price || 0),
       strategy: r.strategy || null,
       context: r.context || null,
-      date: r.date || new Date().toISOString(),
-      family_id: familyId
+      date: r.date || new Date().toISOString()
     });
   } catch(e) { console.warn('Modaring Refika Hatası:', e); }
 }
 
 async function deleteModaringRefikaFromSupabase(id) {
   try {
-    const familyId = DEFAULT_FID;
-    const finalId = String(id).includes(familyId) ? String(id) : `${id}-${familyId}`;
-    await supabase.from('modaring_refika').delete().eq('id', finalId).eq('family_id', familyId);
+    await supabase.from('modaring_refika').delete().eq('id', String(id));
   } catch(e) {}
 }
 
@@ -3559,162 +3527,162 @@ const useStore = create(
       // --- Modaring Actions (SQL-First) ---
       addModaringPersonel: (person) => {
         const state = get();
-        const newPerson = { id: Date.now(), ...person, active: true };
+        const newPerson = { id: String(Date.now()), ...person, active: true };
         const updated = [...(state.modaring.personel || []), newPerson];
         set({ modaring: { ...state.modaring, personel: updated } });
         pushModaringPersonelToSupabase(newPerson);
       },
       updateModaringPersonel: (id, updates) => {
         const state = get();
-        const updated = (state.modaring.personel || []).map(p => p.id === id ? { ...p, ...updates } : p);
+        const updated = (state.modaring.personel || []).map(p => String(p.id) === String(id) ? { ...p, ...updates } : p);
         set({ modaring: { ...state.modaring, personel: updated } });
-        const item = updated.find(p => p.id === id);
+        const item = updated.find(p => String(p.id) === String(id));
         if (item) pushModaringPersonelToSupabase(item);
       },
       deleteModaringPersonel: (id) => {
         const state = get();
-        const updatedP = (state.modaring.personel || []).filter(p => p.id !== id);
-        const updatedV = (state.modaring.vardiya || []).filter(v => v.personelId !== id);
+        const updatedP = (state.modaring.personel || []).filter(p => String(p.id) !== String(id));
+        const updatedV = (state.modaring.vardiya || []).filter(v => String(v.personelId) !== String(id));
         set({ modaring: { ...state.modaring, personel: updatedP, vardiya: updatedV } });
         deleteModaringPersonelFromSupabase(id);
       },
       addModaringVardiya: (shift) => {
         const state = get();
-        const newShift = { id: Date.now(), ...shift };
+        const newShift = { id: String(Date.now()), ...shift };
         const updated = [...(state.modaring.vardiya || []), newShift];
         set({ modaring: { ...state.modaring, vardiya: updated } });
         pushModaringVardiyaToSupabase(newShift);
       },
       updateModaringVardiya: (id, updates) => {
         const state = get();
-        const updated = (state.modaring.vardiya || []).map(v => v.id === id ? { ...v, ...updates } : v);
+        const updated = (state.modaring.vardiya || []).map(v => String(v.id) === String(id) ? { ...v, ...updates } : v);
         set({ modaring: { ...state.modaring, vardiya: updated } });
-        const item = updated.find(v => v.id === id);
+        const item = updated.find(v => String(v.id) === String(id));
         if (item) pushModaringVardiyaToSupabase(item);
       },
       deleteModaringVardiya: (id) => {
         const state = get();
-        const updated = (state.modaring.vardiya || []).filter(v => v.id !== id);
+        const updated = (state.modaring.vardiya || []).filter(v => String(v.id) !== String(id));
         set({ modaring: { ...state.modaring, vardiya: updated } });
         deleteModaringVardiyaFromSupabase(id);
       },
       addModaringKasaItem: (item) => {
         const state = get();
-        const newItem = { id: Date.now(), ...item };
+        const newItem = { id: String(Date.now()), ...item };
         const updated = [...(state.modaring.kasa || []), newItem];
         set({ modaring: { ...state.modaring, kasa: updated } });
         pushModaringKasaToSupabase(newItem);
       },
       updateModaringKasaItem: (id, updates) => {
         const state = get();
-        const updated = (state.modaring.kasa || []).map(k => k.id === id ? { ...k, ...updates } : k);
+        const updated = (state.modaring.kasa || []).map(k => String(k.id) === String(id) ? { ...k, ...updates } : k);
         set({ modaring: { ...state.modaring, kasa: updated } });
-        const item = updated.find(k => k.id === id);
+        const item = updated.find(k => String(k.id) === String(id));
         if (item) pushModaringKasaToSupabase(item);
       },
       deleteModaringKasaItem: (id) => {
         const state = get();
-        const updated = (state.modaring.kasa || []).filter(k => k.id !== id);
+        const updated = (state.modaring.kasa || []).filter(k => String(k.id) !== String(id));
         set({ modaring: { ...state.modaring, kasa: updated } });
         deleteModaringKasaFromSupabase(id);
       },
       addModaringBank: (bank) => {
         const state = get();
-        const newBank = { id: Date.now(), ...bank };
+        const newBank = { id: String(Date.now()), ...bank };
         const updated = [...(state.modaring.bankalar || []), newBank];
         set({ modaring: { ...state.modaring, bankalar: updated } });
         pushModaringBankaToSupabase(newBank);
       },
       updateModaringBank: (id, updates) => {
         const state = get();
-        const updated = (state.modaring.bankalar || []).map(b => b.id === id ? { ...b, ...updates } : b);
+        const updated = (state.modaring.bankalar || []).map(b => String(b.id) === String(id) ? { ...b, ...updates } : b);
         set({ modaring: { ...state.modaring, bankalar: updated } });
-        const item = updated.find(b => b.id === id);
+        const item = updated.find(b => String(b.id) === String(id));
         if (item) pushModaringBankaToSupabase(item);
       },
       deleteModaringBank: (id) => {
         const state = get();
-        const updated = (state.modaring.bankalar || []).filter(b => b.id !== id);
+        const updated = (state.modaring.bankalar || []).filter(b => String(b.id) !== String(id));
         set({ modaring: { ...state.modaring, bankalar: updated } });
         deleteModaringBankaFromSupabase(id);
       },
       addModaringTedarik: (tedarik) => {
         const state = get();
-        const newItem = { id: Date.now(), ...tedarik };
+        const newItem = { id: String(Date.now()), ...tedarik };
         const updated = [...(state.modaring.tedarik || []), newItem];
         set({ modaring: { ...state.modaring, tedarik: updated } });
         pushModaringTedarikToSupabase(newItem);
       },
       updateModaringTedarik: (id, updates) => {
         const state = get();
-        const updated = (state.modaring.tedarik || []).map(t => t.id === id ? { ...t, ...updates } : t);
+        const updated = (state.modaring.tedarik || []).map(t => String(t.id) === String(id) ? { ...t, ...updates } : t);
         set({ modaring: { ...state.modaring, tedarik: updated } });
-        const item = updated.find(t => t.id === id);
+        const item = updated.find(t => String(t.id) === String(id));
         if (item) pushModaringTedarikToSupabase(item);
       },
       deleteModaringTedarik: (id) => {
         const state = get();
-        const updated = (state.modaring.tedarik || []).filter(t => t.id !== id);
+        const updated = (state.modaring.tedarik || []).filter(t => String(t.id) !== String(id));
         set({ modaring: { ...state.modaring, tedarik: updated } });
         deleteModaringTedarikFromSupabase(id);
       },
       addModaringSiparis: (siparis) => {
         const state = get();
-        const newItem = { id: Date.now(), ...siparis };
+        const newItem = { id: String(Date.now()), ...siparis };
         const updated = [...(state.modaring.siparisler || []), newItem];
         set({ modaring: { ...state.modaring, siparisler: updated } });
         pushModaringSiparisToSupabase(newItem);
       },
       updateModaringSiparis: (id, updates) => {
         const state = get();
-        const updated = (state.modaring.siparisler || []).map(s => s.id === id ? { ...s, ...updates } : s);
+        const updated = (state.modaring.siparisler || []).map(s => String(s.id) === String(id) ? { ...s, ...updates } : s);
         set({ modaring: { ...state.modaring, siparisler: updated } });
-        const item = updated.find(s => s.id === id);
+        const item = updated.find(s => String(s.id) === String(id));
         if (item) pushModaringSiparisToSupabase(item);
       },
       deleteModaringSiparis: (id) => {
         const state = get();
-        const updated = (state.modaring.siparisler || []).filter(s => s.id !== id);
+        const updated = (state.modaring.siparisler || []).filter(s => String(s.id) !== String(id));
         set({ modaring: { ...state.modaring, siparisler: updated } });
         deleteModaringSiparisFromSupabase(id);
       },
       addModaringAjanda: (task) => {
         const state = get();
-        const newItem = { id: Date.now(), ...task };
+        const newItem = { id: String(Date.now()), ...task };
         const updated = [...(state.modaring.ajanda || []), newItem];
         set({ modaring: { ...state.modaring, ajanda: updated } });
         pushModaringAjandaToSupabase(newItem);
       },
       updateModaringAjanda: (id, updates) => {
         const state = get();
-        const updated = (state.modaring.ajanda || []).map(a => a.id === id ? { ...a, ...updates } : a);
+        const updated = (state.modaring.ajanda || []).map(a => String(a.id) === String(id) ? { ...a, ...updates } : a);
         set({ modaring: { ...state.modaring, ajanda: updated } });
-        const item = updated.find(a => a.id === id);
+        const item = updated.find(a => String(a.id) === String(id));
         if (item) pushModaringAjandaToSupabase(item);
       },
       deleteModaringAjanda: (id) => {
         const state = get();
-        const updated = (state.modaring.ajanda || []).filter(a => a.id !== id);
+        const updated = (state.modaring.ajanda || []).filter(a => String(a.id) !== String(id));
         set({ modaring: { ...state.modaring, ajanda: updated } });
         deleteModaringAjandaFromSupabase(id);
       },
       addModaringRefika: (fikir) => {
         const state = get();
-        const newItem = { id: Date.now(), ...fikir, date: new Date().toISOString() };
+        const newItem = { id: String(Date.now()), ...fikir, date: new Date().toISOString() };
         const updated = [...(state.modaring.refikaFikirleri || []), newItem];
         set({ modaring: { ...state.modaring, refikaFikirleri: updated } });
         pushModaringRefikaToSupabase(newItem);
       },
       updateModaringRefika: (id, updates) => {
         const state = get();
-        const updated = (state.modaring.refikaFikirleri || []).map(r => r.id === id ? { ...r, ...updates } : r);
+        const updated = (state.modaring.refikaFikirleri || []).map(r => String(r.id) === String(id) ? { ...r, ...updates } : r);
         set({ modaring: { ...state.modaring, refikaFikirleri: updated } });
-        const item = updated.find(r => r.id === id);
+        const item = updated.find(r => String(r.id) === String(id));
         if (item) pushModaringRefikaToSupabase(item);
       },
       deleteModaringRefika: (id) => {
         const state = get();
-        const updated = (state.modaring.refikaFikirleri || []).filter(r => r.id !== id);
+        const updated = (state.modaring.refikaFikirleri || []).filter(r => String(r.id) !== String(id));
         set({ modaring: { ...state.modaring, refikaFikirleri: updated } });
         deleteModaringRefikaFromSupabase(id);
       },
