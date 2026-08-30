@@ -7,6 +7,8 @@ import {
 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import toast from 'react-hot-toast';
+import Portal from '../../components/Portal';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const VardiyaTab = () => {
   const { 
@@ -27,7 +29,7 @@ const VardiyaTab = () => {
   const [selectedPersonDetail, setSelectedPersonDetail] = useState(null);
 
   // Confirm Modal State
-  const [confirmModal, setConfirmModal] = useState({ show: false, title: '', message: '', onConfirm: null });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
   const getLocalDateStr = useCallback((date) => {
     const y = date.getFullYear();
@@ -73,10 +75,10 @@ const VardiyaTab = () => {
       const dStr = getLocalDateStr(d);
       const dayName = d.toLocaleDateString('tr-TR', { weekday: 'long' });
       text += `\n${emojis[i]}${dayName}\n`;
-      const dayShifts = useStore.getState().modaring.vardiya.filter(s => s?.date === dStr);
+      const dayShifts = (useStore.getState().modaring?.vardiya || []).filter(s => s?.date === dStr);
       if (dayShifts.length === 0) text += "Plan yok 🏖️\n";
       else dayShifts.forEach(s => {
-        const p = personel.find(x => x.id === s.personelId);
+        const p = personel.find(x => String(x.id) === String(s.personelId));
         text += `${p?.name?.split(' ')[0] || 'Personel'} ${s.startTime}:00 - ${s.endTime}:00\n`;
       });
     });
@@ -100,19 +102,19 @@ const VardiyaTab = () => {
 
     const baseStats = personel.map(p => {
       let filtered = [];
-      if (viewMode === 'daily') filtered = shifts.filter(s => s?.date === formattedDateStr && s?.personelId === p.id);
-      else if (viewMode === 'weekly') filtered = shifts.filter(s => weekStrs.includes(s?.date) && s?.personelId === p.id);
+      if (viewMode === 'daily') filtered = shifts.filter(s => s?.date === formattedDateStr && String(s?.personelId) === String(p.id));
+      else if (viewMode === 'weekly') filtered = shifts.filter(s => weekStrs.includes(s?.date) && String(s?.personelId) === String(p.id));
       else if (viewMode === 'monthly') filtered = shifts.filter(s => { 
         const parts = s?.date?.split('-');
-        return parts && parseInt(parts[0]) === year && parseInt(parts[1]) === (month + 1) && s?.personelId === p.id;
+        return parts && parseInt(parts[0]) === year && parseInt(parts[1]) === (month + 1) && String(s?.personelId) === String(p.id);
       });
       else if (viewMode === 'yearly') filtered = shifts.filter(s => {
         const parts = s?.date?.split('-');
-        return parts && parseInt(parts[0]) === year && s?.personelId === p.id;
+        return parts && parseInt(parts[0]) === year && String(s?.personelId) === String(p.id);
       });
 
-      const hours = filtered.reduce((acc, s) => acc + (parseInt(s.endTime) - parseInt(s.startTime)), 0);
-      const earned = filtered.reduce((acc, s) => acc + (s.totalPay || 0), 0);
+      const hours = filtered.reduce((acc, s) => acc + (parseInt(s.endTime || 0) - parseInt(s.startTime || 0)), 0);
+      const earned = filtered.reduce((acc, s) => acc + (Number(s.totalPay) || 0), 0);
       return { ...p, hours, earned, count: filtered.length, lastNote: filtered[filtered.length-1]?.note };
     });
     return baseStats.sort((a, b) => b.hours - a.hours);
@@ -122,25 +124,30 @@ const VardiyaTab = () => {
 
   const handleSaveShift = useCallback(async (data) => {
     const currentModaring = useStore.getState().modaring;
-    const currentShifts = currentModaring.vardiya || [];
-    const isOverlap = currentShifts.some(s => s.personelId === data.personelId && s.date === data.date && s.id !== data.id && ((parseInt(data.startTime) < parseInt(s.endTime) && parseInt(data.endTime) > parseInt(s.startTime))));
+    const currentShifts = currentModaring?.vardiya || [];
+    const isOverlap = currentShifts.some(s => 
+      String(s.personelId) === String(data.personelId) && 
+      s.date === data.date && 
+      String(s.id) !== String(data.id) && 
+      (parseInt(data.startTime) < parseInt(s.endTime) && parseInt(data.endTime) > parseInt(s.startTime))
+    );
     if (isOverlap) { toast.error("Vardiya Çakışması!"); return; }
     
-    const pInfo = currentModaring.personel.find(px => px.id === data.personelId);
+    const pInfo = (currentModaring?.personel || []).find(px => String(px.id) === String(data.personelId));
     const wage = (parseInt(data.endTime) - parseInt(data.startTime)) * (pInfo?.hourlyRate || 0);
-    const otherShifts = currentShifts.filter(s => !(s?.id === data.id));
     
     if (data.id) {
       updateModaringVardiya(data.id, { ...data, totalPay: wage });
     } else {
-      addModaringVardiya({ ...data, totalPay: wage });
+      const { id, ...newShiftData } = data;
+      addModaringVardiya({ ...newShiftData, totalPay: wage });
     }
     setEditingShift(null);
     toast.success('Kaydedildi');
   }, [updateModaringVardiya, addModaringVardiya]);
 
   const executeClear = useCallback(() => {
-    const currentShifts = useStore.getState().modaring.vardiya || [];
+    const currentShifts = useStore.getState().modaring?.vardiya || [];
     const msg = viewMode === 'daily' ? 'Gün temizlendi' : 'Hafta temizlendi';
     
     const shiftsToDelete = currentShifts.filter(s => {
@@ -154,20 +161,20 @@ const VardiyaTab = () => {
 
     shiftsToDelete.forEach(s => deleteModaringVardiya(s.id));
     toast.success(msg);
-    setConfirmModal({ show: false, title: '', message: '', onConfirm: null });
+    setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
   }, [viewMode, formattedDateStr, getWeekRange, getLocalDateStr, selectedDate, deleteModaringVardiya]);
 
   const handleClear = useCallback(() => {
     if (viewMode === 'daily') {
       setConfirmModal({ 
-        show: true, 
+        isOpen: true, 
         title: 'Günü Temizle', 
         message: `${formattedDateStr} tarihindeki tüm vardiyaları silmek istediğinize emin misiniz?`, 
         onConfirm: executeClear 
       });
     } else if (viewMode === 'weekly') {
       setConfirmModal({ 
-        show: true, 
+        isOpen: true, 
         title: 'Haftayı Temizle', 
         message: 'Bu haftanın tüm planlarını silmek istediğinize emin misiniz?', 
         onConfirm: executeClear 
@@ -383,7 +390,7 @@ const VardiyaTab = () => {
       </div>
 
       {editingShift && (
-        <ShiftEditModal shift={editingShift} personel={personel.find(p => p.id === editingShift.personelId)} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => handleDeleteShift(editingShift.id)} />
+        <ShiftEditModal shift={editingShift} personel={personel.find(p => String(p.id) === String(editingShift.personelId))} onClose={() => setEditingShift(null)} onSave={handleSaveShift} onDelete={() => handleDeleteShift(editingShift.id)} />
       )}
 
       {selectedPersonDetail && <PersonDetailModal person={selectedPersonDetail} onClose={() => setSelectedPersonDetail(null)} onUpdate={(updates) => { 
@@ -392,13 +399,13 @@ const VardiyaTab = () => {
         toast.success('Güncellendi'); 
       }} onDelete={() => { 
         setConfirmModal({ 
-          show: true, 
+          isOpen: true, 
           title: 'Personeli Sil', 
           message: `${selectedPersonDetail.name} isimli personeli ve tüm vardiyalarını silmek istediğinize emin misiniz?`, 
           onConfirm: () => {
             deleteModaringPersonel(selectedPersonDetail.id);
             setSelectedPersonDetail(null);
-            setConfirmModal({ show: false, title: '', message: '', onConfirm: null });
+            setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null });
             toast.error('Personel silindi');
           }
         });
@@ -410,41 +417,32 @@ const VardiyaTab = () => {
         toast.success('Personel eklendi!'); 
       }} />}
 
-      {confirmModal.show && <ConfirmModal title={confirmModal.title} message={confirmModal.message} onConfirm={confirmModal.onConfirm} onCancel={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null })} />}
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen} 
+        title={confirmModal.title} 
+        message={confirmModal.message} 
+        onConfirm={confirmModal.onConfirm} 
+        onCancel={() => setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: null })} 
+      />
     </div>
   );
 };
 
-// YAKIŞIKLI PENCERE (CONFIRM MODAL)
-const ConfirmModal = ({ title, message, onConfirm, onCancel }) => (
-  <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={onCancel}>
-    <div className="modal-content glass animate-pop" style={{ maxWidth: '320px', textAlign: 'center', padding: '24px' }} onClick={e => e.stopPropagation()}>
-      <div className="confirm-icon-box mb-16" style={{ background: '#fee2e2', width: '56px', height: '56px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-        <AlertTriangle size={28} color="#ef4444" />
-      </div>
-      <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>{title}</h3>
-      <p style={{ fontSize: '14px', color: 'var(--txt-light)', lineHeight: '1.5', marginBottom: '24px' }}>{message}</p>
-      <div className="modal-actions-v2" style={{ gap: '12px' }}>
-        <button className="premium-btn-secondary" style={{ flex: 1 }} onClick={onCancel}>İptal</button>
-        <button className="premium-btn-danger" style={{ flex: 1, background: '#ef4444', color: 'white' }} onClick={onConfirm}>Evet, Sil</button>
-      </div>
-    </div>
-  </div>
-);
-
 const StaffAddOnlyModal = ({ onClose, onAdd }) => {
   const [form, setForm] = useState({ name: '', hourlyRate: '', emoji: '👤', color: '#fb7185' });
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-slideUp staff-modal-v2" onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><UserPlus size={24} color="#fb7185" /><h3>Yeni Personel</h3><button className="icon-btn-small" onClick={onClose}><X size={20} /></button></div>
-        <div className="modal-body-v2">
-          <div className="form-group-v2"><label>Ad Soyad</label><input className="premium-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Örn: Ayşe Yılmaz" /></div>
-          <div className="form-grid-v2 mt-12"><div className="form-group-v2"><label>Saatlik Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} placeholder="₺" /></div><div className="form-group-v2"><label>Renk</label><input type="color" className="premium-input-color" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div></div>
-          <button className="submit-btn-premium mt-24" onClick={() => { if(!form.name || !form.hourlyRate) return toast.error('Eksik bilgi'); onAdd(form); }}>Kaydet ve Ekle</button>
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content glass animate-slideUp staff-modal-v2" onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2"><UserPlus size={24} color="#fb7185" /><h3>Yeni Personel</h3><button className="icon-btn-small" onClick={onClose}><X size={20} /></button></div>
+          <div className="modal-body-v2">
+            <div className="form-group-v2"><label>Ad Soyad</label><input className="premium-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Örn: Ayşe Yılmaz" /></div>
+            <div className="form-grid-v2 mt-12"><div className="form-group-v2"><label>Saatlik Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} placeholder="₺" /></div><div className="form-group-v2"><label>Renk</label><input type="color" className="premium-input-color" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div></div>
+            <button className="submit-btn-premium mt-24" onClick={() => { if(!form.name || !form.hourlyRate) return toast.error('Eksik bilgi'); onAdd(form); }}>Kaydet ve Ekle</button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 };
 
@@ -452,17 +450,19 @@ const ShiftEditModal = ({ shift, personel, onClose, onSave, onDelete }) => {
   const [data, setData] = useState({ id: shift.id, personelId: shift.personelId, date: shift.date, startTime: shift.startTime || "10", endTime: shift.endTime || "22", note: shift.note || "" });
   const hoursArr = Array.from({ length: 13 }, (_, i) => (i + 10).toString());
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-pop" style={{ maxWidth: '320px' }} onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2"><Clock size={20} color={personel.color} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Planla</h3><small>{personel.name}</small></div></div>
-        <div className="modal-body-v2">
-          <div className="template-row mb-12"><button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "18"})}>🌅 10-18</button><button className="template-btn" onClick={() => setData({...data, startTime: "14", endTime: "22"})}>🌙 14-22</button><button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "22"})}>💎 Tam</button></div>
-          <div className="form-grid-v2"><div className="form-group-v2"><label>Giriş</label><select className="premium-select" value={data.startTime} onChange={e => setData({...data, startTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div><div className="form-group-v2"><label>Çıkış</label><select className="premium-select" value={data.endTime} onChange={e => setData({...data, endTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div></div>
-          <div className="form-group-v2 mt-12"><label>Not</label><textarea className="premium-input" style={{ height: '60px', padding: '10px' }} value={data.note} onChange={e => setData({...data, note: e.target.value})} placeholder="Vardiya notu..." /></div>
-          <div className="modal-actions-v2 mt-20">{shift.id && <button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button>}<button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave(data)}>Planla</button></div>
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content glass animate-pop" style={{ maxWidth: '320px' }} onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2"><Clock size={20} color={personel?.color || '#fb7185'} /><div><h3 style={{ fontSize: '16px' }}>Vardiya Planla</h3><small>{personel?.name || 'Personel'}</small></div></div>
+          <div className="modal-body-v2">
+            <div className="template-row mb-12"><button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "18"})}>🌅 10-18</button><button className="template-btn" onClick={() => setData({...data, startTime: "14", endTime: "22"})}>🌙 14-22</button><button className="template-btn" onClick={() => setData({...data, startTime: "10", endTime: "22"})}>💎 Tam</button></div>
+            <div className="form-grid-v2"><div className="form-group-v2"><label>Giriş</label><select className="premium-select" value={data.startTime} onChange={e => setData({...data, startTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div><div className="form-group-v2"><label>Çıkış</label><select className="premium-select" value={data.endTime} onChange={e => setData({...data, endTime: e.target.value})}>{hoursArr.map(h => <option key={h} value={h}>{h}:00</option>)}</select></div></div>
+            <div className="form-group-v2 mt-12"><label>Not</label><textarea className="premium-input" style={{ height: '60px', padding: '10px' }} value={data.note} onChange={e => setData({...data, note: e.target.value})} placeholder="Vardiya notu..." /></div>
+            <div className="modal-actions-v2 mt-20">{shift.id && <button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button>}<button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onSave(data)}>Planla</button></div>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 };
 
@@ -477,34 +477,36 @@ const PersonDetailModal = ({ person, onClose, onUpdate, onDelete }) => {
     emoji: person.emoji || '👤'
   });
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content glass animate-slideUp staff-modal-v2" onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2">
-          <span style={{ background: form.color, width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.3s' }}>
-            {form.emoji}
-          </span>
-          <h3>Profil</h3>
-          <button className="icon-btn-small" onClick={onClose}><X size={20} /></button>
-        </div>
-        <div className="modal-body-v2">
-          <div className="form-group-v2"><label>Adı Soyadı</label><input className="premium-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
-          
-          <div className="form-grid-v2 mt-12">
-            <div className="form-group-v2"><label>Rol</label><input className="premium-input" value={form.role} onChange={e => setForm({...form, role: e.target.value})} /></div>
-            <div className="form-group-v2"><label>Renk</label><input type="color" className="premium-input-color" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div>
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content glass animate-slideUp staff-modal-v2" onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2">
+            <span style={{ background: form.color, width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.3s' }}>
+              {form.emoji}
+            </span>
+            <h3>Profil</h3>
+            <button className="icon-btn-small" onClick={onClose}><X size={20} /></button>
           </div>
+          <div className="modal-body-v2">
+            <div className="form-group-v2"><label>Adı Soyadı</label><input className="premium-input" value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>
+            
+            <div className="form-grid-v2 mt-12">
+              <div className="form-group-v2"><label>Rol</label><input className="premium-input" value={form.role} onChange={e => setForm({...form, role: e.target.value})} /></div>
+              <div className="form-group-v2"><label>Renk</label><input type="color" className="premium-input-color" value={form.color} onChange={e => setForm({...form, color: e.target.value})} /></div>
+            </div>
 
-          <div className="form-grid-v2 mt-12">
-            <div className="form-group-v2"><label>Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} /></div>
-            <div className="form-group-v2"><label>Emoji</label><input className="premium-input" value={form.emoji} onChange={e => setForm({...form, emoji: e.target.value})} /></div>
+            <div className="form-grid-v2 mt-12">
+              <div className="form-group-v2"><label>Ücret</label><input type="number" className="premium-input" value={form.hourlyRate} onChange={e => setForm({...form, hourlyRate: e.target.value})} /></div>
+              <div className="form-group-v2"><label>Emoji</label><input className="premium-input" value={form.emoji} onChange={e => setForm({...form, emoji: e.target.value})} /></div>
+            </div>
+
+            <div className="form-group-v2 mt-12"><label>Telefon</label><div style={{ display: 'flex', gap: 8 }}><input className="premium-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /><a href={`tel:${form.phone}`} className="icon-btn-small" style={{ background: '#10b981', color: 'white' }}><Phone size={16} /></a></div></div>
+            <div className="form-group-v2 mt-12"><label>Personel Notu</label><textarea className="premium-input" style={{ height: '80px', padding: '10px' }} value={form.note} onChange={e => setForm({...form, note: e.target.value})} /></div>
+            <div className="modal-actions-v2 mt-20"><button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button><button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onUpdate(form)}>Güncelle</button></div>
           </div>
-
-          <div className="form-group-v2 mt-12"><label>Telefon</label><div style={{ display: 'flex', gap: 8 }}><input className="premium-input" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} /><a href={`tel:${form.phone}`} className="icon-btn-small" style={{ background: '#10b981', color: 'white' }}><Phone size={16} /></a></div></div>
-          <div className="form-group-v2 mt-12"><label>Personel Notu</label><textarea className="premium-input" style={{ height: '80px', padding: '10px' }} value={form.note} onChange={e => setForm({...form, note: e.target.value})} /></div>
-          <div className="modal-actions-v2 mt-20"><button className="icon-btn-danger" onClick={onDelete}><Trash2 size={18} /></button><button className="submit-btn-premium" style={{ flex: 1 }} onClick={() => onUpdate(form)}>Güncelle</button></div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 };
 

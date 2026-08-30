@@ -1837,15 +1837,25 @@ async function deleteModaringPersonelFromSupabase(id) {
 
 async function pushModaringVardiyaToSupabase(v) {
   try {
-    await supabase.from('modaring_vardiya').upsert({
+    const payload = {
       id: String(v.id),
-      personel_id: String(v.personelId || v.personel_id),
+      personel_id: String(v.personelId || v.personel_id || ''),
       date: v.date || null,
       start_time: String(v.startTime || v.start_time || "10"),
       end_time: String(v.endTime || v.end_time || "18"),
       total_pay: Number(v.totalPay || v.total_pay || 0),
-      status: v.status || 'aktif'
-    });
+      status: v.status || 'aktif',
+      note: v.note || null
+    };
+    const { error } = await supabase.from('modaring_vardiya').upsert(payload);
+    if (error) {
+      if (error.code === '42703' || error.message?.includes('note')) {
+        delete payload.note;
+        await supabase.from('modaring_vardiya').upsert(payload);
+      } else {
+        console.warn('Modaring Vardiya Supabase Hatası:', error);
+      }
+    }
   } catch(e) { console.warn('Modaring Vardiya Hatası:', e); }
 }
 
@@ -1936,13 +1946,30 @@ async function deleteModaringSiparisFromSupabase(id) {
 
 async function pushModaringAjandaToSupabase(a) {
   try {
-    await supabase.from('modaring_ajanda').upsert({
+    const payload = {
       id: String(a.id),
-      title: a.title,
+      title: a.title || 'Başlıksız',
       due_date: a.dueDate || a.due_date || null,
       amount: Number(a.amount || 0),
-      status: a.status || 'bekliyor'
-    });
+      status: a.status || 'pending',
+      category: a.category || 'Hatırlatıcı',
+      note: a.note || null
+    };
+    const { error } = await supabase.from('modaring_ajanda').upsert(payload);
+    if (error) {
+      if (error.code === '42703' || error.message?.includes('category') || error.message?.includes('note')) {
+        const fallback = {
+          id: String(a.id),
+          title: a.title || 'Başlıksız',
+          due_date: a.dueDate || a.due_date || null,
+          amount: Number(a.amount || 0),
+          status: a.status || 'pending'
+        };
+        await supabase.from('modaring_ajanda').upsert(fallback);
+      } else {
+        console.warn('Modaring Ajanda Supabase Hatası:', error);
+      }
+    }
   } catch(e) { console.warn('Modaring Ajanda Hatası:', e); }
 }
 
@@ -2878,54 +2905,64 @@ const useStore = create(
             }
 
             // ── Modaring ──
-            if (personel.data) {
+            if (personel.data && Array.isArray(personel.data)) {
               modaring.personel = personel.data.map(x => ({
-                id: x.id, name: x.name, hourlyRate: Number(x.hourly_rate || 0),
-                color: x.color, emoji: x.emoji, active: x.active
+                id: String(x.id), name: x.name, hourlyRate: Number(x.hourly_rate || 0),
+                color: x.color || '#fb7185', emoji: x.emoji || '👤', active: x.active !== false
               }));
             }
-            if (vardiya.data) {
+            if (vardiya.data && Array.isArray(vardiya.data)) {
               modaring.vardiya = vardiya.data.map(x => ({
-                id: x.id, personelId: x.personel_id, date: x.date,
-                startTime: x.start_time, endTime: x.end_time,
-                totalPay: Number(x.total_pay || 0), status: x.status
+                id: String(x.id),
+                personelId: String(x.personel_id || ''),
+                date: x.date,
+                startTime: String(x.start_time || '10'),
+                endTime: String(x.end_time || '18'),
+                totalPay: Number(x.total_pay || 0),
+                status: x.status || 'aktif',
+                note: x.note || ''
               }));
             }
-            if (kasaItems.data) {
+            if (kasaItems.data && Array.isArray(kasaItems.data)) {
               modaring.kasa = kasaItems.data.map(x => ({
-                id: x.id, date: x.date, type: x.type,
+                id: String(x.id), date: x.date, type: x.type,
                 amount: Number(x.amount || 0), method: x.method,
                 note: x.note, bankId: x.bank_id
               }));
             }
-            if (bankalar.data) {
+            if (bankalar.data && Array.isArray(bankalar.data)) {
               modaring.bankalar = bankalar.data.map(x => ({
-                id: x.id, name: x.name, type: x.type,
+                id: String(x.id), name: x.name, type: x.type,
                 balance: Number(x.balance || 0), color: x.color, icon: x.icon
               }));
             }
-            if (tedarik.data) {
+            if (tedarik.data && Array.isArray(tedarik.data)) {
               modaring.tedarik = tedarik.data.map(x => ({
-                id: x.id, name: x.name, link: x.link,
+                id: String(x.id), name: x.name, link: x.link,
                 category: x.category, contact: x.contact, note: x.note
               }));
             }
-            if (siparisler.data && siparisler.data.length > 0) {
+            if (siparisler.data && Array.isArray(siparisler.data)) {
               modaring.siparisler = siparisler.data.map(x => ({
-                id: x.id, supplierId: x.supplier_id, date: x.date,
+                id: String(x.id), supplierId: String(x.supplier_id || ''), date: x.date,
                 items: x.items || [], total: Number(x.total || 0),
-                paid: x.paid, status: x.status, bankId: x.bank_id
+                paid: !!x.paid, status: x.status || 'bekliyor', bankId: x.bank_id
               }));
             }
-            if (ajanda.data && ajanda.data.length > 0) {
+            if (ajanda.data && Array.isArray(ajanda.data)) {
               modaring.ajanda = ajanda.data.map(x => ({
-                id: x.id, title: x.title, dueDate: x.due_date,
-                amount: Number(x.amount || 0), status: x.status
+                id: String(x.id),
+                title: x.title || 'Başlıksız',
+                dueDate: x.due_date || null,
+                amount: Number(x.amount || 0),
+                status: x.status || 'pending',
+                category: x.category || 'Hatırlatıcı',
+                note: x.note || ''
               }));
             }
-            if (refika.data && refika.data.length > 0) {
+            if (refika.data && Array.isArray(refika.data)) {
               modaring.refikaFikirleri = refika.data.map(x => ({
-                id: x.id, title: x.title, desc: x.description,
+                id: String(x.id), title: x.title, desc: x.description,
                 cost: Number(x.cost || 0), price: Number(x.price || 0),
                 strategy: x.strategy, context: x.context, date: x.date
               }));
@@ -3527,7 +3564,7 @@ const useStore = create(
       // --- Modaring Actions (SQL-First) ---
       addModaringPersonel: (person) => {
         const state = get();
-        const newPerson = { id: String(Date.now()), ...person, active: true };
+        const newPerson = { ...person, id: (person.id && person.id !== 'null' && person.id !== 'undefined') ? String(person.id) : String(Date.now()), active: person.active !== false };
         const updated = [...(state.modaring.personel || []), newPerson];
         set({ modaring: { ...state.modaring, personel: updated } });
         pushModaringPersonelToSupabase(newPerson);
@@ -3548,7 +3585,7 @@ const useStore = create(
       },
       addModaringVardiya: (shift) => {
         const state = get();
-        const newShift = { id: String(Date.now()), ...shift };
+        const newShift = { ...shift, id: (shift.id && shift.id !== 'null' && shift.id !== 'undefined') ? String(shift.id) : String(Date.now()) };
         const updated = [...(state.modaring.vardiya || []), newShift];
         set({ modaring: { ...state.modaring, vardiya: updated } });
         pushModaringVardiyaToSupabase(newShift);
@@ -3568,7 +3605,7 @@ const useStore = create(
       },
       addModaringKasaItem: (item) => {
         const state = get();
-        const newItem = { id: String(Date.now()), ...item };
+        const newItem = { ...item, id: (item.id && item.id !== 'null' && item.id !== 'undefined') ? String(item.id) : String(Date.now()) };
         const updated = [...(state.modaring.kasa || []), newItem];
         set({ modaring: { ...state.modaring, kasa: updated } });
         pushModaringKasaToSupabase(newItem);
@@ -3588,7 +3625,7 @@ const useStore = create(
       },
       addModaringBank: (bank) => {
         const state = get();
-        const newBank = { id: String(Date.now()), ...bank };
+        const newBank = { ...bank, id: (bank.id && bank.id !== 'null' && bank.id !== 'undefined') ? String(bank.id) : String(Date.now()) };
         const updated = [...(state.modaring.bankalar || []), newBank];
         set({ modaring: { ...state.modaring, bankalar: updated } });
         pushModaringBankaToSupabase(newBank);
@@ -3608,7 +3645,7 @@ const useStore = create(
       },
       addModaringTedarik: (tedarik) => {
         const state = get();
-        const newItem = { id: String(Date.now()), ...tedarik };
+        const newItem = { ...tedarik, id: (tedarik.id && tedarik.id !== 'null' && tedarik.id !== 'undefined') ? String(tedarik.id) : String(Date.now()) };
         const updated = [...(state.modaring.tedarik || []), newItem];
         set({ modaring: { ...state.modaring, tedarik: updated } });
         pushModaringTedarikToSupabase(newItem);
@@ -3628,7 +3665,7 @@ const useStore = create(
       },
       addModaringSiparis: (siparis) => {
         const state = get();
-        const newItem = { id: String(Date.now()), ...siparis };
+        const newItem = { ...siparis, id: (siparis.id && siparis.id !== 'null' && siparis.id !== 'undefined') ? String(siparis.id) : String(Date.now()) };
         const updated = [...(state.modaring.siparisler || []), newItem];
         set({ modaring: { ...state.modaring, siparisler: updated } });
         pushModaringSiparisToSupabase(newItem);
@@ -3648,7 +3685,7 @@ const useStore = create(
       },
       addModaringAjanda: (task) => {
         const state = get();
-        const newItem = { id: String(Date.now()), ...task };
+        const newItem = { ...task, id: (task.id && task.id !== 'null' && task.id !== 'undefined') ? String(task.id) : String(Date.now()) };
         const updated = [...(state.modaring.ajanda || []), newItem];
         set({ modaring: { ...state.modaring, ajanda: updated } });
         pushModaringAjandaToSupabase(newItem);
@@ -3668,7 +3705,7 @@ const useStore = create(
       },
       addModaringRefika: (fikir) => {
         const state = get();
-        const newItem = { id: String(Date.now()), ...fikir, date: new Date().toISOString() };
+        const newItem = { ...fikir, id: (fikir.id && fikir.id !== 'null' && fikir.id !== 'undefined') ? String(fikir.id) : String(Date.now()), date: fikir.date || new Date().toISOString() };
         const updated = [...(state.modaring.refikaFikirleri || []), newItem];
         set({ modaring: { ...state.modaring, refikaFikirleri: updated } });
         pushModaringRefikaToSupabase(newItem);
@@ -10181,6 +10218,21 @@ const useStore = create(
         // Fix Kasa
         if (merged.kasa) {
           if (!Array.isArray(merged.kasa.tasinmazlar)) merged.kasa.tasinmazlar = [];
+        }
+
+        // Fix Modaring
+        if (merged.modaring) {
+          if (!Array.isArray(merged.modaring.personel)) merged.modaring.personel = [];
+          if (!Array.isArray(merged.modaring.vardiya)) merged.modaring.vardiya = [];
+          if (!Array.isArray(merged.modaring.kasa)) merged.modaring.kasa = [];
+          if (!Array.isArray(merged.modaring.bankalar)) merged.modaring.bankalar = [];
+          if (!Array.isArray(merged.modaring.tedarik)) merged.modaring.tedarik = [];
+          if (!Array.isArray(merged.modaring.siparisler)) merged.modaring.siparisler = [];
+          if (!Array.isArray(merged.modaring.ajanda)) merged.modaring.ajanda = [];
+          if (!Array.isArray(merged.modaring.trendler)) merged.modaring.trendler = [];
+          if (!Array.isArray(merged.modaring.refikaFikirleri)) merged.modaring.refikaFikirleri = [];
+        } else {
+          merged.modaring = { ...INITIAL_MODARING };
         }
 
         if (!Array.isArray(merged.logs)) merged.logs = [];
