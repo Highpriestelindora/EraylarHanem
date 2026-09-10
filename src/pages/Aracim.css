@@ -658,3 +658,576 @@
   color: var(--aracim);
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
+
+/* ==========================================================================
+   Eski Araçlar (Arşiv) & Boş Garaj Görünümü
+   ========================================================================== */
+
+/* Boş Garaj Kartı */
+.empty-garage-card {
+  padding: 36px 24px;
+  text-align: center;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.egc-icon-badge {
+  width: 72px;
+  height: 72px;
+  border-radius: 22px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.empty-garage-card h3 {
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+}
+
+.empty-garage-card p {
+  font-size: 13.5px;
+  line-height: 1.5;
+  opacity: 0.8;
+  max-width: 440px;
+  margin: 0 auto 24px auto;
+}
+
+.egc-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 420px;
+  flex-wrap: wrap;
+}
+
+.egc-actions button {
+  flex: 1;
+  min-width: 170px;
+  min-height: 44px;
+}
+
+.submit-btn-premium.secondary {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #f1f5f9;
+}
+
+.submit-btn-premium.secondary:active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Eski Araçlar Banner */
+.eski-araclar-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+}
+
+.eski-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.04));
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.eski-banner .eb-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.eski-banner .eb-content h4 {
+  margin: 0 0 3px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.eski-banner .eb-content p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+/* Eski Araç Kartı */
+.eski-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.eski-card {
+  padding: 18px 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.eski-card:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.ec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ec-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sold-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #f59e0b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  width: fit-content;
+}
+
+.ec-title {
+  margin: 2px 0 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.ec-plate {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  width: fit-content;
+  opacity: 0.85;
+}
+
+.ec-right {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.ec-price-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.65;
+}
+
+.ec-price {
+  font-size: 20px;
+  font-weight: 800;
+  color: #10b981;
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+/* Satış Detay Izgarası */
+.ec-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+@media (min-width: 480px) {
+  .ec-details-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.ec-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ec-detail-item .label {
+  font-size: 10.5px;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.ec-detail-item .val {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.ec-detail-item .val.note {
+  font-size: 11.5px;
+  opacity: 0.85;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+/* İstatistik Şeritleri */
+.ec-stats-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ec-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 11.5px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Kart Aksiyon Butonları */
+.ec-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ec-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.ec-btn.view-btn {
+  flex: 2;
+  min-width: 140px;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.2));
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+.ec-btn.view-btn:active {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+.ec-btn.edit-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+.ec-btn.edit-btn:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.ec-btn.restore-btn {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.ec-btn.restore-btn:active {
+  background: rgba(16, 185, 129, 0.22);
+}
+
+.ec-btn.delete-btn {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  padding: 8px 12px;
+}
+
+.ec-btn.delete-btn:active {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+/* Garaj Seçimindeki Sat Butonu */
+.garage-sell-btn {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f59e0b;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.garage-sell-btn:active {
+  background: rgba(245, 158, 11, 0.3);
+}
+
+/* Arşiv Detay Modalı */
+.archive-modal-content {
+  max-width: 620px;
+  width: 94%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.archive-sale-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  margin-bottom: 16px;
+}
+
+.archive-sale-summary .ass-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.archive-sale-summary .ass-item.full-width {
+  grid-column: 1 / -1;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.archive-sale-summary .ass-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  opacity: 0.65;
+  letter-spacing: 0.4px;
+}
+
+.archive-sale-summary .ass-val {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.archive-sale-summary .ass-val.price {
+  font-size: 17px;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.archive-sale-summary .ass-val.note {
+  font-size: 12px;
+  opacity: 0.85;
+  font-style: italic;
+}
+
+/* Arşiv Alt Sekmeleri */
+.archive-subtabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.archive-tab-btn {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 40px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.archive-tab-btn.active {
+  background: var(--aracim);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Arşiv Geçmiş Listesi */
+.archive-tab-content {
+  max-height: 38vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.archive-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.archive-item .ai-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.archive-item .ai-left strong {
+  font-size: 13.5px;
+  color: #f1f5f9;
+}
+
+.archive-item .ai-left small {
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.archive-item .ai-cost {
+  font-size: 14px;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.part-interval-pill {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  font-weight: 600;
+}
+
+.close-btn-ghost {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.close-btn-ghost:active {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.sell-info-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.sell-info-alert p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  opacity: 0.85;
+}
+
+.empty-text {
+  text-align: center;
+  font-size: 12.5px;
+  opacity: 0.6;
+  padding: 24px 0;
+}
+
+/* 5 Tab Bar Mobil Optimizasyonu */
+@media (max-width: 420px) {
+  .aracim-container .tab-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px;
+    padding: 4px;
+  }
+  
+  .aracim-container .tab-btn {
+    padding: 6px 2px;
+    font-size: 10.5px;
+    min-height: 44px;
+  }
+  
+  .aracim-container .tab-btn span:first-child {
+    font-size: 15px;
+  }
+  
+  .ec-actions {
+    flex-direction: column;
+  }
+  
+  .ec-actions .ec-btn {
+    width: 100%;
+  }
+}
+

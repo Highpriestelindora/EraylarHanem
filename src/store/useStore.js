@@ -168,20 +168,41 @@ const DEFAULT_STATE = {
     routinePackages: SOCIAL_ROUTINES || [], // The 10 routines
     tab: 'hafta'
   },
-  selectedVehicleId: 'v1',
-  garaj: [
+  selectedVehicleId: null,
+  garaj: [],
+  eskiAraclar: [
     {
       id: 'v1',
       type: 'car',
       brand: 'Toyota',
       model: 'C-HR 1.8 Hybrid',
       plaka: '34 HH 1144',
-      km: 41452,
+      km: 42969,
       marketValue: 1550000,
-      parts: [],
-      fuelLogs: [],
-      services: [],
-      documents: [],
+      status: 'sold',
+      saleInfo: {
+        date: '2026-09-10',
+        price: 1550000,
+        km: 42969,
+        buyer: 'Yeni Sahibi',
+        notes: 'Sorunsuz devir teslim yapıldı. Hayırlı olsun 🚗'
+      },
+      parts: [
+        { id: 'oil', name: 'Motor Yağı', lastKM: 35000, intervalKM: 15000, icon: '🛢️' },
+        { id: 'filter', name: 'Hava Filtresi', lastKM: 35000, intervalKM: 15000, icon: '🌪️' }
+      ],
+      fuelLogs: [
+        { id: 1, date: '2026-04-20', km: 42969, amount: 45.5, price: 42.5, station: 'Shell', consumption: '7.2' },
+        { id: 2, date: '2026-04-10', km: 41452, amount: 42.0, price: 41.8, station: 'Opet', consumption: '7.5' }
+      ],
+      services: [
+        { id: 1, date: '2025-10-15', km: 35000, title: 'Periyodik Bakım', detail: 'Yağ ve filtreler değişti, genel kontrol yapıldı', cost: 4500, shop: 'Toyota Yetkili Servis' }
+      ],
+      documents: [
+        { id: 'd1', name: 'Kasko Poliçesi', dueDate: '2026-11-20', brand: 'Neova Sigorta', notes: 'Genişletilmiş Kasko' },
+        { id: 'd2', name: 'Trafik Sigortası', dueDate: '2026-11-20', brand: 'Neova Sigorta', notes: '' },
+        { id: 'd3', name: 'Araç Muayenesi', dueDate: '2027-06-15', brand: 'TÜVTÜRK', notes: 'Kusursuz geçti' }
+      ],
       tireStatus: { type: 'Yazlık', changeDate: '2026-04-01', condition: 'İyi' },
       lastCleaned: '2026-04-23',
       parkLocation: { lat: null, lng: null, note: '', floor: '', spot: '', active: false },
@@ -2013,6 +2034,7 @@ function extractAppData(state, forPersist = false) {
       currentUser: state.currentUser,
       family_id: state.family_id,
       selectedVehicleId: state.selectedVehicleId,
+      eskiAraclar: state.eskiAraclar,
       modaring: { ...state.modaring, activeTab: state.modaring?.activeTab }, // Sadece UI state
       mutfak: { ...state.mutfak, activeTab: state.mutfak?.activeTab },
       sosyal: { ...state.sosyal, tab: state.sosyal?.tab }
@@ -2025,6 +2047,7 @@ function extractAppData(state, forPersist = false) {
     users: state.users,
     system: state.system,
     selectedVehicleId: state.selectedVehicleId,
+    eskiAraclar: state.eskiAraclar,
     logs: state.logs,
     achievements: state.achievements,
     ui: state.ui
@@ -2430,6 +2453,8 @@ const useStore = create(
             // Restore Vehicle Metadata from Supabase
             if (araclar.data && araclar.data.length > 0) {
               araclar.data.forEach(item => {
+                const isSold = (state.eskiAraclar || []).some(ev => String(ev.id) === String(item.id) || (ev.plaka && item.plaka && ev.plaka.trim().toLowerCase() === item.plaka.trim().toLowerCase()));
+                if (isSold || item.status === 'sold') return;
                 const existingIdx = garaj.findIndex(gv => String(gv.id) === String(item.id));
                 if (existingIdx !== -1) {
                   garaj[existingIdx] = {
@@ -8758,6 +8783,115 @@ const useStore = create(
         const nextId = updatedGaraj.length > 0 ? updatedGaraj[0].id : null;
         set({ garaj: updatedGaraj, selectedVehicleId: nextId });
         deleteGarajAracFromSupabase(id);
+      },
+
+      sellVehicle: (vehicleId, saleInfo, addToFinans = false) => {
+        const state = get();
+        const currentGaraj = Array.isArray(state.garaj) ? state.garaj : [];
+        const vehicleToSell = currentGaraj.find(v => String(v.id) === String(vehicleId));
+        if (!vehicleToSell) {
+          toast.error('Satılacak araç bulunamadı.');
+          return;
+        }
+
+        const soldVehicle = {
+          ...vehicleToSell,
+          status: 'sold',
+          saleInfo: {
+            date: saleInfo.date || new Date().toISOString().split('T')[0],
+            price: Number(saleInfo.price || vehicleToSell.marketValue || 0),
+            km: Number(saleInfo.km || vehicleToSell.km || 0),
+            buyer: saleInfo.buyer || '',
+            notes: saleInfo.notes || ''
+          }
+        };
+
+        const updatedGaraj = currentGaraj.filter(v => String(v.id) !== String(vehicleId));
+        const updatedEski = [soldVehicle, ...(state.eskiAraclar || [])];
+        const nextSelectedId = updatedGaraj.length > 0 ? updatedGaraj[0].id : null;
+
+        set({
+          garaj: updatedGaraj,
+          eskiAraclar: updatedEski,
+          selectedVehicleId: nextSelectedId
+        });
+
+        if (addToFinans && soldVehicle.saleInfo.price > 0) {
+          get().addExpense({
+            title: `Araç Satış Geliri: ${vehicleToSell.model} (${vehicleToSell.plaka || ''})`,
+            amount: -Math.abs(soldVehicle.saleInfo.price),
+            category: 'arac',
+            source: 'Garaj',
+            dt: soldVehicle.saleInfo.date
+          });
+        }
+
+        get().addLog('Garaj', `${vehicleToSell.model} satıldı olarak arşivlendi (${soldVehicle.saleInfo.price?.toLocaleString('tr-TR')} ₺).`);
+        pushGenericToSupabase('eski_araclar', { id: 'archive', list: updatedEski });
+        deleteGarajAracFromSupabase(vehicleId);
+        toast.success(`${vehicleToSell.model} Eski Araçlar arşivine taşındı! 🏷️`);
+      },
+
+      restoreVehicle: (vehicleId) => {
+        const state = get();
+        const currentEski = Array.isArray(state.eskiAraclar) ? state.eskiAraclar : [];
+        const vehicleToRestore = currentEski.find(v => String(v.id) === String(vehicleId));
+        if (!vehicleToRestore) {
+          toast.error('Geri yüklenecek araç bulunamadı.');
+          return;
+        }
+
+        const { saleInfo, status, ...cleanVehicle } = vehicleToRestore;
+        const restored = {
+          ...cleanVehicle,
+          status: 'active'
+        };
+
+        const updatedEski = currentEski.filter(v => String(v.id) !== String(vehicleId));
+        const updatedGaraj = [...(state.garaj || []), restored];
+
+        set({
+          garaj: updatedGaraj,
+          eskiAraclar: updatedEski,
+          selectedVehicleId: restored.id
+        });
+
+        get().addLog('Garaj', `${restored.model} tekrar aktif garaja alındı.`);
+        pushGenericToSupabase('eski_araclar', { id: 'archive', list: updatedEski });
+        pushGarajAracToSupabase(restored);
+        toast.success(`${restored.model} aktif garaja geri alındı! 🏎️`);
+      },
+
+      updateSoldVehicle: (vehicleId, updates) => {
+        const state = get();
+        const currentEski = Array.isArray(state.eskiAraclar) ? state.eskiAraclar : [];
+        const updatedEski = currentEski.map(v => {
+          if (String(v.id) === String(vehicleId)) {
+            return {
+              ...v,
+              ...updates,
+              saleInfo: {
+                ...(v.saleInfo || {}),
+                ...(updates.saleInfo || {})
+              }
+            };
+          }
+          return v;
+        });
+
+        set({ eskiAraclar: updatedEski });
+        pushGenericToSupabase('eski_araclar', { id: 'archive', list: updatedEski });
+        toast.success('Satış bilgileri güncellendi! ✏️');
+      },
+
+      deleteSoldVehicle: (vehicleId) => {
+        const state = get();
+        const currentEski = Array.isArray(state.eskiAraclar) ? state.eskiAraclar : [];
+        const updatedEski = currentEski.filter(v => String(v.id) !== String(vehicleId));
+
+        set({ eskiAraclar: updatedEski });
+        pushGenericToSupabase('eski_araclar', { id: 'archive', list: updatedEski });
+        toast.success('Araç kaydı arşivden silindi. 🗑️');
       },
 
       addWashRecord: (vehicleId, { price, date }, paymentInfo = null) => {

@@ -4364,6 +4364,7 @@
   padding: 8px 5px;
   margin: 10px 0;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .weather-forecast-scroll::-webkit-scrollbar { display: none; }
@@ -4391,6 +4392,7 @@
   overflow-x: auto;
   padding: 10px 0;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 .oracle-forecast-row::-webkit-scrollbar { display: none; }
 

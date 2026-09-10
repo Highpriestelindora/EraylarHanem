@@ -3,12 +3,14 @@ import {
   Car, Fuel, Wrench, History as HistoryIcon, Plus, Gauge, ArrowUpRight, 
   Shield, Landmark, AlertCircle, Sparkles, Home, Camera,
   MapPin, Phone, FileText, Settings, ArrowLeft, MoreVertical,
-  ChevronRight, Droplets, Trash2, Check, Warehouse, Edit3
+  ChevronRight, Droplets, Trash2, Check, Warehouse, Edit3,
+  RotateCcw, X, DollarSign, Calendar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 import AnimatedPage from '../components/AnimatedPage';
 import ConfirmModal from '../components/ConfirmModal';
+import Portal from '../components/Portal';
 import toast from 'react-hot-toast';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
@@ -25,9 +27,10 @@ export default function Aracim() {
   const [activeTab, setActiveTab] = useState('panel');
   const navigate = useNavigate();
   const { 
-    garaj, selectedVehicleId, setModuleData, 
+    garaj, eskiAraclar, selectedVehicleId, setModuleData, 
     updateKM, addFuelLog, addServiceRecord,
     addVehicle, updateVehicle, deleteVehicle,
+    sellVehicle, restoreVehicle, updateSoldVehicle, deleteSoldVehicle,
     addWashRecord, startParking, finishParking,
     deleteServiceRecord, deleteDocument, addDocument, updateDocument,
     updatePartMaintenance, deleteFuelLog, updateSupportContacts, updateFuelLog,
@@ -37,7 +40,7 @@ export default function Aracim() {
   const isGuest = currentUser?.name === 'Misafir';
   
   const vehicle = useMemo(() => 
-    garaj.find(v => v.id === selectedVehicleId) || garaj[0], 
+    garaj.find(v => v.id === selectedVehicleId) || garaj[0] || null, 
     [garaj, selectedVehicleId]
   );
 
@@ -58,6 +61,11 @@ export default function Aracim() {
   const [activeDocAction, setActiveDocAction] = useState(null); // The doc for ActionSheet
   const [showConfirm, setShowConfirm] = useState({ open: false, message: '', onConfirm: null });
 
+  // Sold & Archive states
+  const [viewingArchive, setViewingArchive] = useState(null);
+  const [editingSaleVehicle, setEditingSaleVehicle] = useState(null);
+  const [sellingVehicle, setSellingVehicle] = useState(null);
+
   const requestConfirm = (message, onConfirm) => {
     setShowConfirm({ open: true, message, onConfirm });
   };
@@ -68,7 +76,7 @@ export default function Aracim() {
   } = vehicle || { km: 0, parts: [], fuelLogs: [], services: [], documents: [] };
 
   const logsWithConsumption = useMemo(() => {
-    const sorted = [...fuelLogs].sort((a, b) => (a.km || 0) - (b.km || 0));
+    const sorted = [...(fuelLogs || [])].sort((a, b) => (a.km || 0) - (b.km || 0));
     return sorted.map((log, index) => {
       let consumption = 0;
       if (index > 0) {
@@ -88,6 +96,9 @@ export default function Aracim() {
 
   // AI Insights - Dolmuşçu Manileri Edition
   const aiNote = useMemo(() => {
+    if (!vehicle) {
+      return "Garajınızda şu anda aktif bir araç bulunmuyor. Eski Araçlar sekmesinden satılan araçlarınızı görebilir veya yeni bir araç ekleyebilirsiniz. 🚗";
+    }
     const maniler = [
       "Aşıksan vur saza, şoförsen bas gaza! {model} yollara hazır. 🏎️",
       "Rampaların ustasıyım, {model}'ın hastasıyım! 🌟",
@@ -102,15 +113,16 @@ export default function Aracim() {
     ];
     
     // Basit bir hash fonksiyonu ile araca özel ama sabit olmayan bir mani seçelim
-    const seed = fuelLogs.length + (km % 10);
-    return maniler[seed % maniler.length].replace('{model}', vehicle.model);
-  }, [fuelLogs, vehicle.model, km]);
+    const seed = (fuelLogs?.length || 0) + ((km || 0) % 10);
+    return maniler[seed % maniler.length].replace('{model}', vehicle.model || 'Eraylar Garajı');
+  }, [fuelLogs, vehicle, km]);
 
   const tabs = [
     { id: 'panel', label: 'Panel', emoji: '🏎️' },
     { id: 'servis', label: 'Servis', emoji: '🛠️' },
     { id: 'torpido', label: 'Torpido', emoji: '📂' },
-    { id: 'analiz', label: 'Analiz', emoji: '📊' }
+    { id: 'analiz', label: 'Analiz', emoji: '📊' },
+    { id: 'eski', label: 'Eski Araçlar', emoji: '🕰️' }
   ];
 
   return (
@@ -126,8 +138,8 @@ export default function Aracim() {
                 Eraylar Garajım
               </div>
               <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {vehicle.model}
-                {!isGuest && (
+                {vehicle?.model || (activeTab === 'eski' ? 'Eski Araçlar' : 'Garaj Boş')}
+                {!isGuest && vehicle && (
                   <Settings size={14} className="opacity-50" onClick={(e) => {
                     e.stopPropagation();
                     setEditingVehicle(vehicle);
@@ -169,7 +181,14 @@ export default function Aracim() {
           <p>{aiNote}</p>
         </div>
 
-        {activeTab === 'panel' && (
+        {activeTab !== 'eski' && !vehicle && (
+          <EmptyGarageView 
+            onAddVehicle={() => { setEditingVehicle(null); setShowVehicleForm(true); }}
+            onGoToEski={() => setActiveTab('eski')}
+          />
+        )}
+
+        {activeTab === 'panel' && vehicle && (
           <div className="panel-view animate-fadeIn">
             {/* KM Widget */}
             <div className="km-widget-premium glass" onClick={() => !isGuest && setShowUpdateKM(true)} style={{ marginTop: '0', padding: '16px 20px', cursor: isGuest ? 'default' : 'pointer' }}>
@@ -264,7 +283,7 @@ export default function Aracim() {
           </div>
         )}
 
-        {activeTab === 'servis' && (
+        {activeTab === 'servis' && vehicle && (
           <div className="servis-view animate-fadeIn">
             <div className="section-header-v2">
               <h3>🛠️ Servis Defteri</h3>
@@ -299,7 +318,7 @@ export default function Aracim() {
           </div>
         )}
 
-        {activeTab === 'torpido' && (
+        {activeTab === 'torpido' && vehicle && (
           <div className="glovebox-view animate-fadeIn">
             <div className="section-header-v2">
               <h3>📂 Dijital Torpido</h3>
@@ -336,7 +355,7 @@ export default function Aracim() {
           </div>
         )}
 
-        {activeTab === 'analiz' && (
+        {activeTab === 'analiz' && vehicle && (
           <div className="analysis-view animate-fadeIn">
             {/* Market Value Widget */}
             <div className="section-header-v2">
@@ -346,57 +365,74 @@ export default function Aracim() {
               <div className="kmw-main">
                 <Landmark size={32} className="kmw-icon" />
                 <div className="kmw-text">
-                  <small style={{ color: 'rgba(255,255,255,0.8)' }}>GÜNCEL PİYASA DEĞERİ</small>
-                  <h2 style={{ fontSize: '24px', color: 'white' }}>{formatMoney(vehicle.marketValue)}</h2>
+                  <small>GÜNCEL PİYASA DEĞERİ</small>
+                  <h2 style={{ fontSize: '24px' }}>{formatMoney(vehicle.marketValue)}</h2>
                 </div>
               </div>
-              {!isGuest && <Edit3 size={18} className="kmw-arrow" />}
+              {!isGuest && <ArrowUpRight size={18} className="kmw-arrow" />}
             </div>
 
-            <div className="section-header-v2">
-              <h3>📊 Yakıt Verimliliği</h3>
-              <small>L/100km</small>
+            {/* Quick Stats Grid */}
+            <div className="analysis-stats-grid mb-24">
+              <div className="as-card glass">
+                <small>TOPLAM SERVİS</small>
+                <strong>{formatMoney(services.reduce((acc, s) => acc + (s.cost || 0), 0))}</strong>
+                <span>{services.length} işlem kaydı</span>
+              </div>
+              <div className="as-card glass">
+                <small>TOPLAM YAKIT</small>
+                <strong>{formatMoney(fuelLogs.reduce((acc, l) => acc + (l.tutar || (l.amount * l.price) || 0), 0))}</strong>
+                <span>{fuelLogs.length} dolum</span>
+              </div>
             </div>
-            <div className="fuel-chart-box glass">
-              <Line 
+
+            {/* Monthly Cost Breakdown */}
+            <div className="section-header-v2">
+              <h3>📈 Masraf Dağılımı</h3>
+            </div>
+            <div className="chart-card glass mb-24" style={{ height: '220px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <Doughnut 
                 data={{
-                  labels: logsWithConsumption.filter(l => l.consumption !== null).map(l => `${(l.km || 0).toLocaleString('tr-TR')} KM`),
+                  labels: ['Servis & Bakım', 'Yakıt Harcaması'],
                   datasets: [{
-                    label: 'Tüketim (L/100km)',
-                    data: logsWithConsumption.filter(l => l.consumption !== null).map(l => l.consumption),
-                    borderColor: '#f87171',
-                    tension: 0.4,
-                    fill: false
+                    data: [
+                      services.reduce((acc, s) => acc + (s.cost || 0), 0),
+                      fuelLogs.reduce((acc, l) => acc + (l.tutar || (l.amount * l.price) || 0), 0)
+                    ],
+                    backgroundColor: ['#f87171', '#60a5fa'],
+                    borderWidth: 0
                   }]
-                }}
-                options={{
-                  plugins: { legend: { display: false } },
-                  scales: { y: { beginAtZero: false } }
-                }}
+                }} 
+                options={{ 
+                  maintainAspectRatio: false,
+                  plugins: { legend: { position: 'bottom', labels: { color: '#64748B', font: { weight: 'bold' } } } }
+                }} 
               />
             </div>
 
-            <div className="fuel-history-list mt-24">
-               <div className="section-header-v2">
-                <h3>⛽ Yakıt Geçmişi</h3>
-              </div>
-              {[...fuelLogs].sort((a, b) => (b.km || 0) - (a.km || 0)).map(l => (
-                <div key={l.id} className="fuel-item-premium glass">
-                  <div className="fip-left">
-                    <div className="fip-station">{l.station || 'Diğer'}</div>
-                    <small>{l.date ? new Date(l.date).toLocaleDateString('tr-TR') : ''} · {l.km?.toLocaleString()} KM</small>
+            {/* Consumption History List */}
+            <div className="section-header-v2">
+              <h3>⛽ Yakıt & Tüketim Geçmişi</h3>
+              {!isGuest && <button className="add-btn-mini" onClick={() => { setEditingFuelLog(null); setShowAddFuel(true); }}><Plus size={14} /></button>}
+            </div>
+            <div className="fuel-history-list">
+              {logsWithConsumption.map(l => (
+                <div key={l.id} className="fuel-history-item glass">
+                  <div className="fhi-left">
+                    <div className="fhi-icon"><Fuel size={18} /></div>
+                    <div className="fhi-info">
+                      <strong>{l.station}</strong>
+                      <small>{l.date} · {l.km.toLocaleString()} KM</small>
+                    </div>
                   </div>
-                  <div className="fip-right-actions">
-                    <div className="fip-stats">
-                      <div className="fip-cons" style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px', textAlign: 'right' }}>
-                        {l.amount || l.litre || 0} L {l.price ? `(₺${Number(l.price).toFixed(2)}/L)` : ''}
-                      </div>
-                      <div className="fip-cost" style={{ fontSize: '14px', fontWeight: '800', color: '#f87171' }}>
-                        {formatMoney(l.tutar || l.totalPrice || ((l.amount || 0) * (l.price || 0)))}
-                      </div>
+                  <div className="fhi-right">
+                    <div className="fhi-cost">{formatMoney(l.tutar || (l.amount * l.price))}</div>
+                    <div className="fhi-meta">
+                      <span>{l.amount} L</span>
+                      {l.consumption && <span className="consumption-badge">{l.consumption} L/100km</span>}
                     </div>
                     {!isGuest && (
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                      <div className="fhi-actions mt-4" style={{ display: 'flex', gap: '4px' }}>
                         <button className="delete-btn-mini" style={{ background: 'rgba(255,255,255,0.08)', color: '#60a5fa' }} onClick={() => { 
                           setEditingFuelLog(l);
                           setShowAddFuel(true);
@@ -413,6 +449,26 @@ export default function Aracim() {
               ))}
             </div>
           </div>
+        )}
+
+        {activeTab === 'eski' && (
+          <EskiAraclarView 
+            eskiAraclar={eskiAraclar || []}
+            onViewArchive={(v) => setViewingArchive(v)}
+            onEditSale={(v) => setEditingSaleVehicle(v)}
+            onRestore={(v) => {
+              requestConfirm(`${v.model} (${v.plaka}) aracını tekrar aktif garaja taşımak istediğinizden emin misiniz?`, () => {
+                restoreVehicle(v.id);
+                setActiveTab('panel');
+              });
+            }}
+            onDelete={(v) => {
+              requestConfirm(`${v.model} (${v.plaka}) aracına ait tüm arşiv kayıtlarını kalıcı olarak silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`, () => {
+                deleteSoldVehicle(v.id);
+              });
+            }}
+            isGuest={isGuest}
+          />
         )}
       </div>
 
@@ -446,6 +502,7 @@ export default function Aracim() {
           selectedId={selectedVehicleId} 
           onSelect={(id) => setModuleData('selectedVehicleId', id)}
           onAdd={() => { setEditingVehicle(null); setShowVehicleForm(true); }}
+          onSell={(v) => { setShowGarageModal(false); setSellingVehicle(v); }}
           onClose={() => setShowGarageModal(false)} 
         />
       )}
@@ -455,7 +512,9 @@ export default function Aracim() {
           vehicle={editingVehicle}
           onSave={(data) => editingVehicle ? updateVehicle(editingVehicle.id, data) : addVehicle(data)}
           onDelete={deleteVehicle}
-          onClose={() => setShowVehicleForm(false)}
+          onSell={(v) => { setShowVehicleForm(false); setSellingVehicle(v); }}
+          requestConfirm={requestConfirm}
+          onClose={() => setShowVehicleForm(false)} 
         />
       )}
 
@@ -528,11 +587,45 @@ export default function Aracim() {
         />
       )}
 
-      {showSupportModal && (
+      {showSupportModal && vehicle && (
         <SupportFormModal 
           contacts={vehicle.supportContacts}
           onSave={(data) => updateSupportContacts(vehicle.id, data)}
           onClose={() => setShowSupportModal(false)}
+        />
+      )}
+
+      {viewingArchive && (
+        <ArchiveDetailModal 
+          vehicle={viewingArchive}
+          onClose={() => setViewingArchive(null)}
+        />
+      )}
+
+      {editingSaleVehicle && (
+        <EditSaleInfoModal 
+          vehicle={editingSaleVehicle}
+          onSave={(saleInfo) => {
+            updateSoldVehicle(editingSaleVehicle.id, { saleInfo });
+            setEditingSaleVehicle(null);
+            toast.success('Satış bilgileri güncellendi ✨');
+          }}
+          onClose={() => setEditingSaleVehicle(null)}
+        />
+      )}
+
+      {sellingVehicle && (
+        <SellVehicleModal 
+          vehicle={sellingVehicle}
+          onSell={(saleData, addToFinans) => {
+            sellVehicle(sellingVehicle.id, saleData, addToFinans);
+            setSellingVehicle(null);
+            setShowVehicleForm(false);
+            setShowGarageModal(false);
+            setActiveTab('eski');
+            toast.success(`${sellingVehicle.model} satıldı ve Eski Araçlar'a arşivlendi 🏷️`);
+          }}
+          onClose={() => setSellingVehicle(null)}
         />
       )}
 
@@ -777,85 +870,142 @@ function FuelLogModal({ onClose, onSave, currentKM, log = null }) {
   );
 }
 
-function GarageModal({ garaj, selectedId, onSelect, onAdd, onClose }) {
+function GarageModal({ garaj, selectedId, onSelect, onAdd, onSell, onClose }) {
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2">
-          <Warehouse size={24} color="var(--aracim)" />
-          <h3>Eraylar Garaj</h3>
-        </div>
-        <div className="garage-list mt-12">
-          {garaj.map(v => (
-            <div 
-              key={v.id} 
-              className={`garage-item glass ${v.id === selectedId ? 'active' : ''}`} 
-              onClick={() => { onSelect(v.id); onClose(); }}
-            >
-              <div className="gi-icon">{v.type === 'boat' ? '⛵' : '🚗'}</div>
-              <div className="gi-info">
-                <strong>{v.model}</strong>
-                <small>{v.plaka}</small>
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2">
+            <Warehouse size={24} color="var(--aracim)" />
+            <h3>Eraylar Garaj</h3>
+          </div>
+          <div className="garage-list mt-12">
+            {garaj.length === 0 ? (
+              <div className="empty-garage-mini glass p-16 text-center" style={{ borderRadius: '12px', padding: '20px' }}>
+                <p style={{ margin: '0 0 6px 0', fontWeight: 600 }}>Aktif garajınızda araç bulunmuyor.</p>
+                <small style={{ opacity: 0.75 }}>Satılan araçlarınızı "Eski Araçlar" sekmesinde bulabilirsiniz.</small>
               </div>
-              {v.id === selectedId && <Check size={16} className="text-green-500" />}
-            </div>
-          ))}
-          <button className="add-vehicle-btn-premium mt-12" onClick={() => { onAdd(); onClose(); }}>
-            <Plus size={18} /> Yeni Araç veya Tekne Ekle
-          </button>
+            ) : (
+              garaj.map(v => (
+                <div 
+                  key={v.id} 
+                  className={`garage-item glass ${v.id === selectedId ? 'active' : ''}`} 
+                  onClick={() => { onSelect(v.id); onClose(); }}
+                >
+                  <div className="gi-icon">{v.type === 'boat' ? '⛵' : '🚗'}</div>
+                  <div className="gi-info">
+                    <strong>{v.model}</strong>
+                    <small>{v.plaka}</small>
+                  </div>
+                  <div className="gi-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {onSell && (
+                      <button
+                        type="button"
+                        className="garage-sell-btn"
+                        title="Bu Aracı Sat"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSell(v);
+                        }}
+                      >
+                        🏷️ Sat
+                      </button>
+                    )}
+                    {v.id === selectedId && <Check size={16} className="text-green-500" />}
+                  </div>
+                </div>
+              ))
+            )}
+            <button className="add-vehicle-btn-premium mt-12" onClick={() => { onAdd(); onClose(); }}>
+              <Plus size={18} /> Yeni Araç veya Tekne Ekle
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
-function VehicleFormModal({ vehicle, onSave, onDelete, onClose }) {
+function VehicleFormModal({ vehicle, onSave, onDelete, onSell, requestConfirm, onClose }) {
   const [form, setForm] = useState(vehicle || { type: 'car', brand: '', model: '', plaka: '', marketValue: 0 });
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
-        <div className="modal-header-v2">
-          <Settings size={24} />
-          <h3>{vehicle ? 'Aracı Düzenle' : 'Yeni Araç'}</h3>
-        </div>
-        <div className="modal-body-v2">
-          <div className="form-group-v2">
-            <label>Tür</label>
-            <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="premium-select">
-              <option value="car">Otomobil</option>
-              <option value="boat">Tekne / Deniz Aracı</option>
-            </select>
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2">
+            <Settings size={24} />
+            <h3>{vehicle ? 'Aracı Düzenle' : 'Yeni Araç'}</h3>
           </div>
-          <div className="form-group-v2 mt-12">
-            <label>Marka / Model</label>
-            <input value={form.model} onChange={e => setForm({...form, model: e.target.value})} className="premium-input" placeholder="Örn: Tiguan R-Line" />
-          </div>
-          <div className="form-group-v2 mt-12">
-            <label>Plaka / Bağlama Kütüğü</label>
-            <input value={form.plaka} onChange={e => setForm({...form, plaka: e.target.value})} className="premium-input" placeholder="34 HH 1144" />
-          </div>
-          <div className="form-group-v2 mt-12">
-            <label>Güncel Piyasa Değeri (TL)</label>
-            <input 
-              type="number" 
-              value={form.marketValue} 
-              onChange={e => setForm({...form, marketValue: Number(e.target.value)})} 
-              className="premium-input" 
-              placeholder="1.500.000" 
-            />
-          </div>
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-            <button className="submit-btn-premium" style={{ flex: 2 }} onClick={() => { onSave(form); onClose(); }}>Kaydet</button>
-            {vehicle && <button className="submit-btn-premium" style={{ flex: 1, background: '#ef4444' }} onClick={() => { 
-              requestConfirm('Silmek istediğinize emin misiniz?', () => {
-                onDelete(vehicle.id); 
-                onClose(); 
-              });
-            }}><Trash2 size={18} /></button>}
+          <div className="modal-body-v2">
+            <div className="form-group-v2">
+              <label>Tür</label>
+              <select value={form.type} onChange={e => setForm({...form, type: e.target.value})} className="premium-select">
+                <option value="car">Otomobil</option>
+                <option value="boat">Tekne / Deniz Aracı</option>
+              </select>
+            </div>
+            <div className="form-group-v2 mt-12">
+              <label>Marka / Model</label>
+              <input value={form.model} onChange={e => setForm({...form, model: e.target.value})} className="premium-input" placeholder="Örn: Tiguan R-Line" />
+            </div>
+            <div className="form-group-v2 mt-12">
+              <label>Plaka / Bağlama Kütüğü</label>
+              <input value={form.plaka} onChange={e => setForm({...form, plaka: e.target.value})} className="premium-input" placeholder="34 HH 1144" />
+            </div>
+            <div className="form-group-v2 mt-12">
+              <label>Güncel Piyasa Değeri (TL)</label>
+              <input 
+                type="number" 
+                value={form.marketValue} 
+                onChange={e => setForm({...form, marketValue: Number(e.target.value)})} 
+                className="premium-input" 
+                placeholder="1.500.000" 
+              />
+            </div>
+
+            {vehicle && onSell && (
+              <div className="sell-trigger-box mt-16 p-12 glass" style={{ borderRadius: '12px', border: '1px dashed rgba(245, 158, 11, 0.4)', background: 'rgba(245, 158, 11, 0.06)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ fontSize: '13px', color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      🏷️ Aracı Sattınız mı?
+                    </strong>
+                    <p style={{ fontSize: '11px', opacity: 0.8, margin: '2px 0 0 0' }}>
+                      Eski Araçlar arşivine taşır ve tüm geçmişi saklar.
+                    </p>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="submit-btn-premium" 
+                    style={{ background: 'linear-gradient(135deg, #d97706, #b45309)', padding: '6px 14px', fontSize: '12px', width: 'auto' }}
+                    onClick={() => {
+                      onSell(vehicle);
+                    }}
+                  >
+                    Aracı Sat
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <button className="submit-btn-premium" style={{ flex: 2 }} onClick={() => { onSave(form); onClose(); }}>Kaydet</button>
+              {vehicle && <button className="submit-btn-premium" style={{ flex: 1, background: '#ef4444' }} onClick={() => { 
+                if (requestConfirm) {
+                  requestConfirm(`${vehicle.model} (${vehicle.plaka}) aracını aktif garajdan silmek istediğinize emin misiniz?`, () => {
+                    onDelete(vehicle.id); 
+                    onClose(); 
+                  });
+                } else {
+                  onDelete(vehicle.id); 
+                  onClose(); 
+                }
+              }}><Trash2 size={18} /></button>}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Portal>
   );
 }
 
@@ -1123,5 +1273,541 @@ function PartMaintenanceModal({ part, onSave, onClose }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function EmptyGarageView({ onAddVehicle, onGoToEski }) {
+  return (
+    <div className="empty-garage-card glass animate-fadeIn">
+      <div className="egc-icon-badge">
+        <Warehouse size={36} color="var(--aracim)" />
+      </div>
+      <h3>Aktif Garajınızda Araç Bulunmuyor</h3>
+      <p>
+        Şu anda garajınızda kayıtlı aktif bir araç veya tekne bulunmuyor. Yeni bir araç ekleyebilir ya da satılan araçlarınızın tüm geçmişine <strong>Eski Araçlar</strong> sekmesinden ulaşabilirsiniz.
+      </p>
+      <div className="egc-actions">
+        <button className="submit-btn-premium" onClick={onAddVehicle}>
+          <Plus size={18} /> Yeni Araç Ekle
+        </button>
+        <button className="submit-btn-premium secondary" onClick={onGoToEski}>
+          <HistoryIcon size={18} /> 🕰️ Eski Araçlar Arşivi
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function EskiAraclarView({ eskiAraclar = [], onViewArchive, onEditSale, onRestore, onDelete, isGuest }) {
+  return (
+    <div className="eski-araclar-view animate-fadeIn">
+      <div className="eski-banner glass">
+        <div className="eb-icon">🕰️</div>
+        <div className="eb-content">
+          <h4>Eski Araçlar Arşivi</h4>
+          <p>
+            Satılmış veya devredilmiş araçlarınızın satış detayları (tarih, fiyat, km) ve geçmiş tüm servis/yakıt/torpido kayıtları burada muhafaza edilir.
+          </p>
+        </div>
+      </div>
+
+      {eskiAraclar.length === 0 ? (
+        <div className="eski-empty glass text-center p-24">
+          <Car size={36} style={{ opacity: 0.4, margin: '0 auto 12px' }} />
+          <h3>Henüz Arşivlenmiş Araç Yok</h3>
+          <p style={{ fontSize: '13px', opacity: 0.7 }}>
+            Aktif garajınızdaki araçları sattığınızda satış detayları ve geçmiş tüm kayıtlarıyla birlikte buradan inceleyebilirsiniz.
+          </p>
+        </div>
+      ) : (
+        <div className="eski-list">
+          {eskiAraclar.map((v) => {
+            const sale = v.saleInfo || {};
+            const serviceCount = v.services?.length || 0;
+            const fuelCount = v.fuelLogs?.length || 0;
+            const docCount = v.documents?.length || 0;
+
+            return (
+              <div key={v.id} className="eski-card glass">
+                {/* Header */}
+                <div className="ec-header">
+                  <div className="ec-left">
+                    <span className="sold-badge">SATILDI</span>
+                    <h3 className="ec-title">{v.model}</h3>
+                    <div className="ec-plate">{v.plaka}</div>
+                  </div>
+                  <div className="ec-right">
+                    <span className="ec-price-label">Satış Fiyatı</span>
+                    <div className="ec-price">{formatMoney(sale.price || v.marketValue || 0)}</div>
+                  </div>
+                </div>
+
+                {/* Sale Details Grid */}
+                <div className="ec-details-grid">
+                  <div className="ec-detail-item">
+                    <span className="label"><Calendar size={13} /> Satış Tarihi</span>
+                    <span className="val">{sale.date || 'Belirtilmedi'}</span>
+                  </div>
+                  <div className="ec-detail-item">
+                    <span className="label"><Gauge size={13} /> Satış KM</span>
+                    <span className="val">{sale.km ? `${Number(sale.km).toLocaleString('tr-TR')} KM` : (v.km ? `${Number(v.km).toLocaleString('tr-TR')} KM` : '-')}</span>
+                  </div>
+                  <div className="ec-detail-item">
+                    <span className="label">👤 Alıcı</span>
+                    <span className="val">{sale.buyer || 'Belirtilmedi'}</span>
+                  </div>
+                  <div className="ec-detail-item">
+                    <span className="label">📝 Not</span>
+                    <span className="val note">{sale.notes || 'Not eklenmedi.'}</span>
+                  </div>
+                </div>
+
+                {/* History Stats Summary */}
+                <div className="ec-stats-row">
+                  <span className="ec-stat-pill"><Wrench size={13} /> {serviceCount} Servis Kaydı</span>
+                  <span className="ec-stat-pill"><Fuel size={13} /> {fuelCount} Yakıt Kaydı</span>
+                  <span className="ec-stat-pill"><FileText size={13} /> {docCount} Belge</span>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="ec-actions">
+                  <button 
+                    className="ec-btn view-btn"
+                    onClick={() => onViewArchive(v)}
+                  >
+                    <FileText size={15} /> 📂 Tüm Geçmişi Gör
+                  </button>
+                  {!isGuest && (
+                    <>
+                      <button 
+                        className="ec-btn edit-btn" 
+                        onClick={() => onEditSale(v)}
+                        title="Satış Bilgilerini Düzenle"
+                      >
+                        <Edit3 size={15} /> Satış Bilgisi
+                      </button>
+                      <button 
+                        className="ec-btn restore-btn" 
+                        onClick={() => onRestore(v)}
+                        title="Aktif Garaja Geri Yükle"
+                      >
+                        <RotateCcw size={15} /> Geri Yükle
+                      </button>
+                      <button 
+                        className="ec-btn delete-btn" 
+                        onClick={() => onDelete(v)}
+                        title="Arşivi Kalıcı Olarak Sil"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArchiveDetailModal({ vehicle, onClose }) {
+  const [detailTab, setDetailTab] = useState('servis');
+  const sale = vehicle.saleInfo || {};
+
+  return (
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content animate-pop arac-modal-content archive-modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Warehouse size={26} color="#f59e0b" />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="sold-badge">SATILDI</span>
+                  <h3 style={{ margin: 0, fontSize: '18px' }}>{vehicle.model}</h3>
+                </div>
+                <small style={{ opacity: 0.75 }}>{vehicle.plaka} · Arşiv Kayıtları</small>
+              </div>
+            </div>
+            <button className="close-btn-ghost" onClick={onClose}><X size={20} /></button>
+          </div>
+
+          <div className="modal-body-v2">
+            {/* Sale Summary Banner */}
+            <div className="archive-sale-summary glass">
+              <div className="ass-item">
+                <span className="ass-label">Satış Fiyatı</span>
+                <span className="ass-val price">{formatMoney(sale.price || vehicle.marketValue || 0)}</span>
+              </div>
+              <div className="ass-item">
+                <span className="ass-label">Satış Tarihi</span>
+                <span className="ass-val">{sale.date || '-'}</span>
+              </div>
+              <div className="ass-item">
+                <span className="ass-label">Satış KM</span>
+                <span className="ass-val">{sale.km ? `${Number(sale.km).toLocaleString('tr-TR')} KM` : (vehicle.km ? `${Number(vehicle.km).toLocaleString('tr-TR')} KM` : '-')}</span>
+              </div>
+              {sale.buyer && (
+                <div className="ass-item">
+                  <span className="ass-label">Alıcı</span>
+                  <span className="ass-val">{sale.buyer}</span>
+                </div>
+              )}
+              {sale.notes && (
+                <div className="ass-item full-width">
+                  <span className="ass-label">Satış Notu</span>
+                  <span className="ass-val note">{sale.notes}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Subtabs for History */}
+            <div className="archive-subtabs">
+              <button 
+                type="button"
+                className={`archive-tab-btn ${detailTab === 'servis' ? 'active' : ''}`} 
+                onClick={() => setDetailTab('servis')}
+              >
+                🛠️ Servis ({vehicle.services?.length || 0})
+              </button>
+              <button 
+                type="button"
+                className={`archive-tab-btn ${detailTab === 'yakit' ? 'active' : ''}`} 
+                onClick={() => setDetailTab('yakit')}
+              >
+                ⛽ Yakıt ({vehicle.fuelLogs?.length || 0})
+              </button>
+              <button 
+                type="button"
+                className={`archive-tab-btn ${detailTab === 'belge' ? 'active' : ''}`} 
+                onClick={() => setDetailTab('belge')}
+              >
+                📂 Torpido ({vehicle.documents?.length || 0})
+              </button>
+              <button 
+                type="button"
+                className={`archive-tab-btn ${detailTab === 'parca' ? 'active' : ''}`} 
+                onClick={() => setDetailTab('parca')}
+              >
+                ⚙️ Bakım Parçaları
+              </button>
+            </div>
+
+            {/* Subtab Content */}
+            <div className="archive-tab-content">
+              {detailTab === 'servis' && (
+                <div className="archive-list">
+                  {!vehicle.services || vehicle.services.length === 0 ? (
+                    <p className="empty-text">Kayıtlı servis geçmişi bulunmuyor.</p>
+                  ) : (
+                    vehicle.services.map(s => (
+                      <div key={s.id} className="archive-item glass">
+                        <div className="ai-left">
+                          <strong>{s.title}</strong>
+                          <small>{s.shop || 'Servis'} · {s.date} · {s.km?.toLocaleString()} KM</small>
+                        </div>
+                        <div className="ai-right">
+                          <span className="ai-cost">{formatMoney(s.cost)}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {detailTab === 'yakit' && (
+                <div className="archive-list">
+                  {!vehicle.fuelLogs || vehicle.fuelLogs.length === 0 ? (
+                    <p className="empty-text">Kayıtlı yakıt kaydı bulunmuyor.</p>
+                  ) : (
+                    vehicle.fuelLogs.map(f => (
+                      <div key={f.id} className="archive-item glass">
+                        <div className="ai-left">
+                          <strong>{f.station || 'İstasyon'}</strong>
+                          <small>{f.date} · {f.km?.toLocaleString()} KM · {f.amount} L ({f.price} TL/L)</small>
+                        </div>
+                        <div className="ai-right">
+                          <span className="ai-cost">{formatMoney(f.tutar || (f.amount * f.price))}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {detailTab === 'belge' && (
+                <div className="archive-list">
+                  {!vehicle.documents || vehicle.documents.length === 0 ? (
+                    <p className="empty-text">Kayıtlı belge veya poliçe bulunmuyor.</p>
+                  ) : (
+                    vehicle.documents.map(d => (
+                      <div key={d.id} className="archive-item glass">
+                        <div className="ai-left">
+                          <strong>{d.icon || '📄'} {d.name}</strong>
+                          <small>{d.brand || 'Kurum'} · Bitiş: {d.dueDate || 'Süresiz'}</small>
+                        </div>
+                        <div className="ai-right">
+                          {d.cost > 0 && <span className="ai-cost">{formatMoney(d.cost)}</span>}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {detailTab === 'parca' && (
+                <div className="archive-list">
+                  {!vehicle.parts || vehicle.parts.length === 0 ? (
+                    <p className="empty-text">Bakım parçası bilgisi bulunmuyor.</p>
+                  ) : (
+                    vehicle.parts.map(p => (
+                      <div key={p.id} className="archive-item glass">
+                        <div className="ai-left">
+                          <strong>{p.label}</strong>
+                          <small>Son Değişim: {p.lastKM?.toLocaleString()} KM ({p.lastDate || '-'})</small>
+                        </div>
+                        <div className="ai-right">
+                          <span className="part-interval-pill">{p.intervalKM?.toLocaleString()} KM Bakım</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            <button className="submit-btn-premium mt-20" onClick={onClose}>
+              Pencereyi Kapat
+            </button>
+          </div>
+        </div>
+      </div>
+    </Portal>
+  );
+}
+
+function SellVehicleModal({ vehicle, onSell, onClose }) {
+  const [form, setForm] = useState({
+    date: new Date().toISOString().split('T')[0],
+    price: vehicle.marketValue || '',
+    km: vehicle.km || '',
+    buyer: '',
+    notes: ''
+  });
+  const [addToFinans, setAddToFinans] = useState(true);
+
+  return (
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2">
+            <Warehouse size={24} color="#f59e0b" />
+            <div>
+              <h3>Aracı Sat (Eski Araçlar'a Arşivle)</h3>
+              <small style={{ opacity: 0.7 }}>{vehicle.model} ({vehicle.plaka})</small>
+            </div>
+          </div>
+
+          <div className="modal-body-v2">
+            <div className="sell-info-alert glass mb-16">
+              <Sparkles size={18} color="#f59e0b" />
+              <p>
+                Bu işlem aracınızı aktif garajınızdan kaldırıp <strong>Eski Araçlar</strong> sekmesine taşır. Servis, yakıt ve torpido geçmişi eksiksiz korunur.
+              </p>
+            </div>
+
+            <div className="form-grid-v2">
+              <div className="form-group-v2">
+                <label>Satış Tarihi</label>
+                <input 
+                  type="date" 
+                  value={form.date} 
+                  onChange={e => setForm({ ...form, date: e.target.value })} 
+                  className="premium-input" 
+                />
+              </div>
+              <div className="form-group-v2">
+                <label>Satış Fiyatı (TL)</label>
+                <input 
+                  type="number" 
+                  value={form.price} 
+                  onChange={e => setForm({ ...form, price: e.target.value })} 
+                  className="premium-input" 
+                  placeholder="1550000" 
+                />
+              </div>
+            </div>
+
+            <div className="form-grid-v2 mt-12">
+              <div className="form-group-v2">
+                <label>Satış Kilometresi</label>
+                <input 
+                  type="number" 
+                  value={form.km} 
+                  onChange={e => setForm({ ...form, km: e.target.value })} 
+                  className="premium-input" 
+                  placeholder="42969" 
+                />
+              </div>
+              <div className="form-group-v2">
+                <label>Alıcı Adı / Kurum</label>
+                <input 
+                  type="text" 
+                  value={form.buyer} 
+                  onChange={e => setForm({ ...form, buyer: e.target.value })} 
+                  className="premium-input" 
+                  placeholder="Yeni Sahibi / Galeri" 
+                />
+              </div>
+            </div>
+
+            <div className="form-group-v2 mt-12">
+              <label>Satış Notu / Açıklama</label>
+              <textarea 
+                value={form.notes} 
+                onChange={e => setForm({ ...form, notes: e.target.value })} 
+                className="premium-input" 
+                rows="2"
+                placeholder="Sorunsuz devir teslim yapıldı. Yedek anahtar teslim edildi." 
+              />
+            </div>
+
+            <label className="checkbox-container mt-16 glass p-12" style={{ borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+              <input 
+                type="checkbox" 
+                checked={addToFinans} 
+                onChange={e => setAddToFinans(e.target.checked)} 
+                style={{ width: '18px', height: '18px', accentColor: '#10b981' }}
+              />
+              <span style={{ fontSize: '13px' }}>
+                💰 Satış bedelini (<strong>{form.price ? formatMoney(form.price) : '0 TL'}</strong>) Kasa & Finans modülüne Gelir olarak kaydet
+              </span>
+            </label>
+
+            <button 
+              className="submit-btn-premium mt-20" 
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
+              onClick={() => {
+                const prc = Number(form.price);
+                if (!prc || isNaN(prc) || prc <= 0) {
+                  return toast.error('Lütfen geçerli bir satış fiyatı girin.');
+                }
+                onSell({
+                  date: form.date,
+                  price: prc,
+                  km: Number(form.km) || vehicle.km || 0,
+                  buyer: form.buyer || 'Alıcı',
+                  notes: form.notes || ''
+                }, addToFinans);
+              }}
+            >
+              Satışı Onayla ve Arşivle 🏷️
+            </button>
+          </div>
+        </div>
+      </div>
+    </Portal>
+  );
+}
+
+function EditSaleInfoModal({ vehicle, onSave, onClose }) {
+  const currentSale = vehicle.saleInfo || {};
+  const [form, setForm] = useState({
+    date: currentSale.date || new Date().toISOString().split('T')[0],
+    price: currentSale.price || vehicle.marketValue || '',
+    km: currentSale.km || vehicle.km || '',
+    buyer: currentSale.buyer || '',
+    notes: currentSale.notes || ''
+  });
+
+  return (
+    <Portal>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content animate-pop arac-modal-content" onClick={e => e.stopPropagation()}>
+          <div className="modal-header-v2">
+            <Edit3 size={24} color="#60a5fa" />
+            <div>
+              <h3>Satış Bilgilerini Güncelle</h3>
+              <small style={{ opacity: 0.7 }}>{vehicle.model} ({vehicle.plaka})</small>
+            </div>
+          </div>
+
+          <div className="modal-body-v2">
+            <div className="form-grid-v2">
+              <div className="form-group-v2">
+                <label>Satış Tarihi</label>
+                <input 
+                  type="date" 
+                  value={form.date} 
+                  onChange={e => setForm({ ...form, date: e.target.value })} 
+                  className="premium-input" 
+                />
+              </div>
+              <div className="form-group-v2">
+                <label>Satış Fiyatı (TL)</label>
+                <input 
+                  type="number" 
+                  value={form.price} 
+                  onChange={e => setForm({ ...form, price: e.target.value })} 
+                  className="premium-input" 
+                />
+              </div>
+            </div>
+
+            <div className="form-grid-v2 mt-12">
+              <div className="form-group-v2">
+                <label>Satış Kilometresi</label>
+                <input 
+                  type="number" 
+                  value={form.km} 
+                  onChange={e => setForm({ ...form, km: e.target.value })} 
+                  className="premium-input" 
+                />
+              </div>
+              <div className="form-group-v2">
+                <label>Alıcı Adı / Kurum</label>
+                <input 
+                  type="text" 
+                  value={form.buyer} 
+                  onChange={e => setForm({ ...form, buyer: e.target.value })} 
+                  className="premium-input" 
+                />
+              </div>
+            </div>
+
+            <div className="form-group-v2 mt-12">
+              <label>Satış Notu / Açıklama</label>
+              <textarea 
+                value={form.notes} 
+                onChange={e => setForm({ ...form, notes: e.target.value })} 
+                className="premium-input" 
+                rows="2" 
+              />
+            </div>
+
+            <button 
+              className="submit-btn-premium mt-20" 
+              onClick={() => {
+                const prc = Number(form.price);
+                if (!prc || isNaN(prc) || prc <= 0) {
+                  return toast.error('Lütfen geçerli bir satış fiyatı girin.');
+                }
+                onSave({
+                  date: form.date,
+                  price: prc,
+                  km: Number(form.km) || 0,
+                  buyer: form.buyer || '',
+                  notes: form.notes || ''
+                });
+              }}
+            >
+              Bilgileri Kaydet ✨
+            </button>
+          </div>
+        </div>
+      </div>
+    </Portal>
   );
 }

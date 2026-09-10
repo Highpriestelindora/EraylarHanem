@@ -718,7 +718,7 @@ const getFallbackData = (type, tripContext = {}) => {
 };
 
 async function fetchWeatherForTrip(city, country, startDate, endDate) {
-  if (!city) return null;
+  if (!city || !startDate) return null;
   try {
     const cleanCity = normalizeText(city);
     const translatedCity = CITY_TRANSLATIONS[cleanCity] || cleanCity;
@@ -732,113 +732,134 @@ async function fetchWeatherForTrip(city, country, startDate, endDate) {
       geoData = await geoRes.json();
     }
 
-    if (geoData.results?.length) {
-      const { latitude, longitude } = geoData.results[0];
-      const today = new Date();
-      const start = new Date(startDate || today);
-      const end = endDate ? new Date(endDate) : new Date(start.getTime() + 3 * 864e5);
-      const daysDiff = (start - today) / 864e5;
-      const isHistorical = daysDiff > 14;
+    if (!geoData.results?.length) return null;
 
-      if (isHistorical) {
-        try {
-          const lastYear = new Date(start);
-          lastYear.setFullYear(lastYear.getFullYear() - 1);
-          const startArchive = lastYear.toISOString().split('T')[0];
-          const tripDurationMs = end.getTime() - start.getTime();
-          const endArchive = new Date(lastYear.getTime() + tripDurationMs).toISOString().split('T')[0];
-          const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startArchive}&end_date=${endArchive}&daily=weathercode,temperature_2m_max&timezone=auto`);
-          const data = await res.json();
-          if (data.daily?.temperature_2m_max) {
-            const temps = data.daily.temperature_2m_max.filter(t => t != null);
-            if (temps.length > 0) {
-              const avg = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
-              
-              const tripDates = [];
-              let curr = new Date(start);
-              while (curr <= end) {
-                tripDates.push(curr.toISOString().split('T')[0]);
-                curr.setDate(curr.getDate() + 1);
-              }
-              
-              const mappedTime = data.daily.time.map((t, idx) => {
-                if (tripDates[idx]) return tripDates[idx];
-                try {
-                  const d = new Date(t);
-                  d.setFullYear(d.getFullYear() + 1);
-                  return d.toISOString().split('T')[0];
-                } catch (e) {
-                  return t;
-                }
-              });
+    const { latitude, longitude } = geoData.results[0];
 
-              const codes = data.daily.weathercode || [];
-              const isSun = codes.length > 0 ? (codes.every(c => c < 3) || codes[0] < 3) : true;
+    const cleanStartStr = startDate.split('T')[0];
+    const cleanEndStr = (endDate || startDate).split('T')[0];
+    const [startStr, endStr] = cleanStartStr <= cleanEndStr ? [cleanStartStr, cleanEndStr] : [cleanEndStr, cleanStartStr];
 
-              const mappedDaily = {
-                time: mappedTime,
-                weathercode: data.daily.weathercode || mappedTime.map(() => 0),
-                temperature_2m_max: data.daily.temperature_2m_max
-              };
+    const parseISOParts = (s) => {
+      const p = s.split('-').map(Number);
+      return new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+    };
 
-              return {
-                temp: avg,
-                isSun: isSun,
-                label: `${temps.length} Günlük Ort. (Geçen Yıl)`,
-                isHistorical: true,
-                daily: mappedDaily
-              };
-            }
-          }
-        } catch (e) {}
-      }
+    const formatUTC = (d) => {
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(d.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
 
-      const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=weathercode,temperature_2m_max&timezone=auto&forecast_days=16`);
-      const data = await res.json();
+    const todayStr = getNowUTC().split('T')[0];
+    const todayObj = parseISOParts(todayStr);
+    const startObj = parseISOParts(startStr);
+    const endObj = parseISOParts(endStr);
 
-      if (data.daily?.time?.length) {
-        const startStr = start.toISOString().split('T')[0];
-        const endStr = end.toISOString().split('T')[0];
-        const matchingIndices = [];
-        
-        for (let i = 0; i < data.daily.time.length; i++) {
-          if (data.daily.time[i] >= startStr && data.daily.time[i] <= endStr) {
-            matchingIndices.push(i);
-          }
+    const diffStartDays = Math.round((startObj - todayObj) / 864e5);
+    const diffEndDays = Math.round((endObj - todayObj) / 864e5);
+
+    let rawDaily = null;
+    let isLastYear = false;
+
+    // 1. If dates fall within Forecast API window (-90 days to +15 days)
+    if (diffStartDays >= -90 && diffEndDays <= 15) {
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&start_date=${startStr}&end_date=${endStr}&daily=weathercode,temperature_2m_max&timezone=auto`);
+        const data = await res.json();
+        if (data.daily?.time?.length) {
+          rawDaily = data.daily;
         }
-        
-        if (matchingIndices.length > 0) {
-          const sumTemps = matchingIndices.reduce((sum, idx) => sum + (data.daily.temperature_2m_max[idx] || data.current_weather?.temperature || 15), 0);
-          const avgTemp = Math.round(sumTemps / matchingIndices.length);
-          const codes = matchingIndices.map(idx => data.daily.weathercode[idx]);
-          const isSun = codes.every(c => c < 3) || codes[0] < 3;
-          
-          const filteredDaily = {
-            time: matchingIndices.map(idx => data.daily.time[idx]),
-            weathercode: matchingIndices.map(idx => data.daily.weathercode[idx]),
-            temperature_2m_max: matchingIndices.map(idx => data.daily.temperature_2m_max[idx])
-          };
-          
-          return {
-            temp: avgTemp,
-            isSun: isSun,
-            label: `${matchingIndices.length} Günlük Ort.`,
-            daily: filteredDaily
-          };
-        }
-      }
+      } catch (e) {}
+    }
 
-      if (data.current_weather) {
-        return { 
-          temp: Math.round(data.current_weather.temperature),
-          isSun: data.current_weather.weathercode < 3,
-          label: isHistorical ? 'Güncel' : 'Tahmin',
-          daily: data.daily
-        };
+    // 2. Past trips older than 90 days (or if forecast API call failed for past dates)
+    if (!rawDaily && diffEndDays < 0) {
+      try {
+        const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${startStr}&end_date=${endStr}&daily=weathercode,temperature_2m_max&timezone=auto`);
+        const data = await res.json();
+        if (data.daily?.time?.length) {
+          rawDaily = data.daily;
+        }
+      } catch (e) {}
+    }
+
+    // 3. Future trips beyond 15 days: query the Archive API for the same calendar dates last year
+    if (!rawDaily && diffStartDays > 0) {
+      try {
+        const lastYearStart = new Date(startObj);
+        lastYearStart.setUTCFullYear(lastYearStart.getUTCFullYear() - 1);
+        const lastYearEnd = new Date(endObj);
+        lastYearEnd.setUTCFullYear(lastYearEnd.getUTCFullYear() - 1);
+
+        const aStartStr = formatUTC(lastYearStart);
+        const aEndStr = formatUTC(lastYearEnd);
+
+        const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${aStartStr}&end_date=${aEndStr}&daily=weathercode,temperature_2m_max&timezone=auto`);
+        const data = await res.json();
+        if (data.daily?.time?.length) {
+          const tripDates = [];
+          let curr = new Date(startObj);
+          while (curr <= endObj) {
+            tripDates.push(formatUTC(curr));
+            curr.setUTCDate(curr.getUTCDate() + 1);
+          }
+          rawDaily = {
+            time: tripDates,
+            weathercode: data.daily?.weathercode || tripDates.map(() => 0),
+            temperature_2m_max: data.daily?.temperature_2m_max || tripDates.map(() => 22)
+          };
+          isLastYear = true;
+        }
+      } catch (e) {}
+    }
+
+    if (!rawDaily || !rawDaily.time?.length) return null;
+
+    // Strict filter: ONLY keep days that fall exactly within [startStr, endStr]
+    const validIndices = [];
+    for (let i = 0; i < rawDaily.time.length; i++) {
+      const t = rawDaily.time[i];
+      if (t >= startStr && t <= endStr) {
+        validIndices.push(i);
       }
     }
-  } catch (e) {}
-  return null;
+
+    if (validIndices.length === 0) return null;
+
+    const times = validIndices.map(i => rawDaily.time[i]);
+    const codes = validIndices.map(i => rawDaily.weathercode[i] ?? 0);
+    const temps = validIndices.map(i => rawDaily.temperature_2m_max[i] ?? 20);
+
+    const avgTemp = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
+    const isSun = codes.every(c => c < 3) || codes[0] < 3;
+
+    let label = `${times.length} Günlük Tatil`;
+    if (isLastYear) {
+      label = `${times.length} Günlük Ort. (Geçen Yıl)`;
+    } else if (diffEndDays < 0) {
+      label = `${times.length} Günlük Tatil Ort.`;
+    } else if (diffStartDays > 0) {
+      label = `${times.length} Günlük Tahmin`;
+    } else {
+      label = `${times.length} Günlük Tatil`;
+    }
+
+    return {
+      temp: avgTemp,
+      isSun,
+      label,
+      isHistorical: diffEndDays < 0 || isLastYear,
+      daily: {
+        time: times,
+        weathercode: codes,
+        temperature_2m_max: temps
+      }
+    };
+  } catch (e) {
+    return null;
+  }
 }// --- HELPERS ---
 const AIRPORT_DICT = {
   'SAW': { name: 'Sabiha Gökçen', city: 'İstanbul' },
@@ -1725,7 +1746,7 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
   const { addExpense, tatil, setModuleData, deleteTrip } = useStore();
   const currentUser = useStore(state => state.currentUser);
   const isGuest = currentUser?.name === 'Misafir';
-  const [weatherForecast, setWeatherForecast] = useState([]);
+  const [weatherForecast, setWeatherForecast] = useState(null);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [reviewUser, setReviewUser] = useState(null);
@@ -1734,14 +1755,39 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
   const [activeSubTab, setActiveSubTab] = useState(isCompleted ? 'details' : 'valiz');
 
   useEffect(() => {
+    let isMounted = true;
     const load = async () => {
       const data = await fetchWeatherForTrip(trip.city, trip.country, trip.startDate, trip.endDate);
-      // We convert the data back to an array format if needed for other UI parts, 
-      // but for now, we pass the object down.
-      setWeatherForecast(data);
+      if (isMounted) {
+        setWeatherForecast(data);
+      }
     };
     load();
+    return () => { isMounted = false; };
   }, [trip.city, trip.country, trip.startDate, trip.endDate]);
+
+  const vacationDaily = useMemo(() => {
+    if (!weatherForecast?.daily?.time?.length) return null;
+    const startStr = trip.startDate?.split('T')[0];
+    const endStr = (trip.endDate || trip.startDate)?.split('T')[0];
+    if (!startStr) return null;
+    const [minDate, maxDate] = startStr <= endStr ? [startStr, endStr] : [endStr, startStr];
+
+    const indices = [];
+    for (let i = 0; i < weatherForecast.daily.time.length; i++) {
+      const t = weatherForecast.daily.time[i];
+      if (t >= minDate && t <= maxDate) {
+        indices.push(i);
+      }
+    }
+    if (indices.length === 0) return null;
+
+    return {
+      time: indices.map(i => weatherForecast.daily.time[i]),
+      weathercode: indices.map(i => weatherForecast.daily.weathercode[i]),
+      temperature_2m_max: indices.map(i => weatherForecast.daily.temperature_2m_max[i])
+    };
+  }, [weatherForecast, trip.startDate, trip.endDate]);
 
   const getWeatherIcon = (code) => {
     if (code <= 1) return <Sun size={14} className="text-yellow-500" />;
@@ -1792,20 +1838,28 @@ function TripDetailContent({ trip, onOpenTracker, onOpenMap, onClose, onEdit, re
           </div>
           <div className="h-stat">
             <Moon size={14} />
-            <span>{Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) + 1} Gece</span>
+            <span>{trip.endDate ? (Math.ceil((new Date(trip.endDate) - new Date(trip.startDate)) / 864e5) + 1) : 1} Gece</span>
           </div>
         </div>
 
-        {weatherForecast?.daily?.time && (
+        {vacationDaily?.time && vacationDaily.time.length > 0 && (
           <div className="weather-forecast-scroll animate-slideRight">
-            {weatherForecast.daily.time.map((t, i) => (
-              <div key={t} className="wf-day glass">
-                <small>{new Date(t + "T00:00:00").toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase()}</small>
-                <span className="wf-mini-date">{new Date(t + "T00:00:00").getDate()}/{new Date(t + "T00:00:00").getMonth() + 1}</span>
-                {getWeatherIcon(weatherForecast.daily.weathercode[i])}
-                <strong>{Math.round(weatherForecast.daily.temperature_2m_max[i])}°</strong>
-              </div>
-            ))}
+            {vacationDaily.time.map((t, i) => {
+              const parts = t.split('-');
+              const day = Number(parts[2]);
+              const month = Number(parts[1]);
+              const year = Number(parts[0]);
+              const dateObj = new Date(year, month - 1, day);
+              const weekday = dateObj.toLocaleDateString('tr-TR', { weekday: 'short' }).toUpperCase();
+              return (
+                <div key={t} className="wf-day glass">
+                  <small>{weekday}</small>
+                  <span className="wf-mini-date">{day}/{month}</span>
+                  {getWeatherIcon(vacationDaily.weathercode[i])}
+                  <strong>{Math.round(vacationDaily.temperature_2m_max[i])}°</strong>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -3611,16 +3665,21 @@ function ValizSection({ trip, weatherForecast, onAutoFill }) {
             ))}
           </div>
 
-          {!weatherAdvice.isHistorical && weatherAdvice.daily && (
+          {weatherAdvice.daily?.time && weatherAdvice.daily.time.length > 0 && (
             <div className="oracle-forecast-row">
-              {weatherAdvice.daily.time.slice(0, 7).map((time, i) => {
+              {weatherAdvice.daily.time.map((time, i) => {
                 const code = weatherAdvice.daily.weathercode[i];
                 const temp = Math.round(weatherAdvice.daily.temperature_2m_max[i]);
-                const dayName = new Date(time).toLocaleDateString('tr-TR', { weekday: 'short' });
+                const parts = time.split('-');
+                const day = Number(parts[2]);
+                const month = Number(parts[1]);
+                const year = Number(parts[0]);
+                const dateObj = new Date(year, month - 1, day);
+                const dayName = dateObj.toLocaleDateString('tr-TR', { weekday: 'short' });
                 return (
                   <div key={time} className="forecast-mini-item">
                     <span className="fm-day">{dayName}</span>
-                    <span className="fm-date">{`${new Date(time).getDate()}/${new Date(time).getMonth() + 1}`}</span>
+                    <span className="fm-date">{`${day}/${month}`}</span>
                     <span className="fm-icon">
                       {code <= 3 ? '☀️' : code <= 67 ? '🌧️' : '❄️'}
                     </span>
