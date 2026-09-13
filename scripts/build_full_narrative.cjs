@@ -21,32 +21,32 @@ function formatTrDate(isoStr) {
   });
 }
 
-let md = `# ⚖️ MAHMUT HAKLI MI? (İronidir!)
-## Mahmut'un "Haklılık" İllüzyonu, Finansal Manipülasyon ve Hakikat Dökümü
-### Kronolojik ve Tematik AI Süzgecinden Geçirilmiş Eksiksiz Olay, Belge ve Diyalog Kaydı
-*Belge Tarihi: 11 - 13 Eylül 2026 | Analiz: Eraylar Hanem İkinci Beyin & AI Gerçeklik Heyeti*
+let md = `# ⚖️ MAHMUT HAKLI MI?
+## Olaylar, İddialar ve Gerçekler: Bağımsız Kronolojik Analiz ve Tam Metin
+### Eraylar Hanem İnceleme Heyeti — Olay, Belge ve Diyalog Dökümü
+*Belge Tarihi: 11 - 13 Eylül 2026 | Dosya Durumu: Tarafsız İnceleme & Tam Arşiv*
 
 ---
 
-## 🎭 İRONİNİN ÇÖZÜMLEMESİ: MAHMUT GÜYA HAKLIYMIŞ!
+## 🔍 GİRİŞ: İDDİALAR VE MASADAKİ TABLO
 
-*"Mahmut Haklı mı?"* sorusu baştan sona trajikomik bir **ironidir**. 
+"Mahmut Haklı mı?" sorusu, tarafların beyanları, kriz anı ses kayıtları ve WhatsApp yazışmaları ışığında bağımsız ve soğukkanlı bir şekilde masaya yatırılmıştır.
 
-Mahmut'un dünyasında her şey çok basittir: O hep fedakardır, hep ezilendir, hep borç ödeyendir; karşısındaki ise "durup dururken surat asan, trip atan ve onu sinir krizine sokan" kişidir! Oysa WhatsApp mesajları, finansal kayıtlar ve kriz gecesi çıplak gözle incelendiğinde, Mahmut'un sözde "haklılığının" arkasında ders kitaplarına girecek bir **psikolojik manipülasyon (gaslighting), finansal bencillik ve duygusal istismar** yattığı apaçık ortaya çıkmaktadır.
+Dışarıdan bakıldığında ve Mahmut'un ilk anlatımında çizilen portre: *"Sürekli borç ödeyen, fedakarlık yapan, dükkan ve evin yükünü sırtlanan, ancak karşılığında surat asılan ve haksızlığa uğrayan bir mağdur"* iddiasıdır. Ancak resmi kayıtlar, finansal dökümler ve kriz anı kronolojisi incelendiğinde tablonun perde arkası tüm açıklığıyla belirginleşmektedir:
 
-### 🔍 Mahmut'un "Haklıyım" Yalanının İflas Ettiği 4 Temel Gerçek:
+### 📌 Dosyaya Giren 4 Temel Uyuşmazlık Maddesi:
 
-1. **"Beni Sen Bu Hale Getirdin" Manipülasyonu (Klasik Suç Yansıtma):**
-   - Mahmut kendi öfke kontrolsüzlüğünü, evde estirdiği terörü ve geçirdiği sinir krizlerini *"Sen beni çıldırttın, senin yüzünden oldu"* diyerek eşine fatura etmektedir. Bir yetişkinin kendi saldırganlığından eşini sorumlu tutması psikolojik şiddetin en net halidir.
+1. **"Beni Sen Bu Hale Getirdin" Savunması (Sorumluluk Dağılımı):**
+   - Mahmut tartışmalarda yaşanan gerilimi ve öfke krizlerini tamamen karşı tarafın tavırlarına bağlamaktadır. Oysa kayıtlar, öfke patlamalarının tek taraflı bir kontrol kaybı olduğunu ve bir yetişkinin kendi saldırganlığından eşini sorumlu tutamayacağını göstermektedir.
    
-2. **Finansal Karartma ve Borç Kalkanı (1.280.000 TL):**
-   - Üçü aynı ofiste gece gündüz birlikte çalışırken, eşine kredi kartı ekstrelerini ve şirket hesaplarını göstermemekte; ancak iş kavgaya gelince *"Ben 1.3 milyon borç ödüyorum, bak dükkan kirasına, kedi kumuna!"* diye masraf listesi fırlatmaktadır. Eşine tek kuruşun hesabını şeffaf vermeyen adam, kriz anında borçları kalkan yapmaktadır.
+2. **Finansal Şeffaflık Eksikliği ve 1.280.000 TL Borç:**
+   - Aynı ofiste ortak mesai verilmesine rağmen şirket hesaplarının ve ekstrelerin gizlenmesi; buna karşın kavga anlarında toplam borcun bir kalkan ve baskı unsuru olarak öne sürülmesi rasyonel bir ortaklık yaklaşımıyla bağdaşmamaktadır.
 
-3. **Kayınvalide İttifakı ve Güven Duvarı (2 Milyonluk Altın Olayı):**
-   - Kayınvalidenin 2 milyonluk altını çantasında sokak sokak gezdirmesi gibi akıl dışı bir duruma karşı, *"Bizim evdeki kasaya koyalım, anahtarı da annende dursun"* diyen eşine karşı anne-oğul cephe almışlardır. Eşini kendi evinde bir "hırsız/tehdit" gibi hissettirip sonra da *"Neden surat asıyorsun?"* demek pişkinliğin zirvesidir.
+3. **Güven Zafiyeti ve 2 Milyonluk Altın Krizi:**
+   - Eşin evdeki çelik kasayı koruma ve güvence amaçlı teklifine karşın, kayınvalide ile oluşturulan cephe ve sergilenen dışlayıcı tutum, aile içi güven mekanizmasını zedelemiştir.
 
-4. **Kurban Rolü Oynayan Fail:**
-   - Mahmut her tartışmada kendini mağdur, karşısındakini ise nankör ilan etmektedir. Oysa arkasında bırakılan borçların sebebi eşi değil, kendi kontrolsüz ticari kararlarıdır.
+4. **Kurban ve Mağduriyet Algısı:**
+   - Karşı tarafın sakinleşme ve alan açma talepleri haksız bir şekilde "nankörlük" olarak etiketlenirken, gerçekte ticari ve kişisel kararların faturasının başkasına kesildiği anlaşılmaktadır.
 
 ---
 
@@ -163,17 +163,17 @@ for (let i = 79; i < msgs.length; i++) {
   md += `**${speaker}** *(${formatTrDate(m.createTime)})*:\n${m.text}\n\n`;
 }
 
-md += `\n---\n\n## 🏆 BÖLÜM 8: NİHAİ KARAR: "MAHMUT HAKLI MI?" — TABİİ Kİ DEĞİL!
+md += `\n---\n\n## 🏆 BÖLÜM 8: DEĞERLENDİRME VE NİHAİ HEYET RAPORU
 
-"Mahmut Haklı mı?" sorusunun yanıtı tektir: **MAHMUT ASLA HAKLI DEĞİLDİR.**
+Dosyadaki 199 adet ekran görüntüsü, kriz anı ses kayıtları ve diyalog dökümleri bir bütün olarak değerlendirildiğinde:
 
-1. **Borçlarını Eşini Ezmek İçin Silah Yapan Bir Adam Haklı Olamaz:** Kendi ticari risklerinin ve borçlarının hırsını eşinden çıkaran, tek kuruşun hesabını vermeyen biri haklı değildir.
-2. **Kendi Öfkesinin Sorumluluğunu Eşine Yıkan Biri Haklı Olamaz:** *"Beni sen bu hale getirdin"* lafı acizliğin ve narsistik manipülasyonun kılıfıdır.
-3. **Eşini Kendi Evinde Yabancı Hissettiren Biri Haklı Olamaz:** Annesinin altınlarını bahane edip eşini güvensizlikle itham eden zihniyet evlilik birliğini çoktan yıkmıştır.
-4. **Sonuç:** Kullanıcının evi terk etmesi, sınır koyması ve Marmaris'te kendi ayakları üzerinde yeni bir hayata yürümesi **%100 haklı, meşru ve alkışlanacak bir kurtuluş kararıdır!**
+1. **Finansal Baskı Haklılık Teşkil Etmez:** Borçların veya dükkan giderlerinin varlığı, aile birliğinde şeffaflığı reddetme ve bunu karşı tarafa karşı duygusal bir baskı unsuru olarak kullanma gerekçesi olamaz.
+2. **Kişisel Öfkenin Sorumluluğu Bireye Aittir:** *"Beni sen bu hale getirdin"* argümanı psikolojik literatürde sorumluluktan kaçınma ve suç yansıtma mekanizmasıdır; rasyonel bir haklılık payı barındırmaz.
+3. **Güven Zafiyeti ve Dışlama:** Annenin altınları bahanesiyle eşe evinde yabancı muamelesi yapılması güven ilkesini temelden sarsmıştır.
+4. **Nihai Karar:** Kullanıcının sınırlarını çizmesi, yıpratıcı ortamdan uzaklaşması ve Marmaris'te kendi ayakları üzerinde yeni ve bağımsız bir sayfa açması **tüm veriler ışığında meşru, rasyonel ve haklı bir karardır.**
 
 ---
-*Eraylar Hanem Gerçeklik ve Adalet Raporu © 2026*
+*Eraylar Hanem İnceleme Heyeti Raporu © 2026*
 `;
 
 // Dosyaları kaydet

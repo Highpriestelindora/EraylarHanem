@@ -62,7 +62,7 @@ export default function Ayarlar() {
     link.click();
     document.body.removeChild(link);
 
-    toast.success('⚖️ "Mahmut Haklı mı?" İronik Çözümleme ve Tam Metin indiriliyor (92 Sayfa • 270 KB)...', {
+    toast.success('⚖️ "Mahmut Haklı mı?" İnceleme Raporu ve Tam Metin indiriliyor (92 Sayfa • 270 KB)...', {
       duration: 5000,
       icon: '⚖️'
     });
@@ -248,8 +248,8 @@ export default function Ayarlar() {
             <BookOpen size={22} />
           </div>
           <div className="mahmut-btn-info">
-            <span className="mahmut-btn-title">Mahmut Haklı mı? (İroni)</span>
-            <span className="mahmut-btn-desc">92 Sayfa • Mahmut'un "Haklılık" İllüzyonu, Gerçekler ve Tam Metin Kitap • 270 KB</span>
+            <span className="mahmut-btn-title">Mahmut Haklı mı?</span>
+            <span className="mahmut-btn-desc">92 Sayfa • Bağımsız İnceleme, Olay Örgüsü ve Tam Metin Kitap • 270 KB</span>
           </div>
           <div className="mahmut-btn-action-icon">
             <Download size={20} className="download-bounce" />
