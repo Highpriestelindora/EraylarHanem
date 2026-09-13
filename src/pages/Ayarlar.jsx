@@ -62,7 +62,7 @@ export default function Ayarlar() {
     link.click();
     document.body.removeChild(link);
 
-    toast.success('⚖️ "Mahmut Haklı mı?" İnceleme Raporu ve Tam Metin indiriliyor (92 Sayfa • 270 KB)...', {
+    toast.success('⚖️ "Mahmut Haklı mı?" İnceleme Raporu ve Tam Metin indiriliyor (96 Sayfa • 282 KB)...', {
       duration: 5000,
       icon: '⚖️'
     });
@@ -235,7 +235,7 @@ export default function Ayarlar() {
       <div className="settings-group mahmut-special-group">
         <div className="group-header-flex">
           <h4>Özel İnceleme & Sohbet Arşivi</h4>
-          <span className="mahmut-badge-pill">92 Sayfa Metin • 199 Görsel 🟢</span>
+          <span className="mahmut-badge-pill">96 Sayfa Metin • 199 Görsel 🟢</span>
         </div>
         
         {/* Buton 1: Mahmut Haklı mı — Tam Metin Kitap */}
@@ -249,7 +249,7 @@ export default function Ayarlar() {
           </div>
           <div className="mahmut-btn-info">
             <span className="mahmut-btn-title">Mahmut Haklı mı?</span>
-            <span className="mahmut-btn-desc">92 Sayfa • Bağımsız İnceleme, Olay Örgüsü ve Tam Metin Kitap • 270 KB</span>
+            <span className="mahmut-btn-desc">96 Sayfa • Bağımsız İnceleme, Olay Örgüsü ve Tam Metin Kitap • 282 KB</span>
           </div>
           <div className="mahmut-btn-action-icon">
             <Download size={20} className="download-bounce" />
