@@ -80,8 +80,8 @@ async function generatePdfBook() {
       continue;
     }
 
-    // Konuşmacı: Psikolog (ChatGPT)
-    if (line.startsWith('**🧠 Psikolog (ChatGPT)**')) {
+    // Konuşmacı: Danışman / Psikolog (ChatGPT)
+    if (line.startsWith('**🧠')) {
       doc.moveDown(0.5);
       const header = line.replace(/\*\*/g, '');
       doc.font(arialBold).fontSize(10.5).fillColor('#4338ca').text(header);
@@ -136,7 +136,7 @@ async function generatePdfBook() {
     // Üst Bilgi (Sayfa 1 hariç)
     if (p > 0) {
       doc.font(arialRegular).fontSize(8).fillColor('#94a3b8').text(
-        'Mahmut Haklı mı? — Eksiksiz Kronolojik Sohbet ve Olay Örgüsü',
+        'Sohbet Diyalogları — Yorumsuz Tam Metin & Olay Örgüsü',
         50,
         25,
         { align: 'left' }
@@ -158,9 +158,16 @@ async function generatePdfBook() {
 
   writeStream.on('finish', () => {
     console.log(`✅ PDF Kitap başarıyla üretildi: ${outputPdfPath}`);
+    // Sohbet_Diyaloglari_Yorumsuz.pdf olarak da kaydet
+    const altPdfPath = 'c:/Users/Administrator/Desktop/EraylarHanem-main/public/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.pdf';
+    fs.copyFileSync(outputPdfPath, altPdfPath);
+    console.log(`✅ Alternatif PDF kaydedildi: ${altPdfPath}`);
+
     // Masaüstüne de kopyalayalım
     fs.copyFileSync(outputPdfPath, desktopPdfPath);
-    console.log(`✅ Masaüstüne kopyalandı: ${desktopPdfPath}`);
+    const desktopAltPdf = 'C:/Users/Administrator/Desktop/Sohbet_Diyaloglari_Yorumsuz.pdf';
+    fs.copyFileSync(outputPdfPath, desktopAltPdf);
+    console.log(`✅ Masaüstüne kopyalandı: ${desktopPdfPath} ve ${desktopAltPdf}`);
   });
 }
 

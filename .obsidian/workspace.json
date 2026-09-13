@@ -76,7 +76,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 200
   },
   "right": {
     "id": "02a5a74fec2ac860",
@@ -180,17 +180,19 @@
   },
   "active": "7d9f18a2de085a70",
   "lastOpenFiles": [
-    "scratch/check_finans_arsiv.js",
-    "node_modules/lucide-react/dist/esm/icons/zoom-out.js",
-    "node_modules/lucide-react/dist/esm/icons/youtube.js",
-    "node_modules/lucide-react/dist/esm/icons/x.js",
-    "node_modules/lucide-react/dist/esm/icons/x-square.js",
-    "node_modules/lucide-react/dist/esm/icons/x-octagon.js",
-    "node_modules/lucide-react/dist/esm/icons/x-circle.js",
-    "node_modules/lucide-react/dist/esm/icons/wrench.js",
-    "node_modules/lucide-react/dist/esm/icons/wrap-text.js.map",
-    "node_modules/lucide-react/dist/esm/icons/wrap-text.js",
-    "node_modules/lucide-react/dist/esm/icons/worm.js.map",
+    "dist/assets/index-A5GB1c9c.js",
+    "dist/assets/eraylar-logo-DBQP8L0U.png",
+    "dist/assets/index-B6_W5rm5.css",
+    "dist/index.html",
+    "dist/assets/polyfills-legacy-CzCeAzhv.js",
+    "dist/assets/index-legacy-3FW4LNSH.js",
+    "dist/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.txt",
+    "public/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.txt",
+    "scripts/build_strictly_chronological_dialogues.cjs",
+    "dist/assets/index-Dw40OhgX.js",
+    "dist/assets/index-BWkLG77j.css",
+    "dist/assets/index-legacy-l3LuKoAD.js",
+    "docs/Sohbet_Diyaloglari_Yorumsuz.md",
     "node_modules/@babel/generator/README.md",
     "node_modules/@babel/helper-compilation-targets/README.md",
     "node_modules/@babel/helper-define-polyfill-provider/README.md",
@@ -215,7 +217,6 @@
     "node_modules/@types/node/README.md",
     "node_modules/@types/react-dom/README.md",
     "node_modules/commander/CHANGELOG.md",
-    "node_modules/convert-source-map/README.md",
     "node_modules/@supabase/phoenix/priv/static/phoenix.png",
     "node_modules/@supabase/phoenix/priv/static/phoenix-orange.png"
   ]

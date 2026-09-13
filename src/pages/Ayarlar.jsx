@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   User as UserIcon, Bell, Shield, Moon, LogOut, ChevronRight, 
   History as HistoryIcon, X, VolumeX, BellRing, Archive, Database, 
   CheckCircle2, Sparkles, UserCheck, FileText, Download, ShieldCheck, 
-  Search, ExternalLink, BookOpen 
+  Search, ExternalLink, BookOpen, Eye, Copy, FileDown, Calendar,
+  ZoomIn, ZoomOut, Check, ArrowUpRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -34,39 +35,155 @@ export default function Ayarlar() {
 
   // Sohbet Arşivi & Doğrulama Modalı State
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [showReaderModal, setShowReaderModal] = useState(false);
+  const [readerText, setReaderText] = useState('');
+  const [readerLoading, setReaderLoading] = useState(false);
+  const [readerFontSize, setReaderFontSize] = useState(15);
+  const [readerSearchQuery, setReaderSearchQuery] = useState('');
+  const [selectedDateFilter, setSelectedDateFilter] = useState('all');
+  const [copiedId, setCopiedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const handleDownloadMahmutPdf = () => {
-    const pdfUrl = '/sohbet_arsiv/Mahmut_Hakli_mi_Sohbet_Arsivi.pdf';
-    const link = document.createElement('a');
-    link.href = pdfUrl;
-    link.download = 'Mahmut_Hakli_mi_Sohbet_Arsivi.pdf';
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleOpenReader = async () => {
+    setShowReaderModal(true);
+    if (!readerText) {
+      setReaderLoading(true);
+      try {
+        const res = await fetch('/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.txt');
+        const text = await res.text();
+        setReaderText(text);
+      } catch (err) {
+        toast.error('Metin yüklenirken hata oluştu');
+      } finally {
+        setReaderLoading(false);
+      }
+    }
+  };
 
-    toast.success('📱 "Mahmut Haklı mı" Orijinal Görsel PDF indiriliyor (200 Sayfa - 42 MB)...', {
-      duration: 5000,
+  const handleCopyAllText = () => {
+    if (!readerText) return;
+    navigator.clipboard.writeText(readerText)
+      .then(() => toast.success('Tüm diyalog metni kopyalandı! 📋'))
+      .catch(() => toast.error('Kopyalama başarısız oldu'));
+  };
+
+  const handleCopySingleItem = (text, id) => {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        setCopiedId(id);
+        toast.success('Mesaj kopyalandı! 📋');
+        setTimeout(() => setCopiedId(null), 2000);
+      })
+      .catch(() => toast.error('Kopyalama başarısız oldu'));
+  };
+
+  const handleDownloadMahmutPdf = () => {
+    toast.success('📱 199 Görsel Arşiv PDF açılıyor (42 MB)...', {
+      duration: 3000,
       icon: '⚖️'
     });
   };
 
   const handleDownloadTextPdf = () => {
-    const pdfUrl = '/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.pdf';
-    const link = document.createElement('a');
-    link.href = pdfUrl;
-    link.download = 'Sohbet_Diyaloglari_Yorumsuz.pdf';
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    toast.success('💬 Yorumsuz Sohbet Diyalogları indiriliyor (90 Sayfa • 260 KB)...', {
-      duration: 5000,
-      icon: '💬'
+    toast.success('💬 Yorumsuz Sohbet Diyalogları PDF açılıyor...', {
+      duration: 3000,
+      icon: '📄'
     });
   };
+
+  // Parsed dialogues for in-app reader
+  const parsedDialogues = useMemo(() => {
+    if (!readerText) return [];
+    const lines = readerText.split('\n');
+    const items = [];
+    let currentItem = null;
+    let itemId = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (line.startsWith('## 📅 ')) {
+        if (currentItem) {
+          items.push(currentItem);
+          currentItem = null;
+        }
+        items.push({
+          id: `date-${++itemId}`,
+          type: 'date_header',
+          title: line.replace('## ', '').trim()
+        });
+        continue;
+      }
+
+      if (line.startsWith('**👤 Kullanıcı**')) {
+        if (currentItem) items.push(currentItem);
+        const timeMatch = line.match(/\*\((.*?)\)\*/);
+        currentItem = {
+          id: `msg-${++itemId}`,
+          type: 'message',
+          speaker: 'user',
+          time: timeMatch ? timeMatch[1] : '',
+          content: []
+        };
+        continue;
+      }
+
+      if (line.startsWith('**🧠')) {
+        if (currentItem) items.push(currentItem);
+        const timeMatch = line.match(/\*\((.*?)\)\*/);
+        currentItem = {
+          id: `msg-${++itemId}`,
+          type: 'message',
+          speaker: 'assistant',
+          time: timeMatch ? timeMatch[1] : '',
+          content: []
+        };
+        continue;
+      }
+
+      if (line.trim() === '---') {
+        if (currentItem) {
+          items.push(currentItem);
+          currentItem = null;
+        }
+        continue;
+      }
+
+      if (currentItem) {
+        currentItem.content.push(line);
+      }
+    }
+
+    if (currentItem) items.push(currentItem);
+    return items;
+  }, [readerText]);
+
+  // Filtered dialogues based on date chip & search
+  const filteredDialogues = useMemo(() => {
+    let currentSectionDate = '';
+    const q = readerSearchQuery.toLowerCase().trim();
+
+    return parsedDialogues.filter(item => {
+      if (item.type === 'date_header') {
+        currentSectionDate = item.title;
+        if (selectedDateFilter !== 'all' && !item.title.includes(selectedDateFilter)) {
+          return false;
+        }
+        return true;
+      }
+
+      if (selectedDateFilter !== 'all' && !currentSectionDate.includes(selectedDateFilter)) {
+        return false;
+      }
+
+      if (q) {
+        const fullContent = item.content ? item.content.join(' ').toLowerCase() : '';
+        return fullContent.includes(q) || (item.time && item.time.toLowerCase().includes(q));
+      }
+
+      return true;
+    });
+  }, [parsedDialogues, readerSearchQuery, selectedDateFilter]);
 
 
   const filteredManifest = React.useMemo(() => {
@@ -238,29 +355,76 @@ export default function Ayarlar() {
           <span className="mahmut-badge-pill">Yorumsuz Ham Metin • 199 Görsel 🟢</span>
         </div>
         
-        {/* Buton 1: Sohbet Diyalogları — Yorumsuz Tam Metin */}
-        <button 
-          type="button" 
+        {/* Buton 1: Sohbet Diyalogları PDF İndir / Aç */}
+        <a 
+          href="/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.pdf"
+          download="Sohbet_Diyaloglari_Yorumsuz.pdf"
+          target="_blank" 
+          rel="noopener noreferrer"
           className="mahmut-action-btn primary-btn glass"
           onClick={handleDownloadTextPdf}
+          style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}
         >
           <div className="mahmut-btn-icon-wrap primary">
             <BookOpen size={22} />
           </div>
           <div className="mahmut-btn-info">
-            <span className="mahmut-btn-title">Sohbet Diyalogları (Yorumsuz Ham Metin)</span>
-            <span className="mahmut-btn-desc">199 Görsel ve Ses Kayıtlarının Birebir Kronolojik Diyalog Dökümü • 90 Sayfa</span>
+            <span className="mahmut-btn-title">Sohbet Diyalogları (PDF İndir / Aç)</span>
+            <span className="mahmut-btn-desc">199 Görsel ve Ses Kayıtlarının Birebir Kronolojik Dökümü • 90 Sayfa • 270 KB</span>
           </div>
           <div className="mahmut-btn-action-icon">
             <Download size={20} className="download-bounce" />
           </div>
-        </button>
+        </a>
 
-        {/* Buton 2: 199 Orijinal Görsel Dökümü */}
+        {/* Buton 2: Uygulama İçinde Doğrudan Oku (İndirmeden) */}
         <button 
           type="button" 
+          className="mahmut-action-btn reader-action-btn glass"
+          onClick={handleOpenReader}
+        >
+          <div className="mahmut-btn-icon-wrap reader">
+            <Eye size={22} />
+          </div>
+          <div className="mahmut-btn-info">
+            <span className="mahmut-btn-title">Uygulama İçinde Doğrudan Oku</span>
+            <span className="mahmut-btn-desc">İndirme Yapmadan Tüm Diyalogları Ekranda Oku & İncele</span>
+          </div>
+          <div className="mahmut-btn-action-icon">
+            <ChevronRight size={20} />
+          </div>
+        </button>
+
+        {/* Buton 3: Hızlı Metin (TXT Dosyası) */}
+        <a 
+          href="/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.txt"
+          download="Sohbet_Diyaloglari_Yorumsuz.txt"
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="mahmut-action-btn txt-action-btn glass"
+          style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}
+        >
+          <div className="mahmut-btn-icon-wrap txt">
+            <FileText size={22} />
+          </div>
+          <div className="mahmut-btn-info">
+            <span className="mahmut-btn-title">Hızlı Metin (TXT Dosyası Olarak Aç / İndir)</span>
+            <span className="mahmut-btn-desc">Anında Açılır • Hafif Metin Formatı • 144 KB</span>
+          </div>
+          <div className="mahmut-btn-action-icon">
+            <Download size={20} />
+          </div>
+        </a>
+
+        {/* Buton 4: 199 Orijinal Görsel Dökümü */}
+        <a 
+          href="/sohbet_arsiv/Mahmut_Hakli_mi_Sohbet_Arsivi.pdf"
+          download="Mahmut_Hakli_mi_Sohbet_Arsivi.pdf"
+          target="_blank" 
+          rel="noopener noreferrer"
           className="mahmut-action-btn image-archive-btn glass"
           onClick={handleDownloadMahmutPdf}
+          style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}
         >
           <div className="mahmut-btn-icon-wrap image-archive">
             <FileText size={22} />
@@ -272,9 +436,9 @@ export default function Ayarlar() {
           <div className="mahmut-btn-action-icon">
             <Download size={20} />
           </div>
-        </button>
+        </a>
 
-        {/* Buton 3: %100 Dosya Doğrulama */}
+        {/* Buton 5: %100 Dosya Doğrulama */}
         <button 
           type="button" 
           className="mahmut-action-btn verify-btn glass"
@@ -288,7 +452,7 @@ export default function Ayarlar() {
             <span className="mahmut-btn-desc">199/199 JPEG Eksiksiz Kontrol • 0 Atlanan Satır • Doğrulama Raporu</span>
           </div>
           <div className="mahmut-btn-action-icon">
-            <ChevronRight size={20} className="chevron" />
+            <ChevronRight size={20} />
           </div>
         </button>
       </div>
@@ -458,32 +622,248 @@ export default function Ayarlar() {
 
               {/* Alt Butonlar */}
               <footer className="v-modal-footer">
-                <button 
-                  type="button" 
+                <a 
+                  href="/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="v-footer-btn-primary"
-                  onClick={handleDownloadTextPdf}
+                  style={{ textDecoration: 'none' }}
                 >
                   <BookOpen size={18} />
-                  <span>Tam Metin Kitap (270 KB)</span>
-                </button>
-                <button 
-                  type="button" 
-                  className="v-footer-btn-secondary"
-                  onClick={handleDownloadMahmutPdf}
-                  title="200 Sayfa 1600x1000 HD Orijinal Görsel Dökümü"
-                >
-                  <Download size={18} />
-                  <span>Görseller (42 MB)</span>
-                </button>
+                  <span>Diyaloglar (PDF)</span>
+                </a>
                 <a 
-                  href="/sohbet_arsiv/Mahmut_Hakli_mi_Tam_Metin_Kitap.pdf" 
+                  href="/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.txt"
+                  download="Sohbet_Diyaloglari_Yorumsuz.txt"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="v-footer-btn-secondary"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <FileText size={18} />
+                  <span>Düz Metin (TXT)</span>
+                </a>
+                <a 
+                  href="/sohbet_arsiv/Mahmut_Hakli_mi_Sohbet_Arsivi.pdf" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="v-footer-btn-secondary"
+                  style={{ textDecoration: 'none' }}
                 >
-                  <ExternalLink size={18} />
-                  <span>Önizle</span>
+                  <Download size={18} />
+                  <span>Görseller (42 MB)</span>
                 </a>
+              </footer>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* Sohbet Diyalogları Okuyucu Modalı (In-App Reader - iPhone & PWA Uyumlu) */}
+      {showReaderModal && (
+        <Portal>
+          <div className="modal-overlay" onClick={() => setShowReaderModal(false)}>
+            <div 
+              className="modal-content reader-modal glass animate-pop" 
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Modal Başlık */}
+              <header className="reader-header">
+                <div className="reader-header-text">
+                  <h3>
+                    <BookOpen size={20} className="reader-title-icon" /> 
+                    <span>Sohbet Diyalogları</span>
+                    <span className="reader-mode-pill">Yorumsuz Ham Metin</span>
+                  </h3>
+                  <p className="reader-subtitle">
+                    1 - 13 Eylül 2026 • 18.000+ Kelime • 100% Kronolojik Gerçek Zaman Sıralaması
+                  </p>
+                </div>
+
+                <div className="reader-header-actions">
+                  {/* Yazı Boyutu Ayarı */}
+                  <div className="reader-font-controls" title="Yazı Boyutu">
+                    <button 
+                      type="button" 
+                      className="reader-icon-btn" 
+                      onClick={() => setReaderFontSize(prev => Math.max(13, prev - 1))}
+                      title="Yazıyı Küçült"
+                    >
+                      <ZoomOut size={16} />
+                    </button>
+                    <span className="reader-font-indicator">{readerFontSize}px</span>
+                    <button 
+                      type="button" 
+                      className="reader-icon-btn" 
+                      onClick={() => setReaderFontSize(prev => Math.min(22, prev + 1))}
+                      title="Yazıyı Büyüt"
+                    >
+                      <ZoomIn size={16} />
+                    </button>
+                  </div>
+
+                  <button 
+                    type="button" 
+                    className="reader-icon-btn copy-all-btn" 
+                    onClick={handleCopyAllText}
+                    title="Tüm Metni Kopyala"
+                  >
+                    <Copy size={17} />
+                  </button>
+
+                  <button 
+                    type="button" 
+                    className="close-btn reader-close-btn" 
+                    onClick={() => setShowReaderModal(false)}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </header>
+
+              {/* Arama ve Hızlı Filtre Barı */}
+              <div className="reader-toolbar">
+                <div className="reader-search-box">
+                  <Search size={16} className="reader-search-icon" />
+                  <input 
+                    type="text" 
+                    placeholder="Diyaloglarda ara (örn: altın, Marmaris, 1.280.000, duşakabin)..." 
+                    value={readerSearchQuery}
+                    onChange={(e) => setReaderSearchQuery(e.target.value)}
+                  />
+                  {readerSearchQuery && (
+                    <button 
+                      type="button" 
+                      className="reader-clear-btn" 
+                      onClick={() => setReaderSearchQuery('')}
+                    >
+                      <X size={15} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Tarih Hızlı Filtre Çipleri */}
+                <div className="reader-chips-scroll">
+                  {[
+                    { key: 'all', label: 'Tüm Konuşmalar' },
+                    { key: '1 EYLÜL', label: '1 Eyl (Dürtü Kontrolü)' },
+                    { key: '11 EYLÜL', label: '11 Eyl (Altın Krizi)' },
+                    { key: '12 EYLÜL', label: '12 Eyl (Borçlar & Veda)' },
+                    { key: '13 EYLÜL', label: '13 Eyl (Delil & Arşiv)' },
+                  ].map(chip => (
+                    <button
+                      key={chip.key}
+                      type="button"
+                      className={`reader-filter-chip ${selectedDateFilter === chip.key ? 'active' : ''}`}
+                      onClick={() => setSelectedDateFilter(chip.key)}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Okuma Alanı */}
+              <div className="reader-body-scroll" style={{ fontSize: `${readerFontSize}px` }}>
+                {readerLoading ? (
+                  <div className="reader-loading">
+                    <div className="reader-spinner"></div>
+                    <span>Diyalog metni yükleniyor (18.000+ kelime)...</span>
+                  </div>
+                ) : filteredDialogues.length > 0 ? (
+                  filteredDialogues.map((item) => {
+                    if (item.type === 'date_header') {
+                      return (
+                        <div key={item.id} className="reader-date-card">
+                          <div className="reader-date-badge">
+                            <Calendar size={15} />
+                            <span>{item.title}</span>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    const isUser = item.speaker === 'user';
+                    const fullText = item.content ? item.content.join('\n') : '';
+
+                    return (
+                      <div key={item.id} className={`reader-bubble-wrap ${isUser ? 'user-wrap' : 'assistant-wrap'}`}>
+                        <div className={`reader-bubble ${isUser ? 'user' : 'assistant'}`}>
+                          <div className="reader-bubble-header">
+                            <span className={`reader-speaker-tag ${isUser ? 'user-tag' : 'assistant-tag'}`}>
+                              {isUser ? '👤 Kullanıcı' : '🧠 Danışman (ChatGPT)'}
+                            </span>
+                            {item.time && (
+                              <span className="reader-time-pill">
+                                {item.time}
+                              </span>
+                            )}
+                            <button 
+                              type="button" 
+                              className="reader-bubble-copy-btn"
+                              onClick={() => handleCopySingleItem(fullText, item.id)}
+                              title="Bu mesajı kopyala"
+                            >
+                              {copiedId === item.id ? <Check size={14} className="copied-check" /> : <Copy size={14} />}
+                            </button>
+                          </div>
+                          <div className="reader-bubble-content">
+                            {item.content && item.content.map((paragraph, pIdx) => {
+                              if (!paragraph.trim()) return <div key={pIdx} className="reader-p-space" />;
+                              return (
+                                <p key={pIdx} className="reader-paragraph">
+                                  {paragraph}
+                                </p>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="reader-empty">
+                    <p>Aramanızla eşleşen bir diyalog bulunamadı.</p>
+                    <button 
+                      type="button" 
+                      className="reader-reset-btn" 
+                      onClick={() => { setReaderSearchQuery(''); setSelectedDateFilter('all'); }}
+                    >
+                      Filtreleri Temizle
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Sticky Footer */}
+              <footer className="reader-modal-footer">
+                <a 
+                  href="/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.pdf" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="reader-footer-btn primary"
+                  onClick={handleDownloadTextPdf}
+                >
+                  <Download size={18} />
+                  <span>PDF İndir / Aç (270 KB)</span>
+                </a>
+                <a 
+                  href="/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.txt" 
+                  download="Sohbet_Diyaloglari_Yorumsuz.txt" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="reader-footer-btn txt"
+                >
+                  <FileText size={18} />
+                  <span>TXT Metin (144 KB)</span>
+                </a>
+                <button 
+                  type="button" 
+                  className="reader-footer-btn close"
+                  onClick={() => setShowReaderModal(false)}
+                >
+                  Kapat
+                </button>
               </footer>
             </div>
           </div>
