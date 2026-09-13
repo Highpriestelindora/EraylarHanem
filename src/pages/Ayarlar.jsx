@@ -3,7 +3,7 @@ import {
   User as UserIcon, Bell, Shield, Moon, LogOut, ChevronRight, 
   History as HistoryIcon, X, VolumeX, BellRing, Archive, Database, 
   CheckCircle2, Sparkles, UserCheck, FileText, Download, ShieldCheck, 
-  Search, ExternalLink 
+  Search, ExternalLink, BookOpen 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
@@ -46,11 +46,28 @@ export default function Ayarlar() {
     link.click();
     document.body.removeChild(link);
 
-    toast.success('📱 "Mahmut Haklı mı" PDF belgesi indiriliyor (200 Sayfa - 199 Orijinal Görsel)...', {
+    toast.success('📱 "Mahmut Haklı mı" Orijinal Görsel PDF indiriliyor (200 Sayfa - 42 MB)...', {
       duration: 5000,
       icon: '⚖️'
     });
   };
+
+  const handleDownloadTextPdf = () => {
+    const pdfUrl = '/sohbet_arsiv/Mahmut_Hakli_mi_Tam_Metin_Kitap.pdf';
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = 'Mahmut_Hakli_mi_Tam_Metin_Kitap.pdf';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success('📖 "Mahmut Haklı mı" Tam Metin Kitap PDF indiriliyor (92 Sayfa • 270 KB)...', {
+      duration: 5000,
+      icon: '📖'
+    });
+  };
+
 
   const filteredManifest = React.useMemo(() => {
     if (!searchQuery.trim()) return CHAT_ARCHIVE_MANIFEST;
@@ -218,28 +235,46 @@ export default function Ayarlar() {
       <div className="settings-group mahmut-special-group">
         <div className="group-header-flex">
           <h4>Özel İnceleme & Sohbet Arşivi</h4>
-          <span className="mahmut-badge-pill">199 Görsel Çözümlendi 🟢</span>
+          <span className="mahmut-badge-pill">92 Sayfa Metin • 199 Görsel 🟢</span>
         </div>
         
-        {/* Buton 1: Mahmut Haklı mı */}
+        {/* Buton 1: Mahmut Haklı mı — Tam Metin Kitap */}
         <button 
           type="button" 
           className="mahmut-action-btn primary-btn glass"
-          onClick={handleDownloadMahmutPdf}
+          onClick={handleDownloadTextPdf}
         >
           <div className="mahmut-btn-icon-wrap primary">
-            <FileText size={22} />
+            <BookOpen size={22} />
           </div>
           <div className="mahmut-btn-info">
-            <span className="mahmut-btn-title">Mahmut Haklı mı</span>
-            <span className="mahmut-btn-desc">199 Görsel • 1:1 Satır Satır Eksiksiz PDF • Telefona İndir</span>
+            <span className="mahmut-btn-title">Mahmut Haklı mı (Tam Metin Kitap)</span>
+            <span className="mahmut-btn-desc">92 Sayfa • AI Süzgecinden Geçmiş Kronolojik Metin • 270 KB</span>
           </div>
           <div className="mahmut-btn-action-icon">
             <Download size={20} className="download-bounce" />
           </div>
         </button>
 
-        {/* Buton 2: %100 Dosya Doğrulama */}
+        {/* Buton 2: 199 Orijinal Görsel Dökümü */}
+        <button 
+          type="button" 
+          className="mahmut-action-btn image-archive-btn glass"
+          onClick={handleDownloadMahmutPdf}
+        >
+          <div className="mahmut-btn-icon-wrap image-archive">
+            <FileText size={22} />
+          </div>
+          <div className="mahmut-btn-info">
+            <span className="mahmut-btn-title">199 Orijinal Görsel Arşivi</span>
+            <span className="mahmut-btn-desc">200 Sayfa • 1600x1000 HD Orijinal Ekran Görüntüleri • 42 MB</span>
+          </div>
+          <div className="mahmut-btn-action-icon">
+            <Download size={20} />
+          </div>
+        </button>
+
+        {/* Buton 3: %100 Dosya Doğrulama */}
         <button 
           type="button" 
           className="mahmut-action-btn verify-btn glass"
@@ -249,7 +284,7 @@ export default function Ayarlar() {
             <ShieldCheck size={22} />
           </div>
           <div className="mahmut-btn-info">
-            <span className="mahmut-btn-title">%100 Dosya Doğrulama</span>
+            <span className="mahmut-btn-title">%100 Dosya Doğrulama & Denetim</span>
             <span className="mahmut-btn-desc">199/199 JPEG Eksiksiz Kontrol • 0 Atlanan Satır • Doğrulama Raporu</span>
           </div>
           <div className="mahmut-btn-action-icon">
@@ -426,13 +461,22 @@ export default function Ayarlar() {
                 <button 
                   type="button" 
                   className="v-footer-btn-primary"
+                  onClick={handleDownloadTextPdf}
+                >
+                  <BookOpen size={18} />
+                  <span>Tam Metin Kitap (270 KB)</span>
+                </button>
+                <button 
+                  type="button" 
+                  className="v-footer-btn-secondary"
                   onClick={handleDownloadMahmutPdf}
+                  title="200 Sayfa 1600x1000 HD Orijinal Görsel Dökümü"
                 >
                   <Download size={18} />
-                  <span>Mahmut Haklı mı (PDF İndir - 42 MB)</span>
+                  <span>Görseller (42 MB)</span>
                 </button>
                 <a 
-                  href="/sohbet_arsiv/Mahmut_Hakli_mi_Sohbet_Arsivi.pdf" 
+                  href="/sohbet_arsiv/Mahmut_Hakli_mi_Tam_Metin_Kitap.pdf" 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="v-footer-btn-secondary"
