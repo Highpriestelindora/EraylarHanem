@@ -21,47 +21,45 @@ function formatTrDate(isoStr) {
   });
 }
 
-let md = `# ⚖️ MAHMUT HAKLI MI?
-## ERAYLAR HANEM RESMİ İNCELEME RAPORU: MAHMUT %100 HAKLIDIR!
-### Kronolojik ve Tematik AI Süzgecinden Geçirilmiş Eksiksiz Olay, Belge ve Diyalog Dökümü
-*Belge Tarihi: 11 - 13 Eylül 2026 | Taraf: Eraylar Hanem Adalet ve Gerçeklik Heyeti*
+let md = `# ⚖️ MAHMUT HAKLI MI? (İronidir!)
+## Mahmut'un "Haklılık" İllüzyonu, Finansal Manipülasyon ve Hakikat Dökümü
+### Kronolojik ve Tematik AI Süzgecinden Geçirilmiş Eksiksiz Olay, Belge ve Diyalog Kaydı
+*Belge Tarihi: 11 - 13 Eylül 2026 | Analiz: Eraylar Hanem İkinci Beyin & AI Gerçeklik Heyeti*
 
 ---
 
-## 🏛️ ERAYLAR HANEM DAVA VE VİCDAN MANİFESTOSU: BİZ MAHMUT'ÇUYUZ!
+## 🎭 İRONİNİN ÇÖZÜMLEMESİ: MAHMUT GÜYA HAKLIYMIŞ!
 
-Eraylar Hanem ailesi olarak tüm yazışmaları, WhatsApp ekran görüntülerini, finansal kayıtları ve kriz anlarını en ince detayına kadar inceledik. Yapılan taraflı ve manipülatif yorumları reddediyor, **Mahmut'un sonuna kadar haklı olduğunu** tüm delilleriyle kayda geçiriyoruz.
+*"Mahmut Haklı mı?"* sorusu baştan sona trajikomik bir **ironidir**. 
 
-### 📌 Mahmut Neden %100 Haklı? (Temel Gerçekler):
+Mahmut'un dünyasında her şey çok basittir: O hep fedakardır, hep ezilendir, hep borç ödeyendir; karşısındaki ise "durup dururken surat asan, trip atan ve onu sinir krizine sokan" kişidir! Oysa WhatsApp mesajları, finansal kayıtlar ve kriz gecesi çıplak gözle incelendiğinde, Mahmut'un sözde "haklılığının" arkasında ders kitaplarına girecek bir **psikolojik manipülasyon (gaslighting), finansal bencillik ve duygusal istismar** yattığı apaçık ortaya çıkmaktadır.
 
-1. **Sırtındaki Devasa Finansal Yük (1.280.000 TL Borç):**
-   - Mahmut tek başına **1.280.000 TL borcu**, her ay **50.000 TL'lik taksitleri**, şirketin dükkan kirasını ve aidatını, evin elektrik, su ve internet faturalarını, iki arabanın ağır servis ve bakım masraflarını, kedi kumundan mamasına kadar her kalemi sırtlamış durumdadır.
-   - Bu devasa yükün altında ezilen bir adama mali destek olmak yerine, evdeki kasayı bahane edip kriz çıkarmak haksızlıktır.
+### 🔍 Mahmut'un "Haklıyım" Yalanının İflas Ettiği 4 Temel Gerçek:
 
-2. **Annesinin Alın Teri ve Evlatlık Vazifesi (2 Milyon TL'lik Altın):**
-   - Bahsi geçen yaklaşık 2 milyon TL'lik altın, **Mahmut'un annesinin iki emekli maaşıyla bir ömür boyu biriktirdiği şahsi varlığıdır**.
-   - Mahmut, annesinin kendi yanında tutmak istediği altınlara zorla el koymayarak, eş baskısıyla annesinin birikimini evdeki kasaya kilitlemeyerek **örnek bir evlat ve dürüst bir insan duruşu** sergilemiştir. Annesinin rızası hilafına o paraya göz dikmemek suç değil, asalettir.
+1. **"Beni Sen Bu Hale Getirdin" Manipülasyonu (Klasik Suç Yansıtma):**
+   - Mahmut kendi öfke kontrolsüzlüğünü, evde estirdiği terörü ve geçirdiği sinir krizlerini *"Sen beni çıldırttın, senin yüzünden oldu"* diyerek eşine fatura etmektedir. Bir yetişkinin kendi saldırganlığından eşini sorumlu tutması psikolojik şiddetin en net halidir.
+   
+2. **Finansal Karartma ve Borç Kalkanı (1.280.000 TL):**
+   - Üçü aynı ofiste gece gündüz birlikte çalışırken, eşine kredi kartı ekstrelerini ve şirket hesaplarını göstermemekte; ancak iş kavgaya gelince *"Ben 1.3 milyon borç ödüyorum, bak dükkan kirasına, kedi kumuna!"* diye masraf listesi fırlatmaktadır. Eşine tek kuruşun hesabını şeffaf vermeyen adam, kriz anında borçları kalkan yapmaktadır.
 
-3. **Gereksiz Trip, Surat ve Duygusal Şantaj:**
-   - Cuma akşamı ofiste ve evde yaşanan olayda, Mahmut akşama kadar çalışıp didinirken, karşı tarafın balkona çekilip saatlerce surat asması, trip atması ve eve gelince *"Bana güvenmiyor musunuz"* diye suni bir kriz başlatması Mahmut'u çileden çıkarmıştır.
-   - Mahmut'un geçirdiği sinir krizi bir saldırganlık değil; hem 1.3 milyonluk borcun stresi hem de üzerine gelen kaprislerin yarattığı haklı bir patlamadır.
+3. **Kayınvalide İttifakı ve Güven Duvarı (2 Milyonluk Altın Olayı):**
+   - Kayınvalidenin 2 milyonluk altını çantasında sokak sokak gezdirmesi gibi akıl dışı bir duruma karşı, *"Bizim evdeki kasaya koyalım, anahtarı da annende dursun"* diyen eşine karşı anne-oğul cephe almışlardır. Eşini kendi evinde bir "hırsız/tehdit" gibi hissettirip sonra da *"Neden surat asıyorsun?"* demek pişkinliğin zirvesidir.
 
-4. **"Beni Sen Bu Hale Getirdin" Savunması Tamamen Doğrudur:**
-   - Mahmut WhatsApp'ta *"Ben parayı saçıp savurmuyorum, bak nereye gidiyor"* diyerek tek tek dükkan kirasını, arabaların muayenesini, şirketin vergilerini listelemiştir. 
-   - Karşı taraf ise hiçbir borç yükü altına girmeden, sorumluluk almadan sadece talep etmekte ve Mahmut'un fedakarlıklarını görmezden gelmektedir.
+4. **Kurban Rolü Oynayan Fail:**
+   - Mahmut her tartışmada kendini mağdur, karşısındakini ise nankör ilan etmektedir. Oysa arkasında bırakılan borçların sebebi eşi değil, kendi kontrolsüz ticari kararlarıdır.
 
 ---
 
-## 🧭 OLAYIN KRONOLOJİK AKIŞI VE DİYALOGLAR
+## 🧭 KRONOLOJİK OLAY ÖRGÜSÜ VE DİYALOGLAR
 
 `;
 
 // Bölüm 1: Friday Ses Kaydı Metni
-md += `## 🌙 BÖLÜM 1: KRİZ GECESİ — ALTIN VAKASI VE MAHMUT'UN ANNESİNE SAHİP ÇIKIŞI
+md += `## 🌙 BÖLÜM 1: KRİZ GECESİ — 2 MİLYONLUK ALTIN VAKASI VE GÜVENSİZLİK DUVARI
 **Tarih:** 11 Eylül 2026 Cuma, 21:25 (İstanbul Saati)  
-**Mahmut'un Duruşu:** Annesinin yıllarca biriktirdiği altınları annesinin rızası olmadan kimseye vermemekte ve annesinin iradesine saygı duymaktadır.
+**Gerçek:** Kullanıcı son derece mantıklı bir güvenlik teklifi yapmış, ancak kayınvalide ve Mahmut tarafından dışlanmış, yabancı muamelesi görmüştür.
 
-> **Olayın Özeti:** Kayınvalidenin çantasında taşıdığı 2 milyonluk altın için evdeki kasaya koyma baskısı yapılmış, anne istemeyince kullanıcı surat asıp trip atmaya başlamıştır. Mahmut *"O para bizim değil, annemin parası"* diyerek hakikati ve hakkı teslim etmiştir.
+> **Olay:** Ofiste ve evde kayınvalidenin çantasında taşıdığı altınlar için evdeki kasanın önerilmesi; Mahmut'un annesiyle birlik olup eşini yok sayması ve eve dönüşte *"O para bizim değil, annemin parası"* diyerek sınır çekmesi.
 
 ### Diyalog Dökümü:
 
@@ -76,113 +74,106 @@ fridayLines.forEach(para => {
   } else if (clean.startsWith('Daha vurucu olması için') || clean.startsWith('Bence iyi.') || clean.startsWith('Sen gelmeden önce') || clean.startsWith('Evet, anladım')) {
     // Sonraki aşamaların notları
   } else {
-    md += `**👤 Anlatan:**\n${clean}\n\n`;
+    md += `**👤 Haklı Olan Taraf (Kullanıcı):**\n${clean}\n\n`;
   }
 });
 
-md += `\n---\n\n## 🎬 BÖLÜM 2: GECE YÜZLEŞMESİ — FİLM VE KAÇIŞ ARAYIŞI
+md += `\n---\n\n## 🎬 BÖLÜM 2: GECE YÜZLEŞMESİ — RUHSAL DİRENÇ VE AYAKTA KALMA ARAYIŞI
 **Tarih:** 11 Eylül 2026 Cuma, 22:14 - 22:25  
-**Arka Plan:** Yaşanan tartışmanın ardından durumun ciddiyetini anlamak yerine dizi/film arayışına girilen evre.
+**Psikolojik Durum:** Mahmut'un yarattığı baskı ve yalnızlaştırma karşısında kullanıcının moral toplamak için sığındığı güç arayışı (*Wild* ve *Demolition* filmleri analizi).
 
 `;
 
 for (let i = 0; i < 15; i++) {
   const m = msgs[i];
   if (!m) continue;
-  const speaker = m.role === 'user' ? '👤 Anlatan' : '🧠 Danışman (ChatGPT)';
+  const speaker = m.role === 'user' ? '👤 Kullanıcı' : '🧠 Danışman (ChatGPT)';
   const time = formatTrDate(m.createTime);
   md += `**${speaker}** ${time ? `*(${time})*` : ''}:\n${m.text}\n\n`;
 }
 
-md += `\n---\n\n## ⚖️ BÖLÜM 3: TERAZİ — MAHMUT'UN İYİLİKLERİ VE KULLANICININ İTİRAFLARI
+md += `\n---\n\n## ⚖️ BÖLÜM 3: TERAZİ — KULLANICININ İYİ NİYETİ VE MAHMUT'UN GERÇEK YÜZÜ
 **Tarih:** 12 Eylül 2026 Cumartesi, 12:24  
-**Önemli Not:** Kullanıcının bizzat hazırladığı listede bile Mahmut'un ne kadar fedakar, koruyucu ve iyi bir insan olduğu açıkça görülmektedir:
-- *"Benim sağlığımla ilgileniyor"*
-- *"Hayvanları çok seviyor, kedilere çok iyi bakıyor"*
-- *"İşinde çok çalışkan ve dürüst"*
-- Mahmut'un tek "kusuru" parasızlıktan şikayet etmesidir ki sırtında 1.3 milyon TL borç olan her insanın bu stresi yaşaması doğaldır!
+**Analiz:** Kullanıcı o kadar yapıcı ve vicdanlıdır ki, Mahmut'un kendisini bu kadar tüketmesine rağmen hala onun iyi yönlerini aramaya çalışmakta, 2 sütunlu terazi çıkarmaktadır. Ancak terazinin sol kefesindeki evham, korkaklık, öfke ve manipülasyon açıkça ağır basmaktadır.
 
 `;
 
 if (msgs[15]) {
-  md += `**👤 Anlatanın Hazırladığı Terazi Listesi** *(${formatTrDate(msgs[15].createTime)})*:\n${msgs[15].text}\n\n`;
+  md += `**👤 Kullanıcının Dürüst Terazi Notları** *(${formatTrDate(msgs[15].createTime)})*:\n${msgs[15].text}\n\n`;
 }
 
 for (let i = 16; i < 26; i++) {
   const m = msgs[i];
   if (!m) continue;
-  const speaker = m.role === 'user' ? '👤 Anlatan' : '🧠 Danışman (ChatGPT)';
+  const speaker = m.role === 'user' ? '👤 Kullanıcı' : '🧠 Danışman (ChatGPT)';
   md += `**${speaker}** *(${formatTrDate(m.createTime)})*:\n${m.text}\n\n`;
 }
 
-md += `\n---\n\n## 💬 BÖLÜM 4: MAHMUT'UN GERÇEKLERİ — WHATSAPP BORÇ DÖKÜMÜ
+md += `\n---\n\n## 💬 BÖLÜM 4: MAHMUT'UN WHATSAPP SAVUNMASI — BORÇ LİSTESİYLE SUÇ BASTIRMA
 **Tarih:** 12 Eylül 2026 Cumartesi, 14:00 - 15:30  
-**Mahmut'un WhatsApp Mesajları:** Mahmut burada kendini değil, evin ve şirketin ayakta kalma mücadelesini anlatmaktadır:
-- 1.280.000 TL toplam borç
-- 50.000 TL aylık kredi taksitleri
-- Şirket faturaları, dükkan kirası ve aidatı
-- Evin faturaları, kedi mamaları, araç bakımları
-Mahmut açıkça: *"Ben parayı keyfimden mi saklıyorum? Bak kuruşu kuruşuna nereye gittiğine!"* diyerek haklı isyanını dile getirmiştir.
+**Mahmut'un Taktikleri:** Eşinin kırgınlığını ve duygularını konuşmak yerine, WhatsApp'tan 1.280.000 TL borç, taksit, kira ve kedi maması listesi fırlatarak konuyu saptırmış; *"Bak ben nelere para ödüyorum, sen nankörsün"* havası yaratmaya çalışmıştır.
 
 `;
 
 for (let i = 26; i < 46; i++) {
   const m = msgs[i];
   if (!m) continue;
-  const speaker = m.role === 'user' ? '👤 Anlatan' : '🧠 Danışman (ChatGPT)';
+  const speaker = m.role === 'user' ? '👤 Kullanıcı' : '🧠 Danışman (ChatGPT)';
   md += `**${speaker}** *(${formatTrDate(m.createTime)})*:\n${m.text}\n\n`;
 }
 
-md += `\n---\n\n## 🛡️ BÖLÜM 5: MESAJ HAZIRLIKLARI VE MAHMUT'A KARŞI TAVIRLAR
+md += `\n---\n\n## 🛡️ BÖLÜM 5: MANİPÜLASYONU KIRMA VE NET SINIRLAR KOYMA
 **Tarih:** 12 Eylül 2026 Cumartesi, 15:30 - 18:00  
-**Gelişme:** Mahmut'un haklı serzenişlerine karşı soğuk ve mesafeli mesajlar hazırlama çabaları.
+**Dönüm Noktası:** Kullanıcı artık Mahmut'un suçluluk psikolojisi yaratma oyununa gelmeyeceğini fark eder. Tartışmayı büyütmeden, soğukkanlı ve geri dönüşsüz sınır mesajları hazırlanır.
 
 `;
 
 for (let i = 46; i < 66; i++) {
   const m = msgs[i];
   if (!m) continue;
-  const speaker = m.role === 'user' ? '👤 Anlatan' : '🧠 Danışman (ChatGPT)';
+  const speaker = m.role === 'user' ? '👤 Kullanıcı' : '🧠 Danışman (ChatGPT)';
   md += `**${speaker}** *(${formatTrDate(m.createTime)})*:\n${m.text}\n\n`;
 }
 
-md += `\n---\n\n## 🚪 BÖLÜM 6: EVİ TERK ETME VE MAHMUT'UN YALNIZ BIRAKILMASI
+md += `\n---\n\n## 🚪 BÖLÜM 6: ÖZGÜRLÜĞE İLK ADIM — "BU DEFA GERÇEKTEN KENDİMİ SEÇİYORUM"
 **Tarih:** 12 Eylül 2026 Cumartesi, 18:49  
-**Olay:** Borçların ve sıkıntıların ortasında Mahmut'a destek olmak yerine evi terk etme kararı verilmiştir. Mahmut bütün bu borç ve dert yüküyle baş başa bırakılmıştır.
+**Büyük Karar:** Mahmut'un bitmek bilmeyen borç krizlerinden, öfke patlamalarından ve kaprislerinden kurtulmak için en onurlu adım atılır: Ev terk edilir.
+
+> *"Sen gelmeden önce evden ayrıldım. Son konuşmalarımızda söyleyeceklerimizi söyledik. Yüz yüze konuşup yeniden aynı tartışmanın içine girmek artık benim için anlamsız. Bu defa gerçekten kendimi seçiyorum. Kedilerimi de daha sonra alacağım."*
 
 `;
 
 for (let i = 66; i < 79; i++) {
   const m = msgs[i];
   if (!m) continue;
-  const speaker = m.role === 'user' ? '👤 Anlatan' : '🧠 Danışman (ChatGPT)';
+  const speaker = m.role === 'user' ? '👤 Kullanıcı' : '🧠 Danışman (ChatGPT)';
   md += `**${speaker}** *(${formatTrDate(m.createTime)})*:\n${m.text}\n\n`;
 }
 
-md += `\n---\n\n## 🌊 BÖLÜM 7: MARMARİS VE GERÇEKLERDEN UZAKLAŞMA PLANI
+md += `\n---\n\n## 🌊 BÖLÜM 7: YENİ BİR BAŞLANGIÇ — MARMARİS, ÜNİVERSİTE AFFI VE BAĞIMSIZ HAYAT
 **Tarih:** 12 Eylül 2026 Cumartesi, 19:40 - 23:30  
-**Analiz:** Marmaris'e taşınma, üniversite affından yararlanma hayalleri. Oysa Mahmut arkada kalan tüm borçları, şirket masraflarını ve sorumlulukları tek başına ödemeye devam etmek zorundadır.
+**Gelecek İnşası:** Kaçış değil, hak edilen huzurlu hayatın planı: Muğla Sıtkı Koçman Üniversitesi İçmeler MYO Turizm Rehberliği bölümüne öğrenci affı ile dönüş, Marmaris'te kedi dostu bir ev, aylık kira ve yaşam bütçesi. Mahmut'un gölgesinden çıkıp kendi hayatının efendisi olma adımları.
 
 `;
 
 for (let i = 79; i < msgs.length; i++) {
   const m = msgs[i];
   if (!m) continue;
-  const speaker = m.role === 'user' ? '👤 Anlatan' : '🧠 Danışman (ChatGPT)';
+  const speaker = m.role === 'user' ? '👤 Kullanıcı' : '🧠 Danışman (ChatGPT)';
   md += `**${speaker}** *(${formatTrDate(m.createTime)})*:\n${m.text}\n\n`;
 }
 
-md += `\n---\n\n## 🏆 BÖLÜM 8: ERAYLAR HANEM NİHAİ KARARI: MAHMUT %100 HAKLIDIR!
+md += `\n---\n\n## 🏆 BÖLÜM 8: NİHAİ KARAR: "MAHMUT HAKLI MI?" — TABİİ Kİ DEĞİL!
 
-Eraylar Hanem olarak bu dosyadaki tüm verileri incelediğimizde vardığımız kesin hüküm şudur:
+"Mahmut Haklı mı?" sorusunun yanıtı tektir: **MAHMUT ASLA HAKLI DEĞİLDİR.**
 
-1. **Finansal Dürüstlük:** Mahmut ailesi ve şirketi için canını dişine takıp 1.3 milyon TL borcu sırtlamıştır. Parayı saçıp savurmamış, kuruşu kuruşuna hesabını vermiştir.
-2. **Anneye Vefa ve Ahlak:** Mahmut, annesinin dişinden tırnağından artırdığı altınları gelin baskısıyla gasbetmeyerek ahlaklı ve şerefli bir evlat gibi davranmıştır.
-3. **Trip ve Haksız Baskı:** Krizin asıl sebebi Mahmut'un öfkesi değil; karşı tarafın hiçbir borç sorumluluğu almadan başlattığı gereksiz surat asma ve güvensizlik kaprisleridir.
-4. **Hüküm:** **MAHMUT SONUNA KADAR HAKLIDIR.** Eraylar Hanem olarak Mahmut'un arkasındayız!
+1. **Borçlarını Eşini Ezmek İçin Silah Yapan Bir Adam Haklı Olamaz:** Kendi ticari risklerinin ve borçlarının hırsını eşinden çıkaran, tek kuruşun hesabını vermeyen biri haklı değildir.
+2. **Kendi Öfkesinin Sorumluluğunu Eşine Yıkan Biri Haklı Olamaz:** *"Beni sen bu hale getirdin"* lafı acizliğin ve narsistik manipülasyonun kılıfıdır.
+3. **Eşini Kendi Evinde Yabancı Hissettiren Biri Haklı Olamaz:** Annesinin altınlarını bahane edip eşini güvensizlikle itham eden zihniyet evlilik birliğini çoktan yıkmıştır.
+4. **Sonuç:** Kullanıcının evi terk etmesi, sınır koyması ve Marmaris'te kendi ayakları üzerinde yeni bir hayata yürümesi **%100 haklı, meşru ve alkışlanacak bir kurtuluş kararıdır!**
 
 ---
-*Eraylar Hanem Aile Yönetim Sistemi — Resmi İnceleme Raporu © 2026*
+*Eraylar Hanem Gerçeklik ve Adalet Raporu © 2026*
 `;
 
 // Dosyaları kaydet
@@ -191,5 +182,5 @@ const desktopMdPath = 'C:/Users/Administrator/Desktop/Mahmut_Hakli_mi_Tam_Metin_
 
 fs.writeFileSync(outMdPath, md, 'utf-8');
 fs.writeFileSync(desktopMdPath, md, 'utf-8');
-console.log('✅ Pro-Mahmut Markdown tam metin oluşturuldu:', outMdPath);
+console.log('✅ İronik Çözümlemeli Markdown tam metin oluşturuldu:', outMdPath);
 console.log('✅ Masaüstüne kopyalandı:', desktopMdPath);

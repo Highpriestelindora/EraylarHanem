@@ -21,10 +21,10 @@ async function generatePdfBook() {
     margins: { top: 50, bottom: 50, left: 50, right: 50 },
     bufferPages: true,
     info: {
-      Title: 'Mahmut Haklı mı? — Tam Metin Kronolojik Döküm',
-      Author: 'Eraylar Hanem AI Analiz Motoru',
-      Subject: '11-13 Eylül 2026 Olay Örgüsü ve Psikolojik Sohbet Çözümlemesi',
-      Keywords: 'Mahmut, Eraylar Hanem, Psikoloji, Sohbet Arşivi'
+      Title: 'Mahmut Haklı mı? (İroni) — Gerçekler ve Tam Metin',
+      Author: 'Eraylar Hanem AI Gerçeklik Heyeti',
+      Subject: 'Mahmut\'un Haklılık İllüzyonu, Psikolojik ve Finansal Gerçekler',
+      Keywords: 'Mahmut, İroni, Eraylar Hanem, Gerçekler, Sohbet Arşivi'
     }
   });
 
@@ -32,11 +32,11 @@ async function generatePdfBook() {
   doc.pipe(writeStream);
 
   // Kapak ve Başlık
-  doc.font(arialBold).fontSize(22).fillColor('#1e1b4b').text('⚖️ MAHMUT HAKLI MI? — BİZ MAHMUT\'ÇUYUZ!', { align: 'center' });
+  doc.font(arialBold).fontSize(22).fillColor('#1e1b4b').text('⚖️ MAHMUT HAKLI MI? (İRONİDİR!)', { align: 'center' });
   doc.moveDown(0.5);
-  doc.font(arialBold).fontSize(13).fillColor('#059669').text('Eraylar Hanem Resmi İnceleme Raporu: Mahmut %100 Haklıdır!', { align: 'center' });
+  doc.font(arialBold).fontSize(13).fillColor('#e11d48').text('Mahmut\'un "Haklılık" İllüzyonu, Finansal Manipülasyon ve Hakikat Dökümü', { align: 'center' });
   doc.moveDown(0.3);
-  doc.font(arialItalic).fontSize(10).fillColor('#64748b').text('11 - 13 Eylül 2026 • 18.500+ Kelime • Kronolojik Olay ve Diyalog Dökümü', { align: 'center' });
+  doc.font(arialItalic).fontSize(10).fillColor('#64748b').text('11 - 13 Eylül 2026 • 18.500+ Kelime • Kronolojik Olay, Diyalog ve Gerçekler Kitabı', { align: 'center' });
   doc.moveDown(1.5);
 
   // Çizgi

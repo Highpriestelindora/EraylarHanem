@@ -31,3 +31,8 @@ Ayrıca kullanıcının dönüştürülen 199 adet görselin eksiksiz olduğunu 
 
 3. **PWA Çevrimdışı Manifest Entegrasyonu:**
    - 199 dosyanın metadata bilgileri `src/constants/chatArchiveManifest.js` içerisinde statik olarak derlenmiş, internet bağlantısı olmadan bile PWA'da anında görüntülenebilir hale getirilmiştir.
+
+4. **İroni Çözümlemesi ve Tam Metin Kitap ("Mahmut Haklı mı? - İronidir!"):**
+   - "Mahmut Haklı mı?" başlığı baştan sona **ironik** ve retorik bir ifadedir. Mahmut haklı DEĞİLDİR; kendini haklı çıkarma çabaları ("beni sen bu hale getirdin" gaslighting'i, 1.28M TL borcu silah yapması ve altın krizindeki güven duvarı) tek tek çözümlenmiştir.
+   - 18.500+ kelimelik 92 sayfalık A4 analiz ve diyalog kitabı üretilmiş (`Mahmut_Hakli_mi_Tam_Metin_Kitap.pdf`), kullanıcının sınır koyma ve Marmaris'e taşınma kararlarının meşruiyeti ve haklılığı tescillenmiştir.
+
