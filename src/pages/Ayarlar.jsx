@@ -53,18 +53,18 @@ export default function Ayarlar() {
   };
 
   const handleDownloadTextPdf = () => {
-    const pdfUrl = '/sohbet_arsiv/Mahmut_Hakli_mi_Tam_Metin_Kitap.pdf';
+    const pdfUrl = '/sohbet_arsiv/Sohbet_Diyaloglari_Yorumsuz.pdf';
     const link = document.createElement('a');
     link.href = pdfUrl;
-    link.download = 'Mahmut_Hakli_mi_Tam_Metin_Kitap.pdf';
+    link.download = 'Sohbet_Diyaloglari_Yorumsuz.pdf';
     link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    toast.success('⚖️ "Mahmut Haklı mı?" İnceleme Raporu ve Tam Metin indiriliyor (96 Sayfa • 282 KB)...', {
+    toast.success('💬 Yorumsuz Sohbet Diyalogları indiriliyor (90 Sayfa • 260 KB)...', {
       duration: 5000,
-      icon: '⚖️'
+      icon: '💬'
     });
   };
 
@@ -234,11 +234,11 @@ export default function Ayarlar() {
       {/* Özel İnceleme: Mahmut Haklı mı & %100 Doğrulama */}
       <div className="settings-group mahmut-special-group">
         <div className="group-header-flex">
-          <h4>Özel İnceleme & Sohbet Arşivi</h4>
-          <span className="mahmut-badge-pill">96 Sayfa Metin • 199 Görsel 🟢</span>
+          <h4>Sohbet Arşivi & Diyalog Kayıtları</h4>
+          <span className="mahmut-badge-pill">Yorumsuz Ham Metin • 199 Görsel 🟢</span>
         </div>
         
-        {/* Buton 1: Mahmut Haklı mı — Tam Metin Kitap */}
+        {/* Buton 1: Sohbet Diyalogları — Yorumsuz Tam Metin */}
         <button 
           type="button" 
           className="mahmut-action-btn primary-btn glass"
@@ -248,8 +248,8 @@ export default function Ayarlar() {
             <BookOpen size={22} />
           </div>
           <div className="mahmut-btn-info">
-            <span className="mahmut-btn-title">Mahmut Haklı mı?</span>
-            <span className="mahmut-btn-desc">96 Sayfa • Bağımsız İnceleme, Olay Örgüsü ve Tam Metin Kitap • 282 KB</span>
+            <span className="mahmut-btn-title">Sohbet Diyalogları (Yorumsuz Ham Metin)</span>
+            <span className="mahmut-btn-desc">199 Görsel ve Ses Kayıtlarının Birebir Kronolojik Diyalog Dökümü • 90 Sayfa</span>
           </div>
           <div className="mahmut-btn-action-icon">
             <Download size={20} className="download-bounce" />

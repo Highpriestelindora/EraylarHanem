@@ -21,10 +21,10 @@ async function generatePdfBook() {
     margins: { top: 50, bottom: 50, left: 50, right: 50 },
     bufferPages: true,
     info: {
-      Title: 'Mahmut Haklı mı? — Bağımsız İnceleme ve Tam Metin',
-      Author: 'Eraylar Hanem İnceleme Kurulu',
-      Subject: '11-13 Eylül 2026 Olay Örgüsü, Belgeler ve Kronolojik İnceleme',
-      Keywords: 'Mahmut, Eraylar Hanem, İnceleme, Sohbet Arşivi'
+      Title: 'Sohbet Diyalogları — Yorumsuz Tam Metin',
+      Author: 'Eraylar Hanem Sohbet Arşivi',
+      Subject: '199 Görsel ve Ses Kayıtlarının Birebir Kronolojik Diyalog Dökümü',
+      Keywords: 'Sohbet, Diyalog, Ham Metin, Yorumsuz'
     }
   });
 
@@ -32,11 +32,11 @@ async function generatePdfBook() {
   doc.pipe(writeStream);
 
   // Kapak ve Başlık
-  doc.font(arialBold).fontSize(22).fillColor('#1e1b4b').text('⚖️ MAHMUT HAKLI MI?', { align: 'center' });
+  doc.font(arialBold).fontSize(22).fillColor('#1e1b4b').text('💬 SOHBET DİYALOGLARI', { align: 'center' });
   doc.moveDown(0.5);
-  doc.font(arialBold).fontSize(13).fillColor('#4338ca').text('Bağımsız Olay ve Diyalog İncelemesi — Kronolojik Tam Metin Raporu', { align: 'center' });
+  doc.font(arialBold).fontSize(13).fillColor('#4338ca').text('199 Görsel ve Ses Kayıtlarının Birebir Kronolojik Diyalog Dökümü', { align: 'center' });
   doc.moveDown(0.3);
-  doc.font(arialItalic).fontSize(10).fillColor('#64748b').text('11 - 13 Eylül 2026 • 18.500+ Kelime • Resmi Analiz ve Hakikat Kaydı', { align: 'center' });
+  doc.font(arialItalic).fontSize(10).fillColor('#64748b').text('11 - 13 Eylül 2026 • 17.500+ Kelime • Yorumsuz ve Tarafsız Ham Metin', { align: 'center' });
   doc.moveDown(1.5);
 
   // Çizgi
