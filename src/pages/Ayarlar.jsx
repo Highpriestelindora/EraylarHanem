@@ -62,9 +62,9 @@ export default function Ayarlar() {
     link.click();
     document.body.removeChild(link);
 
-    toast.success('📖 "Mahmut Haklı mı" Tam Metin Kitap PDF indiriliyor (92 Sayfa • 270 KB)...', {
+    toast.success('⚖️ "Biz Mahmut\'çuyuz!" Resmi Raporu indiriliyor (92 Sayfa • 270 KB)...', {
       duration: 5000,
-      icon: '📖'
+      icon: '⚖️'
     });
   };
 
@@ -248,8 +248,8 @@ export default function Ayarlar() {
             <BookOpen size={22} />
           </div>
           <div className="mahmut-btn-info">
-            <span className="mahmut-btn-title">Mahmut Haklı mı (Tam Metin Kitap)</span>
-            <span className="mahmut-btn-desc">92 Sayfa • AI Süzgecinden Geçmiş Kronolojik Metin • 270 KB</span>
+            <span className="mahmut-btn-title">Mahmut Haklı mı (Biz Mahmut'çuyuz!)</span>
+            <span className="mahmut-btn-desc">92 Sayfa • Eraylar Hanem Resmi Raporu: Mahmut %100 Haklıdır! • 270 KB</span>
           </div>
           <div className="mahmut-btn-action-icon">
             <Download size={20} className="download-bounce" />

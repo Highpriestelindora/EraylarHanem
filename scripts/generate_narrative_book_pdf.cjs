@@ -32,11 +32,11 @@ async function generatePdfBook() {
   doc.pipe(writeStream);
 
   // Kapak ve Başlık
-  doc.font(arialBold).fontSize(24).fillColor('#1e1b4b').text('⚖️ MAHMUT HAKLI MI?', { align: 'center' });
+  doc.font(arialBold).fontSize(22).fillColor('#1e1b4b').text('⚖️ MAHMUT HAKLI MI? — BİZ MAHMUT\'ÇUYUZ!', { align: 'center' });
   doc.moveDown(0.5);
-  doc.font(arialRegular).fontSize(13).fillColor('#4f46e5').text('Kronolojik ve Tematik AI Süzgecinden Geçirilmiş Tam Metin', { align: 'center' });
+  doc.font(arialBold).fontSize(13).fillColor('#059669').text('Eraylar Hanem Resmi İnceleme Raporu: Mahmut %100 Haklıdır!', { align: 'center' });
   doc.moveDown(0.3);
-  doc.font(arialItalic).fontSize(10).fillColor('#64748b').text('11 - 13 Eylül 2026 • 18.500+ Kelime • Eksiksiz Diyalog ve Olay Örgüsü', { align: 'center' });
+  doc.font(arialItalic).fontSize(10).fillColor('#64748b').text('11 - 13 Eylül 2026 • 18.500+ Kelime • Kronolojik Olay ve Diyalog Dökümü', { align: 'center' });
   doc.moveDown(1.5);
 
   // Çizgi
